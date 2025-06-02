@@ -1,0 +1,58 @@
+<svg width="250" height="250" viewBox="0 0 250 250" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pantsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.3" />
+    </linearGradient>
+    <filter id="digitalGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="250" height="250" fill="#0a0a0a"/>
+  
+  <!-- Waistband -->
+  <rect x="80" y="60" width="90" height="15" fill="url(#pantsGradient)" stroke="#8b5cf6" stroke-width="2" rx="3"/>
+  
+  <!-- Left Leg -->
+  <rect x="85" y="75" width="35" height="150" fill="url(#pantsGradient)" stroke="#8b5cf6" stroke-width="1" rx="5"/>
+  
+  <!-- Right Leg -->
+  <rect x="130" y="75" width="35" height="150" fill="url(#pantsGradient)" stroke="#8b5cf6" stroke-width="1" rx="5"/>
+  
+  <!-- Cargo Pockets -->
+  <rect x="70" y="100" width="20" height="25" fill="#1a1a1a" stroke="#fbbf24" stroke-width="1" rx="3"/>
+  <rect x="160" y="100" width="20" height="25" fill="#1a1a1a" stroke="#fbbf24" stroke-width="1" rx="3"/>
+  
+  <!-- Side Pockets -->
+  <rect x="90" y="90" width="25" height="15" fill="#000" stroke="#8b5cf6" stroke-width="1" rx="2"/>
+  <rect x="135" y="90" width="25" height="15" fill="#000" stroke="#8b5cf6" stroke-width="1" rx="2"/>
+  
+  <!-- Digital Cargo Details -->
+  <rect x="75" y="110" width="10" height="2" fill="#fbbf24" filter="url(#digitalGlow)"/>
+  <rect x="165" y="110" width="10" height="2" fill="#fbbf24" filter="url(#digitalGlow)"/>
+  
+  <!-- Knee Reinforcement -->
+  <rect x="90" y="140" width="25" height="20" fill="none" stroke="#8b5cf6" stroke-width="1" rx="3" opacity="0.6"/>
+  <rect x="135" y="140" width="25" height="20" fill="none" stroke="#8b5cf6" stroke-width="1" rx="3" opacity="0.6"/>
+  
+  <!-- Tech Stripes -->
+  <rect x="85" y="180" width="35" height="2" fill="#fbbf24" filter="url(#digitalGlow)" opacity="0.8"/>
+  <rect x="130" y="180" width="35" height="2" fill="#fbbf24" filter="url(#digitalGlow)" opacity="0.8"/>
+  
+  <!-- Digital Pattern -->
+  <rect x="95" y="200" width="15" height="1" fill="#8b5cf6" opacity="0.6"/>
+  <rect x="140" y="200" width="15" height="1" fill="#8b5cf6" opacity="0.6"/>
+  
+  <!-- Brand Label -->
+  <rect x="120" y="65" width="20" height="8" fill="#000" stroke="#fbbf24" stroke-width="1" rx="1"/>
+  <text x="130" y="71" text-anchor="middle" fill="#fbbf24" font-family="monospace" font-size="5" font-weight="bold">DIGITAL</text>
+  
+  <!-- Ankle Cuffs -->
+  <rect x="85" y="220" width="35" height="5" fill="#1a1a1a" stroke="#8b5cf6" stroke-width="1" rx="2"/>
+  <rect x="130" y="220" width="35" height="5" fill="#1a1a1a" stroke="#8b5cf6" stroke-width="1" rx="2"/>
+</svg>
