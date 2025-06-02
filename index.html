@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bungi x Bobby | The Tech Animal Collection</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/loading.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-container">
+            <div class="loading-logo-container">
+                <div class="cookie-wrapper">
+                    <div class="cyber-cookie" id="cyber-cookie">
+                        <div class="cookie-single">
+                            <div class="cookie-bite"></div>
+                            <div class="cookie-texture">
+                                <div class="cookie-chip"></div>
+                                <div class="cookie-chip"></div>
+                                <div class="cookie-chip"></div>
+                                <div class="cookie-chip"></div>
+                                <div class="cookie-chip"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cookie-pixels"></div>
+                    <div class="cookie-crumbs"></div>
+                </div>
+                <img src="assets/bobby-logo.svg" alt="BUNGI X BOBBY" class="loading-logo">
+                <div class="glitch-overlay"></div>
+            </div>
+            <div class="loading-text">
+                <span class="glitch-text" data-text="INITIALIZING">INITIALIZING</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                    <div class="progress-glow"></div>
+                </div>
+                <div class="progress-text">0%</div>
+            </div>
+            <div class="loading-particles"></div>
+        </div>
+    </div>
+
+    <!-- Main Website -->
+    <div id="main-site" class="main-site hidden">
+        <!-- Background Pattern -->
+        <div class="bg-pattern"></div>
+        <div class="glitch-overlay"></div>
+        <div class="grid-details"></div>
+        
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="assets/bobby-logo.svg" alt="Bobby" class="nav-logo-img">
+                    <span class="nav-brand">BUNGI X BOBBY</span>
+                    <div class="logo-banner">
+                        <div class="logo-container">
+                          <img src="assets/hat.png" class="banner-logo hat" alt="Hat logo" />
+                          <img src="assets/cookie.png" class="banner-logo cookie" alt="Cookie logo" />
+                          <img src="assets/bunny.png" class="banner-logo bunny" alt="Bunny logo" />
+                          <img src="assets/b.png" class="banner-logo b" alt="B logo" />
+                        </div>
+                      </div>
+                      
+                </div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="#home" class="nav-link glitch-hover" data-text="HOME">HOME</a></li>
+                    <li class="nav-item"><a href="#collection" class="nav-link glitch-hover" data-text="COLLECTION">COLLECTION</a></li>
+                    <li class="nav-item"><a href="#about" class="nav-link glitch-hover" data-text="ABOUT">ABOUT</a></li>
+                    <li class="nav-item"><a href="#contact" class="nav-link glitch-hover" data-text="CONTACT">CONTACT</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="cart-btn" id="cart-btn">
+                        <span class="cart-icon">🛒</span>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <div class="social-links">
+                        <a href="https://instagram.com/bungi_bobby_the_rabbit" class="social-link instagram" target="_blank">
+                            <span class="hologram-btn">
+                                <img src="assets/instagram-logo.svg" alt="Instagram" class="social-icon">
+                            </span>
+                        </a>
+                        <a href="https://tiktok.com/@bungi__" class="social-link tiktok" target="_blank">
+                            <span class="hologram-btn">
+                                <img src="assets/tiktok-logo.svg" alt="TikTok" class="social-icon">
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-bg">
+                <div class="particle-field"></div>
+                <div class="grid-overlay"></div>
+            </div>
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        <span class="glitch-text" data-text="BUNGI X BOBBY">BUNGI X BOBBY</span>
+                        <span class="subtitle">THE TECH ANIMAL COLLECTION</span>
+                    </h1>
+                    <p class="hero-description">
+                        Tech animal of the elite GooberMcGeet club
+                    </p>
+                    <button class="cta-btn">
+                        <span>EXPLORE COLLECTION</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                </div>
+                <div class="hero-product">
+                    <div class="product-showcase">
+                        <div class="product-3d">
+                            <img src="assets/featured-hoodie.svg" alt="Featured Hoodie" class="product-img">
+                            <div class="product-hologram"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Collection Section -->
+        <section id="collection" class="collection">
+            <div class="container">
+                <h2 class="section-title">
+                    <span class="glitch-text" data-text="COLLECTION">COLLECTION</span>
+                </h2>
+                <div class="product-grid">
+                    <div class="product-card" data-product="hoodie-1">
+                        <div class="product-image hoodie-flip">
+                            <img src="assets/bungixbobback.png" alt="Neon Glitch Hoodie Back" class="hoodie-back">
+                            <img src="assets/bungixbobfront.png" alt="Neon Glitch Hoodie Front" class="hoodie-front">
+                            <div class="product-overlay">
+                                <button class="quick-view-btn">QUICK VIEW</button>
+                                <button class="add-to-cart-btn">ADD TO CART</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">NEON GLITCH HOODIE</h3>
+                            <p class="product-price">$89.99</p>
+                        </div>
+                    </div>
+                    
+                    <div class="product-card" data-product="tee-1">
+                        <div class="product-image tee-flip">
+                            <img src="assets/tee-1.png" alt="Cyber Rabbit Tee" class="tee-default">
+                            <img src="assets/tee-2.png" alt="Cyber Rabbit Tee Alt" class="tee-hover">
+                            <div class="product-overlay">
+                                <button class="quick-view-btn">QUICK VIEW</button>
+                                <button class="add-to-cart-btn">ADD TO CART</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">CYBER RABBIT TEE</h3>
+                            <p class="product-price">$49.99</p>
+                        </div>
+                    </div>
+                    
+                    <div class="product-card" data-product="jacket-1">
+                        <div class="product-image">
+                            <img src="assets/jacket-1.png" alt="Tech Elite Jacket">
+                            <div class="product-overlay">
+                                <button class="quick-view-btn">QUICK VIEW</button>
+                                <button class="add-to-cart-btn">ADD TO CART</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">TECH ELITE JACKET</h3>
+                            <p class="product-price">$149.99</p>
+                        </div>
+                    </div>
+                    
+                    <div class="product-card" data-product="pants-1">
+                        <div class="product-image">
+                            <img src="assets/pants-1.png" alt="Digital Cargo Pants">
+                            <div class="product-overlay">
+                                <button class="quick-view-btn">QUICK VIEW</button>
+                                <button class="add-to-cart-btn">ADD TO CART</button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name">DIGITAL CARGO PANTS</h3>
+                            <p class="product-price">$79.99</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2 class="section-title">
+                            <span class="glitch-text" data-text="ABOUT BOBBY">ABOUT BOBBY</span>
+                        </h2>
+                        <p class="about-description">
+                            In the neon-lit streets of the digital underground, Bobby the Rabbit reigns supreme as the ultimate Tech Animal of the elite GooberMcGeet Club. This collection isn't just fashion – it's Bobby's world, brought to life. Each piece channels his rebellious spirit, underground edge, and love for cookies, blending high-tech aesthetics with a streetwise vibe. Gear up and step into Bobby's digital domain – where you're not just part of the scene, you're the Tech Animal of the elite GooberMcGeet Club. Join Bobby's crew – where the tech animals run wild and cookies are always within reach.
+                        </p>
+                        <div class="ascii-art">
+                            <pre class="ascii-bobby">
+    ╔═════════════════════════════════╗
+    ║         BUNGI X BOBBY           ║
+    ║   THE TECH ANIMAL COLLECTION    ║
+    ║                                 ║
+    ║   > PREMIUM QUALITY             ║
+    ║   > DYSTOPIAN DESIGN            ║
+    ║   > TECH ELITE STATUS           ║
+    ╚═════════════════════════════════╝
+                            </pre>
+                        </div>
+                    </div>
+                    <div class="about-visual">
+                        <div class="tech-grid">
+                            <div class="grid-item">
+                                <img src="assets/profren1.png" alt="Tech Visual 1" class="grid-image">
+                            </div>
+                            <div class="grid-item">
+                                <img src="assets/ren2.png" alt="Tech Visual 2" class="grid-image">
+                            </div>
+                            <div class="grid-item">
+                                <img src="assets/ren3.png" alt="Tech Visual 3" class="grid-image">
+                            </div>
+                            <div class="grid-item">
+                                <img src="assets/ren4.png" alt="Tech Visual 4" class="grid-image">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3 class="footer-title">BUNGI X BOBBY</h3>
+                        <p class="footer-text">Tech animal of the elite GooberMcGeet club</p>
+                        <div class="social-links-footer">
+                            <a href="https://instagram.com/bungi_bobby_the_rabbit" class="social-link" target="_blank">
+                                <span class="hologram-btn">INSTAGRAM</span>
+                            </a>
+                            <a href="https://tiktok.com/@bungi__" class="social-link" target="_blank">
+                                <span class="hologram-btn">TIKTOK</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="footer-section">
+                        <h3 class="footer-title">QUICK LINKS</h3>
+                        <ul class="footer-links">
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#collection">Collection</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3 class="footer-title">CONTACT</h3>
+                        <p class="footer-text">bungi.bobbytherabbit@gmail.com</p>
+                        <p class="footer-text">+1 (555) CYBER-01</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <div class="ascii-footer">
+                        <pre>
+
+    _______  ________   _______   _______   ________      ________       _______  _______    _______   _______  ________ 
+    //      / /    /   \//   /   \//       \ /        \    /    /   \    //      / /       \\//      / //      / /    /   \
+   //       \/         //        //      __/_/       /    /_       _/   //       \/        ///       \//       \/         /
+  /         /        //         /       / //         /   /         /   /         /         /         /         /\__     // 
+  \________/\_______//\__/_____/\________/ \\_______/    \___/___//    \________/\________/\________/\________/   \____//  
+  
+                                                                                                                                                                                    
+                            
+                        </pre>
+                    </div>
+                    <p class="copyright">© 2025 BUNGI X BOBBY. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Shopping Cart Modal -->
+    <div id="cart-modal" class="cart-modal hidden">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2 class="cart-title">SHOPPING CART</h2>
+                <button class="cart-close" id="cart-close">×</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <div class="empty-cart">
+                    <p>Your cart is empty</p>
+                    <p class="terminal-text">> ADD_ITEMS_TO_CART</p>
+                </div>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span class="total-label">TOTAL: </span>
+                    <span class="total-amount">$0.00</span>
+                </div>
+                <button class="checkout-btn">
+                    <span>CHECKOUT</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/main.js"></script>
+    <script src="scripts/loading.js"></script>
+    <script src="scripts/cart.js"></script>
+    <script src="scripts/animations.js"></script>
+</body>
+</html>
