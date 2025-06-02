@@ -1,0 +1,31 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black Hoodie Front -->
+  <rect width="400" height="400" fill="#000000"/>
+  
+  <!-- Hoodie Shape -->
+  <path d="M100 100 Q100 50 150 50 L250 50 Q300 50 300 100 L300 350 Q300 380 270 380 L130 380 Q100 380 100 350 Z" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- Hood -->
+  <ellipse cx="200" cy="80" rx="80" ry="60" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- Front Pocket -->
+  <rect x="150" y="280" width="100" height="80" rx="5" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- Small Logo on Chest -->
+  <g transform="translate(200, 150)">
+    <!-- Rabbit icon -->
+    <circle cx="0" cy="0" r="20" fill="none" stroke="#ffffff" stroke-width="2"/>
+    <ellipse cx="0" cy="0" rx="10" ry="12" fill="#ffffff"/>
+    <ellipse cx="-5" cy="-10" rx="3" ry="8" fill="#ffffff"/>
+    <ellipse cx="5" cy="-10" rx="3" ry="8" fill="#ffffff"/>
+  </g>
+  
+  <!-- BUNGI X BOBBY Text (smaller on front) -->
+  <text x="200" y="190" font-family="Orbitron, monospace" font-size="14" fill="#ffffff" text-anchor="middle">BUNGI X BOBBY</text>
+  
+  <!-- Drawstrings -->
+  <line x1="180" y1="100" x2="180" y2="130" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="220" y1="100" x2="220" y2="130" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="180" cy="130" r="4" fill="#1a1a1a" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="220" cy="130" r="4" fill="#1a1a1a" stroke="#ffffff" stroke-width="2"/>
+</svg>

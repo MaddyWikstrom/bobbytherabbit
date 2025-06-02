@@ -1,0 +1,36 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black Hoodie Back -->
+  <rect width="400" height="400" fill="#000000"/>
+  
+  <!-- Hoodie Shape -->
+  <path d="M100 100 Q100 50 150 50 L250 50 Q300 50 300 100 L300 350 Q300 380 270 380 L130 380 Q100 380 100 350 Z" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- Hood -->
+  <ellipse cx="200" cy="80" rx="80" ry="60" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- BUNGI X BOBBY Text -->
+  <text x="200" y="120" font-family="Orbitron, monospace" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">BUNGI × BOBBY</text>
+  
+  <!-- Rabbit Graphic -->
+  <g transform="translate(200, 200)">
+    <!-- Rabbit silhouette -->
+    <ellipse cx="0" cy="0" rx="40" ry="50" fill="#ffffff" opacity="0.9"/>
+    <ellipse cx="-15" cy="-40" rx="10" ry="25" fill="#ffffff" opacity="0.9"/>
+    <ellipse cx="15" cy="-40" rx="10" ry="25" fill="#ffffff" opacity="0.9"/>
+    <circle cx="-10" cy="-5" r="3" fill="#000000"/>
+    <circle cx="10" cy="-5" r="3" fill="#000000"/>
+    <path d="M-5 5 Q0 10 5 5" fill="none" stroke="#000000" stroke-width="2"/>
+  </g>
+  
+  <!-- Tech Elements -->
+  <g opacity="0.5">
+    <line x1="50" y1="150" x2="80" y2="150" stroke="#8b5cf6" stroke-width="1"/>
+    <line x1="320" y1="150" x2="350" y2="150" stroke="#8b5cf6" stroke-width="1"/>
+    <line x1="60" y1="250" x2="90" y2="250" stroke="#fbbf24" stroke-width="1"/>
+    <line x1="310" y1="250" x2="340" y2="250" stroke="#fbbf24" stroke-width="1"/>
+  </g>
+  
+  <!-- RABBIT HARDWARE Text -->
+  <text x="200" y="320" font-family="Orbitron, monospace" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">RABBIT</text>
+  <text x="200" y="340" font-family="Orbitron, monospace" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">HARDWARE</text>
+</svg>
