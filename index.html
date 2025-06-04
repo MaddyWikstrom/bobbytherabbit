@@ -17,18 +17,177 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f0f0f0; /* Adjust as per your theme */
-            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a1a 50%, #0a0a0a 100%);
+            font-family: 'Orbitron', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .password-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite alternate;
+        }
+        
+        .password-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #7877c6;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            box-shadow:
+                0 0 30px rgba(120, 119, 198, 0.5),
+                inset 0 0 30px rgba(120, 119, 198, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .password-title {
+            color: #7877c6;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            animation: glitch-text 3s infinite;
+        }
+        
+        .password-title::before,
+        .password-title::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .password-title::before {
+            animation: glitch-1 0.5s infinite;
+            color: #ff77c6;
+            z-index: -1;
+        }
+        
+        .password-title::after {
+            animation: glitch-2 0.5s infinite;
+            color: #77c6ff;
+            z-index: -2;
+        }
+        
+        .password-input {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #7877c6;
+            border-radius: 5px;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            color: #7877c6;
+            font-family: 'Orbitron', monospace;
+            width: 300px;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .password-input:focus {
+            outline: none;
+            border-color: #ff77c6;
+            box-shadow: 0 0 20px rgba(255, 119, 198, 0.5);
+            color: #ff77c6;
+        }
+        
+        .password-input::placeholder {
+            color: rgba(120, 119, 198, 0.5);
+        }
+        
+        .password-submit {
+            background: linear-gradient(45deg, #7877c6, #ff77c6);
+            border: none;
+            border-radius: 5px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            color: #000;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .password-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(120, 119, 198, 0.4);
+        }
+        
+        .password-submit:active {
+            transform: translateY(0);
+        }
+        
+        .password-error {
+            color: #ff4757;
+            font-size: 1rem;
+            margin-top: 15px;
+            font-family: 'Orbitron', monospace;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes glitch-text {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        @keyframes glitch-1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        @keyframes glitch-2 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(-2px, 2px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
     </style>
 </head>
 <body>
     <!-- Password Entry Screen -->
     <div id="password-screen" class="password-screen" style="display: flex;">
-        <h2>Enter Password</h2>
-        <input type="password" id="password-input" placeholder="Password" />
-        <button id="submit-password">Submit</button>
-        <div id="error-message" style="color: red; display: none;">Incorrect password. Please try again.</div>
+        <div class="password-container">
+            <h2 class="password-title" data-text="ACCESS REQUIRED">ACCESS REQUIRED</h2>
+            <input type="password" id="password-input" class="password-input" placeholder="Enter Password" />
+            <button id="submit-password" class="password-submit">AUTHENTICATE</button>
+            <div id="error-message" class="password-error" style="display: none;">ACCESS DENIED. TRY AGAIN.</div>
+        </div>
     </div>
     
     <!-- Loading Screen -->
@@ -339,7 +498,7 @@
                 if (enteredPassword === correctPassword) {
                     console.log("Password correct, proceeding to loading screen");
                     passwordScreen.style.display = "none";
-                    loadingScreen.style.display = "block";
+                    loadingScreen.style.display = "flex";
                     // Initialize loading screen after password is correct
                     initializeLoadingScreen();
                 } else {
