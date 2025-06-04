@@ -1,4 +1,10 @@
 # Ignore sensitive files
+/netlify/*
+/functions/*
+/netlify/*
+/functions/*
+/netlify/*
+/functions/*
 /scripts/shopify-integration.js
 
 # Node modules

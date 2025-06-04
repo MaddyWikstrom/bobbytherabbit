@@ -1,14 +1,59 @@
-// Simplified Shopify Integration for Checkout Redirection
+let PRODUCT_MAPPING = {};
 
-const SHOPIFY_CONFIG = {
-    domain: 'bobbytherabbit.com.myshopify.com',
-    storefrontAccessToken: 'fb92c5b6df6a740fc5d5fc94c30dbd0d',
-    apiVersion: '2024-01'
-};
+// Function to fetch products from Netlify function
+async function fetchProducts() {
+    try {
+        const response = await fetch('/.netlify/functions/get-products');
+        const data = await response.json();
 
-// Initialize Shopify Buy SDK
-let shopifyClient = null;
-let shopifyCheckout = null;
+        if (data.error) {
+            console.error('Error fetching products:', data.error);
+            return;
+        }
+
+        console.log('✅ Products loaded from Netlify function:', data);
+
+        // Generate mapping
+        const mapping = {};
+        data.forEach(product => {
+            mapping[product.node.title] = product.node.id;
+        });
+
+        console.log('📋 Product Mapping:');
+        console.log(mapping);
+
+        // Generate the PRODUCT_MAPPING code
+        let mappingCode = 'const PRODUCT_MAPPING = {\n';
+        data.forEach(product => {
+            const productId = product.node.id;
+            const productName = product.node.title;
+            mappingCode += `    '${productName}': {\n`;
+            mappingCode += `        shopifyProductId: '${productId}',\n`;
+            mappingCode += `        // Add variant information here\n`;
+            mappingCode += `    },\n`;
+        });
+        mappingCode += '};';
+
+        console.log('📝 Generated PRODUCT_MAPPING code:\n');
+        console.log(mappingCode);
+
+        // Store the mapping in localStorage
+        localStorage.setItem('shopifyProductMapping', mappingCode);
+
+        // Load the product mapping
+        const storedMapping = localStorage.getItem('shopifyProductMapping');
+        if (storedMapping) {
+            try {
+                PRODUCT_MAPPING = eval('(' + storedMapping + ')'); // WARNING: Use with caution
+                console.log('✅ Loaded product mapping from local storage');
+            } catch (e) {
+                console.error('❌ Error parsing product mapping from local storage:', e);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching products:', error);
+    }
+}
 
 // Load Shopify Buy Button SDK
 function loadShopifySDK(callback) {
@@ -32,9 +77,9 @@ function initializeShopifyClient() {
     }
 
     shopifyClient = window.ShopifyBuy.buildClient({
-        domain: SHOPIFY_CONFIG.domain,
-        storefrontAccessToken: SHOPIFY_CONFIG.storefrontAccessToken,
-        apiVersion: SHOPIFY_CONFIG.apiVersion
+        domain: 'bobbytherabbit.com.myshopify.com',
+        storefrontAccessToken: 'fb92c5b6df6a740fc5d5fc94c30dbd0d',
+        apiVersion: '2024-01'
     });
 
     // Create or retrieve existing checkout
@@ -101,5 +146,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Override checkout button
         setTimeout(overrideCheckoutButton, 1000);
+
+         // Fetch products
+        fetchProducts();
     });
 });
