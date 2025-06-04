@@ -88,26 +88,19 @@ function initializeProductInteractions() {
     const quickViewBtns = document.querySelectorAll('.quick-view-btn');
     const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
     
-    // Add hover effects to product cards
+    // Add click event to product cards
     productCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.classList.add('holographic-card');
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.classList.remove('holographic-card');
+        card.addEventListener('click', function() {
+            this.classList.toggle('active');
         });
     });
-    
-    // Quick view functionality
-    quickViewBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const productCard = this.closest('.product-card');
-            const productName = productCard.querySelector('.product-name').textContent;
-            const productType = productCard.dataset.product;
-            
-            // Create quick view modal
+     // Add click event to product image to show quick view
+    productCards.forEach(card => {
+        const productImage = card.querySelector('.product-image');
+        productImage.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent card toggle
+            const productName = card.querySelector('.product-name').textContent;
+            const productType = card.dataset.product;
             showQuickView(productName, productType);
         });
     });

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopify Buy Button Integration Example - Bobby Streetwear</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            padding: 2rem;
+        }
+        
+        .example-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #8b5cf6;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .product-example {
+            background: #1a1a1a;
+            border: 2px solid #8b5cf6;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .product-example h2 {
+            color: #facc15;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        .code-block code {
+            color: #8b5cf6;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+        }
+        
+        .shopify-buy-frame {
+            margin: 2rem 0;
+            min-height: 300px;
+        }
+        
+        .instructions {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 4px solid #8b5cf6;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .warning {
+            background: rgba(250, 204, 21, 0.1);
+            border-left: 4px solid #facc15;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="example-container">
+        <h1>Shopify Buy Button Integration Examples</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Replace all placeholder values (domain, token, product IDs) with your actual Shopify store information before using in production.
+        </div>
+        
+        <div class="product-example">
+            <h2>Example 1: Simple Product Buy Button</h2>
+            <p>This example shows how to embed a single product with a buy button:</p>
+            
+            <div class="code-block">
+                <code>&lt;!-- Place this div where you want the product to appear --&gt;
+&lt;div id="product-component-1234567890"&gt;&lt;/div&gt;
+
+&lt;!-- Add this script at the end of your body tag --&gt;
+&lt;script type="text/javascript"&gt;
+/*&lt;![CDATA[*/
+(function () {
+  var scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+  if (window.ShopifyBuy) {
+    if (window.ShopifyBuy.UI) {
+      ShopifyBuyInit();
+    } else {
+      loadScript();
+    }
+  } else {
+    loadScript();
+  }
+  function loadScript() {
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = scriptURL;
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+    script.onload = ShopifyBuyInit;
+  }
+  function ShopifyBuyInit() {
+    var client = ShopifyBuy.buildClient({
+      domain: 'your-store.myshopify.com',
+      storefrontAccessToken: 'your-access-token',
+    });
+    ShopifyBuy.UI.onReady(client).then(function (ui) {
+      ui.createComponent('product', {
+        id: '1234567890', // Your product ID
+        node: document.getElementById('product-component-1234567890'),
+        moneyFormat: '%24%7B%7Bamount%7D%7D',
+        options: {
+          "product": {
+            "styles": {
+              "product": {
+                "background-color": "transparent"
+              },
+              "button": {
+                "font-family": "Orbitron, sans-serif",
+                "font-weight": "bold",
+                ":hover": {
+                  "background-color": "#7d4fd3"
+                },
+                "background-color": "#8b5cf6",
+                "border-radius": "4px",
+                "padding": "12px 24px"
+              }
+            }
+          }
+        }
+      });
+    });
+  }
+})();
+/*]]&gt;*/
+&lt;/script&gt;</code>
+            </div>
+            
+            <div class="shopify-buy-frame">
+                <!-- The actual Shopify product would appear here -->
+                <div style="text-align: center; padding: 3rem; border: 2px dashed #8b5cf6;">
+                    Shopify Product Component Would Appear Here
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-example">
+            <h2>Example 2: Custom Styled Buy Button Only</h2>
+            <p>This shows how to add just the buy button without the full product display:</p>
+            
+            <div class="code-block">
+                <code>&lt;div id="product-component-button-only"&gt;&lt;/div&gt;
+
+&lt;script type="text/javascript"&gt;
+ShopifyBuy.UI.onReady(client).then(function (ui) {
+  ui.createComponent('product', {
+    id: '1234567890',
+    node: document.getElementById('product-component-button-only'),
+    options: {
+      "product": {
+        "contents": {
+          "img": false,
+          "title": false,
+          "price": false
+        },
+        "styles": {
+          "button": {
+            "font-family": "Orbitron, sans-serif",
+            "font-size": "16px",
+            "padding-top": "16px",
+            "padding-bottom": "16px",
+            "color": "#0a0a0a",
+            ":hover": {
+              "color": "#0a0a0a",
+              "background-color": "#facc15"
+            },
+            "background-color": "#8b5cf6",
+            ":focus": {
+              "background-color": "#7d4fd3"
+            },
+            "border-radius": "4px",
+            "padding-left": "32px",
+            "padding-right": "32px"
+          }
+        },
+        "text": {
+          "button": "ADD TO CART"
+        }
+      }
+    }
+  });
+});
+&lt;/script&gt;</code>
+            </div>
+        </div>
+        
+        <div class="product-example">
+            <h2>Example 3: Integration with Your Existing Product Cards</h2>
+            <p>Here's how to modify your existing product cards to include Shopify functionality:</p>
+            
+            <div class="code-block">
+                <code>&lt;!-- Modified product card structure --&gt;
+&lt;div class="product-card" data-product="hoodie-1"&gt;
+    &lt;div class="product-image"&gt;
+        &lt;img src="assets/hoodie-1.svg" alt="Neon Glitch Hoodie"&gt;
+        &lt;div class="product-overlay"&gt;
+            &lt;button class="quick-view-btn"&gt;QUICK VIEW&lt;/button&gt;
+            &lt;!-- Replace the add to cart button with Shopify button --&gt;
+            &lt;div id="shopify-button-hoodie-1" class="shopify-button-container"&gt;&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="product-info"&gt;
+        &lt;h3 class="product-name"&gt;NEON GLITCH HOODIE&lt;/h3&gt;
+        &lt;p class="product-price"&gt;$89.99&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+/* Custom styles for Shopify button container */
+.shopify-button-container {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* Override Shopify button styles to match your design */
+.shopify-buy__btn {
+    background-color: transparent !important;
+    border: 2px solid #8b5cf6 !important;
+    color: #fff !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    transition: all 0.3s ease !important;
+}
+
+.shopify-buy__btn:hover {
+    background-color: #8b5cf6 !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5) !important;
+}
+&lt;/style&gt;</code>
+            </div>
+        </div>
+        
+        <div class="product-example">
+            <h2>Example 4: Complete Integration Script</h2>
+            <p>This script initializes all your products with Shopify Buy Buttons:</p>
+            
+            <div class="code-block">
+                <code>&lt;script type="text/javascript"&gt;
+// Product configuration
+const shopifyProducts = {
+    'hoodie-1': {
+        id: 'YOUR_HOODIE_PRODUCT_ID',
+        name: 'NEON GLITCH HOODIE'
+    },
+    'tee-1': {
+        id: 'YOUR_TEE_PRODUCT_ID',
+        name: 'CYBER RABBIT TEE'
+    },
+    'jacket-1': {
+        id: 'YOUR_JACKET_PRODUCT_ID',
+        name: 'TECH ELITE JACKET'
+    },
+    'pants-1': {
+        id: 'YOUR_PANTS_PRODUCT_ID',
+        name: 'DIGITAL CARGO PANTS'
+    }
+};
+
+// Initialize all Shopify buttons
+function initializeAllShopifyButtons() {
+    Object.entries(shopifyProducts).forEach(([key, product]) => {
+        const container = document.getElementById(`shopify-button-${key}`);
+        if (container && product.id) {
+            createShopifyButton(container, product.id, product.name);
+        }
+    });
+}
+
+// Create individual Shopify button
+function createShopifyButton(container, productId, productName) {
+    ShopifyBuy.UI.onReady(client).then(function (ui) {
+        ui.createComponent('product', {
+            id: productId,
+            node: container,
+            options: {
+                "product": {
+                    "contents": {
+                        "img": false,
+                        "title": false,
+                        "price": false
+                    },
+                    "styles": {
+                        "button": {
+                            "font-family": "Orbitron, sans-serif",
+                            "color": "#ffffff",
+                            ":hover": {
+                                "color": "#0a0a0a",
+                                "background-color": "#8b5cf6"
+                            },
+                            "background-color": "transparent",
+                            "border": "2px solid #8b5cf6",
+                            ":focus": {
+                                "background-color": "#7d4fd3"
+                            },
+                            "border-radius": "4px",
+                            "padding": "10px 20px",
+                            "font-weight": "bold",
+                            "font-size": "14px"
+                        }
+                    },
+                    "text": {
+                        "button": "ADD TO CART"
+                    }
+                }
+            }
+        });
+    });
+}
+
+// Initialize when Shopify SDK is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for Shopify Buy SDK to load
+    if (window.ShopifyBuy && window.ShopifyBuy.UI) {
+        initializeAllShopifyButtons();
+    } else {
+        // Try again after SDK loads
+        setTimeout(initializeAllShopifyButtons, 2000);
+    }
+});
+&lt;/script&gt;</code>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Implementation Steps:</h3>
+            <ol>
+                <li><strong>Get Your Shopify Credentials:</strong>
+                    <ul>
+                        <li>Go to Shopify Admin → Apps → Manage private apps</li>
+                        <li>Create a private app with Storefront API access</li>
+                        <li>Copy your Storefront Access Token</li>
+                    </ul>
+                </li>
+                <li><strong>Find Your Product IDs:</strong>
+                    <ul>
+                        <li>In Shopify Admin, go to each product</li>
+                        <li>The product ID is in the URL (the number after /products/)</li>
+                        <li>Or use the Shopify API to list all products</li>
+                    </ul>
+                </li>
+                <li><strong>Update Your HTML:</strong>
+                    <ul>
+                        <li>Add the Shopify Buy Button script to your index.html</li>
+                        <li>Replace placeholder values with your actual credentials</li>
+                        <li>Add div containers where you want buttons to appear</li>
+                    </ul>
+                </li>
+                <li><strong>Style Integration:</strong>
+                    <ul>
+                        <li>Use the provided CSS overrides to match your design</li>
+                        <li>Adjust colors, fonts, and sizes as needed</li>
+                        <li>Test on different screen sizes</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        
+        <div class="warning">
+            <h3>🔒 Security Notes:</h3>
+            <ul>
+                <li>The Storefront Access Token is safe to use in client-side code</li>
+                <li>Never expose your Admin API keys in frontend code</li>
+                <li>Use environment variables for sensitive data in production</li>
+                <li>Enable CORS properly in your Shopify settings</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>🧪 Testing Your Integration:</h3>
+            <ol>
+                <li>Start with one product to test the integration</li>
+                <li>Verify the cart functionality works correctly</li>
+                <li>Test the checkout process with a test order</li>
+                <li>Check that Printful receives the order</li>
+                <li>Verify inventory and pricing sync properly</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

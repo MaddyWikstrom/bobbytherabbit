@@ -1,0 +1,8 @@
+# Ignore sensitive files
+/scripts/shopify-integration.js
+
+# Node modules
+/node_modules
+
+# System files
+.DS_Store
