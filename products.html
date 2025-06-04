@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby Streetwear - Product Collection</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/products.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/loading.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Main Content -->
+    <div id="main-content" class="main-content">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="index.html">
+                        <img src="assets/bobby-logo.svg" alt="Bobby Streetwear" class="nav-logo">
+                    </a>
+                </div>
+                <div class="nav-menu" id="nav-menu">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="products.html" class="nav-link active">Products</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </div>
+                <div class="nav-actions">
+                    <button class="search-toggle" id="search-toggle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </button>
+                    <button class="wishlist-toggle" id="wishlist-toggle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        <span class="wishlist-count" id="wishlist-count">0</span>
+                    </button>
+                    <button class="cart-toggle" id="cart-toggle">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count" id="cart-count">0</span>
+                    </button>
+                    <button class="nav-toggle" id="nav-toggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Search Overlay -->
+        <div class="search-overlay" id="search-overlay">
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Search products...">
+                <button class="search-close" id="search-close">×</button>
+            </div>
+            <div class="search-results" id="search-results"></div>
+        </div>
+
+        <!-- Product Collection Header -->
+        <section class="collection-header">
+            <div class="container">
+                <div class="collection-hero">
+                    <h1 class="collection-title">THE TECH ANIMAL COLLECTION</h1>
+                    <p class="collection-subtitle">Discover our complete range of premium tech animal essentials</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters & Controls -->
+        <section class="collection-controls">
+            <div class="container">
+                <div class="controls-wrapper">
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-category="all">All Products</button>
+                        <button class="filter-btn" data-category="hoodie">Hoodies</button>
+                        <button class="filter-btn" data-category="t-shirt">T-Shirts</button>
+                        <button class="filter-btn" data-category="sweatshirt">Sweatshirts</button>
+                        <button class="filter-btn" data-category="joggers">Joggers</button>
+                        <button class="filter-btn" data-category="windbreaker">Windbreakers</button>
+                        <button class="filter-btn" data-category="beanie">Beanies</button>
+                    </div>
+                    <div class="sort-controls">
+                        <select id="sort-select" class="sort-select">
+                            <option value="featured">Featured</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="name">Name A-Z</option>
+                        </select>
+                        <div class="view-toggle">
+                            <button class="view-btn active" data-view="grid">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </button>
+                            <button class="view-btn" data-view="list">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Grid -->
+        <section class="product-collection">
+            <div class="container">
+                <div class="products-grid" id="products-grid">
+                    <!-- Products will be dynamically loaded here -->
+                </div>
+                <div class="loading-skeleton" id="loading-skeleton">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be generated here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Shopping Cart Sidebar -->
+        <div class="cart-sidebar" id="cart-sidebar">
+            <div class="cart-header">
+                <h3>Shopping Cart</h3>
+                <button class="cart-close" id="cart-close">×</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <!-- Cart items will be populated here -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total: $<span id="cart-total">0.00</span></span>
+                </div>
+                <button class="checkout-btn" id="checkout-btn">Checkout</button>
+            </div>
+        </div>
+
+        <!-- Wishlist Sidebar -->
+        <div class="wishlist-sidebar" id="wishlist-sidebar">
+            <div class="wishlist-header">
+                <h3>Wishlist</h3>
+                <button class="wishlist-close" id="wishlist-close">×</button>
+            </div>
+            <div class="wishlist-items" id="wishlist-items">
+                <!-- Wishlist items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Product Quick View Modal -->
+        <div class="quick-view-modal" id="quick-view-modal">
+            <div class="modal-overlay" id="modal-overlay"></div>
+            <div class="modal-content">
+                <button class="modal-close" id="modal-close">×</button>
+                <div class="modal-body" id="modal-body">
+                    <!-- Quick view content will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <img src="assets/bobby-logo.svg" alt="Bobby Streetwear" class="footer-logo">
+                        <p>Premium streetwear for the modern generation</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="products.html">Products</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Follow Us</h4>
+                        <div class="social-links">
+                            <a href="#" class="social-link">
+                                <img src="assets/instagram-logo.svg" alt="Instagram">
+                            </a>
+                            <a href="#" class="social-link">
+                                <img src="assets/tiktok-logo.svg" alt="TikTok">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2024 Bobby Streetwear. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Cart Overlay -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="wishlist-overlay" id="wishlist-overlay"></div>
+
+    <!-- Scripts -->
+    <script src="scripts/products.js"></script>
+    <script src="scripts/cart.js"></script>
+    <script src="scripts/wishlist.js"></script>
+    <script src="scripts/search.js"></script>
+    <script src="scripts/products-loading.js"></script>
+    <script src="scripts/animations.js"></script>
+</body>
+</html>

@@ -1,681 +1,696 @@
-// Shopping Cart JavaScript for Bobby Streetwear
+// Enhanced Cart Management System
+class CartManager {
+    constructor() {
+        this.items = [];
+        this.isOpen = false;
+        this.total = 0;
+        this.itemCount = 0;
+        
+        this.loadCartFromStorage();
+        this.init();
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCart();
-});
+    init() {
+        this.setupEventListeners();
+        this.updateCartDisplay();
+        this.updateCartCount();
+    }
 
-function initializeCart() {
-    const cartBtn = document.getElementById('cart-btn');
-    const cartModal = document.getElementById('cart-modal');
-    const cartClose = document.getElementById('cart-close');
-    const cartItems = document.getElementById('cart-items');
-    const checkoutBtn = document.querySelector('.checkout-btn');
-    
-    // Open cart modal
-    cartBtn.addEventListener('click', function() {
-        cartModal.classList.remove('hidden');
-        updateCartDisplay();
-        
-        // Add entrance animation
-        setTimeout(() => {
-            cartModal.style.opacity = '1';
-            cartModal.querySelector('.cart-content').style.transform = 'scale(1)';
-        }, 10);
-    });
-    
-    // Close cart modal
-    cartClose.addEventListener('click', closeCart);
-    
-    // Close cart when clicking outside
-    cartModal.addEventListener('click', function(e) {
-        if (e.target === cartModal) {
-            closeCart();
+    setupEventListeners() {
+        // Cart toggle
+        const cartToggle = document.getElementById('cart-toggle');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartClose = document.getElementById('cart-close');
+        const cartOverlay = document.getElementById('cart-overlay');
+
+        if (cartToggle) {
+            cartToggle.addEventListener('click', () => this.toggleCart());
         }
-    });
-    
-    // Checkout functionality
-    checkoutBtn.addEventListener('click', function() {
-        const cart = getCart();
-        if (cart.length === 0) {
-            showNotification('Your cart is empty!');
-            return;
+
+        if (cartClose) {
+            cartClose.addEventListener('click', () => this.closeCart());
         }
-        
-        initiateCheckout();
-    });
-    
-    function closeCart() {
-        cartModal.style.opacity = '0';
-        cartModal.querySelector('.cart-content').style.transform = 'scale(0.9)';
-        
-        setTimeout(() => {
-            cartModal.classList.add('hidden');
-        }, 300);
-    }
-    
-    function updateCartDisplay() {
-        const cart = getCart();
-        const totalAmount = document.querySelector('.total-amount');
-        
-        if (cart.length === 0) {
-            cartItems.innerHTML = `
-                <div class="empty-cart">
-                    <p>Your cart is empty</p>
-                    <p class="terminal-text">> ADD_ITEMS_TO_CART</p>
-                </div>
-            `;
-            totalAmount.textContent = '$0.00';
-            return;
+
+        if (cartOverlay) {
+            cartOverlay.addEventListener('click', () => this.closeCart());
         }
-        
-        // Generate cart items HTML
-        let cartHTML = '';
-        let total = 0;
-        
-        cart.forEach((item, index) => {
-            const itemPrice = parseFloat(item.price.replace('$', ''));
-            const itemTotal = itemPrice * item.quantity;
-            total += itemTotal;
-            
-            cartHTML += `
-                <div class="cart-item" data-index="${index}">
-                    <div class="item-info">
-                        <h4 class="item-name">${item.name}</h4>
-                        <p class="item-details">Size: ${item.size} | ${item.price}</p>
-                    </div>
-                    <div class="item-controls">
-                        <div class="quantity-controls">
-                            <button class="qty-btn minus" data-index="${index}">-</button>
-                            <span class="quantity">${item.quantity}</span>
-                            <button class="qty-btn plus" data-index="${index}">+</button>
-                        </div>
-                        <button class="remove-item" data-index="${index}">×</button>
-                    </div>
-                    <div class="item-total">$${itemTotal.toFixed(2)}</div>
-                </div>
-            `;
-        });
-        
-        cartItems.innerHTML = cartHTML;
-        totalAmount.textContent = `$${total.toFixed(2)}`;
-        
-        // Add event listeners to cart controls
-        addCartControlListeners();
-    }
-    
-    function addCartControlListeners() {
-        // Quantity controls
-        document.querySelectorAll('.qty-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.dataset.index);
-                const isPlus = this.classList.contains('plus');
-                
-                updateQuantity(index, isPlus);
-            });
-        });
-        
-        // Remove item buttons
-        document.querySelectorAll('.remove-item').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.dataset.index);
-                removeFromCart(index);
-            });
+
+        // Checkout button
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', () => this.proceedToCheckout());
+        }
+
+        // Close cart on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.closeCart();
+            }
         });
     }
-    
-    function updateQuantity(index, increase) {
-        const cart = getCart();
-        
-        if (increase) {
-            cart[index].quantity += 1;
+
+    addItem(product, selectedVariant = null) {
+        const variant = selectedVariant || {
+            color: product.colors?.[0] || 'Default',
+            size: product.sizes?.[0] || 'One Size',
+            price: product.price
+        };
+
+        const itemId = `${product.id}-${variant.color}-${variant.size}`;
+        const existingItem = this.items.find(item => item.id === itemId);
+
+        if (existingItem) {
+            existingItem.quantity += 1;
         } else {
-            cart[index].quantity -= 1;
+            this.items.push({
+                id: itemId,
+                productId: product.id,
+                title: product.title,
+                price: variant.price,
+                image: product.mainImage,
+                color: variant.color,
+                size: variant.size,
+                quantity: 1,
+                category: product.category
+            });
+        }
+
+        this.saveCartToStorage();
+        this.updateCartDisplay();
+        this.updateCartCount();
+        this.showCartAnimation();
+        
+        // Analytics tracking
+        this.trackAddToCart(product, variant);
+    }
+
+    removeItem(itemId) {
+        this.items = this.items.filter(item => item.id !== itemId);
+        this.saveCartToStorage();
+        this.updateCartDisplay();
+        this.updateCartCount();
+        this.showRemoveAnimation();
+    }
+
+    updateQuantity(itemId, newQuantity) {
+        if (newQuantity <= 0) {
+            this.removeItem(itemId);
+            return;
+        }
+
+        const item = this.items.find(item => item.id === itemId);
+        if (item) {
+            item.quantity = newQuantity;
+            this.saveCartToStorage();
+            this.updateCartDisplay();
+            this.updateCartCount();
+        }
+    }
+
+    clearCart() {
+        this.items = [];
+        this.saveCartToStorage();
+        this.updateCartDisplay();
+        this.updateCartCount();
+    }
+
+    toggleCart() {
+        if (this.isOpen) {
+            this.closeCart();
+        } else {
+            this.openCart();
+        }
+    }
+
+    openCart() {
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
+        
+        if (cartSidebar && cartOverlay) {
+            cartSidebar.classList.add('active');
+            cartOverlay.classList.add('active');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
             
-            if (cart[index].quantity <= 0) {
-                cart.splice(index, 1);
+            // Focus management for accessibility
+            const firstFocusable = cartSidebar.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (firstFocusable) {
+                firstFocusable.focus();
             }
         }
+    }
+
+    closeCart() {
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
         
-        saveCart(cart);
-        updateCartDisplay();
-        updateCartCount();
+        if (cartSidebar && cartOverlay) {
+            cartSidebar.classList.remove('active');
+            cartOverlay.classList.remove('active');
+            this.isOpen = false;
+            document.body.style.overflow = '';
+        }
+    }
+
+    updateCartDisplay() {
+        const cartItems = document.getElementById('cart-items');
+        const cartTotal = document.getElementById('cart-total');
         
-        // Add animation to the updated item
-        const cartItem = document.querySelector(`[data-index="${index}"]`);
-        if (cartItem) {
-            cartItem.style.transform = 'scale(1.05)';
+        if (!cartItems) return;
+
+        if (this.items.length === 0) {
+            cartItems.innerHTML = `
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                    <h3>Your cart is empty</h3>
+                    <p>Add some products to get started</p>
+                    <button class="continue-shopping-btn" onclick="cartManager.closeCart()">
+                        Continue Shopping
+                    </button>
+                </div>
+            `;
+            this.total = 0;
+        } else {
+            cartItems.innerHTML = this.items.map(item => this.createCartItemHTML(item)).join('');
+            this.calculateTotal();
+            this.attachCartItemListeners();
+        }
+
+        if (cartTotal) {
+            cartTotal.textContent = this.total.toFixed(2);
+        }
+    }
+
+    createCartItemHTML(item) {
+        return `
+            <div class="cart-item" data-item-id="${item.id}">
+                <img src="${item.image}" alt="${item.title}" class="cart-item-image">
+                <div class="cart-item-info">
+                    <div class="cart-item-title">${item.title}</div>
+                    <div class="cart-item-variant">
+                        ${item.color !== 'Default' ? `Color: ${item.color}` : ''}
+                        ${item.size !== 'One Size' ? ` • Size: ${item.size}` : ''}
+                    </div>
+                    <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                    <div class="cart-item-controls">
+                        <button class="quantity-btn decrease" onclick="cartManager.updateQuantity('${item.id}', ${item.quantity - 1})">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <span class="quantity-display">${item.quantity}</span>
+                        <button class="quantity-btn increase" onclick="cartManager.updateQuantity('${item.id}', ${item.quantity + 1})">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button class="remove-item-btn" onclick="cartManager.removeItem('${item.id}')" title="Remove item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3,6 5,6 21,6"></polyline>
+                        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }
+
+    attachCartItemListeners() {
+        // Add hover effects and animations
+        document.querySelectorAll('.cart-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.transform = 'translateX(5px)';
+            });
+            
+            item.addEventListener('mouseleave', () => {
+                item.style.transform = '';
+            });
+        });
+
+        // Add quantity button animations
+        document.querySelectorAll('.quantity-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                btn.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    btn.style.transform = '';
+                }, 150);
+            });
+        });
+    }
+
+    calculateTotal() {
+        this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        this.itemCount = this.items.reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    updateCartCount() {
+        this.calculateTotal();
+        const cartCount = document.getElementById('cart-count');
+        if (cartCount) {
+            cartCount.textContent = this.itemCount;
+            cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
+            
+            // Add bounce animation
+            if (this.itemCount > 0) {
+                cartCount.style.animation = 'bounce 0.5s ease';
+                setTimeout(() => {
+                    cartCount.style.animation = '';
+                }, 500);
+            }
+        }
+    }
+
+    showCartAnimation() {
+        const cartToggle = document.getElementById('cart-toggle');
+        if (cartToggle) {
+            cartToggle.style.animation = 'cartPulse 0.6s ease';
             setTimeout(() => {
-                cartItem.style.transform = 'scale(1)';
-            }, 200);
+                cartToggle.style.animation = '';
+            }, 600);
         }
     }
-    
-    function removeFromCart(index) {
-        const cart = getCart();
-        const removedItem = cart[index];
-        
-        cart.splice(index, 1);
-        saveCart(cart);
-        updateCartDisplay();
-        updateCartCount();
-        
-        showNotification(`${removedItem.name} removed from cart`);
-        
-        // Add removal animation
-        const cartItem = document.querySelector(`[data-index="${index}"]`);
-        if (cartItem) {
-            cartItem.style.animation = 'slideOut 0.3s ease forwards';
+
+    showRemoveAnimation() {
+        // Add a subtle shake animation to indicate removal
+        const cartSidebar = document.getElementById('cart-sidebar');
+        if (cartSidebar) {
+            cartSidebar.style.animation = 'shake 0.3s ease';
+            setTimeout(() => {
+                cartSidebar.style.animation = '';
+            }, 300);
         }
     }
-    
-    function initiateCheckout() {
-        const cart = getCart();
-        const total = cart.reduce((sum, item) => {
-            return sum + (parseFloat(item.price.replace('$', '')) * item.quantity);
-        }, 0);
-        
-        // Create checkout interface
-        const checkoutModal = createCheckoutModal(cart, total);
-        document.body.appendChild(checkoutModal);
-        
-        // Close cart modal
-        closeCart();
-        
-        // Show checkout modal
-        setTimeout(() => {
-            checkoutModal.style.opacity = '1';
-            checkoutModal.querySelector('.checkout-content').style.transform = 'scale(1)';
-        }, 10);
+
+    proceedToCheckout() {
+        if (this.items.length === 0) {
+            this.showNotification('Your cart is empty!', 'error');
+            return;
+        }
+
+        // Show loading state
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            const originalText = checkoutBtn.textContent;
+            checkoutBtn.textContent = 'Processing...';
+            checkoutBtn.disabled = true;
+
+            // Simulate checkout process
+            setTimeout(() => {
+                this.initiateShopifyCheckout();
+                checkoutBtn.textContent = originalText;
+                checkoutBtn.disabled = false;
+            }, 1000);
+        }
     }
-    
-    function createCheckoutModal(cart, total) {
+
+    initiateShopifyCheckout() {
+        // Create Shopify checkout URL with cart items
+        const checkoutData = {
+            items: this.items.map(item => ({
+                variant_id: this.getShopifyVariantId(item),
+                quantity: item.quantity
+            }))
+        };
+
+        // For now, show a modal with checkout options
+        this.showCheckoutModal();
+    }
+
+    showCheckoutModal() {
         const modal = document.createElement('div');
         modal.className = 'checkout-modal';
         modal.innerHTML = `
-            <div class="checkout-content">
-                <div class="checkout-header">
-                    <h2 class="glitch-text" data-text="CHECKOUT">CHECKOUT</h2>
-                    <button class="checkout-close">×</button>
+            <div class="checkout-modal-overlay"></div>
+            <div class="checkout-modal-content">
+                <div class="checkout-modal-header">
+                    <h3>Checkout Options</h3>
+                    <button class="checkout-modal-close">×</button>
                 </div>
-                <div class="checkout-body">
-                    <div class="terminal-interface">
-                        <div class="terminal-header">
-                            <span class="terminal-title">BOBBY_PAYMENT_SYSTEM_v2.1</span>
+                <div class="checkout-modal-body">
+                    <div class="checkout-summary">
+                        <h4>Order Summary</h4>
+                        <div class="checkout-items">
+                            ${this.items.map(item => `
+                                <div class="checkout-item">
+                                    <span>${item.title} (${item.quantity}x)</span>
+                                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                                </div>
+                            `).join('')}
                         </div>
-                        <div class="terminal-content">
-                            <div class="order-summary">
-                                <p class="terminal-line">> ORDER_SUMMARY:</p>
-                                ${cart.map(item => `
-                                    <p class="terminal-line">   ${item.name} (${item.size}) x${item.quantity} - $${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</p>
-                                `).join('')}
-                                <p class="terminal-line">   ────────────────────────</p>
-                                <p class="terminal-line">   TOTAL: $${total.toFixed(2)}</p>
-                                <p class="terminal-line">> PROCESSING_PAYMENT...</p>
-                            </div>
-                            <div class="payment-form">
-                                <div class="form-group">
-                                    <label class="terminal-label">> ENTER_EMAIL:</label>
-                                    <input type="email" class="terminal-input" placeholder="user@cybernet.com" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="terminal-label">> CARD_NUMBER:</label>
-                                    <input type="text" class="terminal-input" placeholder="**** **** **** ****" maxlength="19" required>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label class="terminal-label">> EXP_DATE:</label>
-                                        <input type="text" class="terminal-input" placeholder="MM/YY" maxlength="5" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="terminal-label">> CVV:</label>
-                                        <input type="text" class="terminal-input" placeholder="***" maxlength="3" required>
-                                    </div>
-                                </div>
-                                <button class="process-payment-btn glitch-btn" data-text="PROCESS_PAYMENT">
-                                    PROCESS_PAYMENT
-                                </button>
-                            </div>
+                        <div class="checkout-total">
+                            <strong>Total: $${this.total.toFixed(2)}</strong>
                         </div>
+                    </div>
+                    <div class="checkout-options">
+                        <button class="checkout-option-btn shopify-checkout">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.8 2.2c-.5-.1-1.1-.1-1.7-.1-3.4 0-5.8 1.6-5.8 4.3 0 1.9 1.4 3.2 3.7 3.2 2.1 0 3.8-1.6 3.8-3.7 0-.8-.2-1.4-.5-1.9l1.5-1.8zm-3.3 6.3c-1.4 0-2.4-.9-2.4-2.2 0-1.6 1.2-2.8 2.9-2.8.4 0 .8.1 1.1.2-.2.4-.3.9-.3 1.4 0 1.8 1.1 3.4 2.7 3.4h.1c-.4 1.4-1.7 2.4-3.3 2.4-.8 0-1.5-.3-2.1-.8l1.3-1.6z"/>
+                            </svg>
+                            Checkout with Shopify
+                        </button>
+                        <button class="checkout-option-btn paypal-checkout">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 2.79A.859.859 0 0 1 5.79 2h8.263c.734 0 1.434.155 2.029.428 1.295.595 2.047 1.587 2.047 2.934 0 .653-.086 1.24-.28 1.793-.485 1.372-1.483 2.309-2.91 2.659-.243.06-.499.103-.777.127.734.24 1.299.679 1.621 1.269.347.634.422 1.418.422 2.263 0 .87-.1 1.714-.3 2.448-.48 1.759-1.375 2.86-2.596 3.186-.394.105-.84.157-1.32.157H9.402l-.706 3.273z"/>
+                            </svg>
+                            PayPal Express
+                        </button>
+                        <button class="checkout-option-btn apple-pay-checkout">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                            </svg>
+                            Apple Pay
+                        </button>
                     </div>
                 </div>
             </div>
         `;
-        
-        // Add event listeners
-        const closeBtn = modal.querySelector('.checkout-close');
-        const processBtn = modal.querySelector('.process-payment-btn');
-        const cardInput = modal.querySelector('input[placeholder="**** **** **** ****"]');
-        const expInput = modal.querySelector('input[placeholder="MM/YY"]');
-        
-        closeBtn.addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-        
-        // Format card number input
-        cardInput.addEventListener('input', function() {
-            let value = this.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-            this.value = formattedValue;
-        });
-        
-        // Format expiry date input
-        expInput.addEventListener('input', function() {
-            let value = this.value.replace(/\D/g, '');
-            if (value.length >= 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2, 4);
-            }
-            this.value = value;
-        });
-        
-        processBtn.addEventListener('click', function() {
-            processPayment(modal, cart, total);
-        });
-        
-        return modal;
+
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+
+        // Setup modal events
+        const closeModal = () => {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        };
+
+        modal.querySelector('.checkout-modal-close').onclick = closeModal;
+        modal.querySelector('.checkout-modal-overlay').onclick = closeModal;
+
+        // Setup checkout options
+        modal.querySelector('.shopify-checkout').onclick = () => {
+            this.showNotification('Redirecting to Shopify checkout...', 'info');
+            closeModal();
+            // Implement actual Shopify checkout redirect
+        };
+
+        modal.querySelector('.paypal-checkout').onclick = () => {
+            this.showNotification('Redirecting to PayPal...', 'info');
+            closeModal();
+            // Implement PayPal checkout
+        };
+
+        modal.querySelector('.apple-pay-checkout').onclick = () => {
+            this.showNotification('Initiating Apple Pay...', 'info');
+            closeModal();
+            // Implement Apple Pay
+        };
     }
-    
-    function processPayment(modal, cart, total) {
-        const processBtn = modal.querySelector('.process-payment-btn');
-        const terminalContent = modal.querySelector('.terminal-content');
-        
-        // Validate form
-        const inputs = modal.querySelectorAll('.terminal-input');
-        let isValid = true;
-        
-        inputs.forEach(input => {
-            if (!input.value.trim()) {
-                isValid = false;
-                input.style.borderColor = 'var(--accent-yellow)';
-                input.style.boxShadow = '0 0 10px var(--glow-yellow)';
-            } else {
-                input.style.borderColor = 'var(--border-color)';
-                input.style.boxShadow = 'none';
-            }
-        });
-        
-        if (!isValid) {
-            showNotification('Please fill in all fields');
-            return;
-        }
-        
-        // Start payment processing animation
-        processBtn.textContent = 'PROCESSING...';
-        processBtn.disabled = true;
-        
-        // Simulate payment processing
-        const processingSteps = [
-            'VALIDATING_CARD...',
-            'CONNECTING_TO_BANK...',
-            'AUTHORIZING_PAYMENT...',
-            'PROCESSING_TRANSACTION...',
-            'PAYMENT_SUCCESSFUL!'
-        ];
-        
-        let stepIndex = 0;
-        const processingInterval = setInterval(() => {
-            if (stepIndex < processingSteps.length) {
-                const stepElement = document.createElement('p');
-                stepElement.className = 'terminal-line processing-step';
-                stepElement.textContent = `> ${processingSteps[stepIndex]}`;
-                terminalContent.appendChild(stepElement);
-                
-                // Scroll to bottom
-                terminalContent.scrollTop = terminalContent.scrollHeight;
-                
-                stepIndex++;
-            } else {
-                clearInterval(processingInterval);
-                completePayment(modal, cart, total);
-            }
-        }, 800);
+
+    getShopifyVariantId(item) {
+        // This would map to actual Shopify variant IDs
+        // For now, return a placeholder
+        return `${item.productId}-${item.color}-${item.size}`.replace(/\s+/g, '-').toLowerCase();
     }
-    
-    function completePayment(modal, cart, total) {
-        // Clear cart
-        localStorage.removeItem('bobbyCart');
-        updateCartCount();
-        
-        // Show success message
-        const terminalContent = modal.querySelector('.terminal-content');
-        const successMessage = document.createElement('div');
-        successMessage.className = 'success-message';
-        successMessage.innerHTML = `
-            <p class="terminal-line success">✓ PAYMENT_COMPLETED</p>
-            <p class="terminal-line">ORDER_ID: #BOBBY${Date.now()}</p>
-            <p class="terminal-line">TOTAL_CHARGED: $${total.toFixed(2)}</p>
-            <p class="terminal-line">SHIPPING_TO: CYBERNET_ADDRESS</p>
-            <p class="terminal-line">> THANK_YOU_FOR_YOUR_ORDER!</p>
-        `;
-        
-        terminalContent.appendChild(successMessage);
-        terminalContent.scrollTop = terminalContent.scrollHeight;
-        
-        
-        // Auto close after 3 seconds
-        setTimeout(() => {
-            document.body.removeChild(modal);
-            showNotification('Order placed successfully! Check your email for confirmation.');
-        }, 3000);
-    }
-    
-    function getCart() {
-        return JSON.parse(localStorage.getItem('bobbyCart')) || [];
-    }
-    
-    function saveCart(cart) {
-        localStorage.setItem('bobbyCart', JSON.stringify(cart));
-    }
-    
-    function updateCartCount() {
-        const cart = getCart();
-        const cartCount = document.querySelector('.cart-count');
-        
-        if (cartCount) {
-            cartCount.textContent = cart.length;
+
+    saveCartToStorage() {
+        try {
+            localStorage.setItem('bobby-streetwear-cart', JSON.stringify(this.items));
+        } catch (error) {
+            console.error('Error saving cart to storage:', error);
         }
     }
-    
-    // Sound functions removed for better user experience
-    
-    function showNotification(message) {
-        const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-text">${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    document.body.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
+
+    loadCartFromStorage() {
+        try {
+            const savedCart = localStorage.getItem('bobby-streetwear-cart');
+            if (savedCart) {
+                this.items = JSON.parse(savedCart);
+            }
+        } catch (error) {
+            console.error('Error loading cart from storage:', error);
+            this.items = [];
+        }
+    }
+
+    trackAddToCart(product, variant) {
+        // Analytics tracking
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'add_to_cart', {
+                currency: 'USD',
+                value: variant.price,
+                items: [{
+                    item_id: product.id,
+                    item_name: product.title,
+                    category: product.category,
+                    quantity: 1,
+                    price: variant.price
+                }]
+            });
+        }
+
+        // Facebook Pixel tracking
+        if (typeof fbq !== 'undefined') {
+            fbq('track', 'AddToCart', {
+                content_ids: [product.id],
+                content_type: 'product',
+                value: variant.price,
+                currency: 'USD'
+            });
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Use the same notification system as products.js
+        if (window.productManager && window.productManager.showNotification) {
+            window.productManager.showNotification(message, type);
+        } else {
+            // Fallback notification
+            alert(message);
+        }
+    }
+
+    // Public API methods
+    getCartData() {
+        return {
+            items: this.items,
+            total: this.total,
+            itemCount: this.itemCount
+        };
+    }
+
+    getCartSummary() {
+        return {
+            subtotal: this.total,
+            tax: this.total * 0.08, // 8% tax rate
+            shipping: this.total > 50 ? 0 : 9.99, // Free shipping over $50
+            total: this.total + (this.total * 0.08) + (this.total > 50 ? 0 : 9.99)
+        };
     }
 }
 
-// Add CSS for cart and checkout interfaces
+// Initialize cart manager
+document.addEventListener('DOMContentLoaded', () => {
+    window.cartManager = new CartManager();
+});
+
+// Add cart-specific styles
 const cartStyles = `
-    .cart-item {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 1rem;
-        align-items: center;
-        padding: 1rem;
-        border-bottom: 1px solid var(--border-color);
-        transition: all 0.3s ease;
-    }
-    
-    .cart-item:hover {
-        background: rgba(139, 92, 246, 0.05);
-    }
-    
-    .item-info h4 {
-        color: var(--text-primary);
-        margin-bottom: 0.25rem;
-        font-size: 1rem;
-    }
-    
-    .item-details {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-    
-    .item-controls {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: var(--secondary-bg);
-        border-radius: 4px;
-        padding: 0.25rem;
-    }
-    
-    .qty-btn {
-        background: transparent;
-        border: 1px solid var(--accent-purple);
-        color: var(--text-primary);
-        width: 24px;
-        height: 24px;
-        border-radius: 2px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-    
-    .qty-btn:hover {
-        background: var(--accent-purple);
-        box-shadow: 0 0 10px var(--glow-purple);
-    }
-    
-    .quantity {
-        color: var(--text-primary);
-        font-weight: 600;
-        min-width: 20px;
+    .empty-cart {
         text-align: center;
+        padding: 3rem 1rem;
+        color: rgba(255, 255, 255, 0.7);
     }
-    
-    .remove-item {
-        background: transparent;
-        border: 1px solid var(--accent-yellow);
-        color: var(--accent-yellow);
-        width: 24px;
-        height: 24px;
-        border-radius: 2px;
+
+    .empty-cart-icon {
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-cart h3 {
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+
+    .continue-shopping-btn {
+        background: linear-gradient(45deg, #a855f7, #3b82f6);
+        border: none;
+        color: #ffffff;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        margin-top: 1rem;
         transition: all 0.3s ease;
     }
-    
-    .remove-item:hover {
-        background: var(--accent-yellow);
-        color: var(--primary-bg);
-        box-shadow: 0 0 10px var(--glow-yellow);
+
+    .continue-shopping-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4);
     }
-    
-    .item-total {
-        color: var(--accent-yellow);
-        font-weight: 600;
-        font-size: 1.1rem;
+
+    .cart-item-variant {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-bottom: 0.25rem;
     }
-    
+
     .checkout-modal {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.95);
         z-index: 10000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         opacity: 0;
-        transition: opacity 0.3s ease;
+        visibility: hidden;
+        transition: all 0.3s ease;
     }
-    
-    .checkout-content {
-        background: var(--primary-bg);
-        border: 2px solid var(--accent-purple);
-        border-radius: 8px;
-        max-width: 600px;
-        width: 90%;
+
+    .checkout-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .checkout-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+    }
+
+    .checkout-modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(26, 26, 46, 0.95);
+        border-radius: 20px;
+        max-width: 500px;
+        width: 90vw;
         max-height: 80vh;
         overflow-y: auto;
-        transform: scale(0.8);
-        transition: transform 0.3s ease;
-        box-shadow: 0 0 30px var(--glow-purple);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        backdrop-filter: blur(20px);
     }
-    
-    .checkout-header {
+
+    .checkout-modal-header {
+        padding: 2rem 2rem 1rem;
+        border-bottom: 1px solid rgba(168, 85, 247, 0.2);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
     }
-    
-    .checkout-close {
+
+    .checkout-modal-header h3 {
+        color: #ffffff;
+        margin: 0;
+    }
+
+    .checkout-modal-close {
         background: none;
         border: none;
-        color: var(--text-primary);
+        color: rgba(255, 255, 255, 0.7);
         font-size: 2rem;
         cursor: pointer;
-        transition: color 0.3s ease;
+        padding: 0;
+        line-height: 1;
     }
-    
-    .checkout-close:hover {
-        color: var(--accent-yellow);
+
+    .checkout-modal-close:hover {
+        color: #ffffff;
     }
-    
-    .terminal-interface {
-        background: var(--secondary-bg);
-        border-radius: 4px;
-        margin: 1.5rem;
-        overflow: hidden;
+
+    .checkout-modal-body {
+        padding: 2rem;
     }
-    
-    .terminal-header {
-        background: var(--primary-bg);
-        padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--border-color);
+
+    .checkout-summary {
+        margin-bottom: 2rem;
     }
-    
-    .terminal-title {
-        color: var(--accent-purple);
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-    }
-    
-    .terminal-content {
-        padding: 1rem;
-        max-height: 400px;
-        overflow-y: auto;
-        font-family: 'Courier New', monospace;
-    }
-    
-    .terminal-line {
-        color: var(--text-primary);
-        margin: 0.25rem 0;
-        font-size: 0.9rem;
-    }
-    
-    .terminal-line.success {
-        color: var(--accent-yellow);
-        text-shadow: 0 0 5px var(--glow-yellow);
-    }
-    
-    .processing-step {
-        animation: fadeInUp 0.3s ease;
-    }
-    
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .payment-form {
-        margin-top: 1rem;
-    }
-    
-    .form-group {
+
+    .checkout-summary h4 {
+        color: #ffffff;
         margin-bottom: 1rem;
     }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+
+    .checkout-items {
+        margin-bottom: 1rem;
+    }
+
+    .checkout-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.8);
+        border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+    }
+
+    .checkout-total {
+        padding: 1rem 0;
+        border-top: 2px solid rgba(168, 85, 247, 0.3);
+        color: #ffffff;
+        font-size: 1.2rem;
+    }
+
+    .checkout-options {
+        display: flex;
+        flex-direction: column;
         gap: 1rem;
     }
-    
-    .terminal-label {
-        display: block;
-        color: var(--accent-purple);
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-    
-    .terminal-input {
-        width: 100%;
-        background: var(--primary-bg);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        padding: 0.75rem;
-        border-radius: 4px;
-        font-family: 'Courier New', monospace;
+
+    .checkout-option-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: rgba(168, 85, 247, 0.1);
+        border: 2px solid rgba(168, 85, 247, 0.3);
+        color: #ffffff;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
         transition: all 0.3s ease;
     }
-    
-    .terminal-input:focus {
-        outline: none;
-        border-color: var(--accent-purple);
-        box-shadow: 0 0 10px var(--glow-purple);
+
+    .checkout-option-btn:hover {
+        background: rgba(168, 85, 247, 0.2);
+        border-color: #a855f7;
+        transform: translateY(-2px);
     }
-    
-    .process-payment-btn {
-        width: 100%;
-        margin-top: 1rem;
-        padding: 1rem;
-        font-size: 1rem;
+
+    @keyframes bounce {
+        0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+        40%, 43% { transform: translate3d(0,-8px,0); }
+        70% { transform: translate3d(0,-4px,0); }
+        90% { transform: translate3d(0,-2px,0); }
     }
-    
-    .success-message {
-        background: rgba(139, 92, 246, 0.1);
-        border: 1px solid var(--accent-purple);
-        border-radius: 4px;
-        padding: 1rem;
-        margin-top: 1rem;
+
+    @keyframes cartPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
     }
-    
-    @keyframes slideOut {
-        to {
-            transform: translateX(-100%);
-            opacity: 0;
-        }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-2px); }
+        75% { transform: translateX(2px); }
     }
-    
+
     @media (max-width: 768px) {
-        .cart-item {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
+        .checkout-modal-content {
+            width: 95vw;
+            max-height: 90vh;
         }
-        
-        .item-controls {
-            justify-content: space-between;
-        }
-        
-        .form-row {
-            grid-template-columns: 1fr;
+
+        .checkout-modal-header,
+        .checkout-modal-body {
+            padding: 1.5rem;
         }
     }
 `;

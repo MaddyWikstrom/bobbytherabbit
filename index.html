@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/loading.css">
     <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/homepage-products.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -251,6 +252,7 @@
                 </div>
                 <ul class="nav-menu">
                     <li class="nav-item"><a href="#home" class="nav-link glitch-hover" data-text="HOME">HOME</a></li>
+                    <li class="nav-item"><a href="products.html" class="nav-link glitch-hover" data-text="SHOP">SHOP</a></li>
                     <li class="nav-item"><a href="#collection" class="nav-link glitch-hover" data-text="COLLECTION">COLLECTION</a></li>
                     <li class="nav-item"><a href="#about" class="nav-link glitch-hover" data-text="ABOUT">ABOUT</a></li>
                     <li class="nav-item"><a href="#contact" class="nav-link glitch-hover" data-text="CONTACT">CONTACT</a></li>
@@ -291,7 +293,7 @@
                     <p class="hero-description">
                         Tech animal of the elite GooberMcGeet club
                     </p>
-                    <button class="cta-btn">
+                    <button class="cta-btn" onclick="window.location.href='products.html'">
                         <span>EXPLORE COLLECTION</span>
                         <div class="btn-glow"></div>
                     </button>
@@ -315,50 +317,23 @@
             <div class="container">
                 <!-- Arrow Buttons -->
                 <div class="arrow-container">
-                    <button class="arrow left-arrow">&#9664;</button>
-                    <button class="arrow right-arrow">&#9654;</button>
+                    <button class="arrow left-arrow" id="scroll-left">&#9664;</button>
+                    <button class="arrow right-arrow" id="scroll-right">&#9654;</button>
                 </div>
-                <div class="product-grid">
-                    <div class="product-card" data-product="bungi-x-bobby-rabbit-hardware-unisex-hoodie">
-                        <a href="product.html?handle=bungi-x-bobby-rabbit-hardware-unisex-hoodie" target="_blank">
-                            <div class="product-image">
-                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462"
-                                    alt="BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie">
-                            </div>
-                            <div class="product-info">
-                                <h3 class="product-name">BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie</h3>
-                                <p class="product-price">$50.00</p>
-                                <p class="product-description">A stylish unisex hoodie featuring the Bungi x Bobby design.</p>
-                                <p class="product-description">This hoodie is designed for comfort and style.</p>
-                            </div>
-                        </a>
+                <div class="product-scroll-container">
+                    <div class="product-grid-scroll" id="homepage-products">
+                        <!-- Products will be dynamically loaded here -->
+                        <div class="loading-products">
+                            <div class="loading-spinner"></div>
+                            <p>Loading products...</p>
+                        </div>
                     </div>
-
-                    <div class="product-card" data-product="bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie">
-                        <a href="product.html?handle=bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie" target="_blank">
-                            <div class="product-image">
-                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411"
-                                    alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie">
-                            </div>
-                            <div class="product-info">
-                                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie</h3>
-                                <p class="product-price">50.50</p>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="product-card" data-product="bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt">
-                        <a href="product.html?handle=bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt" target="_blank">
-                            <div class="product-image">
-                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335"
-                                    alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt">
-                            </div>
-                            <div class="product-info">
-                                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt</h3>
-                                <p class="product-price">27.50</p>
-                            </div>
-                        </a>
-                    </div>
+                </div>
+                <div class="view-all-container">
+                    <button class="view-all-btn" onclick="window.location.href='products.html'">
+                        <span>VIEW ALL PRODUCTS</span>
+                        <div class="btn-glow"></div>
+                    </button>
                 </div>
             </div>
         </section>
@@ -521,6 +496,7 @@
     <script src="scripts/loading.js"></script>
     <script src="scripts/cart.js"></script>
     <script src="scripts/animations.js"></script>
+    <script src="scripts/homepage-products.js"></script>
     
     <!-- Shopify Integration - Option B -->
     <script src="scripts/shopify-integration.js"></script>
