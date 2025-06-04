@@ -640,6 +640,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 9rem 0 5rem 0; /* Reduced padding */
     background: var(--secondary-bg);
     position: relative;
+    overflow-x: auto; /* Enable horizontal scrolling */
 }
 
 .collection .container {
@@ -663,7 +664,7 @@ h1, h2, h3, h4, h5, h6 {
     width: auto;
     gap: 2rem;
     margin-top: 3rem;
-    justify-content: center;
+    justify-content: flex-start; /* Align items to the start */
     padding: 0 2rem;
 }
 
@@ -674,6 +675,8 @@ h1, h2, h3, h4, h5, h6 {
     overflow: hidden;
     transition: all 0.3s ease;
     position: relative;
+    width: 100%; /* Set to full width */
+    height: 100%; /* Set to full height */
 }
 
 .product-card:hover {
@@ -1142,3 +1145,26 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Scan Lines Effect - Removed for cleaner look */
+/* Arrow Styles */
+.arrow-container {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 1rem; /* Adjust as needed */
+}
+
+.arrow {
+    background: var(--accent-purple);
+    color: var(--primary-bg);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.arrow:hover {
+    background: var(--accent-yellow);
+}

@@ -1,8 +1,6 @@
 // Loading Screen JavaScript for Bobby Streetwear
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeLoadingScreen();
-});
+// Remove auto-initialization - will be called manually after password entry
 
 function initializeLoadingScreen() {
     const loadingScreen = document.getElementById('loading-screen');

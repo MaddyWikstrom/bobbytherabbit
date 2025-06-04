@@ -22,9 +22,8 @@ console.log('3. Copy the variant IDs for each size\n');
 console.log('📋 STEP 3: Use This Template\n');
 console.log('Copy this template and fill in your actual IDs:\n');
 
-const template = `const PRODUCT_MAPPING = {
-    'hoodie-1': {
-        name: 'NEON GLITCH HOODIE',
+const PRODUCT_MAPPING = {
+    'bungi-x-bobby-rabbit-hardware-unisex-hoodie': {
         shopifyProductId: 'gid://shopify/Product/YOUR_HOODIE_ID',
         shopifyVariants: {
             'S': 'gid://shopify/ProductVariant/YOUR_S_VARIANT_ID',
@@ -32,42 +31,59 @@ const template = `const PRODUCT_MAPPING = {
             'L': 'gid://shopify/ProductVariant/YOUR_L_VARIANT_ID',
             'XL': 'gid://shopify/ProductVariant/YOUR_XL_VARIANT_ID'
         },
-        price: '$89.99'
+        price: '$50.00'
     },
-    'tee-1': {
-        name: 'CYBER RABBIT TEE',
-        shopifyProductId: 'gid://shopify/Product/YOUR_TEE_ID',
+    'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': {
+        shopifyProductId: 'gid://shopify/Product/YOUR_LIGHTMODE_HOODIE_ID',
         shopifyVariants: {
-            'S': 'gid://shopify/ProductVariant/YOUR_S_VARIANT_ID',
-            'M': 'gid://shopify/ProductVariant/YOUR_M_VARIANT_ID',
-            'L': 'gid://shopify/ProductVariant/YOUR_L_VARIANT_ID',
-            'XL': 'gid://shopify/ProductVariant/YOUR_XL_VARIANT_ID'
+            'S': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_S_VARIANT_ID',
+            'M': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_M_VARIANT_ID',
+            'L': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_L_VARIANT_ID',
+            'XL': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_XL_VARIANT_ID'
         },
-        price: '$49.99'
+        price: '$50.50'
     },
-    'jacket-1': {
-        name: 'TECH ELITE JACKET',
-        shopifyProductId: 'gid://shopify/Product/YOUR_JACKET_ID',
+    'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': {
+        shopifyProductId: 'gid://shopify/Product/YOUR_LIGHTMODE_TEE_ID',
         shopifyVariants: {
-            'S': 'gid://shopify/ProductVariant/YOUR_S_VARIANT_ID',
-            'M': 'gid://shopify/ProductVariant/YOUR_M_VARIANT_ID',
-            'L': 'gid://shopify/ProductVariant/YOUR_L_VARIANT_ID',
-            'XL': 'gid://shopify/ProductVariant/YOUR_XL_VARIANT_ID'
+            'XS': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_XS_VARIANT_ID',
+            'S': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_S_VARIANT_ID',
+            'M': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_M_VARIANT_ID',
+            'L': 'gid://shopify/ProductVariant/YOUR_LIGHTMODE_L_VARIANT_ID'
         },
-        price: '$149.99'
+        price: '$27.50'
     },
-    'pants-1': {
-        name: 'DIGITAL CARGO PANTS',
-        shopifyProductId: 'gid://shopify/Product/YOUR_PANTS_ID',
+    'bungi-x-bobby-darkmode-embroidered-unisex-organic-oversized-sweatshirt': {
+        shopifyProductId: 'gid://shopify/Product/YOUR_DARKMODE_SWEATSHIRT_ID',
         shopifyVariants: {
-            'S': 'gid://shopify/ProductVariant/YOUR_S_VARIANT_ID',
-            'M': 'gid://shopify/ProductVariant/YOUR_M_VARIANT_ID',
-            'L': 'gid://shopify/ProductVariant/YOUR_L_VARIANT_ID',
-            'XL': 'gid://shopify/ProductVariant/YOUR_XL_VARIANT_ID'
+            'S': 'gid://shopify/ProductVariant/YOUR_DARKMODE_S_VARIANT_ID',
+            'M': 'gid://shopify/ProductVariant/YOUR_DARKMODE_M_VARIANT_ID',
+            'L': 'gid://shopify/ProductVariant/YOUR_DARKMODE_L_VARIANT_ID',
+            'XL': 'gid://shopify/ProductVariant/YOUR_DARKMODE_XL_VARIANT_ID'
         },
-        price: '$79.99'
+        price: '$50.00'
+    },
+    'bungi-x-bobby-cowboy-unisex-windbreaker': {
+        shopifyProductId: 'gid://shopify/Product/YOUR_COWBOY_WIND_BREAKER_ID',
+        shopifyVariants: {
+            'S': 'gid://shopify/ProductVariant/YOUR_COWBOY_S_VARIANT_ID',
+            'M': 'gid://shopify/ProductVariant/YOUR_COWBOY_M_VARIANT_ID',
+            'L': 'gid://shopify/ProductVariant/YOUR_COWBOY_L_VARIANT_ID',
+            'XL': 'gid://shopify/ProductVariant/YOUR_COWBOY_XL_VARIANT_ID'
+        },
+        price: '$41.00'
+    },
+    'bungi-x-bobby-dark-mode-wide-leg-joggers': {
+        shopifyProductId: 'gid://shopify/Product/YOUR_WIDE_LEG_JOGGERS_ID',
+        shopifyVariants: {
+            'S': 'gid://shopify/ProductVariant/YOUR_WIDE_LEG_S_VARIANT_ID',
+            'M': 'gid://shopify/ProductVariant/YOUR_WIDE_LEG_M_VARIANT_ID',
+            'L': 'gid://shopify/ProductVariant/YOUR_WIDE_LEG_L_VARIANT_ID',
+            'XL': 'gid://shopify/ProductVariant/YOUR_WIDE_LEG_XL_VARIANT_ID'
+        },
+        price: '$44.00'
     }
-};`;
+};
 
 console.log(template);
 

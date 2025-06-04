@@ -10,10 +10,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .password-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0; /* Adjust as per your theme */
+            font-family: Arial, sans-serif;
+        }
+    </style>
 </head>
 <body>
+    <!-- Password Entry Screen -->
+    <div id="password-screen" class="password-screen" style="display: flex;">
+        <h2>Enter Password</h2>
+        <input type="password" id="password-input" placeholder="Password" />
+        <button id="submit-password">Submit</button>
+        <div id="error-message" style="color: red; display: none;">Incorrect password. Please try again.</div>
+    </div>
+    
     <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
+    <div id="loading-screen" class="loading-screen" style="display: none;">
         <div class="loading-container">
             <div class="loading-logo-container">
                 <div class="cookie-wrapper">
@@ -70,7 +89,6 @@
                           <img src="assets/b.png" class="banner-logo b" alt="B logo" />
                         </div>
                       </div>
-                      
                 </div>
                 <ul class="nav-menu">
                     <li class="nav-item"><a href="#home" class="nav-link glitch-hover" data-text="HOME">HOME</a></li>
@@ -136,63 +154,51 @@
                 <span class="glitch-text" data-text="COLLECTION">COLLECTION</span>
             </h2>
             <div class="container">
+                <!-- Arrow Buttons -->
+                <div class="arrow-container">
+                    <button class="arrow left-arrow">&#9664;</button>
+                    <button class="arrow right-arrow">&#9654;</button>
+                </div>
                 <div class="product-grid">
-                    <div class="product-card" data-product="hoodie-1">
-                        <div class="product-image hoodie-flip">
-                            <img src="assets/bungixbobback.png" alt="Neon Glitch Hoodie Back" class="hoodie-back">
-                            <img src="assets/bungixbobfront.png" alt="Neon Glitch Hoodie Front" class="hoodie-front">
-                            <div class="product-overlay">
-                                <button class="quick-view-btn">QUICK VIEW</button>
-                                <button class="add-to-cart-btn">ADD TO CART</button>
+                    <div class="product-card" data-product="bungi-x-bobby-rabbit-hardware-unisex-hoodie">
+                        <a href="product.html?handle=bungi-x-bobby-rabbit-hardware-unisex-hoodie" target="_blank">
+                            <div class="product-image">
+                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462"
+                                    alt="BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie">
                             </div>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">NEON GLITCH HOODIE</h3>
-                            <p class="product-price">$89.99</p>
-                        </div>
+                            <div class="product-info">
+                                <h3 class="product-name">BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie</h3>
+                                <p class="product-price">$50.00</p>
+                                <p class="product-description">A stylish unisex hoodie featuring the Bungi x Bobby design.</p>
+                                <p class="product-description">This hoodie is designed for comfort and style.</p>
+                            </div>
+                        </a>
                     </div>
-                    
-                    <div class="product-card" data-product="tee-1">
-                        <div class="product-image tee-flip">
-                            <img src="assets/tee-1.png" alt="Cyber Rabbit Tee" class="tee-default">
-                            <img src="assets/tee-2.png" alt="Cyber Rabbit Tee Alt" class="tee-hover">
-                            <div class="product-overlay">
-                                <button class="quick-view-btn">QUICK VIEW</button>
-                                <button class="add-to-cart-btn">ADD TO CART</button>
+
+                    <div class="product-card" data-product="bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie">
+                        <a href="product.html?handle=bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie" target="_blank">
+                            <div class="product-image">
+                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411"
+                                    alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie">
                             </div>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">CYBER RABBIT TEE</h3>
-                            <p class="product-price">$49.99</p>
-                        </div>
+                            <div class="product-info">
+                                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie</h3>
+                                <p class="product-price">50.50</p>
+                            </div>
+                        </a>
                     </div>
-                    
-                    <div class="product-card" data-product="jacket-1">
-                        <div class="product-image">
-                            <img src="assets/jacket-1.png" alt="Tech Elite Jacket">
-                            <div class="product-overlay">
-                                <button class="quick-view-btn">QUICK VIEW</button>
-                                <button class="add-to-cart-btn">ADD TO CART</button>
+
+                    <div class="product-card" data-product="bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt">
+                        <a href="product.html?handle=bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt" target="_blank">
+                            <div class="product-image">
+                                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335"
+                                    alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt">
                             </div>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">TECH ELITE JACKET</h3>
-                            <p class="product-price">$149.99</p>
-                        </div>
-                    </div>
-                    
-                    <div class="product-card" data-product="pants-1">
-                        <div class="product-image">
-                            <img src="assets/pants-1.png" alt="Digital Cargo Pants">
-                            <div class="product-overlay">
-                                <button class="quick-view-btn">QUICK VIEW</button>
-                                <button class="add-to-cart-btn">ADD TO CART</button>
+                            <div class="product-info">
+                                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt</h3>
+                                <p class="product-price">27.50</p>
                             </div>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">DIGITAL CARGO PANTS</h3>
-                            <p class="product-price">$79.99</p>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -211,14 +217,14 @@
                         </p>
                         <div class="ascii-art">
                             <pre class="ascii-bobby">
-    ╔═════════════════════════════════╗
-    ║         BUNGI X BOBBY           ║
-    ║   THE TECH ANIMAL COLLECTION    ║
-    ║                                 ║
-    ║   > PREMIUM QUALITY             ║
-    ║   > DYSTOPIAN DESIGN            ║
-    ║   > TECH ELITE STATUS           ║
-    ╚═════════════════════════════════╝
+     ╔═════════════════════════════════╗
+     ║         BUNGI X BOBBY           ║
+     ║   THE TECH ANIMAL COLLECTION    ║
+     ║                                 ║
+     ║   > PREMIUM QUALITY             ║
+     ║   > DYSTOPIAN DESIGN            ║
+     ║   > TECH ELITE STATUS           ║
+     ╚═════════════════════════════════╝
                             </pre>
                         </div>
                     </div>
@@ -276,16 +282,12 @@
                 <div class="footer-bottom">
                     <div class="ascii-footer">
                         <pre>
-
-    _______  ________   _______   _______   ________      ________       _______  _______    _______   _______  ________ 
-    //      / /    /   \//   /   \//       \ /        \    /    /   \    //      / /       \\//      / //      / /    /   \
-   //       \/         //        //      __/_/       /    /_       _/   //       \/        ///       \//       \/         /
-  /         /        //         /       / //         /   /         /   /         /         /         /         /\__     // 
-  \________/\_______//\__/_____/\________/ \\_______/    \___/___//    \________/\________/\________/\________/   \____//  
-  
-                                                                                                                                                                                    
-                            
-                        </pre>
+     _______  ________   _______   _______   ________      ________       _______  _______    _______   _______  ________ 
+     //      / /    /   \//   /   \//       \ /        \    /    /   \    //      / /       \\//      / //      / /    /   \
+    //       \/         //        //      __/_/       /    /_       _/   //       \/        ///       \//       \/         /
+   /         /        //         /       / //         /   /         /   /         /         /         /         /\__     // 
+   \________/\_______//\__/_____/\________/ \\_______/    \___/___//    \________/\________/\________/\________/   \____//  
+    </pre>
                     </div>
                     <p class="copyright">© 2025 BUNGI X BOBBY. All rights reserved.</p>
                 </div>
@@ -319,6 +321,43 @@
         </div>
     </div>
 
+    <script>
+        // Password validation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const correctPassword = "bajablastrabbit47";
+            const submitButton = document.getElementById("submit-password");
+            const passwordInput = document.getElementById("password-input");
+            const errorMessage = document.getElementById("error-message");
+            const passwordScreen = document.getElementById("password-screen");
+            const loadingScreen = document.getElementById("loading-screen");
+
+            // Add event listener for submit button
+            submitButton.addEventListener("click", function() {
+                const enteredPassword = passwordInput.value;
+                console.log("Password submitted:", enteredPassword);
+                
+                if (enteredPassword === correctPassword) {
+                    console.log("Password correct, proceeding to loading screen");
+                    passwordScreen.style.display = "none";
+                    loadingScreen.style.display = "block";
+                    // Initialize loading screen after password is correct
+                    initializeLoadingScreen();
+                } else {
+                    console.log("Incorrect password");
+                    errorMessage.style.display = "block";
+                    passwordInput.value = ""; // Clear the input
+                }
+            });
+
+            // Allow Enter key to submit password
+            passwordInput.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    submitButton.click();
+                }
+            });
+        });
+    </script>
+    
     <script src="scripts/main.js"></script>
     <script src="scripts/loading.js"></script>
     <script src="scripts/cart.js"></script>

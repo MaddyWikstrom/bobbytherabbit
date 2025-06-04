@@ -1,0 +1,787 @@
+Handle,Title,Body (HTML),Vendor,Product Category,Type,Tags,Published,Option1 Name,Option1 Value,Option1 Linked To,Option2 Name,Option2 Value,Option2 Linked To,Option3 Name,Option3 Value,Option3 Linked To,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Variant Barcode,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Google Shopping / Google Product Category,Google Shopping / Gender,Google Shopping / Age Group,Google Shopping / MPN,Google Shopping / Condition,Google Shopping / Custom Product,Google Shopping / Custom Label 0,Google Shopping / Custom Label 1,Google Shopping / Custom Label 2,Google Shopping / Custom Label 3,Google Shopping / Custom Label 4,Variant Image,Variant Weight Unit,Variant Tax Code,Cost per item,Status
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie,"<p>Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.<br><br>• 100% cotton face<br>• 65% ring-spun cotton, 35% polyester<br>• Front pouch pocket<br>• Self-fabric patch on the back<br>• Matching flat drawstrings<br>• 3-panel hood<br>• Blank product sourced from Pakistan<br><br>Disclaimer: This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size.<br><br>This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!</p>
+<p><strong class=""size-guide-title"">Size guide</strong></p>
+<div data-unit-system=""imperial"" class=""table-responsive dynamic"">
+<table cellpadding=""5"">
+<tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST WIDTH (inches)</strong></td>
+<td><strong>LENGTH (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>20</td>
+<td>27</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>21</td>
+<td>28</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>23</td>
+<td>29</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>25</td>
+<td>30</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>26 ½</td>
+<td>31</td>
+</tr>
+<tr>
+<td><strong>3XL</strong></td>
+<td>28</td>
+<td>32</td>
+</tr>
+</tbody>
+</table>
+</div>",My Store,Uncategorized,"","",false,Color,Black,,Size,S,,,,,9004018_10779,487.61179775,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,active
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,M,,,,,9004018_10780,532.97103475,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-back-683f9d11a9742.png?v=1748999463,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,L,,,,,9004018_10781,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,XL,,,,,9004018_10782,609.5147471875,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-back-683f9d11ae0c4.png?v=1748999462,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,2XL,,,,,9004018_10783,683.2235073125,shopify,deny,manual,53.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,5,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,47.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,3XL,,,,,9004018_13416,708.738078125,shopify,deny,manual,55.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-back-683f9d11b64a3.png?v=1748999462,6,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,49.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,S,,,,,9004018_11491,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,7,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,M,,,,,9004018_11492,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-back-683f9d11c14f8.png?v=1748999462,8,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,L,,,,,9004018_11493,566.9904625,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,9,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,XL,,,,,9004018_11494,609.5147471875,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-back-683f9d11ce1c5.png?v=1748999463,10,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,2XL,,,,,9004018_11495,683.2235073125,shopify,deny,manual,53.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,47.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,3XL,,,,,9004018_13417,708.738078125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,49.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,S,,,,,9004018_11486,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,M,,,,,9004018_11487,532.97103475,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,L,,,,,9004018_11488,566.9904625,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,XL,,,,,9004018_11489,609.5147471875,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,2XL,,,,,9004018_11490,683.2235073125,shopify,deny,manual,53.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,47.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,3XL,,,,,9004018_13418,708.738078125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,49.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,S,,,,,9004018_11481,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,M,,,,,9004018_11482,532.97103475,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,L,,,,,9004018_11483,566.9904625,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,XL,,,,,9004018_11484,609.5147471875,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,2XL,,,,,9004018_11485,683.2235073125,shopify,deny,manual,53.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,47.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,3XL,,,,,9004018_13419,708.738078125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,49.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,S,,,,,9004018_20272,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,M,,,,,9004018_20273,532.97103475,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,L,,,,,9004018_20274,566.9904625,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,XL,,,,,9004018_20275,609.5147471875,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,2XL,,,,,9004018_20276,683.2235073125,shopify,deny,manual,53.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,47.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,3XL,,,,,9004018_20277,708.738078125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,49.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie,"Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.<br>
+<br>
+• 100% cotton face<br>
+• 65% ring-spun cotton, 35% polyester<br>
+• Front pouch pocket<br>
+• Self-fabric patch on the back<br>
+• Matching flat drawstrings<br>
+• 3-panel hood<br>
+• Blank product sourced from Pakistan<br>
+<br>
+Disclaimer: This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size.<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST WIDTH (inches)</strong></td>
+<td><strong>LENGTH (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>20</td>
+<td>27</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>21</td>
+<td>28</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>23</td>
+<td>29</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>25</td>
+<td>30</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>26 ½</td>
+<td>31</td>
+</tr>
+<tr>
+<td><strong>3XL</strong></td>
+<td>28</td>
+<td>32</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,S,,,,,,,,4356716_10774,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,active
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,M,,,,,,,,4356716_10775,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-back-683f9ce10ab8f.png?v=1748999410,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,L,,,,,,,,4356716_10776,566.9904625,shopify,deny,manual,50.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,XL,,,,,,,,4356716_10777,609.5147471875,shopify,deny,manual,50.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,2XL,,,,,,,,4356716_10778,683.2235073125,shopify,deny,manual,53.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,47.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,3XL,,,,,,,,4356716_13421,708.738078125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,49.79,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+- Blank product components in the EU sourced from Lithuania<br>
+- Blank product components in the US sourced from the US<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>31 ⅛</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>34 ¼</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>37 ⅜</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>42 ⅛</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>46 ⅞</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>51 ⅝</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,XS,,,,,,,,7836547_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,active
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,S,,,,,,,,7836547_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png?v=1748999335,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,M,,,,,,,,7836547_8852,182.0039384625,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f9c9fdd489.png?v=1748999335,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,L,,,,,,,,7836547_8853,206.10103311875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-left-683f9c9fdd55d.png?v=1748999335,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,XL,,,,,,,,7836547_8854,233.88356578125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,2XL,,,,,,,,7836547_8855,283.49523125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,24.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+- Blank product components in the EU sourced from Lithuania<br>
+- Blank product components in the US sourced from the US<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>31 ⅛</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>34 ¼</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>37 ⅜</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>42 ⅛</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>46 ⅞</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>51 ⅝</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,XS,,,,,,,,3735441_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,active
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,,,,,,,,,S,,,,,,,,3735441_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c6a7580b.png?v=1748999286,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,,,,,,,,,M,,,,,,,,3735441_8852,182.0039384625,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f9c6a75935.png?v=1748999287,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,,,,,,,,,L,,,,,,,,3735441_8853,206.10103311875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-left-683f9c6a75a88.png?v=1748999286,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,,,,,,,,,XL,,,,,,,,3735441_8854,233.88356578125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,,,,,,,,,2XL,,,,,,,,3735441_8855,283.49523125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,24.39,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,BUNGI X BOBBY RABBIT HARDWARE Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design. What's more, the durable fabric with a cotton-feel face and soft brushed fleece inside means that this sweatshirt is bound to become your favorite for a long time.<br>
+<br>
+• 95% recycled polyester, 5% spandex<br>
+• Fabric weight (may vary by 5%): 9.08 oz./yd.² (308 g/m²)<br>
+• Soft cotton-feel face<br>
+• Brushed fleece fabric inside<br>
+• Unisex fit<br>
+• Overlock seams<br>
+• Blank components sourced from China<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST (inches)</strong></td>
+<td><strong>WAIST (inches)</strong></td>
+<td><strong>HIPS (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>2XS</strong></td>
+<td>34 ⅝</td>
+<td>28 ⅜</td>
+<td>35 ⅜</td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>36 ¼</td>
+<td>29 ⅞</td>
+<td>37 </td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>37 ¾</td>
+<td>31 ½</td>
+<td>38 ⅝</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>39 ⅜</td>
+<td>33 ⅛</td>
+<td>40 ⅛</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>42 ½</td>
+<td>36 ¼</td>
+<td>43 ¼</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>45 ⅝</td>
+<td>39 ⅜</td>
+<td>46 ½</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>48 ⅞</td>
+<td>42 ½</td>
+<td>49 ⅝</td>
+</tr>
+<tr>
+<td><strong>3XL</strong></td>
+<td>52 </td>
+<td>45 ⅝</td>
+<td>52 ¾</td>
+</tr>
+<tr>
+<td><strong>4XL</strong></td>
+<td>55 ⅛</td>
+<td>48 ⅞</td>
+<td>55 ⅞</td>
+</tr>
+<tr>
+<td><strong>5XL</strong></td>
+<td>58 ¼</td>
+<td>52 </td>
+<td>59 </td>
+</tr>
+<tr>
+<td><strong>6XL</strong></td>
+<td>61 ⅜</td>
+<td>55 ⅛</td>
+<td>62 ¼</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,2XS,,,,,,,,8966477_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,active
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,XS,,,,,,,,8966477_9730,324.03504931875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-back-683f9be9c58ed.png?v=1748999157,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,S,,,,,,,,8966477_9731,354.08554383125,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-left-front-683f9be9c5aa9.png?v=1748999157,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,M,,,,,,,,8966477_9732,384.13603834375,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-right-front-683f9be9c5c34.png?v=1748999157,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,L,,,,,,,,8966477_9733,405.96517115,shopify,deny,manual,42.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,XL,,,,,,,,8966477_9734,420.1399327125,shopify,deny,manual,42.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,2XL,,,,,,,,8966477_9735,441.96906551875,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,36.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,3XL,,,,,,,,8966477_9736,475.98849326875,shopify,deny,manual,47.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,38.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,4XL,,,,,,,,8966477_19770,599.875909325,shopify,deny,manual,49.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,40.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,5XL,,,,,,,,8966477_19771,635.029318,shopify,deny,manual,52.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,42.63,
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,,,,,,,,,6XL,,,,,,,,8966477_19772,680.10505976875,shopify,deny,manual,54.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,44.63,
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Women's T-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton-touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>33 ⅛</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>34 ⅝</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>36 ¼</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>39 ⅜</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>42 ½</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>45 ⅝</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,XS,,,,,,,,5932847_8884,104.3262451,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,active
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,,,,,,,,,S,,,,,,,,5932847_8885,113.3980925,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-back-683f9bbadc1a7.png?v=1748999112,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,,,,,,,,,M,,,,,,,,5932847_8886,122.4699399,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,,,,,,,,,L,,,,,,,,5932847_8887,136.077711,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,,,,,,,,,XL,,,,,,,,5932847_8888,149.6854821,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,,,,,,,,,2XL,,,,,,,,5932847_8889,172.3651006,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,23.37,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT DARKMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere. It’s easily customizable and made from sustainable materials. <br>
+<br>
+• 80% organic cotton, 20% recycled polyester <br>
+• Fabric weight: 10.3oz/yd.² (350g/m²)<br>
+• Soft brushed interior<br>
+• Oversized fit<br>
+• 2 × 2 ribbed cuffs and hem<br>
+• The fabric of this product holds certifications for its organic cotton content under GOTS (Global Organic Textile Standard) and OCS (Organic Content Standard). Additionally, GRS (Global Recycled Standard) certifies the recycled content present in the product.<br>
+• Blank product sourced from Bangladesh<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>A (inches)</strong></td>
+<td><strong>B (inches)</strong></td>
+<td><strong>C (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>27 ½</td>
+<td>25.00</td>
+<td>22 </td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>28 ⅜</td>
+<td>26 ⅝</td>
+<td>23 ¼</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>29 ⅛</td>
+<td>28 ⅛</td>
+<td>23 ¼</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>30 ¼</td>
+<td>30 ⅛</td>
+<td>23 ¼</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>31 ¼</td>
+<td>32 ⅛</td>
+<td>23 ¼</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Color,Black,,Size,S,,,,,1039392_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png?v=1748999022,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,active
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,M,,,,,1039392_20836,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,L,,,,,1039392_20841,612.3496995,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-left-683f9b6286198.png?v=1748999022,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,XL,,,,,1039392_20846,635.029318,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-right-683f9b6286354.png?v=1748999022,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,2XL,,,,,1039392_20851,675.8526313,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,5,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,46.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Heather Grey,,,S,,,,,1039392_20834,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-back-683f9b6286b60.png?v=1748999022,6,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Heather Grey,,,M,,,,,1039392_20839,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-left-683f9b6286fc8.png?v=1748999022,7,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Heather Grey,,,L,,,,,1039392_20844,612.3496995,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-right-683f9b6287494.png?v=1748999022,8,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Heather Grey,,,XL,,,,,1039392_20849,635.029318,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-front-683f9b62879d1.png?v=1748999022,9,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,Heather Grey,,,2XL,,,,,1039392_20854,675.8526313,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-back-683f9b62881d4.png?v=1748999022,10,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-heather-grey-front-683f9b6286617.png?v=1748999022,oz,PC040100,46.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,White,,,S,,,,,1039392_20835,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-left-683f9b6288b85.png?v=1748999022,11,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-front-683f9b62879d1.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,White,,,M,,,,,1039392_20840,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-right-683f9b6289383.png?v=1748999022,12,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-front-683f9b62879d1.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,White,,,L,,,,,1039392_20845,612.3496995,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-front-683f9b62879d1.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,,,,,,,,,White,,,XL,,,,,1039392_20850,635.029318,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-white-front-683f9b62879d1.png?v=1748999022,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT LIGHTMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere. It’s easily customizable and made from sustainable materials. <br>
+<br>
+• 80% organic cotton, 20% recycled polyester <br>
+• Fabric weight: 10.3oz/yd.² (350g/m²)<br>
+• Soft brushed interior<br>
+• Oversized fit<br>
+• 2 × 2 ribbed cuffs and hem<br>
+• The fabric of this product holds certifications for its organic cotton content under GOTS (Global Organic Textile Standard) and OCS (Organic Content Standard). Additionally, GRS (Global Recycled Standard) certifies the recycled content present in the product.<br>
+• Blank product sourced from Bangladesh<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Color,Black,,Size,S,,,,,5234695_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png?v=1748998934,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,active
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,M,,,,,5234695_20836,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,L,,,,,5234695_20841,612.3496995,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-left-683f9b0bd9431.png?v=1748998934,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,XL,,,,,5234695_20846,635.029318,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-right-683f9b0bd9763.png?v=1748998934,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,Black,,,2XL,,,,,5234695_20851,675.8526313,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,5,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,46.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,French Navy,,,S,,,,,5234695_20833,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-back-683f9b0bda50b.png?v=1748998934,6,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,French Navy,,,M,,,,,5234695_20838,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-left-683f9b0bdac9e.png?v=1748998934,7,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,French Navy,,,L,,,,,5234695_20843,612.3496995,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-right-683f9b0bdb497.png?v=1748998933,8,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,French Navy,,,XL,,,,,5234695_20848,635.029318,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,oz,PC040100,44.76,
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,,,,,,,,,French Navy,,,2XL,,,,,5234695_20853,675.8526313,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-french-navy-front-683f9b0bd9c84.png?v=1748998934,oz,PC040100,46.76,
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Women's T-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton-touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Size,XS,,,,,,,,6255888_8884,104.3262451,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,21.37,active
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,,,,,,,,,S,,,,,,,,6255888_8885,113.3980925,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-back-683f9ad19a777.png?v=1748998877,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,,,,,,,,,M,,,,,,,,6255888_8886,122.4699399,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,,,,,,,,,L,,,,,,,,6255888_8887,136.077711,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,,,,,,,,,XL,,,,,,,,6255888_8888,149.6854821,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,21.37,
+bungi-x-bobby-rabbit-hardwarewomens-t-shirt,,,,,,,,,2XL,,,,,,,,6255888_8889,172.3651006,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9ad199db2.png?v=1748998876,oz,PC040100,23.37,
+bungi-x-bobby-cuffed-beanie-1,BUNGI X BOBBY Cuffed Beanie,"A snug, form-fitting beanie. It's not only a great head-warming piece but a staple accessory in anyone's wardrobe.<br>
+<br>
+• 100% Turbo Acrylic<br>
+• 12″ (30 cm) in length<br>
+• Hypoallergenic <br>
+• Unisex style<br>
+• Hand washable<br>
+• Blank product sourced from Vietnam, Bangladesh or the Republic of Korea<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Color,Black,,,,,,,,4804417_8936,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,oz,PC040129,12.79,active
+bungi-x-bobby-cuffed-beanie-1,,,,,,,,,White,,,,,,,,4804417_8938,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,oz,PC040129,12.79,
+bungi-x-bobby-cuffed-beanie,BUNGI X BOBBY Cuffed Beanie,"A snug, form-fitting beanie. It's not only a great head-warming piece but a staple accessory in anyone's wardrobe.<br>
+<br>
+• 100% Turbo Acrylic<br>
+• 12″ (30 cm) in length<br>
+• Hypoallergenic <br>
+• Unisex style<br>
+• Hand washable<br>
+• Blank product sourced from Vietnam, Bangladesh or the Republic of Korea<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Title,Default Title,,,,,,,,3473926_8936,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a50cc978.png?v=1748998745,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a50cc978.png?v=1748998745,oz,PC040129,12.79,active
+bungi-x-bobby-darkmode-cuffed-beanie,BUNGI X BOBBY DARKMODE Cuffed Beanie,"A snug, form-fitting beanie. It's not only a great head-warming piece but a staple accessory in anyone's wardrobe.<br>
+<br>
+• 100% Turbo Acrylic<br>
+• 12″ (30 cm) in length<br>
+• Hypoallergenic <br>
+• Unisex style<br>
+• Hand washable<br>
+• Blank product sourced from Vietnam, Bangladesh or the Republic of Korea<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Title,Default Title,,,,,,,,6085662_8936,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a2123783.png?v=1748998698,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a2123783.png?v=1748998698,oz,PC040129,12.79,active
+bungi-x-bobby-dark-mode-wide-leg-joggers,BUNGI X BOBBY DARK MODE Wide-leg joggers,"Rediscover ’90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings, they offer a unisex fit and handy side pockets.<br>
+<br>
+• 95% recycled polyester, 5% spandex<br>
+• Wide-leg cut<br>
+• Relaxed fit<br>
+• Side pockets<br>
+• Elastic waistband with a drawstring <br>
+• Tear-away care label<br>
+<br>
+Disclaimer: In areas where the fabric is double-layered (like pockets), details from the inner fabric layer may subtly show through, especially with lighter designs.<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>WAIST (inches)</strong></td>
+<td><strong>HIPS (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>2XS</strong></td>
+<td>28 ⅜</td>
+<td>35 ⅜</td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>29 ⅞</td>
+<td>37 </td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>31 ½</td>
+<td>38 ⅝</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>33 ⅛</td>
+<td>40 ⅛</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>36 ¼</td>
+<td>43 ¼</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>39 ⅜</td>
+<td>46 ½</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>42 ½</td>
+<td>49 ⅝</td>
+</tr>
+<tr>
+<td><strong>3XL</strong></td>
+<td>45 ⅝</td>
+<td>52 ¾</td>
+</tr>
+<tr>
+<td><strong>4XL</strong></td>
+<td>48 ⅞</td>
+<td>55 ⅞</td>
+</tr>
+<tr>
+<td><strong>5XL</strong></td>
+<td>52 </td>
+<td>59 </td>
+</tr>
+<tr>
+<td><strong>6XL</strong></td>
+<td>55 ⅛</td>
+<td>62 ¼</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,2XS,,,,,,,,6222891_19889,479.95742650625,shopify,deny,manual,43.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-683f99d4ba848.png?v=1748998622,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,38.95,active
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,XS,,,,,,,,6222891_19890,494.9826737625,shopify,deny,manual,44.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,39.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,S,,,,,,,,6222891_19891,486.76131205625,shopify,deny,manual,44.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,39.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,M,,,,,,,,6222891_19892,521.91472073125,shopify,deny,manual,44.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,39.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,L,,,,,,,,6222891_19893,559.90308171875,shopify,deny,manual,44.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,39.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,XL,,,,,,,,6222891_19894,576.0623099,shopify,deny,manual,44.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,39.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,2XL,,,,,,,,6222891_19895,599.875909325,shopify,deny,manual,46.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,41.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,3XL,,,,,,,,6222891_19896,580.0312431375,shopify,deny,manual,48.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,43.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,4XL,,,,,,,,6222891_19897,667.06427913125,shopify,deny,manual,50.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,45.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,5XL,,,,,,,,6222891_19898,707.0371067375,shopify,deny,manual,52.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,47.73,
+bungi-x-bobby-dark-mode-wide-leg-joggers,,,,,,,,,6XL,,,,,,,,6222891_19899,764.8701339125,shopify,deny,manual,55.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,49.73,
+wide-leg-joggers,BUNGI X BOBBY LIGHTMODE Wide-leg joggers,"Rediscover ’90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings, they offer a unisex fit and handy side pockets.<br>
+<br>
+• 95% recycled polyester, 5% spandex<br>
+• Wide-leg cut<br>
+• Relaxed fit<br>
+• Side pockets<br>
+• Elastic waistband with a drawstring <br>
+• Tear-away care label<br>
+<br>
+Disclaimer: In areas where the fabric is double-layered (like pockets), details from the inner fabric layer may subtly show through, especially with lighter designs.<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>WAIST (inches)</strong></td>
+<td><strong>HIPS (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>2XS</strong></td>
+<td>28 ⅜</td>
+<td>35 ⅜</td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>29 ⅞</td>
+<td>37 </td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>31 ½</td>
+<td>38 ⅝</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>33 ⅛</td>
+<td>40 ⅛</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>36 ¼</td>
+<td>43 ¼</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>39 ⅜</td>
+<td>46 ½</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>42 ½</td>
+<td>49 ⅝</td>
+</tr>
+<tr>
+<td><strong>3XL</strong></td>
+<td>45 ⅝</td>
+<td>52 ¾</td>
+</tr>
+<tr>
+<td><strong>4XL</strong></td>
+<td>48 ⅞</td>
+<td>55 ⅞</td>
+</tr>
+<tr>
+<td><strong>5XL</strong></td>
+<td>52 </td>
+<td>59 </td>
+</tr>
+<tr>
+<td><strong>6XL</strong></td>
+<td>55 ⅛</td>
+<td>62 ¼</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,2XS,,,,,,,,7529383_19889,479.95742650625,shopify,deny,manual,44.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-683f9920e04cf.png?v=1748998443,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,38.95,active
+wide-leg-joggers,,,,,,,,,XS,,,,,,,,7529383_19890,494.9826737625,shopify,deny,manual,45.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,39.73,
+wide-leg-joggers,,,,,,,,,S,,,,,,,,7529383_19891,486.76131205625,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,39.73,
+wide-leg-joggers,,,,,,,,,M,,,,,,,,7529383_19892,521.91472073125,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,39.73,
+wide-leg-joggers,,,,,,,,,L,,,,,,,,7529383_19893,559.90308171875,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,39.73,
+wide-leg-joggers,,,,,,,,,XL,,,,,,,,7529383_19894,576.0623099,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,39.73,
+wide-leg-joggers,,,,,,,,,2XL,,,,,,,,7529383_19895,599.875909325,shopify,deny,manual,47.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,41.73,
+wide-leg-joggers,,,,,,,,,3XL,,,,,,,,7529383_19896,580.0312431375,shopify,deny,manual,49.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,43.73,
+wide-leg-joggers,,,,,,,,,4XL,,,,,,,,7529383_19897,667.06427913125,shopify,deny,manual,51.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,45.73,
+wide-leg-joggers,,,,,,,,,5XL,,,,,,,,7529383_19898,707.0371067375,shopify,deny,manual,54.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,47.73,
+wide-leg-joggers,,,,,,,,,6XL,,,,,,,,7529383_19899,764.8701339125,shopify,deny,manual,56.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,49.73,
+bungi-x-bobby-cowboy-unisex-windbreaker,BUNGI X BOBBY COWBOY Unisex windbreaker,"Whether you’re hiking, camping, or just running errands, this casual, sporty windbreaker’s got you covered. It’s very lightweight, durable, and water-repellent. This unisex windbreaker has a zipped closure and elasticated cuffs for a snug fit and comfortable wear. It also has two zipped pockets to store your essentials while on the move. This classic windbreaker will keep you both fashionable and protected on all your adventures.<br>
+<br>
+• 100% polyamide<br>
+• Fabric weight: 7.13 oz./yd.² (202 g/m²)<br>
+• Regular fit<br>
+• Hood with a drawstring, zipped closure, elastic cuffs and hem<br>
+• 2 zipped pockets<br>
+• This product’s fabric is OEKO-TEX Standard 100 certified and PETA-Approved Vegan<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,Uncategorized,"","",true,Color,Black,,Size,S,,,,,2813074_16424,192.011320125625,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,active
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Black,,,M,,,,,2813074_16425,196.00860288625,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-back-683f9890d7f7f.png?v=1748998298,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Black,,,L,,,,,2813074_16426,208.000451168125,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Black,,,XL,,,,,2813074_16427,214.010550070625,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-back-683f9890d81e7.png?v=1748998298,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Black,,,2XL,,,,,2813074_16428,221.126280375,shopify,deny,manual,43.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,35.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Forest Green,,,S,,,,,2813074_16429,192.011320125625,shopify,deny,manual,41.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Forest Green,,,M,,,,,2813074_16430,196.00860288625,shopify,deny,manual,41.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Forest Green,,,L,,,,,2813074_16431,208.000451168125,shopify,deny,manual,41.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Forest Green,,,XL,,,,,2813074_16432,214.010550070625,shopify,deny,manual,41.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,oz,,33.25,
+bungi-x-bobby-cowboy-unisex-windbreaker,,,,,,,,,Forest Green,,,2XL,,,,,2813074_16433,221.126280375,shopify,deny,manual,43.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-forest-green-front-683f9890d80c0.png?v=1748998298,oz,,35.25,
+bungi-x-bobby-cowboy-unisex-sweatshirt,BUNGI X BOBBY COWBOY Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design. What's more, the durable fabric with a cotton-feel face and soft brushed fleece inside means that this sweatshirt is bound to become your favorite for a long time.<br>
+<br>
+• 95% recycled polyester, 5% spandex<br>
+• Fabric weight (may vary by 5%): 9.08 oz./yd.² (308 g/m²)<br>
+• Soft cotton-feel face<br>
+• Brushed fleece fabric inside<br>
+• Unisex fit<br>
+• Overlock seams<br>
+• Blank components sourced from China<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",true,Size,2XS,,,,,,,,7066242_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,active
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,XS,,,,,,,,7066242_9730,324.03504931875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-back-683f98501926c.png?v=1748998234,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,S,,,,,,,,7066242_9731,354.08554383125,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-left-front-683f985019414.png?v=1748998234,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,M,,,,,,,,7066242_9732,384.13603834375,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-right-front-683f985019571.png?v=1748998234,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,L,,,,,,,,7066242_9733,405.96517115,shopify,deny,manual,42.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,XL,,,,,,,,7066242_9734,420.1399327125,shopify,deny,manual,42.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,2XL,,,,,,,,7066242_9735,441.96906551875,shopify,deny,manual,45.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,36.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,3XL,,,,,,,,7066242_9736,475.98849326875,shopify,deny,manual,47.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,38.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,4XL,,,,,,,,7066242_19770,599.875909325,shopify,deny,manual,49.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,40.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,5XL,,,,,,,,7066242_19771,635.029318,shopify,deny,manual,52.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,42.63,
+bungi-x-bobby-cowboy-unisex-sweatshirt,,,,,,,,,6XL,,,,,,,,7066242_19772,680.10505976875,shopify,deny,manual,54.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,44.63,
+bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+- Blank product components in the EU sourced from Lithuania<br>
+- Blank product components in the US sourced from the US<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",true,Size,XS,,,,,,,,9951917_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,active
+bungi-x-bobby-cowboy-mens-t-shirt,,,,,,,,,S,,,,,,,,9951917_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f97ee5d060.png?v=1748998137,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,
+bungi-x-bobby-cowboy-mens-t-shirt,,,,,,,,,M,,,,,,,,9951917_8852,182.0039384625,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f97ee5d148.png?v=1748998137,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,
+bungi-x-bobby-cowboy-mens-t-shirt,,,,,,,,,L,,,,,,,,9951917_8853,206.10103311875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-left-683f97ee5d204.png?v=1748998137,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,
+bungi-x-bobby-cowboy-mens-t-shirt,,,,,,,,,XL,,,,,,,,9951917_8854,233.88356578125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,
+bungi-x-bobby-cowboy-mens-t-shirt,,,,,,,,,2XL,,,,,,,,9951917_8855,283.49523125,shopify,deny,manual,30.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,24.39,
+rabbit-hardware-mens-t-shirt-1,BUNGI X BOBBY RABBIT HARDWARE Men's T-Shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+- Blank product components in the EU sourced from Lithuania<br>
+- Blank product components in the US sourced from the US<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Size,XS,,,,,,,,7997952_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,22.39,active
+rabbit-hardware-mens-t-shirt-1,,,,,,,,,S,,,,,,,,7997952_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f978042b90.png?v=1748998023,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,22.39,
+rabbit-hardware-mens-t-shirt-1,,,,,,,,,M,,,,,,,,7997952_8852,182.0039384625,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f978042ceb.png?v=1748998023,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,22.39,
+rabbit-hardware-mens-t-shirt-1,,,,,,,,,L,,,,,,,,7997952_8853,206.10103311875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-left-683f978042dc8.png?v=1748998023,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,22.39,
+rabbit-hardware-mens-t-shirt-1,,,,,,,,,XL,,,,,,,,7997952_8854,233.88356578125,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,22.39,
+rabbit-hardware-mens-t-shirt-1,,,,,,,,,2XL,,,,,,,,7997952_8855,283.49523125,shopify,deny,manual,30.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f978042281.png?v=1748998023,oz,PC040100,24.39,
+rabbit-hardware-womans-t-shirt,BUNGI X BOBBY COWBOY Womans T-Shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton-touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!<p><strong class=""size-guide-title"">Size guide</strong></p><div class=""table-responsive dynamic"" data-unit-system=""imperial""><table cellpadding=""5""><tbody>
+<tr>
+<td> </td>
+<td><strong>CHEST (inches)</strong></td>
+</tr>
+<tr>
+<td><strong>XS</strong></td>
+<td>33 ⅛</td>
+</tr>
+<tr>
+<td><strong>S</strong></td>
+<td>34 ⅝</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td>36 ¼</td>
+</tr>
+<tr>
+<td><strong>L</strong></td>
+<td>39 ⅜</td>
+</tr>
+<tr>
+<td><strong>XL</strong></td>
+<td>42 ½</td>
+</tr>
+<tr>
+<td><strong>2XL</strong></td>
+<td>45 ⅝</td>
+</tr>
+</tbody></table></div>",My Store,,"","",false,Size,XS,,,,,,,,9034257_8884,104.3262451,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,21.37,active
+rabbit-hardware-womans-t-shirt,,,,,,,,,S,,,,,,,,9034257_8885,113.3980925,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-back-683f9709adedf.png?v=1748997911,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,21.37,
+rabbit-hardware-womans-t-shirt,,,,,,,,,M,,,,,,,,9034257_8886,122.4699399,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-left-683f9709ae0f1.png?v=1748997911,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,21.37,
+rabbit-hardware-womans-t-shirt,,,,,,,,,L,,,,,,,,9034257_8887,136.077711,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-right-683f9709ae28e.png?v=1748997911,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,21.37,
+rabbit-hardware-womans-t-shirt,,,,,,,,,XL,,,,,,,,9034257_8888,149.6854821,shopify,deny,manual,27.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,21.37,
+rabbit-hardware-womans-t-shirt,,,,,,,,,2XL,,,,,,,,9034257_8889,172.3651006,shopify,deny,manual,31.50,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9709ad125.png?v=1748997911,oz,PC040100,23.37,
+rabbit-hardware-mens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE T-Shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing. <br>
+<br>
+- Fabric composition in the EU: 96% polyester, 4% spandex<br>
+- Fabric composition in the US: 93% polyester, 7% spandex<br>
+- Fabric weight in the EU: 6.34 oz./yd.² (215 g/m²)<br>
+- Fabric weight in the US: 7.08 oz./yd.² (240 g/m²)<br>
+- Premium knit mid-weight jersey<br>
+- Smooth, comfortable 2-way stretch fabric that stretches and recovers on the cross and lengthwise grains<br>
+- Regular fit<br>
+- Blank product components in the EU sourced from Lithuania<br>
+- Blank product components in the US sourced from the US<br>
+<br>
+This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Making products on demand instead of in bulk helps reduce overproduction, so thank you for making thoughtful purchasing decisions!",My Store,,"","",false,Title,Default Title,,,,,,,,2604950_8850,155.07189149375,shopify,deny,manual,30.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f7533a6e21.png?v=1748989249,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f7533a6e21.png?v=1748989249,oz,PC040100,22.39,active
+rabbit-hardware-mens-t-shirt,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f7533a7b73.png?v=1748989249,2,Product mockup,,,,,,,,,,,,,,,,,,,
+rabbit-hardware-mens-t-shirt,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f7533a7d89.png?v=1748989249,3,Product mockup,,,,,,,,,,,,,,,,,,,
+rabbit-hardware-mens-t-shirt,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-left-683f7533a7f0d.png?v=1748989249,4,Product mockup,,,,,,,,,,,,,,,,,,,

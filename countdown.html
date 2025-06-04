@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown to Launch</title>
+    <link rel="stylesheet" href="styles/animations.css"> <!-- Link to existing styles -->
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0; /* Adjust as per your theme */
+            font-family: Arial, sans-serif;
+        }
+        .countdown {
+            text-align: center;
+            font-size: 2em;
+            color: #333; /* Adjust as per your theme */
+        }
+    </style>
+</head>
+<body>
+    <div class="countdown" id="countdown">
+        <h1>Countdown to June 6, 2025</h1>
+        <div id="timer"></div>
+    </div>
+    <script>
+        const countdownDate = new Date("June 6, 2025 00:00:00").getTime();
+        const timerElement = document.getElementById("timer");
+
+        const updateTimer = () => {
+            const now = new Date().getTime();
+            const distance = countdownDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            timerElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+            if (distance < 0) {
+                clearInterval(interval);
+                timerElement.innerHTML = "EXPIRED";
+            }
+        };
+
+        const interval = setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>
