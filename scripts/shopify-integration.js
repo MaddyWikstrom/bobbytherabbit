@@ -141,33 +141,12 @@ function loadShopifySDK(callback) {
 
 // Initialize Shopify client
 function initializeShopifyClient() {
-    if (!window.ShopifyBuy) {
-        console.error('Shopify Buy SDK not loaded');
-        return;
-    }
-
-    shopifyClient = window.ShopifyBuy.buildClient({
-        domain: 'bobbytherabbit.myshopify.com',
-        storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-        apiVersion: '2024-01'
-    });
-
-    // Create or retrieve existing checkout
-    const checkoutId = localStorage.getItem('shopifyCheckoutId');
-    if (checkoutId) {
-        shopifyClient.checkout.fetch(checkoutId).then((checkout) => {
-            if (!checkout.completedAt) {
-                shopifyCheckout = checkout;
-            } else {
-                // Checkout was completed, create a new one
-                createNewCheckout();
-            }
-        }).catch(() => {
-            createNewCheckout();
-        });
-    } else {
-        createNewCheckout();
-    }
+    console.log('⚠️ Shopify Buy SDK initialization disabled to prevent CORS issues');
+    console.log('💡 All checkout functionality now uses Netlify functions');
+    
+    // Note: Direct Shopify Buy SDK initialization removed to prevent CORS errors
+    // All product data and checkout functionality should use Netlify functions instead
+    return;
 }
 
 // Create new Shopify checkout

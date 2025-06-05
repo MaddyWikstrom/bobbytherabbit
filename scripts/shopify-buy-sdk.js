@@ -1,5 +1,5 @@
-// Shopify Buy SDK Integration
-// This bypasses CORS issues by using Shopify's official SDK
+// CORS-Free Shopify Integration using Netlify Functions
+// This replaces the Shopify Buy SDK to prevent CORS issues
 
 class ShopifyBuySDKManager {
     constructor() {
@@ -11,63 +11,41 @@ class ShopifyBuySDKManager {
 
     async init() {
         try {
-            // Load Shopify Buy SDK
-            await this.loadShopifySDK();
+            console.log('🔄 Initializing CORS-free Shopify integration...');
+            console.log('💡 Using Netlify functions instead of direct SDK calls');
             
-            // Initialize client
-            this.client = ShopifyBuy.buildClient({
-                domain: 'bobbytherabbit.myshopify.com',
-                storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-                apiVersion: '2024-01'
-            });
-
-            console.log('✅ Shopify Buy SDK initialized successfully');
             this.isLoaded = true;
             
-            // Load products
+            // Load products via Netlify function
             await this.loadProducts();
             
         } catch (error) {
-            console.error('❌ Failed to initialize Shopify Buy SDK:', error);
+            console.error('❌ Failed to initialize Shopify integration:', error);
             this.isLoaded = false;
         }
     }
 
-    loadShopifySDK() {
-        return new Promise((resolve, reject) => {
-            // Check if SDK is already loaded
-            if (window.ShopifyBuy) {
-                resolve();
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-            script.onload = () => {
-                console.log('📦 Shopify Buy SDK loaded');
-                resolve();
-            };
-            script.onerror = () => {
-                console.error('❌ Failed to load Shopify Buy SDK');
-                reject(new Error('Failed to load Shopify Buy SDK'));
-            };
-            
-            document.head.appendChild(script);
-        });
-    }
+    // Note: loadShopifySDK() removed to prevent CORS issues
+    // All functionality now uses Netlify functions
 
     async loadProducts() {
-        if (!this.client) {
-            throw new Error('Shopify client not initialized');
-        }
-
         try {
-            console.log('🛍️ Fetching products via Shopify Buy SDK...');
+            console.log('🛍️ Fetching products via Netlify function...');
             
-            // Fetch products using the SDK
-            const products = await this.client.product.fetchAll();
+            const response = await fetch('/.netlify/functions/get-products');
             
-            console.log(`✅ Loaded ${products.length} products via Shopify Buy SDK`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            const products = data.products || [];
+            console.log(`✅ Loaded ${products.length} products via Netlify function`);
             
             // Convert to our format
             this.products = this.convertShopifyProducts(products);
@@ -75,7 +53,8 @@ class ShopifyBuySDKManager {
             return this.products;
             
         } catch (error) {
-            console.error('❌ Error fetching products via SDK:', error);
+            console.error('❌ Error fetching products via Netlify function:', error);
+            console.log('💡 Make sure environment variables are set in Netlify Dashboard');
             throw error;
         }
     }
@@ -165,45 +144,33 @@ class ShopifyBuySDKManager {
             .substring(0, 200) + '...';
     }
 
-    // Create checkout
+    // Create checkout (disabled to prevent CORS)
     async createCheckout() {
-        if (!this.client) {
-            throw new Error('Shopify client not initialized');
-        }
-
-        try {
-            const checkout = await this.client.checkout.create();
-            return checkout;
-        } catch (error) {
-            console.error('❌ Error creating checkout:', error);
-            throw error;
-        }
+        console.log('⚠️ Direct checkout creation disabled to prevent CORS issues');
+        console.log('💡 Implement checkout via Netlify functions or redirect to Shopify');
+        throw new Error('Direct checkout disabled - use Netlify functions instead');
     }
 
-    // Add items to checkout
+    // Add items to checkout (disabled to prevent CORS)
     async addToCheckout(checkoutId, lineItemsToAdd) {
-        if (!this.client) {
-            throw new Error('Shopify client not initialized');
-        }
-
-        try {
-            const checkout = await this.client.checkout.addLineItems(checkoutId, lineItemsToAdd);
-            return checkout;
-        } catch (error) {
-            console.error('❌ Error adding to checkout:', error);
-            throw error;
-        }
+        console.log('⚠️ Direct checkout modification disabled to prevent CORS issues');
+        console.log('💡 Implement checkout via Netlify functions or redirect to Shopify');
+        throw new Error('Direct checkout disabled - use Netlify functions instead');
     }
 
     // Get product by handle
     async getProductByHandle(handle) {
-        if (!this.client) {
-            throw new Error('Shopify client not initialized');
-        }
-
         try {
-            const product = await this.client.product.fetchByHandle(handle);
-            return this.convertShopifyProducts([product])[0];
+            // Find product in already loaded products
+            const product = this.products.find(p => p.id === handle || p.shopifyId === handle);
+            if (product) {
+                return product;
+            }
+            
+            // If not found, reload all products and try again
+            await this.loadProducts();
+            return this.products.find(p => p.id === handle || p.shopifyId === handle) || null;
+            
         } catch (error) {
             console.error('❌ Error fetching product by handle:', error);
             throw error;

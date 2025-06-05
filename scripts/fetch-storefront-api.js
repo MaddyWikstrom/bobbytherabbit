@@ -1,56 +1,29 @@
-// Fetch products using Storefront API and update PRODUCT_MAPPING
-
-const SHOPIFY_CONFIG = {
-    domain: 'bobbytherabbit.myshopify.com',
-    storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-    apiVersion: '2024-01'
-};
+// Fetch products using Netlify function (CORS-free) and update PRODUCT_MAPPING
 
 async function fetchProductsAndGenerateMapping() {
     try {
-        const response = await fetch(`https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Shopify-Storefront-Access-Token': SHOPIFY_CONFIG.storefrontAccessToken
-            },
-            body: JSON.stringify({
-                query: `{
-                    products(first: 250) {
-                        edges {
-                            node {
-                                id
-                                title
-                                variants(first: 10) {
-                                    edges {
-                                        node {
-                                            id
-                                            title
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }`
-            })
-        });
+        console.log('🔄 Fetching products via Netlify function...');
+        const response = await fetch('/.netlify/functions/get-products');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const data = await response.json();
 
-        if (data.errors) {
-            console.error('GraphQL Errors:', data.errors);
+        if (data.error) {
+            console.error('❌ Netlify function error:', data.error);
             return;
         }
 
-        const products = data.data.products.edges;
-        console.log('✅ Products loaded:', products);
+        const products = data.products || [];
+        console.log('✅ Products loaded via Netlify function:', products);
 
         // Generate mapping
         const mapping = {};
         products.forEach(product => {
-            console.log(`- ${product.node.title}: ${product.node.id}`);
-            mapping[product.node.title] = product.node.id;
+            console.log(`- ${product.title}: ${product.id}`);
+            mapping[product.title] = product.id;
         });
 
         console.log('📋 Product Mapping:');
@@ -59,8 +32,8 @@ async function fetchProductsAndGenerateMapping() {
         // Generate the PRODUCT_MAPPING code
         let mappingCode = 'const PRODUCT_MAPPING = {\n';
         products.forEach(product => {
-            const productId = product.node.id;
-            const productName = product.node.title;
+            const productId = product.id;
+            const productName = product.title;
             mappingCode += `    '${productName}': {\n`;
             mappingCode += `        shopifyProductId: '${productId}',\n`;
             mappingCode += `        // Add variant information here\n`;
@@ -75,7 +48,8 @@ async function fetchProductsAndGenerateMapping() {
         localStorage.setItem('shopifyProductMapping', mappingCode);
 
     } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('❌ Error fetching products via Netlify function:', error);
+        console.log('💡 Make sure environment variables are set in Netlify Dashboard');
     }
 }
 

@@ -3,18 +3,17 @@
 
 console.log('🔍 Shopify Integration Debug Mode Started');
 
-// Configuration - Replace with your actual Shopify details
+// Configuration - Now uses Netlify functions to avoid CORS issues
 const SHOPIFY_CONFIG = {
-    domain: 'bobbytherabbit.myshopify.com', // Replace with your Shopify domain
-    storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4', // Replace with your token
-    apiVersion: '2024-01'
+    domain: 'bobbytherabbit.myshopify.com',
+    note: 'Direct API calls disabled - using Netlify functions to prevent CORS errors'
 };
 
 // Test the configuration
 console.log('📋 Current Configuration:', {
     domain: SHOPIFY_CONFIG.domain,
-    tokenLength: SHOPIFY_CONFIG.storefrontAccessToken.length,
-    tokenPreview: SHOPIFY_CONFIG.storefrontAccessToken.substring(0, 10) + '...'
+    method: 'Netlify Functions (CORS-free)',
+    note: SHOPIFY_CONFIG.note
 });
 
 // Check if configuration is still default
@@ -32,30 +31,12 @@ if (SHOPIFY_CONFIG.storefrontAccessToken === 'your-storefront-access-token') {
     console.log('   3. Go to "API credentials" → "Storefront API access token"');
 }
 
-// Test function to verify API connection
+// Test function to verify Netlify function connection
 async function testShopifyConnection() {
-    console.log('🔄 Testing Shopify API connection...');
-    
-    const testQuery = `
-        {
-            shop {
-                name
-                primaryDomain {
-                    url
-                }
-            }
-        }
-    `;
+    console.log('🔄 Testing Shopify connection via Netlify function...');
     
     try {
-        const response = await fetch(`https://${SHOPIFY_CONFIG.domain}/api/${SHOPIFY_CONFIG.apiVersion}/graphql.json`, {
-            method: 'POST',
-            headers: {
-                'X-Shopify-Storefront-Access-Token': SHOPIFY_CONFIG.storefrontAccessToken,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: testQuery })
-        });
+        const response = await fetch('/.netlify/functions/get-products');
         
         console.log('📡 Response Status:', response.status);
         console.log('📡 Response Headers:', Object.fromEntries(response.headers.entries()));
@@ -67,96 +48,49 @@ async function testShopifyConnection() {
         try {
             const data = JSON.parse(responseText);
             
-            if (data.errors) {
-                console.error('❌ GraphQL Errors:', data.errors);
-                
-                // Check for common errors
-                if (data.errors.some(e => e.message.includes('access token'))) {
-                    console.error('🔑 Token Issue: Your access token is invalid or has incorrect permissions');
-                    console.log('📌 Make sure your token has these Storefront API permissions:');
-                    console.log('   - unauthenticated_read_product_listings');
-                    console.log('   - unauthenticated_write_checkouts');
-                    console.log('   - unauthenticated_read_checkouts');
+            if (data.error) {
+                console.error('❌ Netlify Function Error:', data.error);
+                console.log('📌 Common issues:');
+                console.log('   1. Environment variables not set in Netlify Dashboard');
+                console.log('   2. SHOPIFY_ADMIN_TOKEN missing or invalid');
+                console.log('   3. Netlify function not deployed');
+                return false;
+            } else if (data.products && Array.isArray(data.products)) {
+                console.log('✅ SUCCESS! Connected via Netlify function');
+                console.log(`🛍️ Found ${data.products.length} products`);
+                if (data.products.length > 0) {
+                    console.log('📦 First product:', data.products[0].title);
                 }
-            } else if (data.data && data.data.shop) {
-                console.log('✅ SUCCESS! Connected to:', data.data.shop.name);
-                console.log('🏪 Store URL:', data.data.shop.primaryDomain.url);
                 return true;
             }
         } catch (parseError) {
             console.error('❌ Failed to parse response as JSON');
             console.log('📌 This usually means:');
-            console.log('   1. The domain is incorrect (getting Shopify 404 page)');
-            console.log('   2. CORS is blocking the request (check browser network tab)');
-            console.log('   3. The API version is incorrect');
-            
-            // Check if it's HTML
-            if (responseText.includes('<!doctype') || responseText.includes('<html')) {
-                console.error('🌐 Received HTML instead of JSON - domain is likely incorrect');
-                console.log('📌 Your domain should look like: your-store-name.myshopify.com');
-                console.log('   NOT: your-store-name.com');
-                console.log('   NOT: admin.shopify.com/store/your-store-name');
-            }
+            console.log('   1. Netlify function returned an error page');
+            console.log('   2. Function is not deployed');
+            console.log('   3. Environment variables are missing');
         }
         
     } catch (error) {
         console.error('❌ Network Error:', error);
         console.log('📌 Possible causes:');
-        console.log('   1. CORS blocking (are you running this locally?)');
+        console.log('   1. Netlify function not deployed');
         console.log('   2. Network connectivity issues');
-        console.log('   3. Shopify API is down');
+        console.log('   3. Function endpoint incorrect');
     }
     
     return false;
 }
 
-// Test loading the Buy SDK
+// Test loading the Buy SDK (disabled to prevent CORS)
 function testBuySDK() {
-    console.log('🔄 Checking Shopify Buy SDK...');
+    console.log('⚠️ Shopify Buy SDK testing disabled to prevent CORS issues');
+    console.log('💡 All product data now comes from Netlify functions');
+    console.log('📌 Direct Shopify Buy SDK calls have been replaced with CORS-free Netlify functions');
     
-    if (window.ShopifyBuy) {
-        console.log('✅ Shopify Buy SDK is loaded');
-        
-        try {
-            const client = window.ShopifyBuy.buildClient({
-                domain: SHOPIFY_CONFIG.domain,
-                storefrontAccessToken: SHOPIFY_CONFIG.storefrontAccessToken,
-                apiVersion: SHOPIFY_CONFIG.apiVersion
-            });
-            
-            console.log('✅ Shopify client created successfully');
-            
-            // Test fetching products
-            client.product.fetchAll(1).then(products => {
-                console.log('✅ Successfully fetched products:', products.length);
-                if (products.length > 0) {
-                    console.log('📦 First product:', {
-                        id: products[0].id,
-                        title: products[0].title,
-                        price: products[0].variants[0].price
-                    });
-                }
-            }).catch(error => {
-                console.error('❌ Error fetching products:', error);
-            });
-            
-        } catch (error) {
-            console.error('❌ Error creating Shopify client:', error);
-        }
-    } else {
-        console.log('⏳ Shopify Buy SDK not loaded yet, loading now...');
-        
-        const script = document.createElement('script');
-        script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-        script.onload = () => {
-            console.log('✅ Shopify Buy SDK loaded');
-            testBuySDK(); // Try again
-        };
-        script.onerror = () => {
-            console.error('❌ Failed to load Shopify Buy SDK');
-        };
-        document.head.appendChild(script);
-    }
+    // Note: Buy SDK initialization disabled to prevent CORS errors
+    // All checkout and product functionality should use Netlify functions instead
+    return;
 }
 
 // Run tests when page loads

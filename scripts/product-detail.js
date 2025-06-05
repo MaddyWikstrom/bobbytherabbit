@@ -152,100 +152,34 @@ class ProductDetailManager {
 
     async loadShopifyProduct(productId) {
         try {
-            // Shopify Storefront API configuration
-            const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
-            const SHOP_DOMAIN = 'bobbytherabbit.myshopify.com';
-            const API_VERSION = '2024-01';
-            const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
-
-            // GraphQL query to fetch a single product by handle
-            const productQuery = `
-                query Product($handle: String!) {
-                    product(handle: $handle) {
-                        id
-                        title
-                        handle
-                        description
-                        priceRange {
-                            minVariantPrice {
-                                amount
-                                currencyCode
-                            }
-                            maxVariantPrice {
-                                amount
-                                currencyCode
-                            }
-                        }
-                        images(first: 10) {
-                            edges {
-                                node {
-                                    url
-                                    altText
-                                }
-                            }
-                        }
-                        variants(first: 100) {
-                            edges {
-                                node {
-                                    id
-                                    title
-                                    price {
-                                        amount
-                                        currencyCode
-                                    }
-                                    compareAtPrice {
-                                        amount
-                                        currencyCode
-                                    }
-                                    availableForSale
-                                    quantityAvailable
-                                    selectedOptions {
-                                        name
-                                        value
-                                    }
-                                }
-                            }
-                        }
-                        tags
-                        productType
-                    }
-                }
-            `;
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
-                },
-                body: JSON.stringify({
-                    query: productQuery,
-                    variables: { handle: productId }
-                })
-            });
-
+            // Use Netlify function to avoid CORS issues
+            console.log('🛍️ Loading product via Netlify function...');
+            const response = await fetch('/.netlify/functions/get-products');
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
             
-            if (data.errors) {
-                console.error('❌ Shopify GraphQL Errors:', data.errors);
+            if (data.error) {
+                console.error('❌ Netlify function error:', data.error);
                 return null;
             }
 
-            const product = data.data.product;
+            // Find the specific product by handle/id
+            const product = data.products?.find(p => p.handle === productId || p.id === productId);
+            
             if (!product) {
-                console.log('❌ Product not found in Shopify');
+                console.log('❌ Product not found in Shopify data');
                 return null;
             }
 
-            console.log(`🛍️ Found product in Shopify: ${product.title}`);
+            console.log(`🛍️ Found product via Netlify function: ${product.title}`);
             return this.convertShopifyProductForDetail(product);
             
         } catch (error) {
-            console.error('❌ Error loading Shopify product:', error);
+            console.error('❌ Error loading product via Netlify function:', error);
             return null;
         }
     }

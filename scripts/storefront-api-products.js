@@ -1,73 +1,12 @@
-// Direct Storefront API implementation following Shopify's guide
-// https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/products-collections/getting-started
+// CORS-free product fetching using Netlify functions
+// This replaces direct Storefront API calls to prevent CORS errors
 
-const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
-const SHOP_DOMAIN = 'bobbytherabbit.myshopify.com';
-const API_VERSION = '2024-01';
-
-// GraphQL endpoint
-const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
-
-// Query to fetch products
-const productsQuery = `
-  query Products {
-    products(first: 250) {
-      edges {
-        node {
-          id
-          title
-          handle
-          description
-          priceRange {
-            minVariantPrice {
-              amount
-              currencyCode
-            }
-          }
-          images(first: 1) {
-            edges {
-              node {
-                url
-                altText
-              }
-            }
-          }
-          variants(first: 100) {
-            edges {
-              node {
-                id
-                title
-                price {
-                  amount
-                  currencyCode
-                }
-                availableForSale
-                selectedOptions {
-                  name
-                  value
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-// Fetch products using Storefront API
+// Fetch products using Netlify function (bypasses CORS)
 async function fetchProductsFromStorefront() {
-    console.log('🔄 Fetching products from Shopify Storefront API...');
+    console.log('🔄 Fetching products via Netlify function (CORS-free)...');
     
     try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
-            },
-            body: JSON.stringify({ query: productsQuery })
-        });
+        const response = await fetch('/.netlify/functions/get-products');
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -75,25 +14,22 @@ async function fetchProductsFromStorefront() {
 
         const data = await response.json();
         
-        if (data.errors) {
-            console.error('❌ GraphQL Errors:', data.errors);
-            data.errors.forEach(error => {
-                console.error(`   - ${error.message}`);
-            });
+        if (data.error) {
+            console.error('❌ Netlify function error:', data.error);
             return null;
         }
 
-        const products = data.data.products.edges;
-        console.log(`✅ Successfully fetched ${products.length} products!\n`);
+        const products = data.products || [];
+        console.log(`✅ Successfully fetched ${products.length} products via Netlify function!\n`);
         
         return products;
     } catch (error) {
-        console.error('❌ Error fetching products:', error);
+        console.error('❌ Error fetching products via Netlify function:', error);
         console.log('\n🔧 Troubleshooting tips:');
-        console.log('1. Check if your Storefront Access Token is correct');
-        console.log('2. Verify the token has product reading permissions');
-        console.log('3. Make sure your domain is correct (should end with .myshopify.com)');
-        console.log('4. Check browser console for CORS errors');
+        console.log('1. Make sure Netlify function is deployed');
+        console.log('2. Check environment variables are set in Netlify');
+        console.log('3. Verify SHOPIFY_ADMIN_TOKEN is configured');
+        console.log('4. Check Netlify function logs for errors');
         return null;
     }
 }

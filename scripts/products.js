@@ -108,8 +108,8 @@ class ProductManager {
             });
 
             if (!response.ok) {
-                console.log('❌ Netlify function failed, trying direct API call...');
-                return await this.loadShopifyProductsDirect();
+                console.log('❌ Netlify function failed, status:', response.status);
+                throw new Error(`Netlify function failed with status: ${response.status}`);
             }
 
             const shopifyProducts = await response.json();
@@ -120,107 +120,10 @@ class ProductManager {
             
         } catch (error) {
             console.error('❌ Error loading Shopify products via Netlify function:', error);
-            console.log('🔄 Falling back to direct API call...');
-            return await this.loadShopifyProductsDirect();
-        }
-    }
-
-    async loadShopifyProductsDirect() {
-        try {
-            // Shopify Storefront API configuration - Direct call fallback
-            const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
-            const SHOP_DOMAIN = 'bobbytherabbit.myshopify.com';
-            const API_VERSION = '2024-01';
-            const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
-
-            // GraphQL query to fetch products
-            const productsQuery = `
-                query Products {
-                    products(first: 250) {
-                        edges {
-                            node {
-                                id
-                                title
-                                handle
-                                description
-                                priceRange {
-                                    minVariantPrice {
-                                        amount
-                                        currencyCode
-                                    }
-                                    maxVariantPrice {
-                                        amount
-                                        currencyCode
-                                    }
-                                }
-                                images(first: 5) {
-                                    edges {
-                                        node {
-                                            url
-                                            altText
-                                        }
-                                    }
-                                }
-                                variants(first: 100) {
-                                    edges {
-                                        node {
-                                            id
-                                            title
-                                            price {
-                                                amount
-                                                currencyCode
-                                            }
-                                            compareAtPrice {
-                                                amount
-                                                currencyCode
-                                            }
-                                            availableForSale
-                                            selectedOptions {
-                                                name
-                                                value
-                                            }
-                                        }
-                                    }
-                                }
-                                tags
-                                productType
-                            }
-                        }
-                    }
-                }
-            `;
-
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
-                },
-                body: JSON.stringify({ query: productsQuery })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.errors) {
-                console.error('❌ Shopify GraphQL Errors:', data.errors);
-                return null;
-            }
-
-            const shopifyProducts = data.data.products.edges;
-            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify (direct)`);
-            
-            // Convert Shopify products to our format
-            return this.convertShopifyProducts(shopifyProducts);
-            
-        } catch (error) {
-            console.error('❌ Error loading Shopify products (direct):', error);
             return null;
         }
     }
+
 
     convertShopifyProducts(shopifyProducts) {
         return shopifyProducts.map(edge => {
