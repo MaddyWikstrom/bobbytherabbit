@@ -15,98 +15,69 @@ class HomepageProductLoader {
 
     async loadProducts() {
         try {
-            // Try to load from CSV first
-            const csvData = await this.loadCSVData();
-            if (csvData && csvData.trim()) {
-                this.products = this.parseCSVToProducts(csvData);
+            // Try to load from Shopify via Netlify function first
+            const shopifyProducts = await this.loadShopifyProducts();
+            if (shopifyProducts && shopifyProducts.length > 0) {
+                this.products = shopifyProducts.slice(0, 12); // Limit to 12 products for homepage
+                console.log('✅ Loaded products from Shopify:', this.products.length);
             } else {
                 // Fallback to sample products
                 this.products = this.getSampleProducts();
+                console.log('⚠️ Using sample products as fallback');
             }
         } catch (error) {
             console.error('Error loading products:', error);
             this.products = this.getSampleProducts();
+            console.log('⚠️ Using sample products due to error');
         }
     }
 
-    async loadCSVData() {
+    async loadShopifyProducts() {
         try {
-            const response = await fetch('products_export_1.csv');
+            console.log('🔄 Fetching products from Shopify...');
+            const response = await fetch('/.netlify/functions/get-products');
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const csvText = await response.text();
-            return csvText;
-        } catch (error) {
-            console.error('Error loading CSV:', error);
-            return '';
-        }
-    }
-
-    parseCSVToProducts(csvText) {
-        if (!csvText || csvText.trim() === '') {
-            return this.getSampleProducts();
-        }
-
-        const lines = csvText.split('\n');
-        if (lines.length < 2) {
-            return this.getSampleProducts();
-        }
-
-        const products = new Map();
-
-        for (let i = 1; i < lines.length; i++) {
-            const values = this.parseCSVLine(lines[i]);
-            if (values.length < 10) continue;
-
-            const handle = values[0];
-            const title = values[1];
-            const description = values[2];
-            const price = parseFloat(values[22]) || 0;
-            const comparePrice = parseFloat(values[23]) || 0;
-            const imageUrl = values[26];
-
-            if (!handle || !title || !imageUrl) continue;
-
-            if (!products.has(handle)) {
-                products.set(handle, {
-                    id: handle,
-                    title: title,
-                    description: this.cleanDescription(description),
-                    category: this.extractCategory(title),
-                    price: price,
-                    comparePrice: comparePrice > price ? comparePrice : null,
-                    mainImage: imageUrl,
-                    featured: Math.random() > 0.7,
-                    new: Math.random() > 0.8,
-                    sale: comparePrice > price
-                });
-            }
-        }
-
-        return Array.from(products.values()).slice(0, 20); // Limit to 20 products for homepage
-    }
-
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
             
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current.trim());
-                current = '';
-            } else {
-                current += char;
+            const data = await response.json();
+            
+            if (data.error) {
+                console.error('Shopify API Error:', data.error);
+                return [];
             }
+
+            // Transform Shopify products to our format
+            return data.map(product => this.transformShopifyProduct(product.node));
+        } catch (error) {
+            console.error('Error loading Shopify products:', error);
+            return [];
         }
-        
-        result.push(current.trim());
-        return result;
+    }
+
+    transformShopifyProduct(product) {
+        const minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+        const maxPrice = parseFloat(product.priceRange.maxVariantPrice.amount);
+        const hasVariants = product.variants.edges.length > 0;
+        const firstVariant = hasVariants ? product.variants.edges[0].node : null;
+        const compareAtPrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
+        const mainImage = product.images.edges.length > 0 ? product.images.edges[0].node.url : 'assets/placeholder-product.png';
+
+        return {
+            id: product.handle,
+            title: product.title,
+            description: this.cleanDescription(product.description),
+            category: this.extractCategory(product.title),
+            price: minPrice,
+            comparePrice: compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null,
+            mainImage: mainImage,
+            featured: product.tags.includes('featured') || Math.random() > 0.7,
+            new: product.tags.includes('new') || Math.random() > 0.8,
+            sale: compareAtPrice && compareAtPrice > minPrice,
+            shopifyId: product.id,
+            handle: product.handle
+        };
     }
 
     cleanDescription(description) {
@@ -133,24 +104,24 @@ class HomepageProductLoader {
         return [
             {
                 id: 'bungi-hoodie-black',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Black',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: 65.00,
-                mainImage: 'assets/hoodie-black.png',
+                mainImage: 'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
                 featured: true,
                 new: true,
                 sale: true
             },
             {
                 id: 'bungi-hoodie-navy',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/hoodie-navy.png',
+                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
                 featured: true,
                 new: false,
                 sale: false
@@ -158,23 +129,23 @@ class HomepageProductLoader {
             {
                 id: 'bungi-hoodie-maroon',
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/hoodie-maroon.png',
+                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
                 featured: false,
                 new: true,
                 sale: false
             },
             {
                 id: 'bungi-hoodie-charcoal',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: 58.00,
-                mainImage: 'assets/hoodie-charcoal.png',
+                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
                 featured: false,
                 new: false,
                 sale: true
@@ -182,23 +153,23 @@ class HomepageProductLoader {
             {
                 id: 'bungi-hoodie-white',
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/hoodie-white.png',
+                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
                 featured: true,
                 new: false,
                 sale: false
             },
             {
-                id: 'bungi-hoodie-vintage-black',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design.',
+                id: 'bungi-hoodie-navy-back',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy (Back Design)',
+                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/hoodie-vintage-black.png',
+                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
                 featured: false,
                 new: true,
                 sale: false
