@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopify Admin API Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 20px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .success { 
+            background-color: #d4edda; 
+            border-color: #c3e6cb; 
+            color: #155724;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb; 
+            color: #721c24;
+        }
+        .warning { 
+            background-color: #fff3cd; 
+            border-color: #ffeaa7; 
+            color: #856404;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        pre { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            overflow-x: auto; 
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            font-size: 12px;
+        }
+        button { 
+            padding: 12px 24px; 
+            margin: 8px; 
+            cursor: pointer; 
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .setup-instructions {
+            background: #e7f3ff;
+            border: 2px solid #b3d9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .setup-instructions h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .setup-step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Shopify Admin API Integration Test</h1>
+        
+        <div class="setup-instructions">
+            <h3>📋 Setup Required</h3>
+            <p>Before testing, you need to set up the Admin API token:</p>
+            <div class="setup-step">
+                <strong>Step 1:</strong> Go to your Shopify Admin → Settings → Apps and sales channels → Develop apps
+            </div>
+            <div class="setup-step">
+                <strong>Step 2:</strong> Create a new app called "Bobby Streetwear Website Integration"
+            </div>
+            <div class="setup-step">
+                <strong>Step 3:</strong> Configure Admin API scopes: enable <code>read_products</code>
+            </div>
+            <div class="setup-step">
+                <strong>Step 4:</strong> Install the app and copy the Admin API access token (starts with <code>shpat_</code>)
+            </div>
+            <div class="setup-step">
+                <strong>Step 5:</strong> Add the token to your Netlify environment variables as <code>SHOPIFY_ADMIN_TOKEN</code>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test 1: Admin API Function</h2>
+            <p>Tests the new Admin API Netlify function</p>
+            <button onclick="testAdminAPIFunction()">Test Admin API Function</button>
+            <div id="admin-api-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 2: Integration Script</h2>
+            <p>Tests the new Admin API integration script</p>
+            <button onclick="testIntegrationScript()">Test Integration Script</button>
+            <div id="integration-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 3: Health Check</h2>
+            <p>Performs a comprehensive health check</p>
+            <button onclick="performHealthCheck()">Run Health Check</button>
+            <div id="health-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 4: Compare Approaches</h2>
+            <p>Compares old Storefront API vs new Admin API</p>
+            <button onclick="compareApproaches()">Compare Approaches</button>
+            <div id="compare-result"></div>
+        </div>
+    </div>
+
+    <!-- Load the Admin API integration script -->
+    <script src="scripts/shopify-integration-admin-api.js"></script>
+
+    <script>
+        // Test 1: Admin API Function
+        async function testAdminAPIFunction() {
+            const resultDiv = document.getElementById('admin-api-result');
+            resultDiv.innerHTML = '<p>Testing Admin API function...</p>';
+            
+            try {
+                console.log('Testing Admin API function...');
+                
+                const response = await fetch('/.netlify/functions/get-products-admin-api', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Admin API response status:', response.status);
+                console.log('Admin API response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h3>❌ Admin API Function Error</h3>
+                                <p><strong>Error:</strong> ${data.error}</p>
+                                <p><strong>Details:</strong> ${data.details}</p>
+                                <h4>Troubleshooting:</h4>
+                                <pre>${JSON.stringify(data.troubleshooting, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h3>✅ Admin API Function Success</h3>
+                                <p><strong>Source:</strong> ${data.meta?.source || 'Unknown'}</p>
+                                <p><strong>Products found:</strong> ${data.meta?.count || 0}</p>
+                                <p><strong>Domain:</strong> ${data.meta?.domain || 'Unknown'}</p>
+                                <p><strong>API Version:</strong> ${data.meta?.apiVersion || 'Unknown'}</p>
+                                <p><strong>Timestamp:</strong> ${data.meta?.timestamp || 'Unknown'}</p>
+                                <h4>Sample Product Data:</h4>
+                                <pre>${JSON.stringify(data.products?.slice(0, 1) || [], null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Admin API Function HTTP Error</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Response:</strong></p>
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Admin API function error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Admin API Function Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>This might indicate the function is not deployed or there's a network issue.</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 2: Integration Script
+        async function testIntegrationScript() {
+            const resultDiv = document.getElementById('integration-result');
+            resultDiv.innerHTML = '<p>Testing integration script...</p>';
+            
+            try {
+                if (typeof window.shopifyDebug === 'undefined') {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Integration Script Not Loaded</h3>
+                            <p>The shopify-integration-admin-api.js script is not loaded or not working.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Test the debug functions
+                const config = window.shopifyDebug.getConfig();
+                const healthCheck = window.shopifyDebug.performHealthCheck();
+                
+                // Test fetching products
+                const products = await window.shopifyDebug.fetchProducts();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Integration Script Working</h3>
+                        <h4>Configuration:</h4>
+                        <pre>${JSON.stringify(config, null, 2)}</pre>
+                        <h4>Health Check:</h4>
+                        <pre>${JSON.stringify(healthCheck, null, 2)}</pre>
+                        <h4>Product Fetch Result:</h4>
+                        <p>${products ? `Found ${products.length} products` : 'Using fallback data'}</p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Integration script error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Integration Script Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 3: Health Check
+        async function performHealthCheck() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p>Running health check...</p>';
+            
+            try {
+                const checks = {
+                    adminAPIFunction: null,
+                    integrationScript: null,
+                    shopifySDK: null,
+                    localStorage: null
+                };
+
+                // Check Admin API function
+                try {
+                    const response = await fetch('/.netlify/functions/get-products-admin-api');
+                    checks.adminAPIFunction = response.ok ? 'Working' : `Error ${response.status}`;
+                } catch (e) {
+                    checks.adminAPIFunction = 'Not available';
+                }
+
+                // Check integration script
+                checks.integrationScript = typeof window.shopifyDebug !== 'undefined' ? 'Loaded' : 'Not loaded';
+
+                // Check Shopify SDK
+                checks.shopifySDK = typeof window.ShopifyBuy !== 'undefined' ? 'Loaded' : 'Not loaded';
+
+                // Check localStorage
+                const storedMapping = localStorage.getItem('shopifyProductMapping');
+                checks.localStorage = storedMapping ? 'Has data' : 'Empty';
+
+                // Determine overall status
+                const allGood = Object.values(checks).every(status => 
+                    status === 'Working' || status === 'Loaded' || status === 'Has data'
+                );
+
+                resultDiv.innerHTML = `
+                    <div class="${allGood ? 'success' : 'warning'}">
+                        <h3>${allGood ? '✅' : '⚠️'} Health Check Results</h3>
+                        <h4>System Status:</h4>
+                        <pre>${JSON.stringify(checks, null, 2)}</pre>
+                        ${!allGood ? '<p><strong>Note:</strong> Some components may need setup or deployment.</p>' : ''}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Health check error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Health Check Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 4: Compare Approaches
+        async function compareApproaches() {
+            const resultDiv = document.getElementById('compare-result');
+            resultDiv.innerHTML = '<p>Comparing approaches...</p>';
+            
+            const comparison = {
+                'Storefront API (Old)': {
+                    domain: 'bobbytherabbit.com.myshopify.com',
+                    token: 'Storefront Access Token',
+                    endpoint: '/api/2024-01/graphql.json',
+                    method: 'GraphQL',
+                    issues: ['Certificate errors', 'CORS problems', '404 errors', 'Domain issues'],
+                    status: '❌ Not working'
+                },
+                'Admin API (New)': {
+                    domain: 'bobbytherabbit.myshopify.com',
+                    token: 'Admin API Token (shpat_)',
+                    endpoint: '/admin/api/2024-01/products.json',
+                    method: 'REST API',
+                    benefits: ['No CORS issues', 'No certificate problems', 'More reliable', 'Better error handling'],
+                    status: '✅ Recommended'
+                }
+            };
+
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h3>📊 Approach Comparison</h3>
+                    <pre>${JSON.stringify(comparison, null, 2)}</pre>
+                    <h4>Recommendation:</h4>
+                    <p><strong>Use the Admin API approach</strong> - it solves all the issues you were experiencing with the Storefront API.</p>
+                    <h4>Next Steps:</h4>
+                    <ol>
+                        <li>Set up Admin API token in Shopify</li>
+                        <li>Add token to Netlify environment variables</li>
+                        <li>Replace your current integration with the Admin API version</li>
+                        <li>Deploy and test</li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        // Auto-run basic checks on page load
+        window.addEventListener('load', function() {
+            console.log('Admin API test page loaded');
+            console.log('Available debug functions:', typeof window.shopifyDebug !== 'undefined' ? Object.keys(window.shopifyDebug) : 'None');
+        });
+    </script>
+</body>
+</html>

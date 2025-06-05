@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopify Token Test</title>
+</head>
+<body>
+    <h1>Shopify Token Test</h1>
+    <button onclick="testToken()">Test Token</button>
+    <div id="result"></div>
+
+    <script>
+        async function testToken() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                // Test 1: Simple shop query
+                const response = await fetch('https://bobbytherabbit.com.myshopify.com/api/2024-01/graphql.json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': '8c6bd66766da4553701a1f1fe7d94dc4'
+                    },
+                    body: JSON.stringify({
+                        query: `{
+                            shop {
+                                name
+                                description
+                            }
+                        }`
+                    })
+                });
+                
+                result.innerHTML = `
+                    <h3>Response Status: ${response.status}</h3>
+                    <h3>Response Headers:</h3>
+                    <pre>${JSON.stringify([...response.headers.entries()], null, 2)}</pre>
+                `;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML += `
+                        <h3>Response Data:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    result.innerHTML += `
+                        <h3>Error Response:</h3>
+                        <pre>${errorText}</pre>
+                    `;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <h3>Error:</h3>
+                    <pre>${error.message}</pre>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

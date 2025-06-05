@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopify Integration Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Shopify Integration Debug Tool</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Netlify Function</h2>
+        <button onclick="testNetlifyFunction()">Test Netlify Function</button>
+        <div id="netlify-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Direct Shopify API</h2>
+        <button onclick="testDirectShopify()">Test Direct Shopify API</button>
+        <div id="shopify-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Shopify Buy SDK</h2>
+        <button onclick="testShopifySDK()">Test Shopify Buy SDK</button>
+        <div id="sdk-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Alternative Domain</h2>
+        <button onclick="testAlternativeDomain()">Test Alternative Domain</button>
+        <div id="alt-domain-result"></div>
+    </div>
+
+    <script>
+        // Test 1: Netlify Function
+        async function testNetlifyFunction() {
+            const resultDiv = document.getElementById('netlify-result');
+            resultDiv.innerHTML = '<p>Testing Netlify function...</p>';
+            
+            try {
+                console.log('Testing Netlify function at:', window.location.origin + '/.netlify/functions/get-products');
+                
+                const response = await fetch('/.netlify/functions/get-products', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Netlify function response status:', response.status);
+                console.log('Netlify function response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Netlify Function Success</h3>
+                            <p>Status: ${response.status}</p>
+                            <p>Products found: ${Array.isArray(data) ? data.length : 'Unknown'}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Netlify Function Error</h3>
+                            <p>Status: ${response.status}</p>
+                            <p>Response:</p>
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Netlify function error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Netlify Function Error</h3>
+                        <p>Error: ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 2: Direct Shopify API
+        async function testDirectShopify() {
+            const resultDiv = document.getElementById('shopify-result');
+            resultDiv.innerHTML = '<p>Testing direct Shopify API...</p>';
+            
+            const shopifyConfig = {
+                domain: 'bobbytherabbit.com.myshopify.com',
+                token: '8c6bd66766da4553701a1f1fe7d94dc4',
+                apiVersion: '2024-01'
+            };
+            
+            try {
+                const query = `{
+                    shop {
+                        name
+                        description
+                    }
+                    products(first: 3) {
+                        edges {
+                            node {
+                                id
+                                title
+                                handle
+                            }
+                        }
+                    }
+                }`;
+                
+                console.log('Testing direct Shopify API at:', `https://${shopifyConfig.domain}/api/${shopifyConfig.apiVersion}/graphql.json`);
+                
+                const response = await fetch(`https://${shopifyConfig.domain}/api/${shopifyConfig.apiVersion}/graphql.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': shopifyConfig.token,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                console.log('Direct Shopify response status:', response.status);
+                console.log('Direct Shopify response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.errors) {
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h3>❌ Shopify GraphQL Errors</h3>
+                                <pre>${JSON.stringify(data.errors, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h3>✅ Direct Shopify API Success</h3>
+                                <p>Status: ${response.status}</p>
+                                <p>Shop: ${data.data?.shop?.name || 'Unknown'}</p>
+                                <p>Products found: ${data.data?.products?.edges?.length || 0}</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Direct Shopify API Error</h3>
+                            <p>Status: ${response.status}</p>
+                            <p>Response:</p>
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Direct Shopify error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Direct Shopify API Error</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>This might be a CORS or certificate issue</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 3: Shopify Buy SDK
+        async function testShopifySDK() {
+            const resultDiv = document.getElementById('sdk-result');
+            resultDiv.innerHTML = '<p>Loading Shopify Buy SDK...</p>';
+            
+            try {
+                // Load SDK if not already loaded
+                if (!window.ShopifyBuy) {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                
+                const client = window.ShopifyBuy.buildClient({
+                    domain: 'bobbytherabbit.com.myshopify.com',
+                    storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
+                    apiVersion: '2024-01'
+                });
+                
+                console.log('Shopify SDK client created:', client);
+                
+                // Test fetching products
+                const products = await client.product.fetchAll();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Shopify Buy SDK Success</h3>
+                        <p>Products found: ${products.length}</p>
+                        <pre>${JSON.stringify(products.slice(0, 2), null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Shopify SDK error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Shopify Buy SDK Error</h3>
+                        <p>Error: ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 4: Alternative Domain (without .com)
+        async function testAlternativeDomain() {
+            const resultDiv = document.getElementById('alt-domain-result');
+            resultDiv.innerHTML = '<p>Testing alternative domain...</p>';
+            
+            try {
+                const query = `{
+                    shop {
+                        name
+                        description
+                    }
+                }`;
+                
+                // Try without the .com part
+                const altDomain = 'bobbytherabbit.myshopify.com';
+                console.log('Testing alternative domain:', altDomain);
+                
+                const response = await fetch(`https://${altDomain}/api/2024-01/graphql.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': '8c6bd66766da4553701a1f1fe7d94dc4',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Alternative Domain Works!</h3>
+                            <p>Domain: ${altDomain}</p>
+                            <p>Status: ${response.status}</p>
+                            <p>Shop: ${data.data?.shop?.name || 'Unknown'}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Alternative Domain Error</h3>
+                            <p>Status: ${response.status}</p>
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Alternative domain error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Alternative Domain Error</h3>
+                        <p>Error: ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', function() {
+            console.log('Debug page loaded. Run tests manually or check console for details.');
+        });
+    </script>
+</body>
+</html>
