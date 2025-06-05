@@ -24,10 +24,3 @@
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, X-Shopify-Storefront-Access-Token"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Max-Age = "86400"
-
-# Handle preflight OPTIONS requests
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/options-handler"
-  status = 200
-  conditions = {Method = ["OPTIONS"]}
