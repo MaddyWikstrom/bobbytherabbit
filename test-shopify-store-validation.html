@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopify Store Validation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 4px; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; color: #721c24; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; color: #856404; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 4px; color: #0c5460; }
+        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .test-result { margin: 15px 0; padding: 15px; border-radius: 4px; }
+        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Shopify Store & Token Validation</h1>
+        
+        <div class="info">
+            <h3>🎯 Diagnosing the Real Issue</h3>
+            <p>Since domain fixes didn't resolve the "Failed to fetch" errors, let's check if:</p>
+            <ul>
+                <li>Your Shopify store exists and is accessible</li>
+                <li>Your Storefront Access Token is valid</li>
+                <li>The store has the correct API permissions</li>
+                <li>There are network/firewall issues</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>Step 1:</strong> Test if your Shopify store exists
+            <button onclick="testStoreExists()">Test Store Accessibility</button>
+            <div id="store-result"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 2:</strong> Validate your Storefront Access Token
+            <button onclick="testTokenValidity()">Test Token Validity</button>
+            <div id="token-result"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 3:</strong> Check API permissions and setup
+            <button onclick="checkAPISetup()">Check API Setup</button>
+            <div id="api-result"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 4:</strong> Test alternative approaches
+            <button onclick="testAlternatives()">Test Alternatives</button>
+            <div id="alt-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const STORE_DOMAIN = 'bobbytherabbit.myshopify.com';
+        const ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
+
+        // Test 1: Check if store exists
+        async function testStoreExists() {
+            const resultDiv = document.getElementById('store-result');
+            resultDiv.innerHTML = '<div class="info">Testing store accessibility...</div>';
+            
+            try {
+                // Try to access the store's main page
+                const response = await fetch(`https://${STORE_DOMAIN}`, {
+                    method: 'HEAD',
+                    mode: 'no-cors' // Avoid CORS issues for this test
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="success test-result">
+                        <h4>✅ Store Exists</h4>
+                        <p>Store domain <code>${STORE_DOMAIN}</code> is accessible.</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error test-result">
+                        <h4>❌ Store Access Issue</h4>
+                        <p>Cannot access <code>${STORE_DOMAIN}</code></p>
+                        <p><strong>Possible issues:</strong></p>
+                        <ul>
+                            <li>Store doesn't exist or is private</li>
+                            <li>Domain is incorrect</li>
+                            <li>Network/firewall blocking access</li>
+                        </ul>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 2: Test token validity with minimal query
+        async function testTokenValidity() {
+            const resultDiv = document.getElementById('token-result');
+            resultDiv.innerHTML = '<div class="info">Testing token validity...</div>';
+            
+            try {
+                // Use the simplest possible query
+                const response = await fetch(`https://${STORE_DOMAIN}/api/2024-01/graphql.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': ACCESS_TOKEN
+                    },
+                    body: JSON.stringify({
+                        query: `{ shop { name } }`
+                    })
+                });
+
+                console.log('Token test response status:', response.status);
+                console.log('Token test response headers:', [...response.headers.entries()]);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.errors) {
+                        resultDiv.innerHTML = `
+                            <div class="error test-result">
+                                <h4>❌ Token/Permission Error</h4>
+                                <p><strong>GraphQL Errors:</strong></p>
+                                <pre>${JSON.stringify(data.errors, null, 2)}</pre>
+                                <p><strong>Common causes:</strong></p>
+                                <ul>
+                                    <li>Invalid Storefront Access Token</li>
+                                    <li>Token doesn't have required permissions</li>
+                                    <li>Token expired or revoked</li>
+                                </ul>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="success test-result">
+                                <h4>✅ Token Valid</h4>
+                                <p>Storefront Access Token is working!</p>
+                                <p><strong>Shop:</strong> ${data.data?.shop?.name || 'Unknown'}</p>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error test-result">
+                            <h4>❌ HTTP Error ${response.status}</h4>
+                            <p><strong>Response:</strong></p>
+                            <pre>${errorText}</pre>
+                            <p><strong>Common causes:</strong></p>
+                            <ul>
+                                <li>401: Invalid token</li>
+                                <li>403: Insufficient permissions</li>
+                                <li>404: Store not found or API disabled</li>
+                                <li>429: Rate limited</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error test-result">
+                        <h4>❌ Network/CORS Error</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>This suggests:</strong></p>
+                        <ul>
+                            <li>CORS policy blocking the request</li>
+                            <li>Network connectivity issues</li>
+                            <li>Firewall/proxy blocking Shopify</li>
+                            <li>Store has disabled Storefront API</li>
+                        </ul>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Test 3: Check API setup
+        async function checkAPISetup() {
+            const resultDiv = document.getElementById('api-result');
+            
+            resultDiv.innerHTML = `
+                <div class="info test-result">
+                    <h4>🔍 API Setup Checklist</h4>
+                    <p><strong>Your current configuration:</strong></p>
+                    <ul>
+                        <li><strong>Store Domain:</strong> ${STORE_DOMAIN}</li>
+                        <li><strong>Access Token:</strong> ${ACCESS_TOKEN.substring(0, 8)}...</li>
+                        <li><strong>API Version:</strong> 2024-01</li>
+                    </ul>
+                    
+                    <h4>✅ Required Shopify Setup:</h4>
+                    <ol>
+                        <li><strong>Storefront API must be enabled</strong> in your Shopify store</li>
+                        <li><strong>Private app created</strong> with Storefront API access</li>
+                        <li><strong>Storefront access token generated</strong> (not Admin API token)</li>
+                        <li><strong>Required permissions:</strong> Read products, Read product listings</li>
+                    </ol>
+                    
+                    <h4>🔧 How to verify in Shopify Admin:</h4>
+                    <ol>
+                        <li>Go to <strong>Settings → Apps and sales channels</strong></li>
+                        <li>Click <strong>"Develop apps"</strong></li>
+                        <li>Find your app or create a new one</li>
+                        <li>Check <strong>"Storefront API"</strong> tab (not Admin API)</li>
+                        <li>Ensure these scopes are enabled:
+                            <ul>
+                                <li>✅ Read products</li>
+                                <li>✅ Read product listings</li>
+                            </ul>
+                        </li>
+                        <li>Copy the <strong>Storefront access token</strong></li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        // Test 4: Alternative approaches
+        async function testAlternatives() {
+            const resultDiv = document.getElementById('alt-result');
+            
+            resultDiv.innerHTML = `
+                <div class="warning test-result">
+                    <h4>🔄 Alternative Solutions</h4>
+                    
+                    <h5>Option 1: Use Admin API (Recommended)</h5>
+                    <p>Since Storefront API is having issues, switch to Admin API:</p>
+                    <ul>
+                        <li>More reliable and powerful</li>
+                        <li>No CORS issues (server-side only)</li>
+                        <li>Better error handling</li>
+                        <li>Files already created: <code>netlify/functions/get-products-admin-api.js</code></li>
+                    </ul>
+                    
+                    <h5>Option 2: Check Store Settings</h5>
+                    <p>Your store might have Storefront API disabled:</p>
+                    <ul>
+                        <li>Go to Shopify Admin → Settings → Checkout</li>
+                        <li>Check if "Storefront API" is enabled</li>
+                        <li>Some stores disable it for security</li>
+                    </ul>
+                    
+                    <h5>Option 3: Verify Token Type</h5>
+                    <p>Make sure you're using the right token:</p>
+                    <ul>
+                        <li>❌ Admin API token (starts with <code>shpat_</code>)</li>
+                        <li>✅ Storefront API token (alphanumeric)</li>
+                    </ul>
+                    
+                    <h5>Option 4: Test with cURL</h5>
+                    <p>Test outside the browser to rule out CORS:</p>
+                    <pre>curl -X POST https://${STORE_DOMAIN}/api/2024-01/graphql.json \\
+  -H "Content-Type: application/json" \\
+  -H "X-Shopify-Storefront-Access-Token: ${ACCESS_TOKEN}" \\
+  -d '{"query": "{ shop { name } }"}'</pre>
+                </div>
+            `;
+        }
+
+        // Auto-run store test on load
+        window.addEventListener('load', function() {
+            console.log('🔍 Shopify Store Validation Tool');
+            console.log('Testing store:', STORE_DOMAIN);
+            console.log('Token preview:', ACCESS_TOKEN.substring(0, 8) + '...');
+        });
+    </script>
+</body>
+</html>
