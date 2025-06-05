@@ -30,8 +30,8 @@
 /* Cookie Wrapper for independent particles */
 .cookie-wrapper {
     position: relative;
-    width: 150px;
-    height: 150px;
+    width: 80px;
+    height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -40,8 +40,8 @@
 /* Loading Cookie Image */
 .loading-cookie {
     position: relative;
-    width: 150px;
-    height: 150px;
+    width: 80px;
+    height: 80px;
     animation: cookie-spin 2s linear infinite;
     transition: all 1s ease;
     z-index: 2;
@@ -548,14 +548,14 @@
         font-size: 1rem;
     }
     
-    .cyber-cookie {
-        width: 100px;
-        height: 100px;
+    .cookie-wrapper {
+        width: 60px;
+        height: 60px;
     }
     
-    .cookie-single {
-        width: 100px;
-        height: 100px;
+    .loading-cookie {
+        width: 60px;
+        height: 60px;
     }
     
     .cookie-chip {
@@ -582,14 +582,14 @@
         width: 250px;
     }
     
-    .cyber-cookie {
-        width: 80px;
-        height: 80px;
+    .cookie-wrapper {
+        width: 50px;
+        height: 50px;
     }
     
-    .cookie-single {
-        width: 80px;
-        height: 80px;
+    .loading-cookie {
+        width: 50px;
+        height: 50px;
     }
     
     .cookie-chip {
