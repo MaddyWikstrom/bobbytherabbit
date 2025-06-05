@@ -1,7 +1,7 @@
 // Direct Storefront API implementation following Shopify's guide
 // https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/products-collections/getting-started
 
-const STOREFRONT_ACCESS_TOKEN = 'fb92c5b6df6a740fc5d5fc94c30dbd0d';
+const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
 const SHOP_DOMAIN = 'bobbytherabbit.com.myshopify.com';
 const API_VERSION = '2024-01';
 

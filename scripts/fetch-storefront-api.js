@@ -2,7 +2,7 @@
 
 const SHOPIFY_CONFIG = {
     domain: 'bobbytherabbit.com.myshopify.com',
-    storefrontAccessToken: 'fb92c5b6df6a740fc5d5fc94c30dbd0d',
+    storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
     apiVersion: '2024-01'
 };
 
