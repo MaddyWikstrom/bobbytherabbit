@@ -17,7 +17,8 @@ class ShopifyBuySDKManager {
             // Initialize client
             this.client = ShopifyBuy.buildClient({
                 domain: 'bobbytherabbit.com.myshopify.com',
-                storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4'
+                storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
+                apiVersion: '2024-01'
             });
 
             console.log('✅ Shopify Buy SDK initialized successfully');
