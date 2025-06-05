@@ -3,6 +3,11 @@
 ## ❌ Current Issue
 Your Shopify Storefront API is blocking requests due to CORS policy, even with the new token `8c6bd66766da4553701a1f1fe7d94dc4`.
 
+## 📚 Official Shopify Documentation
+**Reference:** https://shopify.dev/docs/api/pos-ui-extensions/2025-04/server-communication#cors
+
+Shopify enforces strict CORS policies for security. The Storefront API has limited CORS support and requires proper server-side implementation.
+
 ## ✅ Solution Steps
 
 ### Step 1: Configure Shopify App CORS Settings
@@ -88,12 +93,42 @@ If the Storefront API continues to have CORS issues, we can switch to using the 
    - Check if the request to `/.netlify/functions/get-products` is successful
    - Look at response headers and status codes
 
+## 🏗️ Shopify-Recommended Solutions
+
+Based on official Shopify documentation, here are the recommended approaches:
+
+### 1. **Server-Side Proxy (Current Implementation) ✅**
+- **Status:** Already implemented via Netlify functions
+- **Benefit:** Bypasses all CORS restrictions
+- **File:** [`netlify/functions/get-products.js`](netlify/functions/get-products.js)
+
+### 2. **Shopify App Proxy**
+- Create a Shopify app with proxy configuration
+- Route requests through Shopify's proxy system
+- Requires app development and installation
+
+### 3. **Shopify Hydrogen/Remix Framework**
+- Use Shopify's official React framework
+- Built-in CORS handling and optimization
+- Requires framework migration
+
+### 4. **Shopify Buy SDK**
+- Official JavaScript SDK with CORS support
+- Limited to specific operations
+- Alternative to direct GraphQL calls
+
 ## 📞 Next Steps
 
-1. **Complete Step 1** (Shopify app CORS configuration)
-2. **Test the website** after 10 minutes
-3. **If still failing**, we'll implement Admin API fallback
+1. **Current Solution:** CSV-first loading is working ✅
+2. **Monitor:** Netlify function deployment for API integration
+3. **Future:** Consider Shopify Buy SDK for enhanced features
+
+## 🔗 Additional Resources
+
+- [Shopify CORS Documentation](https://shopify.dev/docs/api/pos-ui-extensions/2025-04/server-communication#cors)
+- [Shopify Storefront API Guide](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api)
+- [Shopify Buy SDK](https://shopify.dev/docs/api/storefront/2024-01/objects/product)
 
 ---
 
-**The technical implementation is correct - this is purely a Shopify app configuration issue that needs to be fixed in your Shopify admin panel.**
+**Current Status: ✅ Working solution deployed with CSV data + server-side proxy backup**
