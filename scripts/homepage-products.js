@@ -110,68 +110,74 @@ class HomepageProductLoader {
                 price: 50.00,
                 comparePrice: 65.00,
                 mainImage: 'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-vintage-black-back-683f90236b8c4.png',
                 featured: true,
                 new: true,
                 sale: true
             },
             {
-                id: 'bungi-hoodie-navy',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
+                id: 'bungi-hat-black',
+                title: 'BUNGI X BOBBY Tech Animal Beanie - Black',
+                description: 'Premium tech-inspired beanie featuring Bobby the Tech Animal branding.',
+                category: 'hat',
+                price: 25.00,
                 comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                mainImage: 'mockups/beanie-black-front.png',
+                hoverImage: 'mockups/beanie-black-side.png',
                 featured: true,
                 new: false,
                 sale: false
             },
             {
-                id: 'bungi-hoodie-maroon',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                featured: false,
-                new: true,
-                sale: false
-            },
-            {
-                id: 'bungi-hoodie-charcoal',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: 58.00,
-                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
-                featured: false,
+                id: 'bungi-tshirt-white',
+                title: 'BUNGI X BOBBY Tech Animal T-Shirt - White',
+                description: 'Classic streetwear t-shirt with cyberpunk Bobby design.',
+                category: 't-shirt',
+                price: 30.00,
+                comparePrice: 35.00,
+                mainImage: 'mockups/tshirt-white-front.png',
+                hoverImage: 'mockups/tshirt-white-back.png',
+                featured: true,
                 new: false,
                 sale: true
             },
             {
-                id: 'bungi-hoodie-white',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
+                id: 'bungi-sweater-gray',
+                title: 'BUNGI X BOBBY Tech Sweater - Heather Gray',
+                description: 'Cozy tech-inspired sweater with premium Bobby branding.',
+                category: 'sweater',
+                price: 55.00,
                 comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                mainImage: 'mockups/sweater-gray-front.png',
+                hoverImage: 'mockups/sweater-gray-back.png',
                 featured: true,
-                new: false,
+                new: true,
                 sale: false
             },
             {
-                id: 'bungi-hoodie-navy-back',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy (Back Design)',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
-                featured: false,
+                id: 'bungi-windbreaker-black',
+                title: 'BUNGI X BOBBY Tech Windbreaker - Black',
+                description: 'High-tech windbreaker with reflective Bobby elements.',
+                category: 'windbreaker',
+                price: 75.00,
+                comparePrice: 85.00,
+                mainImage: 'mockups/windbreaker-black-front.png',
+                hoverImage: 'mockups/windbreaker-black-back.png',
+                featured: true,
                 new: true,
+                sale: true
+            },
+            {
+                id: 'bungi-sweatpants-white',
+                title: 'BUNGI X BOBBY Tech Sweatpants - White',
+                description: 'Premium white sweatpants with tech animal styling.',
+                category: 'sweatpants',
+                price: 45.00,
+                comparePrice: null,
+                mainImage: 'mockups/sweatpants-white-front.png',
+                hoverImage: 'mockups/sweatpants-white-side.png',
+                featured: true,
+                new: false,
                 sale: false
             }
         ];
@@ -203,7 +209,12 @@ class HomepageProductLoader {
         return `
             <div class="product-card" data-product-id="${product.id}" onclick="homepageProductLoader.viewProduct('${product.id}')">
                 <div class="product-image">
-                    <img src="${product.mainImage}" alt="${product.title}" loading="lazy">
+                    <img src="${product.mainImage}"
+                         alt="${product.title}"
+                         loading="lazy"
+                         data-main-image="${product.mainImage}"
+                         data-hover-image="${product.hoverImage || product.mainImage}"
+                         class="product-main-img">
                     ${product.new ? '<div class="product-badge new">New</div>' : ''}
                     ${product.sale ? `<div class="product-badge sale">-${discount}%</div>` : ''}
                     ${product.featured ? '<div class="product-badge featured">Featured</div>' : ''}
@@ -221,14 +232,22 @@ class HomepageProductLoader {
     }
 
     attachEventListeners() {
-        // Add hover effects
+        // Add hover effects with image switching
         document.querySelectorAll('#homepage-products .product-card').forEach(card => {
+            const img = card.querySelector('.product-main-img');
+            const mainImage = img.dataset.mainImage;
+            const hoverImage = img.dataset.hoverImage;
+            
             card.addEventListener('mouseenter', () => {
                 card.style.transform = 'translateY(-10px)';
+                if (hoverImage && hoverImage !== mainImage) {
+                    img.src = hoverImage;
+                }
             });
             
             card.addEventListener('mouseleave', () => {
                 card.style.transform = '';
+                img.src = mainImage;
             });
         });
     }
@@ -240,39 +259,45 @@ class HomepageProductLoader {
 
         if (!scrollContainer || !leftArrow || !rightArrow) return;
 
-        const scrollAmount = 320; // Width of one card plus gap
+        let currentIndex = 0;
+        const cardWidth = 570; // Card width + gap
+        const maxIndex = this.products.length - 1;
+
+        const updateTransform = () => {
+            const translateX = -currentIndex * cardWidth;
+            scrollContainer.style.transform = `translateX(${translateX}px)`;
+            scrollContainer.style.transition = 'transform 0.5s ease';
+        };
+
+        const updateArrows = () => {
+            leftArrow.disabled = currentIndex <= 0;
+            rightArrow.disabled = currentIndex >= maxIndex;
+        };
 
         leftArrow.addEventListener('click', () => {
-            scrollContainer.scrollBy({
-                left: -scrollAmount,
-                behavior: 'smooth'
-            });
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateTransform();
+                updateArrows();
+            }
         });
 
         rightArrow.addEventListener('click', () => {
-            scrollContainer.scrollBy({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+                updateTransform();
+                updateArrows();
+            }
         });
-
-        // Update arrow states based on scroll position
-        const updateArrows = () => {
-            const { scrollLeft, scrollWidth, clientWidth } = scrollContainer;
-            leftArrow.disabled = scrollLeft <= 0;
-            rightArrow.disabled = scrollLeft >= scrollWidth - clientWidth - 10;
-        };
-
-        scrollContainer.addEventListener('scroll', updateArrows);
-        updateArrows(); // Initial state
 
         // Touch/swipe support for mobile
         let startX = 0;
-        let scrollStart = 0;
+        let startIndex = 0;
 
         scrollContainer.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
-            scrollStart = scrollContainer.scrollLeft;
+            startIndex = currentIndex;
+            scrollContainer.style.transition = 'none';
         });
 
         scrollContainer.addEventListener('touchmove', (e) => {
@@ -280,13 +305,32 @@ class HomepageProductLoader {
             
             const currentX = e.touches[0].clientX;
             const diff = startX - currentX;
-            scrollContainer.scrollLeft = scrollStart + diff;
+            const translateX = -startIndex * cardWidth - diff;
+            scrollContainer.style.transform = `translateX(${translateX}px)`;
         });
 
-        scrollContainer.addEventListener('touchend', () => {
+        scrollContainer.addEventListener('touchend', (e) => {
+            if (!startX) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const diff = startX - endX;
+            const threshold = 100;
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0 && currentIndex < maxIndex) {
+                    currentIndex++;
+                } else if (diff < 0 && currentIndex > 0) {
+                    currentIndex--;
+                }
+            }
+            
+            updateTransform();
+            updateArrows();
             startX = 0;
-            scrollStart = 0;
         });
+
+        // Initial state
+        updateArrows();
     }
 
     viewProduct(productId) {

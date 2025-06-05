@@ -8,7 +8,7 @@
 .product-grid-scroll {
     display: flex;
     gap: 2rem;
-    overflow-x: auto;
+    overflow-x: hidden; /* Changed from auto to hidden */
     scroll-behavior: smooth;
     padding: 1rem 0;
     scrollbar-width: none; /* Firefox */
