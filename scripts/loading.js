@@ -8,7 +8,7 @@ function initializeLoadingScreen() {
     const progressFill = document.querySelector('.progress-fill');
     const progressText = document.querySelector('.progress-text');
     const loadingText = document.querySelector('.loading-text .glitch-text');
-    const cyberCookie = document.getElementById('cyber-cookie');
+    const cyberCookie = document.getElementById('loading-cookie');
     const loadingLogo = document.querySelector('.loading-logo');
     
     let progress = 0;
