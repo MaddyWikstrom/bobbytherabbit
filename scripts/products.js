@@ -129,7 +129,7 @@ class ProductManager {
         try {
             // Shopify Storefront API configuration - Direct call fallback
             const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
-            const SHOP_DOMAIN = 'bobbytherabbit.com.myshopify.com';
+            const SHOP_DOMAIN = 'bobbytherabbit.myshopify.com';
             const API_VERSION = '2024-01';
             const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
 

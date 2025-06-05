@@ -5,7 +5,7 @@ console.log('🔍 Shopify Integration Debug Mode Started');
 
 // Configuration - Replace with your actual Shopify details
 const SHOPIFY_CONFIG = {
-    domain: 'bobbytherabbit.com.myshopify.com', // Replace with your Shopify domain
+    domain: 'bobbytherabbit.myshopify.com', // Replace with your Shopify domain
     storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4', // Replace with your token
     apiVersion: '2024-01'
 };
