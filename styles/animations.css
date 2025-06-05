@@ -362,6 +362,144 @@ html {
     }
 }
 
+/* Enhanced Glitch Effect for Collection Title */
+.glitch-collection {
+    position: relative;
+    animation: glitch-collection-main 2s infinite;
+}
+
+.glitch-collection::before,
+.glitch-collection::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+.glitch-collection::before {
+    animation: glitch-collection-1 0.5s infinite;
+    color: #ff77c6;
+    z-index: -1;
+}
+
+.glitch-collection::after {
+    animation: glitch-collection-2 0.5s infinite;
+    color: #77c6ff;
+    z-index: -2;
+}
+
+@keyframes glitch-collection-main {
+    0%, 100% {
+        transform: translate(0);
+        filter: hue-rotate(0deg);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+        filter: hue-rotate(90deg);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+        filter: hue-rotate(180deg);
+    }
+    60% {
+        transform: translate(2px, 2px);
+        filter: hue-rotate(270deg);
+    }
+    80% {
+        transform: translate(2px, -2px);
+        filter: hue-rotate(360deg);
+    }
+}
+
+@keyframes glitch-collection-1 {
+    0%, 100% {
+        transform: translate(0);
+        opacity: 0;
+    }
+    10% {
+        transform: translate(-5px, -2px);
+        opacity: 1;
+    }
+    20% {
+        transform: translate(-10px, 2px);
+        opacity: 0;
+    }
+    30% {
+        transform: translate(5px, -1px);
+        opacity: 1;
+    }
+    40% {
+        transform: translate(-1px, 2px);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-3px, -3px);
+        opacity: 1;
+    }
+    60% {
+        transform: translate(2px, 1px);
+        opacity: 0;
+    }
+    70% {
+        transform: translate(-4px, 1px);
+        opacity: 1;
+    }
+    80% {
+        transform: translate(-2px, -1px);
+        opacity: 0;
+    }
+    90% {
+        transform: translate(1px, 2px);
+        opacity: 1;
+    }
+}
+
+@keyframes glitch-collection-2 {
+    0%, 100% {
+        transform: translate(0);
+        opacity: 0;
+    }
+    15% {
+        transform: translate(3px, 3px);
+        opacity: 1;
+    }
+    25% {
+        transform: translate(-2px, -2px);
+        opacity: 0;
+    }
+    35% {
+        transform: translate(4px, 2px);
+        opacity: 1;
+    }
+    45% {
+        transform: translate(-3px, 1px);
+        opacity: 0;
+    }
+    55% {
+        transform: translate(2px, -2px);
+        opacity: 1;
+    }
+    65% {
+        transform: translate(-1px, 3px);
+        opacity: 0;
+    }
+    75% {
+        transform: translate(3px, -1px);
+        opacity: 1;
+    }
+    85% {
+        transform: translate(1px, -3px);
+        opacity: 0;
+    }
+    95% {
+        transform: translate(-2px, 2px);
+        opacity: 1;
+    }
+}
+
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
     * {

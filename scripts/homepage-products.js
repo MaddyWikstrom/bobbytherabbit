@@ -122,8 +122,8 @@ class HomepageProductLoader {
                 category: 'hat',
                 price: 25.00,
                 comparePrice: null,
-                mainImage: 'mockups/beanie-black-front.png',
-                hoverImage: 'mockups/beanie-black-side.png',
+                mainImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
                 featured: true,
                 new: false,
                 sale: false
@@ -135,8 +135,8 @@ class HomepageProductLoader {
                 category: 't-shirt',
                 price: 30.00,
                 comparePrice: 35.00,
-                mainImage: 'mockups/tshirt-white-front.png',
-                hoverImage: 'mockups/tshirt-white-back.png',
+                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
                 featured: true,
                 new: false,
                 sale: true
@@ -148,8 +148,8 @@ class HomepageProductLoader {
                 category: 'sweater',
                 price: 55.00,
                 comparePrice: null,
-                mainImage: 'mockups/sweater-gray-front.png',
-                hoverImage: 'mockups/sweater-gray-back.png',
+                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png',
                 featured: true,
                 new: true,
                 sale: false
@@ -161,8 +161,8 @@ class HomepageProductLoader {
                 category: 'windbreaker',
                 price: 75.00,
                 comparePrice: 85.00,
-                mainImage: 'mockups/windbreaker-black-front.png',
-                hoverImage: 'mockups/windbreaker-black-back.png',
+                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
                 featured: true,
                 new: true,
                 sale: true
@@ -174,8 +174,8 @@ class HomepageProductLoader {
                 category: 'sweatpants',
                 price: 45.00,
                 comparePrice: null,
-                mainImage: 'mockups/sweatpants-white-front.png',
-                hoverImage: 'mockups/sweatpants-white-side.png',
+                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
                 featured: true,
                 new: false,
                 sale: false
@@ -261,7 +261,9 @@ class HomepageProductLoader {
 
         let currentIndex = 0;
         const cardWidth = 570; // Card width + gap
-        const maxIndex = this.products.length - 1;
+        const containerWidth = scrollContainer.parentElement.clientWidth;
+        const visibleCards = Math.floor(containerWidth / cardWidth);
+        const maxIndex = Math.max(0, this.products.length - visibleCards);
 
         const updateTransform = () => {
             const translateX = -currentIndex * cardWidth;
