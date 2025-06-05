@@ -21,8 +21,19 @@ class ProductManager {
 
     async loadProducts() {
         try {
-            // First priority: Try to parse CSV data (more reliable than Shopify API with CORS issues)
-            console.log('📄 Loading products from CSV data...');
+            // First priority: Try Shopify Buy SDK (bypasses CORS)
+            console.log('🛍️ Attempting to load products via Shopify Buy SDK...');
+            const shopifySDKProducts = await this.loadShopifySDKProducts();
+            
+            if (shopifySDKProducts && shopifySDKProducts.length > 0) {
+                this.products = shopifySDKProducts;
+                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify Buy SDK!`);
+                this.filteredProducts = [...this.products];
+                return;
+            }
+            
+            // Second priority: Try to parse CSV data
+            console.log('📄 SDK failed, loading products from CSV data...');
             const csvData = await this.loadCSVData();
             this.products = this.parseCSVToProducts(csvData);
             
@@ -32,19 +43,19 @@ class ProductManager {
                 return;
             }
             
-            // Second priority: Try to load from Shopify API
-            console.log('🛍️ CSV failed, attempting to load products from Shopify...');
+            // Third priority: Try to load from Shopify API via Netlify function
+            console.log('🛍️ CSV failed, attempting to load products from Shopify API...');
             const shopifyProducts = await this.loadShopifyProducts();
             
             if (shopifyProducts && shopifyProducts.length > 0) {
                 this.products = shopifyProducts;
-                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify!`);
+                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify API!`);
                 this.filteredProducts = [...this.products];
                 return;
             }
             
             // Final fallback: Use sample products
-            console.log('⚠️ No products from CSV or Shopify, using sample products');
+            console.log('⚠️ No products from any source, using sample products');
             this.products = this.getSampleProducts();
             this.filteredProducts = [...this.products];
             
@@ -53,6 +64,34 @@ class ProductManager {
             console.log('🔄 Falling back to sample products due to error');
             this.products = this.getSampleProducts();
             this.filteredProducts = [...this.products];
+        }
+    }
+
+    async loadShopifySDKProducts() {
+        try {
+            // Initialize Shopify Buy SDK Manager
+            if (!window.shopifySDKManager) {
+                window.shopifySDKManager = new ShopifyBuySDKManager();
+            }
+            
+            // Wait for SDK to load and initialize
+            let attempts = 0;
+            while (!window.shopifySDKManager.isLoaded && attempts < 30) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                attempts++;
+            }
+            
+            if (!window.shopifySDKManager.isLoaded) {
+                throw new Error('Shopify Buy SDK failed to load within 30 seconds');
+            }
+            
+            // Load products via SDK
+            const products = await window.shopifySDKManager.loadProducts();
+            return products;
+            
+        } catch (error) {
+            console.error('❌ Error loading products via Shopify Buy SDK:', error);
+            return null;
         }
     }
 
