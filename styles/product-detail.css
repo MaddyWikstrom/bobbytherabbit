@@ -627,8 +627,8 @@
 .related-products-grid,
 .recently-viewed-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
 }
 
 /* Size Guide Modal */
@@ -844,8 +844,8 @@
 
     .related-products-grid,
     .recently-viewed-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
     }
 }
 
@@ -1210,4 +1210,68 @@
     .floating-logo {
         opacity: 0.2;
     }
+}
+
+/* Related Products and Recently Viewed - Smaller sizing */
+.related-products .product-card,
+.recently-viewed .product-card {
+    font-size: 0.9rem;
+}
+
+.related-products .product-info,
+.recently-viewed .product-info {
+    padding: 1rem;
+}
+
+.related-products .product-title,
+.recently-viewed .product-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
+}
+
+.related-products .product-category,
+.recently-viewed .product-category {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.related-products .price-current,
+.recently-viewed .price-current {
+    font-size: 1.1rem;
+}
+
+.related-products .price-original,
+.recently-viewed .price-original {
+    font-size: 0.9rem;
+}
+
+.related-products .price-discount,
+.recently-viewed .price-discount {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.related-products .add-to-cart-btn,
+.recently-viewed .add-to-cart-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+}
+
+.related-products .product-badge,
+.recently-viewed .product-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+}
+
+.related-products .variant-option,
+.recently-viewed .variant-option {
+    width: 20px;
+    height: 20px;
+}
+
+.related-products .variant-option::after,
+.recently-viewed .variant-option::after {
+    width: 10px;
+    height: 10px;
 }
