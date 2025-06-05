@@ -1107,33 +1107,42 @@ class ProductDetailManager {
     }
 
     async fetchRelatedProducts() {
-        // Sample related products - in a real app, this would fetch from an API
+        // Related products using real mockup images
         return [
             {
-                id: 'bungi-tee-1',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE T-Shirt',
-                price: 27.50,
+                id: 'bungi-hoodie-navy',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
+                price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/tee-1.svg',
-                category: 't-shirt',
+                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                category: 'hoodie',
                 featured: true
             },
             {
-                id: 'bungi-jacket-1',
-                title: 'BUNGI X BOBBY COWBOY Windbreaker',
-                price: 41.00,
+                id: 'bungi-hoodie-maroon',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
+                price: 50.00,
+                comparePrice: 58.00,
+                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                category: 'hoodie',
+                sale: true
+            },
+            {
+                id: 'bungi-hoodie-white',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
+                price: 50.00,
                 comparePrice: null,
-                mainImage: 'assets/jacket-1.svg',
-                category: 'windbreaker',
+                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                category: 'hoodie',
                 new: true
             },
             {
-                id: 'bungi-pants-1',
-                title: 'BUNGI X BOBBY Wide-leg Joggers',
-                price: 44.50,
-                comparePrice: 52.00,
-                mainImage: 'assets/pants-1.svg',
-                category: 'joggers',
+                id: 'bungi-hoodie-charcoal',
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
+                price: 50.00,
+                comparePrice: 65.00,
+                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
+                category: 'hoodie',
                 sale: true
             }
         ];
