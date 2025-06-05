@@ -37,93 +37,19 @@
     align-items: center;
 }
 
-/* 2D Cyberpunk Cookie */
-.cyber-cookie {
+/* Loading Cookie Image */
+.loading-cookie {
     position: relative;
     width: 150px;
     height: 150px;
     animation: cookie-spin 2s linear infinite;
     transition: all 1s ease;
     z-index: 2;
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
 }
 
-.cyber-cookie.morphing {
+.loading-cookie.morphing {
     animation: cookie-morph 1.5s ease-in-out forwards;
-}
-
-.cookie-single {
-    width: 150px;
-    height: 150px;
-    background: linear-gradient(135deg, #8B6F47 0%, #6B5637 50%, #5B4627 100%);
-    border-radius: 50%;
-    overflow: hidden;
-    box-shadow:
-        inset 0 2px 4px rgba(0,0,0,0.3),
-        inset 0 -2px 4px rgba(255,255,255,0.1),
-        0 0 20px rgba(139, 111, 71, 0.5);
-    position: relative;
-}
-
-.cookie-texture {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background:
-        radial-gradient(circle at 30% 30%, rgba(0,0,0,0.1) 2px, transparent 2px),
-        radial-gradient(circle at 70% 60%, rgba(0,0,0,0.1) 1px, transparent 1px),
-        radial-gradient(circle at 50% 80%, rgba(0,0,0,0.1) 1.5px, transparent 1.5px);
-    background-size: 20px 20px, 15px 15px, 25px 25px;
-}
-
-.cookie-chip {
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background: #3A2F1F;
-    border-radius: 40%;
-    box-shadow:
-        inset 0 1px 2px rgba(0,0,0,0.5),
-        0 1px 1px rgba(0,0,0,0.3);
-}
-
-.cookie-chip:nth-child(1) { top: 20%; left: 25%; transform: rotate(45deg); }
-.cookie-chip:nth-child(2) { top: 35%; left: 60%; width: 12px; height: 12px; }
-.cookie-chip:nth-child(3) { top: 60%; left: 30%; transform: rotate(-30deg); }
-.cookie-chip:nth-child(4) { top: 70%; left: 65%; width: 10px; height: 10px; }
-.cookie-chip:nth-child(5) { top: 45%; left: 40%; width: 13px; height: 13px; transform: rotate(60deg); }
-
-/* Cookie Bite */
-.cookie-bite {
-    position: absolute;
-    width: 45px;
-    height: 45px;
-    top: -15px;
-    right: 15px;
-    overflow: hidden;
-    mix-blend-mode: multiply;
-    opacity: 0.9;
-}
-
-.cookie-bite::before,
-.cookie-bite::after {
-    content: '';
-    position: absolute;
-    background: var(--primary-bg);
-    border-radius: 50%;
-}
-
-.cookie-bite::before {
-    width: 40px;
-    height: 40px;
-    top: 0;
-    right: 0;
-}
-
-.cookie-bite::after {
-    width: 35px;
-    height: 35px;
-    top: 20px;
-    right: -10px;
 }
 
 /* Cookie Crumbs Particles - Organic Dispersion */
