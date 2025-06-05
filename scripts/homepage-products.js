@@ -260,10 +260,30 @@ class HomepageProductLoader {
         if (!scrollContainer || !leftArrow || !rightArrow) return;
 
         let currentIndex = 0;
-        const cardWidth = 570; // Card width + gap
+        
+        // Calculate actual card dimensions
+        const firstCard = scrollContainer.querySelector('.product-card');
+        if (!firstCard) return;
+        
+        const cardStyle = window.getComputedStyle(firstCard);
+        const cardWidth = firstCard.offsetWidth + parseInt(cardStyle.marginRight) + parseInt(cardStyle.marginLeft);
+        
+        // Get container width
         const containerWidth = scrollContainer.parentElement.clientWidth;
+        
+        // Calculate how many cards can be visible at once
         const visibleCards = Math.floor(containerWidth / cardWidth);
+        
+        // Calculate maximum scroll index - only scroll if we have more products than visible
         const maxIndex = Math.max(0, this.products.length - visibleCards);
+
+        console.log('Scroll setup:', {
+            totalProducts: this.products.length,
+            cardWidth,
+            containerWidth,
+            visibleCards,
+            maxIndex
+        });
 
         const updateTransform = () => {
             const translateX = -currentIndex * cardWidth;
@@ -274,6 +294,10 @@ class HomepageProductLoader {
         const updateArrows = () => {
             leftArrow.disabled = currentIndex <= 0;
             rightArrow.disabled = currentIndex >= maxIndex;
+            
+            // Add visual feedback for disabled arrows
+            leftArrow.style.opacity = currentIndex <= 0 ? '0.5' : '1';
+            rightArrow.style.opacity = currentIndex >= maxIndex ? '0.5' : '1';
         };
 
         leftArrow.addEventListener('click', () => {
@@ -281,6 +305,7 @@ class HomepageProductLoader {
                 currentIndex--;
                 updateTransform();
                 updateArrows();
+                console.log('Scrolled left to index:', currentIndex);
             }
         });
 
@@ -289,6 +314,7 @@ class HomepageProductLoader {
                 currentIndex++;
                 updateTransform();
                 updateArrows();
+                console.log('Scrolled right to index:', currentIndex);
             }
         });
 
@@ -308,7 +334,13 @@ class HomepageProductLoader {
             const currentX = e.touches[0].clientX;
             const diff = startX - currentX;
             const translateX = -startIndex * cardWidth - diff;
-            scrollContainer.style.transform = `translateX(${translateX}px)`;
+            
+            // Prevent scrolling beyond bounds
+            const minTranslate = -maxIndex * cardWidth;
+            const maxTranslate = 0;
+            const clampedTranslate = Math.max(minTranslate, Math.min(maxTranslate, translateX));
+            
+            scrollContainer.style.transform = `translateX(${clampedTranslate}px)`;
         });
 
         scrollContainer.addEventListener('touchend', (e) => {
@@ -329,6 +361,20 @@ class HomepageProductLoader {
             updateTransform();
             updateArrows();
             startX = 0;
+        });
+
+        // Handle window resize to recalculate scroll limits
+        window.addEventListener('resize', () => {
+            const newContainerWidth = scrollContainer.parentElement.clientWidth;
+            const newVisibleCards = Math.floor(newContainerWidth / cardWidth);
+            const newMaxIndex = Math.max(0, this.products.length - newVisibleCards);
+            
+            // Adjust current index if it's now beyond the new limit
+            if (currentIndex > newMaxIndex) {
+                currentIndex = newMaxIndex;
+                updateTransform();
+            }
+            updateArrows();
         });
 
         // Initial state

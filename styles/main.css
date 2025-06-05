@@ -269,6 +269,116 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 900;
     color: var(--accent-purple);
     text-shadow: 0 0 10px var(--glow-purple);
+    position: relative;
+    display: inline-block;
+}
+
+.nav-brand::before,
+.nav-brand::after {
+    content: 'BUNGI X BOBBY';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.nav-brand::before {
+    animation: nav-glitch-1 2s infinite;
+    color: #ff77c6;
+    z-index: -1;
+}
+
+.nav-brand::after {
+    animation: nav-glitch-2 2s infinite;
+    color: #77c6ff;
+    z-index: -2;
+}
+
+@keyframes nav-glitch-1 {
+    0%, 100% {
+        transform: translate(0);
+        opacity: 0;
+    }
+    10% {
+        transform: translate(-1px, 1px);
+        opacity: 1;
+    }
+    20% {
+        transform: translate(-2px, -1px);
+        opacity: 0;
+    }
+    30% {
+        transform: translate(1px, -1px);
+        opacity: 1;
+    }
+    40% {
+        transform: translate(-1px, 2px);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-2px, -2px);
+        opacity: 1;
+    }
+    60% {
+        transform: translate(1px, 1px);
+        opacity: 0;
+    }
+    70% {
+        transform: translate(-1px, 1px);
+        opacity: 1;
+    }
+    80% {
+        transform: translate(-1px, -1px);
+        opacity: 0;
+    }
+    90% {
+        transform: translate(1px, 2px);
+        opacity: 1;
+    }
+}
+
+@keyframes nav-glitch-2 {
+    0%, 100% {
+        transform: translate(0);
+        opacity: 0;
+    }
+    15% {
+        transform: translate(2px, -2px);
+        opacity: 1;
+    }
+    25% {
+        transform: translate(-1px, 2px);
+        opacity: 0;
+    }
+    35% {
+        transform: translate(2px, 1px);
+        opacity: 1;
+    }
+    45% {
+        transform: translate(-2px, 1px);
+        opacity: 0;
+    }
+    55% {
+        transform: translate(1px, -2px);
+        opacity: 1;
+    }
+    65% {
+        transform: translate(-1px, 2px);
+        opacity: 0;
+    }
+    75% {
+        transform: translate(2px, -1px);
+        opacity: 1;
+    }
+    85% {
+        transform: translate(1px, -2px);
+        opacity: 0;
+    }
+    95% {
+        transform: translate(-2px, 1px);
+        opacity: 1;
+    }
 }
 
 /* Logo Banner */
