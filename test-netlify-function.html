@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Netlify Function</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .loading { background: #2d4a5a; }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #7877c6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #9896d4;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Netlify Function Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Netlify Function</h2>
+        <button onclick="testNetlifyFunction()">Test /.netlify/functions/get-products</button>
+        <div id="function-status" class="status loading" style="display: none;">Testing...</div>
+        <pre id="function-response"></pre>
+    </div>
+
+    <div class="test-container">
+        <h2>Environment Variable Check</h2>
+        <p>This test will help diagnose if the environment variables are properly set in Netlify.</p>
+        <div id="env-check"></div>
+    </div>
+
+    <script>
+        async function testNetlifyFunction() {
+            const statusDiv = document.getElementById('function-status');
+            const responseDiv = document.getElementById('function-response');
+            const envCheckDiv = document.getElementById('env-check');
+            
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = 'Testing Netlify function...';
+            responseDiv.textContent = '';
+            
+            try {
+                console.log('🔄 Testing Netlify function...');
+                
+                const response = await fetch('/.netlify/functions/get-products', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+                
+                const responseText = await response.text();
+                console.log('📡 Raw response:', responseText);
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        
+                        if (data.error) {
+                            statusDiv.className = 'status error';
+                            statusDiv.textContent = '❌ Function returned error';
+                            responseDiv.textContent = JSON.stringify(data, null, 2);
+                            
+                            // Check for specific error types
+                            if (data.error.includes('SHOPIFY_ADMIN_TOKEN')) {
+                                envCheckDiv.innerHTML = `
+                                    <div class="status error">
+                                        <strong>❌ Environment Variable Issue</strong><br>
+                                        The SHOPIFY_ADMIN_TOKEN environment variable is not set in Netlify.<br><br>
+                                        <strong>To fix:</strong><br>
+                                        1. Go to Netlify Dashboard → Your Site → Site Settings → Environment Variables<br>
+                                        2. Add: SHOPIFY_ADMIN_TOKEN = [your-admin-token]<br>
+                                        3. Redeploy the site
+                                    </div>
+                                `;
+                            }
+                        } else if (data.products) {
+                            statusDiv.className = 'status success';
+                            statusDiv.textContent = `✅ Success! Found ${data.products.length} products`;
+                            responseDiv.textContent = JSON.stringify(data, null, 2);
+                            
+                            envCheckDiv.innerHTML = `
+                                <div class="status success">
+                                    <strong>✅ Environment Variables Working</strong><br>
+                                    The Netlify function is working correctly and environment variables are properly set.
+                                </div>
+                            `;
+                        }
+                    } catch (parseError) {
+                        statusDiv.className = 'status error';
+                        statusDiv.textContent = '❌ Invalid JSON response';
+                        responseDiv.textContent = responseText;
+                    }
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.textContent = `❌ HTTP ${response.status} Error`;
+                    responseDiv.textContent = responseText;
+                    
+                    if (response.status === 500) {
+                        envCheckDiv.innerHTML = `
+                            <div class="status error">
+                                <strong>❌ Server Error (500)</strong><br>
+                                This usually indicates an environment variable issue or function error.<br><br>
+                                <strong>Most likely cause:</strong><br>
+                                SHOPIFY_ADMIN_TOKEN environment variable is not set in Netlify Dashboard.
+                            </div>
+                        `;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Network error:', error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Network Error';
+                responseDiv.textContent = error.toString();
+            }
+        }
+        
+        // Auto-run test on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 Netlify Function Test Page Loaded');
+            console.log('Click the button to test the function');
+        });
+    </script>
+</body>
+</html>
