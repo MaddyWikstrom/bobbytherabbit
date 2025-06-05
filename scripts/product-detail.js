@@ -117,15 +117,216 @@ class ProductDetailManager {
     }
 
     async fetchProductData(productId) {
-        // Since CSV loading fails locally due to CORS, use sample products
-        // In a production environment, this would load from the actual CSV/API
         console.log('Loading product data for:', productId);
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            // First priority: Try to load from Shopify API
+            console.log('🛍️ Attempting to load product from Shopify...');
+            const shopifyProduct = await this.loadShopifyProduct(productId);
+            
+            if (shopifyProduct) {
+                console.log('✅ Successfully loaded product from Shopify!');
+                return this.convertProductForDetailPage(shopifyProduct);
+            }
+            
+            // Second priority: Try to load from ProductManager (CSV/embedded data)
+            console.log('📄 Shopify failed, trying ProductManager...');
+            const productManager = this.createProductManager();
+            await productManager.loadProducts();
+            
+            const product = productManager.products.find(p => p.id === productId);
+            if (product) {
+                console.log('✅ Successfully loaded product from ProductManager!');
+                return this.convertProductForDetailPage(product);
+            }
+            
+            // Final fallback: Use sample product
+            console.log('⚠️ No product found, using sample product');
+            return this.getSampleProduct(productId);
+            
+        } catch (error) {
+            console.error('❌ Error loading product:', error);
+            return this.getSampleProduct(productId);
+        }
+    }
+
+    async loadShopifyProduct(productId) {
+        try {
+            // Shopify Storefront API configuration
+            const STOREFRONT_ACCESS_TOKEN = 'fb92c5b6df6a740fc5d5fc94c30dbd0d';
+            const SHOP_DOMAIN = 'bobbytherabbit.com.myshopify.com';
+            const API_VERSION = '2024-01';
+            const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
+
+            // GraphQL query to fetch a single product by handle
+            const productQuery = `
+                query Product($handle: String!) {
+                    product(handle: $handle) {
+                        id
+                        title
+                        handle
+                        description
+                        priceRange {
+                            minVariantPrice {
+                                amount
+                                currencyCode
+                            }
+                            maxVariantPrice {
+                                amount
+                                currencyCode
+                            }
+                        }
+                        images(first: 10) {
+                            edges {
+                                node {
+                                    url
+                                    altText
+                                }
+                            }
+                        }
+                        variants(first: 100) {
+                            edges {
+                                node {
+                                    id
+                                    title
+                                    price {
+                                        amount
+                                        currencyCode
+                                    }
+                                    compareAtPrice {
+                                        amount
+                                        currencyCode
+                                    }
+                                    availableForSale
+                                    quantityAvailable
+                                    selectedOptions {
+                                        name
+                                        value
+                                    }
+                                }
+                            }
+                        }
+                        tags
+                        productType
+                    }
+                }
+            `;
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
+                },
+                body: JSON.stringify({
+                    query: productQuery,
+                    variables: { handle: productId }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.errors) {
+                console.error('❌ Shopify GraphQL Errors:', data.errors);
+                return null;
+            }
+
+            const product = data.data.product;
+            if (!product) {
+                console.log('❌ Product not found in Shopify');
+                return null;
+            }
+
+            console.log(`🛍️ Found product in Shopify: ${product.title}`);
+            return this.convertShopifyProductForDetail(product);
+            
+        } catch (error) {
+            console.error('❌ Error loading Shopify product:', error);
+            return null;
+        }
+    }
+
+    convertShopifyProductForDetail(shopifyProduct) {
+        // Extract images
+        const images = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
         
-        // Return sample product that matches the expected format
-        return this.getSampleProduct(productId);
+        // Extract variants and organize by color/size
+        const variants = [];
+        const colors = new Set();
+        const sizes = new Set();
+        const inventory = {};
+        
+        shopifyProduct.variants.edges.forEach(variantEdge => {
+            const variant = variantEdge.node;
+            
+            let color = '';
+            let size = '';
+            
+            variant.selectedOptions.forEach(option => {
+                if (option.name.toLowerCase() === 'color') {
+                    color = option.value;
+                    colors.add(color);
+                } else if (option.name.toLowerCase() === 'size') {
+                    size = option.value;
+                    sizes.add(size);
+                }
+            });
+            
+            // Add to inventory tracking
+            if (color && size) {
+                inventory[`${color}-${size}`] = variant.quantityAvailable || 0;
+            }
+            
+            variants.push({
+                id: variant.id,
+                color: color,
+                size: size,
+                price: parseFloat(variant.price.amount),
+                comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+                availableForSale: variant.availableForSale,
+                quantityAvailable: variant.quantityAvailable || 0
+            });
+        });
+        
+        // Calculate pricing
+        const minPrice = parseFloat(shopifyProduct.priceRange.minVariantPrice.amount);
+        const maxPrice = parseFloat(shopifyProduct.priceRange.maxVariantPrice.amount);
+        const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
+        
+        return {
+            id: shopifyProduct.handle,
+            shopifyId: shopifyProduct.id,
+            title: shopifyProduct.title,
+            description: shopifyProduct.description || 'Premium streetwear with unique design.',
+            category: this.extractCategory(shopifyProduct.title),
+            price: minPrice,
+            comparePrice: comparePrice,
+            images: images.length > 0 ? images : ['assets/placeholder.jpg'],
+            variants: variants,
+            colors: Array.from(colors),
+            sizes: Array.from(sizes),
+            featured: shopifyProduct.tags.includes('featured'),
+            new: shopifyProduct.tags.includes('new'),
+            sale: comparePrice > minPrice,
+            tags: shopifyProduct.tags,
+            productType: shopifyProduct.productType,
+            inventory: inventory
+        };
+    }
+
+    extractCategory(title) {
+        const titleLower = title.toLowerCase();
+        if (titleLower.includes('hoodie')) return 'Hoodies';
+        if (titleLower.includes('t-shirt') || titleLower.includes('tee')) return 'T-Shirts';
+        if (titleLower.includes('sweatshirt')) return 'Sweatshirts';
+        if (titleLower.includes('joggers') || titleLower.includes('pants')) return 'Joggers';
+        if (titleLower.includes('windbreaker') || titleLower.includes('jacket')) return 'Windbreakers';
+        if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'Beanies';
+        return 'Apparel';
     }
 
     createProductManager() {

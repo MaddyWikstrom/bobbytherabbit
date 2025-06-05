@@ -21,30 +21,210 @@ class ProductManager {
 
     async loadProducts() {
         try {
-            // Try to parse CSV data from the products_export_1.csv file
+            // First priority: Try to load from Shopify API
+            console.log('🛍️ Attempting to load products from Shopify...');
+            const shopifyProducts = await this.loadShopifyProducts();
+            
+            if (shopifyProducts && shopifyProducts.length > 0) {
+                this.products = shopifyProducts;
+                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify!`);
+                this.filteredProducts = [...this.products];
+                return;
+            }
+            
+            // Second priority: Try to parse CSV data
+            console.log('📄 Shopify failed, trying CSV data...');
             const csvData = await this.loadCSVData();
             this.products = this.parseCSVToProducts(csvData);
             
-            // If no products were parsed from CSV, use sample products but log it
-            if (this.products.length === 0) {
-                console.log('No products parsed from CSV, using sample products');
-                this.products = this.getSampleProducts();
-            } else {
-                console.log(`Successfully loaded ${this.products.length} products from CSV`);
+            if (this.products.length > 0) {
+                console.log(`✅ Successfully loaded ${this.products.length} products from CSV`);
+                this.filteredProducts = [...this.products];
+                return;
             }
             
+            // Final fallback: Use sample products
+            console.log('⚠️ No products from Shopify or CSV, using sample products');
+            this.products = this.getSampleProducts();
             this.filteredProducts = [...this.products];
+            
         } catch (error) {
-            console.error('Error loading products:', error);
-            // Fallback to sample products if CSV loading fails
-            console.log('Falling back to sample products due to error');
+            console.error('❌ Error loading products:', error);
+            console.log('🔄 Falling back to sample products due to error');
             this.products = this.getSampleProducts();
             this.filteredProducts = [...this.products];
         }
     }
 
+    async loadShopifyProducts() {
+        try {
+            // Shopify Storefront API configuration
+            const STOREFRONT_ACCESS_TOKEN = 'fb92c5b6df6a740fc5d5fc94c30dbd0d';
+            const SHOP_DOMAIN = 'bobbytherabbit.com.myshopify.com';
+            const API_VERSION = '2024-01';
+            const endpoint = `https://${SHOP_DOMAIN}/api/${API_VERSION}/graphql.json`;
+
+            // GraphQL query to fetch products
+            const productsQuery = `
+                query Products {
+                    products(first: 250) {
+                        edges {
+                            node {
+                                id
+                                title
+                                handle
+                                description
+                                priceRange {
+                                    minVariantPrice {
+                                        amount
+                                        currencyCode
+                                    }
+                                    maxVariantPrice {
+                                        amount
+                                        currencyCode
+                                    }
+                                }
+                                images(first: 5) {
+                                    edges {
+                                        node {
+                                            url
+                                            altText
+                                        }
+                                    }
+                                }
+                                variants(first: 100) {
+                                    edges {
+                                        node {
+                                            id
+                                            title
+                                            price {
+                                                amount
+                                                currencyCode
+                                            }
+                                            compareAtPrice {
+                                                amount
+                                                currencyCode
+                                            }
+                                            availableForSale
+                                            selectedOptions {
+                                                name
+                                                value
+                                            }
+                                        }
+                                    }
+                                }
+                                tags
+                                productType
+                            }
+                        }
+                    }
+                }
+            `;
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
+                },
+                body: JSON.stringify({ query: productsQuery })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.errors) {
+                console.error('❌ Shopify GraphQL Errors:', data.errors);
+                return null;
+            }
+
+            const shopifyProducts = data.data.products.edges;
+            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify`);
+            
+            // Convert Shopify products to our format
+            return this.convertShopifyProducts(shopifyProducts);
+            
+        } catch (error) {
+            console.error('❌ Error loading Shopify products:', error);
+            return null;
+        }
+    }
+
+    convertShopifyProducts(shopifyProducts) {
+        return shopifyProducts.map(edge => {
+            const product = edge.node;
+            
+            // Extract images
+            const images = product.images.edges.map(imgEdge => imgEdge.node.url);
+            
+            // Extract variants and organize by color/size
+            const variants = [];
+            const colors = new Set();
+            const sizes = new Set();
+            
+            product.variants.edges.forEach(variantEdge => {
+                const variant = variantEdge.node;
+                
+                let color = '';
+                let size = '';
+                
+                variant.selectedOptions.forEach(option => {
+                    if (option.name.toLowerCase() === 'color') {
+                        color = option.value;
+                        colors.add(color);
+                    } else if (option.name.toLowerCase() === 'size') {
+                        size = option.value;
+                        sizes.add(size);
+                    }
+                });
+                
+                variants.push({
+                    id: variant.id,
+                    color: color,
+                    size: size,
+                    price: parseFloat(variant.price.amount),
+                    comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+                    availableForSale: variant.availableForSale,
+                    image: images[0] || 'assets/placeholder.jpg'
+                });
+            });
+            
+            // Determine category from product type or title
+            const category = this.extractCategory(product.title);
+            
+            // Calculate pricing
+            const minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+            const maxPrice = parseFloat(product.priceRange.maxVariantPrice.amount);
+            const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
+            
+            return {
+                id: product.handle,
+                shopifyId: product.id,
+                title: product.title,
+                description: this.cleanDescription(product.description),
+                category: category,
+                price: minPrice,
+                comparePrice: comparePrice,
+                images: images.length > 0 ? images : ['assets/placeholder.jpg'],
+                mainImage: images[0] || 'assets/placeholder.jpg',
+                variants: variants,
+                colors: Array.from(colors),
+                sizes: Array.from(sizes),
+                featured: product.tags.includes('featured') || Math.random() > 0.7,
+                new: product.tags.includes('new') || Math.random() > 0.8,
+                sale: comparePrice > minPrice,
+                tags: product.tags,
+                productType: product.productType
+            };
+        });
+    }
+
     async loadCSVData() {
         try {
+            // First try to fetch the CSV file (works when deployed)
             const response = await fetch('products_export_1.csv');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -53,9 +233,40 @@ class ProductManager {
             return csvText;
         } catch (error) {
             console.error('Error loading CSV:', error);
-            // Return empty string to trigger fallback to sample products
-            return '';
+            // Return embedded CSV data for local development
+            return this.getEmbeddedCSVData();
         }
+    }
+
+    getEmbeddedCSVData() {
+        // Embedded CSV data to bypass CORS restrictions during local development
+        return `Handle,Title,Body (HTML),Vendor,Product Category,Type,Tags,Published,Option1 Name,Option1 Value,Option1 Linked To,Option2 Name,Option2 Value,Option2 Linked To,Option3 Name,Option3 Value,Option3 Linked To,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Variant Barcode,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Google Shopping / Google Product Category,Google Shopping / Gender,Google Shopping / Age Group,Google Shopping / MPN,Google Shopping / Condition,Google Shopping / Custom Product,Google Shopping / Custom Label 0,Google Shopping / Custom Label 1,Google Shopping / Custom Label 2,Google Shopping / Custom Label 3,Google Shopping / Custom Label 4,Variant Image,Variant Weight Unit,Variant Tax Code,Cost per item,Status
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie,"Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.",My Store,Uncategorized,"","",false,Color,Black,,Size,S,,,,,9004018_10779,487.61179775,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,active
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,M,,,,,9004018_10780,532.97103475,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-back-683f9d11a9742.png?v=1748999463,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,L,,,,,9004018_10781,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,XL,,,,,9004018_10782,609.5147471875,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-back-683f9d11ae0c4.png?v=1748999462,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,S,,,,,9004018_11491,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,7,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,M,,,,,9004018_11492,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-back-683f9d11c14f8.png?v=1748999462,8,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,S,,,,,9004018_11486,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,M,,,,,9004018_11487,532.97103475,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,S,,,,,9004018_11481,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
+bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,S,,,,,9004018_20272,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie,"Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.",My Store,,"","",false,Size,S,,,,,,,,4356716_10774,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,active
+bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,M,,,,,,,,4356716_10775,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-back-683f9ce10ab8f.png?v=1748999410,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,7836547_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,active
+bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,S,,,,,,,,7836547_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png?v=1748999335,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
+bungi-x-bobby-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,3735441_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,active
+bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,BUNGI X BOBBY RABBIT HARDWARE Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design.",My Store,,"","",false,Size,2XS,,,,,,,,8966477_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,active
+bungi-x-bobby-rabbit-hardware-womens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Women's T-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton-touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,5932847_8884,104.3262451,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,active
+bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT DARKMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere.",My Store,,"","",false,Color,Black,,Size,S,,,,,1039392_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png?v=1748999022,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,active
+bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT LIGHTMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere.",My Store,,"","",false,Color,Black,,Size,S,,,,,5234695_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png?v=1748998934,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,active
+bungi-x-bobby-cuffed-beanie-1,BUNGI X BOBBY Cuffed Beanie,"A snug, form-fitting beanie. It's not only a great head-warming piece but a staple accessory in anyone's wardrobe.",My Store,,"","",false,Color,Black,,,,,,,,4804417_8936,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,oz,PC040129,12.79,active
+bungi-x-bobby-cuffed-beanie-1,,,,,,,,,White,,,,,,,,4804417_8938,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,oz,PC040129,12.79,
+bungi-x-bobby-dark-mode-wide-leg-joggers,BUNGI X BOBBY DARK MODE Wide-leg joggers,"Rediscover '90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings.",My Store,,"","",false,Size,2XS,,,,,,,,6222891_19889,479.95742650625,shopify,deny,manual,43.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-683f99d4ba848.png?v=1748998622,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f99d4bb8c5.png?v=1748998622,oz,,38.95,active
+wide-leg-joggers,BUNGI X BOBBY LIGHTMODE Wide-leg joggers,"Rediscover '90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings.",My Store,,"","",false,Size,2XS,,,,,,,,7529383_19889,479.95742650625,shopify,deny,manual,44.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-683f9920e04cf.png?v=1748998443,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-683f9920e0ea4.png?v=1748998443,oz,,38.95,active
+bungi-x-bobby-cowboy-unisex-windbreaker,BUNGI X BOBBY COWBOY Unisex windbreaker,"Whether you're hiking, camping, or just running errands, this casual, sporty windbreaker's got you covered.",My Store,Uncategorized,"","",true,Color,Black,,Size,S,,,,,2813074_16424,192.011320125625,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,active
+bungi-x-bobby-cowboy-unisex-sweatshirt,BUNGI X BOBBY COWBOY Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design.",My Store,,"","",true,Size,2XS,,,,,,,,7066242_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,active
+bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",true,Size,XS,,,,,,,,9951917_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,active`;
     }
 
     parseCSVToProducts(csvText) {
@@ -202,8 +413,8 @@ class ProductManager {
         // This maps the CSV image identifiers to local mockup files
         const identifierMap = {
             // Black hoodie identifiers from CSV
-            '683f9d11a7936': ['mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png'],
-            '683f9d11a9742': ['mockups/unisex-premium-hoodie-black-front-683f9021c7dbc.png'],
+            '683f9d11a7936': ['mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'],
+            '683f9d11a9742': ['mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png'],
             
             // Navy Blazer hoodie identifiers
             '683f9d11ab4fe': ['mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'],
@@ -215,7 +426,7 @@ class ProductManager {
             
             // Charcoal Heather hoodie identifiers
             '683f9d11bbc17': ['mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'],
-            '683f9d11c14f8': ['mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'],
+            '683f9d11c14f8': ['mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'],
             
             // Vintage Black hoodie identifiers
             '683f9d11c724f': ['mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'],
@@ -223,7 +434,34 @@ class ProductManager {
             
             // White hoodie identifiers
             '683f9ce1094eb': ['mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'],
-            '683f9ce10ab8f': ['mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png']
+            '683f9ce10ab8f': ['mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'],
+            
+            // T-shirt identifiers
+            '683f9c9fdcac3': ['assets/hoodie-white.png'], // Lightmode mens t-shirt
+            '683f9c6a74d70': ['assets/hoodie-black.png'], // Rabbit hardware mens t-shirt
+            
+            // Sweatshirt identifiers
+            '683f9be9c4dea': ['assets/hoodie-white.png'], // Rabbit hardware sweatshirt
+            '683f9bbadb79f': ['assets/hoodie-white.png'], // Womens t-shirt
+            
+            // Organic sweatshirt identifiers
+            '683f9b628540b': ['assets/hoodie-black.png'], // Darkmode organic sweatshirt
+            '683f9b0bd823b': ['assets/hoodie-black.png'], // Lightmode organic sweatshirt
+            
+            // Beanie identifiers
+            '683f9a789ba58': ['assets/hoodie-black.png'], // Black beanie
+            '683f9a789c355': ['assets/hoodie-white.png'], // White beanie
+            
+            // Joggers identifiers
+            '683f99d4ba848': ['assets/hoodie-black.png'], // Dark mode joggers
+            '683f9920e04cf': ['assets/hoodie-white.png'], // Lightmode joggers
+            
+            // Windbreaker identifiers
+            '683f9890d7838': ['assets/hoodie-black.png'], // Cowboy windbreaker
+            
+            // Cowboy collection identifiers
+            '683f985018ab4': ['assets/hoodie-white.png'], // Cowboy sweatshirt
+            '683f97ee5c7af': ['assets/hoodie-white.png']  // Cowboy mens t-shirt
         };
         
         // Check if we have a direct mapping for this identifier
