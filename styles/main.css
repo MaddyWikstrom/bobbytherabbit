@@ -284,100 +284,64 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav-brand::before {
-    animation: nav-glitch-1 2s infinite;
+    animation: nav-glitch-1 8s infinite;
     color: #ff77c6;
     z-index: -1;
 }
 
 .nav-brand::after {
-    animation: nav-glitch-2 2s infinite;
+    animation: nav-glitch-2 8s infinite;
     color: #77c6ff;
     z-index: -2;
 }
 
 @keyframes nav-glitch-1 {
-    0%, 100% {
+    0%, 95%, 100% {
         transform: translate(0);
         opacity: 0;
     }
-    10% {
-        transform: translate(-1px, 1px);
-        opacity: 1;
+    96% {
+        transform: translate(-0.5px, 0.5px);
+        opacity: 0.3;
     }
-    20% {
-        transform: translate(-2px, -1px);
+    97% {
+        transform: translate(0.5px, -0.5px);
         opacity: 0;
     }
-    30% {
-        transform: translate(1px, -1px);
-        opacity: 1;
+    98% {
+        transform: translate(-0.5px, 0.5px);
+        opacity: 0.2;
     }
-    40% {
-        transform: translate(-1px, 2px);
+    99% {
+        transform: translate(0.5px, 0.5px);
         opacity: 0;
-    }
-    50% {
-        transform: translate(-2px, -2px);
-        opacity: 1;
-    }
-    60% {
-        transform: translate(1px, 1px);
-        opacity: 0;
-    }
-    70% {
-        transform: translate(-1px, 1px);
-        opacity: 1;
-    }
-    80% {
-        transform: translate(-1px, -1px);
-        opacity: 0;
-    }
-    90% {
-        transform: translate(1px, 2px);
-        opacity: 1;
     }
 }
 
 @keyframes nav-glitch-2 {
-    0%, 100% {
+    0%, 94%, 100% {
         transform: translate(0);
         opacity: 0;
     }
-    15% {
-        transform: translate(2px, -2px);
-        opacity: 1;
-    }
-    25% {
-        transform: translate(-1px, 2px);
-        opacity: 0;
-    }
-    35% {
-        transform: translate(2px, 1px);
-        opacity: 1;
-    }
-    45% {
-        transform: translate(-2px, 1px);
-        opacity: 0;
-    }
-    55% {
-        transform: translate(1px, -2px);
-        opacity: 1;
-    }
-    65% {
-        transform: translate(-1px, 2px);
-        opacity: 0;
-    }
-    75% {
-        transform: translate(2px, -1px);
-        opacity: 1;
-    }
-    85% {
-        transform: translate(1px, -2px);
-        opacity: 0;
-    }
     95% {
-        transform: translate(-2px, 1px);
-        opacity: 1;
+        transform: translate(0.5px, -0.5px);
+        opacity: 0.2;
+    }
+    96% {
+        transform: translate(-0.5px, 0.5px);
+        opacity: 0;
+    }
+    97% {
+        transform: translate(0.5px, 0.5px);
+        opacity: 0.3;
+    }
+    98% {
+        transform: translate(-0.5px, -0.5px);
+        opacity: 0;
+    }
+    99% {
+        transform: translate(0.5px, -0.5px);
+        opacity: 0.1;
     }
 }
 

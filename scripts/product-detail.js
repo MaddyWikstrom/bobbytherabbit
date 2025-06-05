@@ -723,8 +723,8 @@ class ProductDetailManager {
         // Update page title
         document.title = `${this.currentProduct.title} - Bobby Streetwear`;
         
-        // Update dynamic banner
-        this.updateProductBanner();
+        // Update page title
+        this.updatePageTitle();
 
         const discount = this.currentProduct.comparePrice ? 
             Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
@@ -883,36 +883,14 @@ class ProductDetailManager {
         this.updateInventoryDisplay();
     }
 
-    updateProductBanner() {
-        const heroProductImage = document.getElementById('hero-product-image');
-        const heroProductTitle = document.getElementById('hero-product-title');
-        const heroProductSubtitle = document.getElementById('hero-product-subtitle');
-        const productCategoryBanner = document.getElementById('product-category-banner');
+    updatePageTitle() {
+        const collectionTitle = document.querySelector('.collection-title');
         
         if (!this.currentProduct) return;
         
-        // Update hero image
-        if (heroProductImage && this.currentProduct.images && this.currentProduct.images.length > 0) {
-            heroProductImage.src = this.currentProduct.images[0];
-            heroProductImage.alt = this.currentProduct.title;
-            heroProductImage.style.display = 'block';
-        }
-        
-        // Update category banner
-        if (productCategoryBanner) {
-            productCategoryBanner.textContent = this.currentProduct.category.toUpperCase();
-        }
-        
-        // Update title with glitch effect
-        if (heroProductTitle) {
-            heroProductTitle.textContent = this.currentProduct.title;
-            heroProductTitle.setAttribute('data-text', this.currentProduct.title);
-        }
-        
-        // Update subtitle
-        if (heroProductSubtitle) {
-            const subtitle = this.generateProductSubtitle();
-            heroProductSubtitle.textContent = subtitle;
+        // Update the simple collection title
+        if (collectionTitle) {
+            collectionTitle.textContent = this.currentProduct.category.toUpperCase();
         }
     }
 

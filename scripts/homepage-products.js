@@ -207,7 +207,7 @@ class HomepageProductLoader {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         return `
-            <div class="product-card" data-product-id="${product.id}" onclick="homepageProductLoader.viewProduct('${product.id}')">
+            <div class="product-card" data-product-id="${product.id}" onclick="homepageProductLoader.viewProduct('${product.id}', event)">
                 <div class="product-image">
                     <img src="${product.mainImage}"
                          alt="${product.title}"
@@ -300,7 +300,9 @@ class HomepageProductLoader {
             rightArrow.style.opacity = currentIndex >= maxIndex ? '0.5' : '1';
         };
 
-        leftArrow.addEventListener('click', () => {
+        leftArrow.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (currentIndex > 0) {
                 currentIndex--;
                 updateTransform();
@@ -309,7 +311,9 @@ class HomepageProductLoader {
             }
         });
 
-        rightArrow.addEventListener('click', () => {
+        rightArrow.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (currentIndex < maxIndex) {
                 currentIndex++;
                 updateTransform();
@@ -381,7 +385,12 @@ class HomepageProductLoader {
         updateArrows();
     }
 
-    viewProduct(productId) {
+    viewProduct(productId, event) {
+        // Check if the click is coming from an arrow button
+        if (event && (event.target.closest('.arrow') || event.target.classList.contains('arrow'))) {
+            return; // Don't navigate if clicking on arrow
+        }
+        
         // Navigate to product detail page
         window.location.href = `product.html?id=${productId}`;
     }
