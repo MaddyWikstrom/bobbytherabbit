@@ -58,7 +58,37 @@ class ProductManager {
 
     async loadShopifyProducts() {
         try {
-            // Shopify Storefront API configuration
+            console.log('🛍️ Fetching products via Netlify function to bypass CORS...');
+            
+            // Use Netlify function to bypass CORS restrictions
+            const response = await fetch('/.netlify/functions/get-products', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                console.log('❌ Netlify function failed, trying direct API call...');
+                return await this.loadShopifyProductsDirect();
+            }
+
+            const shopifyProducts = await response.json();
+            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify via Netlify function`);
+            
+            // Convert Shopify products to our format
+            return this.convertShopifyProducts(shopifyProducts);
+            
+        } catch (error) {
+            console.error('❌ Error loading Shopify products via Netlify function:', error);
+            console.log('🔄 Falling back to direct API call...');
+            return await this.loadShopifyProductsDirect();
+        }
+    }
+
+    async loadShopifyProductsDirect() {
+        try {
+            // Shopify Storefront API configuration - Direct call fallback
             const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
             const SHOP_DOMAIN = 'bobbytherabbit.com.myshopify.com';
             const API_VERSION = '2024-01';
@@ -142,13 +172,13 @@ class ProductManager {
             }
 
             const shopifyProducts = data.data.products.edges;
-            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify`);
+            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify (direct)`);
             
             // Convert Shopify products to our format
             return this.convertShopifyProducts(shopifyProducts);
             
         } catch (error) {
-            console.error('❌ Error loading Shopify products:', error);
+            console.error('❌ Error loading Shopify products (direct):', error);
             return null;
         }
     }
