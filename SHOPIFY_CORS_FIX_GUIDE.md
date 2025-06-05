@@ -19,19 +19,13 @@ Your Shopify Storefront API is blocking requests due to CORS policy, even with t
    - Look for the app that has your token `8c6bd66766da4553701a1f1fe7d94dc4`
    - Click on the app name
 
-4. **Configure CORS Origins:**
+4. **Verify Token Permissions:**
    - Go to **Configuration** tab
    - Look for **Storefront API access scopes** section
-   - Find **Allowed origins** or **CORS settings**
-   - Add these domains:
-     ```
-     https://bobbytherabbit.com
-     https://*.bobbytherabbit.com
-     https://bobbytherabbit.netlify.app
-     https://*.netlify.app
-     ```
+   - **Note:** There are NO "Allowed origins" or "CORS settings" in Shopify admin
+   - This is why we need the Netlify function proxy!
 
-5. **Verify Permissions:**
+5. **Ensure These Permissions Are Enabled:**
    Make sure these scopes are enabled:
    - ✅ `unauthenticated_read_product_listings`
    - ✅ `unauthenticated_read_product_inventory`

@@ -1,0 +1,25 @@
+{
+  "name": "bobby-streetwear",
+  "version": "1.0.0",
+  "description": "Bobby Streetwear - Premium streetwear collection",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "streetwear",
+    "fashion",
+    "shopify",
+    "ecommerce"
+  ],
+  "author": "Bobby Streetwear",
+  "license": "MIT"
+}
