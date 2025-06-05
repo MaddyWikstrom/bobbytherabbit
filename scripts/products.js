@@ -21,19 +21,8 @@ class ProductManager {
 
     async loadProducts() {
         try {
-            // First priority: Try to load from Shopify API
-            console.log('🛍️ Attempting to load products from Shopify...');
-            const shopifyProducts = await this.loadShopifyProducts();
-            
-            if (shopifyProducts && shopifyProducts.length > 0) {
-                this.products = shopifyProducts;
-                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify!`);
-                this.filteredProducts = [...this.products];
-                return;
-            }
-            
-            // Second priority: Try to parse CSV data
-            console.log('📄 Shopify failed, trying CSV data...');
+            // First priority: Try to parse CSV data (more reliable than Shopify API with CORS issues)
+            console.log('📄 Loading products from CSV data...');
             const csvData = await this.loadCSVData();
             this.products = this.parseCSVToProducts(csvData);
             
@@ -43,8 +32,19 @@ class ProductManager {
                 return;
             }
             
+            // Second priority: Try to load from Shopify API
+            console.log('🛍️ CSV failed, attempting to load products from Shopify...');
+            const shopifyProducts = await this.loadShopifyProducts();
+            
+            if (shopifyProducts && shopifyProducts.length > 0) {
+                this.products = shopifyProducts;
+                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify!`);
+                this.filteredProducts = [...this.products];
+                return;
+            }
+            
             // Final fallback: Use sample products
-            console.log('⚠️ No products from Shopify or CSV, using sample products');
+            console.log('⚠️ No products from CSV or Shopify, using sample products');
             this.products = this.getSampleProducts();
             this.filteredProducts = [...this.products];
             
