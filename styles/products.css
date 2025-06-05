@@ -1,52 +1,115 @@
 /* Products Page Styles */
 
-/* Collection Header */
+/* Dark Collection Header with Scrolling Background */
 .collection-header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
     padding: 120px 0 80px;
     position: relative;
     overflow: hidden;
 }
 
-.collection-header::before {
-    content: '';
+.scrolling-background {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('../assets/bg-pattern.svg') repeat;
-    opacity: 0.1;
-    animation: float 20s ease-in-out infinite;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.scrolling-logo {
+    position: absolute;
+    height: 200px;
+    width: auto;
+    opacity: 0.15;
+    filter: grayscale(100%) brightness(0.5);
+    animation: scrollHorizontal 30s linear infinite;
+    top: 50%;
+    transform: translateY(-50%);
+    object-fit: contain;
+}
+
+.scrolling-logo:nth-child(1) {
+    left: 0;
+}
+
+.scrolling-logo:nth-child(2) {
+    left: 300px;
+}
+
+.scrolling-logo:nth-child(3) {
+    left: 600px;
+}
+
+.scrolling-logo:nth-child(4) {
+    left: 900px;
+}
+
+.scrolling-logo:nth-child(5) {
+    left: 1200px;
 }
 
 .collection-hero {
-    text-align: center;
     position: relative;
     z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    width: 100%;
 }
 
-.collection-title {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 700;
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.collection-title-main {
+    font-size: clamp(1.2rem, 3vw, 2.8rem);
+    font-weight: 900;
     color: #ffffff;
-    margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    background: linear-gradient(45deg, #ffffff, #a855f7, #3b82f6);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientShift 3s ease-in-out infinite;
+    margin: 0;
+    opacity: 0;
+    animation: fadeInGlow 2s ease-out 0.5s forwards;
+    text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.5),
+        0 0 20px rgba(168, 85, 247, 0.3),
+        0 0 30px rgba(168, 85, 247, 0.2);
+    white-space: nowrap;
+    text-align: center;
 }
 
-.collection-subtitle {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.8);
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
+/* Animations */
+@keyframes scrollHorizontal {
+    0% { transform: translateY(-50%) translateX(0); }
+    100% { transform: translateY(-50%) translateX(-300px); }
+}
+
+@keyframes fadeInGlow {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+        text-shadow: none;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        text-shadow:
+            0 0 10px rgba(255, 255, 255, 0.5),
+            0 0 20px rgba(168, 85, 247, 0.3),
+            0 0 30px rgba(168, 85, 247, 0.2);
+    }
 }
 
 /* Collection Controls */
@@ -926,8 +989,11 @@
         padding: 100px 0 60px;
     }
     
-    .collection-title {
-        font-size: 2.5rem;
+    .bg-logo-1,
+    .bg-logo-2 {
+        width: 80px;
+        height: 80px;
+        opacity: 0.02;
     }
     
     .controls-wrapper {
@@ -986,6 +1052,13 @@
 @media (max-width: 480px) {
     .collection-controls {
         padding: 1.5rem 0;
+    }
+    
+    .bg-logo-1,
+    .bg-logo-2 {
+        width: 60px;
+        height: 60px;
+        opacity: 0.01;
     }
     
     .filter-controls {

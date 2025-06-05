@@ -915,3 +915,299 @@
         transition-duration: 0.01ms !important;
     }
 }
+/* Tech Collection Header */
+.tech-collection-header {
+    padding: 4rem 0 6rem;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.tech-collection-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+    animation: techPulse 6s ease-in-out infinite alternate;
+}
+
+.tech-hero {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.tech-bg-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.bg-pattern-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%;
+    height: 120%;
+    opacity: 0.03;
+    animation: patternRotate 60s linear infinite;
+}
+
+.floating-logos {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.floating-logo {
+    position: absolute;
+    opacity: 0.15;
+    transition: all 0.3s ease;
+    filter: blur(0.5px);
+}
+
+.floating-logo.logo-1 {
+    top: 20%;
+    left: 15%;
+    width: 80px;
+    height: 80px;
+    animation: floatUpDown 8s ease-in-out infinite, fadeInOut 12s ease-in-out infinite;
+    animation-delay: 0s;
+}
+
+.floating-logo.logo-2 {
+    top: 60%;
+    right: 20%;
+    width: 60px;
+    height: 60px;
+    animation: floatLeftRight 10s ease-in-out infinite, fadeInOut 15s ease-in-out infinite;
+    animation-delay: 2s;
+}
+
+.floating-logo.logo-3 {
+    bottom: 30%;
+    left: 25%;
+    width: 70px;
+    height: 70px;
+    animation: floatDiagonal 12s ease-in-out infinite, fadeInOut 18s ease-in-out infinite;
+    animation-delay: 4s;
+}
+
+.floating-logo.logo-4 {
+    top: 40%;
+    right: 15%;
+    width: 90px;
+    height: 90px;
+    animation: floatCircular 14s ease-in-out infinite, fadeInOut 20s ease-in-out infinite;
+    animation-delay: 6s;
+}
+
+.tech-content {
+    position: relative;
+    z-index: 3;
+    padding: 2rem 0;
+}
+
+.tech-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 900;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    position: relative;
+    display: inline-block;
+}
+
+.tech-title .glitch-text {
+    position: relative;
+    display: inline-block;
+}
+
+.tech-title .glitch-text::before,
+.tech-title .glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.tech-title .glitch-text::before {
+    animation: glitch1 3s infinite;
+    color: rgba(168, 85, 247, 0.8);
+    z-index: -1;
+}
+
+.tech-title .glitch-text::after {
+    animation: glitch2 3s infinite;
+    color: rgba(59, 130, 246, 0.8);
+    z-index: -2;
+}
+
+.tech-subtitle {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    margin: 0;
+    animation: subtitleGlow 4s ease-in-out infinite alternate;
+}
+
+/* Animations */
+@keyframes techPulse {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.7; }
+}
+
+@keyframes patternRotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes floatUpDown {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes floatLeftRight {
+    0%, 100% { transform: translateX(0px) rotate(0deg); }
+    50% { transform: translateX(15px) rotate(-3deg); }
+}
+
+@keyframes floatDiagonal {
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    25% { transform: translate(10px, -10px) rotate(2deg); }
+    50% { transform: translate(-5px, -15px) rotate(-2deg); }
+    75% { transform: translate(-10px, 5px) rotate(1deg); }
+}
+
+@keyframes floatCircular {
+    0% { transform: translate(0px, 0px) rotate(0deg); }
+    25% { transform: translate(8px, -8px) rotate(90deg); }
+    50% { transform: translate(0px, -16px) rotate(180deg); }
+    75% { transform: translate(-8px, -8px) rotate(270deg); }
+    100% { transform: translate(0px, 0px) rotate(360deg); }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.25; }
+}
+
+@keyframes glitch1 {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+}
+
+@keyframes glitch2 {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(2px, -2px); }
+    40% { transform: translate(2px, 2px); }
+    60% { transform: translate(-2px, -2px); }
+    80% { transform: translate(-2px, 2px); }
+}
+
+@keyframes subtitleGlow {
+    0% { 
+        color: rgba(255, 255, 255, 0.7);
+        text-shadow: 0 0 5px rgba(168, 85, 247, 0.3);
+    }
+    100% { 
+        color: rgba(255, 255, 255, 0.9);
+        text-shadow: 0 0 15px rgba(168, 85, 247, 0.5), 0 0 25px rgba(59, 130, 246, 0.3);
+    }
+}
+
+/* Hover effects for floating logos */
+.tech-collection-header:hover .floating-logo {
+    opacity: 0.3;
+    filter: blur(0px);
+}
+
+.tech-collection-header:hover .floating-logo.logo-1 {
+    animation-duration: 4s;
+}
+
+.tech-collection-header:hover .floating-logo.logo-2 {
+    animation-duration: 5s;
+}
+
+.tech-collection-header:hover .floating-logo.logo-3 {
+    animation-duration: 6s;
+}
+
+.tech-collection-header:hover .floating-logo.logo-4 {
+    animation-duration: 7s;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tech-collection-header {
+        padding: 3rem 0 4rem;
+    }
+    
+    .floating-logo.logo-1,
+    .floating-logo.logo-2,
+    .floating-logo.logo-3,
+    .floating-logo.logo-4 {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .tech-title {
+        font-size: clamp(2rem, 8vw, 3rem);
+        margin-bottom: 1rem;
+    }
+    
+    .tech-subtitle {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .floating-logo.logo-1,
+    .floating-logo.logo-2,
+    .floating-logo.logo-3,
+    .floating-logo.logo-4 {
+        width: 40px;
+        height: 40px;
+        opacity: 0.1;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .floating-logo,
+    .bg-pattern-overlay,
+    .tech-title .glitch-text::before,
+    .tech-title .glitch-text::after,
+    .tech-subtitle {
+        animation: none !important;
+    }
+    
+    .floating-logo {
+        opacity: 0.2;
+    }
+}
