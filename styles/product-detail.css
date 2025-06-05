@@ -1016,6 +1016,40 @@
     animation-delay: 6s;
 }
 
+.product-hero-image {
+    position: absolute;
+    top: 50%;
+    right: 10%;
+    transform: translateY(-50%);
+    z-index: 2;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.hero-product-img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 16px;
+    filter: blur(1px);
+    animation: heroImageFloat 6s ease-in-out infinite;
+}
+
+.product-category-banner {
+    display: inline-block;
+    background: rgba(168, 85, 247, 0.2);
+    color: #a855f7;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    backdrop-filter: blur(10px);
+}
+
 .tech-content {
     position: relative;
     z-index: 3;
@@ -1130,13 +1164,24 @@
 }
 
 @keyframes subtitleGlow {
-    0% { 
+    0% {
         color: rgba(255, 255, 255, 0.7);
         text-shadow: 0 0 5px rgba(168, 85, 247, 0.3);
     }
-    100% { 
+    100% {
         color: rgba(255, 255, 255, 0.9);
         text-shadow: 0 0 15px rgba(168, 85, 247, 0.5), 0 0 25px rgba(59, 130, 246, 0.3);
+    }
+}
+
+@keyframes heroImageFloat {
+    0%, 100% {
+        transform: translateY(-50%) scale(1) rotate(0deg);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateY(-60%) scale(1.05) rotate(2deg);
+        opacity: 0.4;
     }
 }
 
@@ -1176,6 +1221,16 @@
         height: 50px;
     }
     
+    .product-hero-image {
+        right: 5%;
+        opacity: 0.2;
+    }
+    
+    .hero-product-img {
+        width: 150px;
+        height: 150px;
+    }
+    
     .tech-title {
         font-size: clamp(2rem, 8vw, 3rem);
         margin-bottom: 1rem;
@@ -1194,6 +1249,15 @@
         width: 40px;
         height: 40px;
         opacity: 0.1;
+    }
+    
+    .product-hero-image {
+        display: none; /* Hide on very small screens to avoid clutter */
+    }
+    
+    .product-category-banner {
+        font-size: 0.8rem;
+        padding: 0.4rem 1rem;
     }
 }
 

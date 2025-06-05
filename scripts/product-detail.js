@@ -537,6 +537,7 @@ class ProductDetailManager {
         const productMap = {
             'bungi-hoodie-black': {
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
+                category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
                     'mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png',
@@ -547,8 +548,64 @@ class ProductDetailManager {
                     { name: 'Vintage Black', code: '#2C2C2C' }
                 ]
             },
+            'bungi-hat-black': {
+                title: 'BUNGI X BOBBY Tech Animal Beanie - Black',
+                category: 'Beanies',
+                images: [
+                    'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+                    'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
+                ],
+                colors: [
+                    { name: 'Black', code: '#000000' }
+                ]
+            },
+            'bungi-tshirt-white': {
+                title: 'BUNGI X BOBBY Tech Animal T-Shirt - White',
+                category: 'T-Shirts',
+                images: [
+                    'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                    'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png'
+                ],
+                colors: [
+                    { name: 'White', code: '#FFFFFF' }
+                ]
+            },
+            'bungi-sweater-gray': {
+                title: 'BUNGI X BOBBY Tech Sweater - Heather Gray',
+                category: 'Sweaters',
+                images: [
+                    'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
+                    'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'
+                ],
+                colors: [
+                    { name: 'Heather Gray', code: '#D3D3D3' }
+                ]
+            },
+            'bungi-windbreaker-black': {
+                title: 'BUNGI X BOBBY Tech Windbreaker - Navy',
+                category: 'Windbreakers',
+                images: [
+                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                    'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png'
+                ],
+                colors: [
+                    { name: 'Navy Blazer', code: '#001f3f' }
+                ]
+            },
+            'bungi-sweatpants-white': {
+                title: 'BUNGI X BOBBY Tech Sweatpants - Maroon',
+                category: 'Sweatpants',
+                images: [
+                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                    'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png'
+                ],
+                colors: [
+                    { name: 'Maroon', code: '#800000' }
+                ]
+            },
             'bungi-hoodie-navy': {
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
+                category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
                     'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
@@ -561,6 +618,7 @@ class ProductDetailManager {
             },
             'bungi-hoodie-maroon': {
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
+                category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
                     'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
@@ -573,6 +631,7 @@ class ProductDetailManager {
             },
             'bungi-hoodie-charcoal': {
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
+                category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
                     'mockups/unisex-premium-hoodie-charcoal-heather-right-683f9023457b5.png'
@@ -583,6 +642,7 @@ class ProductDetailManager {
             },
             'bungi-hoodie-white': {
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
+                category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
                     'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
@@ -597,12 +657,22 @@ class ProductDetailManager {
 
         const productData = productMap[productId] || productMap['bungi-hoodie-black'];
 
+        // Generate dynamic description based on product type
+        const descriptions = {
+            'Hoodies': 'Step into the digital underground with Bobby the Rabbit\'s signature hoodie. This premium streetwear piece features the iconic BUNGI X BOBBY RABBIT HARDWARE design, perfect for tech animals of the elite GooberMcGeet club.',
+            'Beanies': 'Keep your tech animal style on point with this premium beanie. Featuring Bobby the Rabbit\'s signature design, it\'s perfect for the elite GooberMcGeet club members.',
+            'T-Shirts': 'Classic streetwear meets cyberpunk aesthetics. This premium t-shirt showcases Bobby the Tech Animal\'s iconic design for the digital elite.',
+            'Sweaters': 'Cozy comfort meets cutting-edge style. This tech-inspired sweater features premium Bobby branding for ultimate streetwear sophistication.',
+            'Windbreakers': 'High-tech weather protection with rebellious style. This windbreaker features reflective Bobby elements and elite GooberMcGeet club exclusivity.',
+            'Sweatpants': 'Premium comfort for active tech animals. These sweatpants combine Bobby\'s signature styling with ultimate comfort for the digital underground.'
+        };
+
         // Fallback sample product with cyberpunk theme
         return {
             id: productId,
             title: productData.title,
-            description: 'Step into the digital underground with Bobby the Rabbit\'s signature hoodie. This premium streetwear piece features the iconic BUNGI X BOBBY RABBIT HARDWARE design, perfect for tech animals of the elite GooberMcGeet club. Crafted with cutting-edge comfort technology and rebellious style.',
-            category: 'Hoodies',
+            description: descriptions[productData.category] || descriptions['Hoodies'],
+            category: productData.category,
             price: 50.00,
             comparePrice: 65.00,
             images: productData.images,
@@ -618,7 +688,7 @@ class ProductDetailManager {
                 { icon: '🔥', text: 'Cyberpunk streetwear aesthetic' },
                 { icon: '🍪', text: 'Cookie-approved design' }
             ],
-            details: 'This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size. Join Bobby\'s crew where the tech animals run wild and cookies are always within reach.',
+            details: 'This product runs small. For the perfect fit, we recommend ordering one size larger than your usual size. Join Bobby\'s crew where the tech animals run wild and cookies are always within reach.',
             care: 'Machine wash cold with like colors. Tumble dry low. Do not bleach. Iron on low heat if needed. Handle with the care of a true tech animal.',
             shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Each piece is crafted in Bobby\'s digital workshop.',
             rating: 4.9,
@@ -652,6 +722,9 @@ class ProductDetailManager {
         
         // Update page title
         document.title = `${this.currentProduct.title} - Bobby Streetwear`;
+        
+        // Update dynamic banner
+        this.updateProductBanner();
 
         const discount = this.currentProduct.comparePrice ? 
             Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
@@ -808,6 +881,57 @@ class ProductDetailManager {
         }
         
         this.updateInventoryDisplay();
+    }
+
+    updateProductBanner() {
+        const heroProductImage = document.getElementById('hero-product-image');
+        const heroProductTitle = document.getElementById('hero-product-title');
+        const heroProductSubtitle = document.getElementById('hero-product-subtitle');
+        const productCategoryBanner = document.getElementById('product-category-banner');
+        
+        if (!this.currentProduct) return;
+        
+        // Update hero image
+        if (heroProductImage && this.currentProduct.images && this.currentProduct.images.length > 0) {
+            heroProductImage.src = this.currentProduct.images[0];
+            heroProductImage.alt = this.currentProduct.title;
+            heroProductImage.style.display = 'block';
+        }
+        
+        // Update category banner
+        if (productCategoryBanner) {
+            productCategoryBanner.textContent = this.currentProduct.category.toUpperCase();
+        }
+        
+        // Update title with glitch effect
+        if (heroProductTitle) {
+            heroProductTitle.textContent = this.currentProduct.title;
+            heroProductTitle.setAttribute('data-text', this.currentProduct.title);
+        }
+        
+        // Update subtitle
+        if (heroProductSubtitle) {
+            const subtitle = this.generateProductSubtitle();
+            heroProductSubtitle.textContent = subtitle;
+        }
+    }
+
+    generateProductSubtitle() {
+        const subtitles = {
+            'hoodie': 'Premium streetwear hoodie for the digital elite',
+            'hoodies': 'Premium streetwear hoodie for the digital elite',
+            't-shirt': 'Classic tech animal streetwear',
+            'tshirt': 'Classic tech animal streetwear',
+            'sweater': 'Cozy tech-inspired comfort wear',
+            'windbreaker': 'High-tech weather protection',
+            'sweatpants': 'Premium comfort for tech animals',
+            'joggers': 'Elite streetwear for active tech animals',
+            'beanie': 'Tech animal headwear essentials',
+            'hat': 'Tech animal headwear essentials'
+        };
+        
+        const category = this.currentProduct.category.toLowerCase();
+        return subtitles[category] || 'Premium BUNGI X BOBBY streetwear';
     }
 
     generateStars(rating) {
