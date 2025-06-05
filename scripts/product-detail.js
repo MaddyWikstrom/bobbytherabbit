@@ -14,10 +14,10 @@ class ProductDetailManager {
     }
 
     async init() {
-        await this.loadProduct();
         this.setupEventListeners();
-        this.setupPasswordProtection();
         this.loadRecentlyViewed();
+        // Start loading immediately without password protection
+        this.startLoadingSequence();
     }
 
     setupPasswordProtection() {
@@ -48,7 +48,7 @@ class ProductDetailManager {
         });
     }
 
-    startLoadingSequence() {
+    async startLoadingSequence() {
         const loadingScreen = document.getElementById('loading-screen');
         const mainContent = document.getElementById('main-content');
         const loadingProgress = document.getElementById('loading-progress');
@@ -67,9 +67,20 @@ class ProductDetailManager {
 
         let progress = 0;
         let messageIndex = 0;
+        let productLoaded = false;
+
+        // Start loading the product data
+        this.loadProduct().then(() => {
+            productLoaded = true;
+        }).catch(error => {
+            console.error('Error loading product:', error);
+            productLoaded = true; // Continue even if there's an error
+        });
 
         const updateProgress = () => {
-            progress += Math.random() * 20 + 10;
+            // Slow down progress if product isn't loaded yet
+            const progressIncrement = productLoaded ? Math.random() * 20 + 10 : Math.random() * 5 + 2;
+            progress += progressIncrement;
             if (progress > 100) progress = 100;
 
             loadingProgress.style.width = `${progress}%`;
@@ -80,7 +91,7 @@ class ProductDetailManager {
                 loadingMessage.textContent = messages[messageIndex];
             }
 
-            if (progress >= 100) {
+            if (progress >= 100 && productLoaded) {
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
                     mainContent.style.display = 'block';
@@ -96,19 +107,14 @@ class ProductDetailManager {
 
     async loadProduct() {
         const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        if (!productId) {
-            window.location.href = 'products.html';
-            return;
-        }
+        const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
 
         // Load product data (this would typically come from an API)
         this.currentProduct = await this.fetchProductData(productId);
         
         if (!this.currentProduct) {
-            window.location.href = 'products.html';
-            return;
+            // Use sample product as final fallback
+            this.currentProduct = this.getSampleProduct(productId);
         }
 
         this.renderProduct();
@@ -527,55 +533,114 @@ class ProductDetailManager {
     }
 
     getSampleProduct(productId) {
-        // Fallback sample product
+        // Map product IDs to specific sample products
+        const productMap = {
+            'bungi-hoodie-black': {
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
+                images: [
+                    'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
+                    'mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png',
+                    'mockups/unisex-premium-hoodie-vintage-black-left-683f9023d85a1.png',
+                    'mockups/unisex-premium-hoodie-vintage-black-right-683f90240cd93.png'
+                ],
+                colors: [
+                    { name: 'Vintage Black', code: '#2C2C2C' }
+                ]
+            },
+            'bungi-hoodie-navy': {
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
+                images: [
+                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                    'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
+                    'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221aa90.png',
+                    'mockups/unisex-premium-hoodie-navy-blazer-right-683f90222d3ed.png'
+                ],
+                colors: [
+                    { name: 'Navy Blazer', code: '#001f3f' }
+                ]
+            },
+            'bungi-hoodie-maroon': {
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
+                images: [
+                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                    'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
+                    'mockups/unisex-premium-hoodie-maroon-left-683f90228e99c.png',
+                    'mockups/unisex-premium-hoodie-maroon-right-683f9022a4ec2.png'
+                ],
+                colors: [
+                    { name: 'Maroon', code: '#800000' }
+                ]
+            },
+            'bungi-hoodie-charcoal': {
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
+                images: [
+                    'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
+                    'mockups/unisex-premium-hoodie-charcoal-heather-right-683f9023457b5.png'
+                ],
+                colors: [
+                    { name: 'Charcoal Heather', code: '#36454F' }
+                ]
+            },
+            'bungi-hoodie-white': {
+                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
+                images: [
+                    'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                    'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
+                    'mockups/unisex-premium-hoodie-white-left-683f8fddd825c.png',
+                    'mockups/unisex-premium-hoodie-white-right-683f8fdddb49b.png'
+                ],
+                colors: [
+                    { name: 'White', code: '#FFFFFF' }
+                ]
+            }
+        };
+
+        const productData = productMap[productId] || productMap['bungi-hoodie-black'];
+
+        // Fallback sample product with cyberpunk theme
         return {
             id: productId,
-            title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie',
-            description: 'Who knew that the softest hoodie you\'ll ever own comes with such a cool design. You won\'t regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.',
+            title: productData.title,
+            description: 'Step into the digital underground with Bobby the Rabbit\'s signature hoodie. This premium streetwear piece features the iconic BUNGI X BOBBY RABBIT HARDWARE design, perfect for tech animals of the elite GooberMcGeet club. Crafted with cutting-edge comfort technology and rebellious style.',
             category: 'Hoodies',
             price: 50.00,
             comparePrice: 65.00,
-            images: [
-                'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c7dbc.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c454e.png'
-            ],
-            colors: [
-                { name: 'Black', code: '#000000' },
-                { name: 'Navy Blazer', code: '#001f3f' },
-                { name: 'Maroon', code: '#800000' },
-                { name: 'Charcoal Heather', code: '#36454F' }
-            ],
+            images: productData.images,
+            colors: productData.colors,
             sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
             features: [
-                { icon: '🧵', text: '100% cotton face' },
-                { icon: '♻️', text: '65% ring-spun cotton, 35% polyester' },
-                { icon: '👜', text: 'Front pouch pocket' },
-                { icon: '🎯', text: 'Self-fabric patch on the back' }
+                { icon: '🐰', text: 'Bobby the Tech Animal approved' },
+                { icon: '⚡', text: 'Elite GooberMcGeet club exclusive' },
+                { icon: '🧵', text: '100% cotton face for ultimate comfort' },
+                { icon: '♻️', text: '65% ring-spun cotton, 35% polyester blend' },
+                { icon: '👜', text: 'Front pouch pocket for tech essentials' },
+                { icon: '🎯', text: 'Self-fabric patch on the back' },
+                { icon: '🔥', text: 'Cyberpunk streetwear aesthetic' },
+                { icon: '🍪', text: 'Cookie-approved design' }
             ],
-            details: 'This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size.',
-            care: 'Machine wash cold, tumble dry low, do not bleach, iron on low heat if needed.',
-            shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you.',
-            rating: 4.8,
-            reviewCount: 127,
+            details: 'This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size. Join Bobby\'s crew where the tech animals run wild and cookies are always within reach.',
+            care: 'Machine wash cold with like colors. Tumble dry low. Do not bleach. Iron on low heat if needed. Handle with the care of a true tech animal.',
+            shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Each piece is crafted in Bobby\'s digital workshop.',
+            rating: 4.9,
+            reviewCount: 247,
             featured: true,
             new: true,
             sale: true,
-            inventory: {
-                'Black-S': 15,
-                'Black-M': 23,
-                'Black-L': 18,
-                'Black-XL': 12,
-                'Black-2XL': 8,
-                'Black-3XL': 5,
-                'Navy Blazer-S': 10,
-                'Navy Blazer-M': 15,
-                'Navy Blazer-L': 12,
-                'Navy Blazer-XL': 8,
-                'Navy Blazer-2XL': 5,
-                'Navy Blazer-3XL': 3
-            }
+            inventory: this.generateSampleInventory(productData.colors)
         };
+    }
+
+    generateSampleInventory(colors) {
+        const inventory = {};
+        const sizes = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
+        
+        colors.forEach(color => {
+            sizes.forEach(size => {
+                inventory[`${color.name}-${size}`] = Math.floor(Math.random() * 25) + 5;
+            });
+        });
+        
+        return inventory;
     }
 
     renderProduct() {
