@@ -878,6 +878,12 @@ class ProductManager {
         const product = this.products.find(p => p.id === productId);
         if (!product) return;
 
+        // Create a deep copy of the product to avoid modifying the original
+        const quickViewProduct = JSON.parse(JSON.stringify(product));
+        // Store filtered images
+        let filteredImages = [...quickViewProduct.images];
+        let currentImageIndex = 0;
+
         const modal = document.getElementById('quick-view-modal');
         const modalBody = document.getElementById('modal-body');
         
@@ -888,10 +894,77 @@ class ProductManager {
             'assets/featured-hoodie.svg'
         ];
         
+        // Function to filter images by color
+        const filterImagesByColor = (colorName) => {
+            if (!quickViewProduct || !quickViewProduct.images || !colorName) {
+                return;
+            }
+            
+            // Convert color name to lowercase for case-insensitive comparison
+            const color = colorName.toLowerCase();
+            
+            // Filter images that match the selected color
+            filteredImages = quickViewProduct.images.filter(imagePath => {
+                const imageName = imagePath.toLowerCase();
+                // Check if image filename contains the color name
+                return imageName.includes(`-${color}-`) ||
+                       imageName.includes(`/${color}-`) ||
+                       imageName.includes(`-${color.replace(' ', '-')}-`) ||
+                       imageName.includes(`/${color.replace(' ', '-')}-`) ||
+                       // Also try matching "color position" without hyphen
+                       imageName.includes(`${color} `);
+            });
+            
+            // If no images match the color, use all images as fallback
+            if (filteredImages.length === 0) {
+                console.log(`No images found for color: ${color}, using all images as fallback`);
+                filteredImages = [...quickViewProduct.images];
+            }
+            
+            // Update thumbnails
+            updateThumbnails();
+            
+            // Update main image
+            currentImageIndex = 0;
+            const mainImage = document.querySelector('.quick-view-main-image');
+            if (mainImage && filteredImages.length > 0) {
+                mainImage.src = filteredImages[0];
+            }
+        };
+        
+        // Function to update thumbnails
+        const updateThumbnails = () => {
+            const thumbnailsContainer = document.querySelector('.quick-view-thumbnails');
+            if (!thumbnailsContainer) return;
+            
+            thumbnailsContainer.innerHTML = filteredImages.map(img => `
+                <img src="${img}" alt="${quickViewProduct.title}" class="quick-view-thumbnail"
+                     onerror="this.onerror=null;
+                              for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
+                                try {
+                                  this.src=${JSON.stringify(fallbackImages)}[i];
+                                  break;
+                                } catch(e) {
+                                  continue;
+                                }
+                              }
+                              console.log('Thumbnail fallback used for ${quickViewProduct.id}');">
+            `).join('');
+            
+            // Re-attach click handlers to thumbnails
+            document.querySelectorAll('.quick-view-thumbnail').forEach((thumb, index) => {
+                thumb.addEventListener('click', () => {
+                    const mainImage = document.querySelector('.quick-view-main-image');
+                    mainImage.src = filteredImages[index];
+                    currentImageIndex = index;
+                });
+            });
+        };
+        
         modalBody.innerHTML = `
             <div class="quick-view-content">
                 <div class="quick-view-images">
-                    <img src="${product.mainImage}" alt="${product.title}" class="quick-view-main-image"
+                    <img src="${quickViewProduct.mainImage}" alt="${quickViewProduct.title}" class="quick-view-main-image"
                          onerror="this.onerror=null;
                                   for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
                                     try {
@@ -901,11 +974,11 @@ class ProductManager {
                                       continue;
                                     }
                                   }
-                                  console.log('Image fallback used in modal for ${product.id}');">
-                    ${product.images.length > 1 ? `
+                                  console.log('Image fallback used in modal for ${quickViewProduct.id}');">
+                    ${quickViewProduct.images.length > 1 ? `
                         <div class="quick-view-thumbnails">
-                            ${product.images.map(img => `
-                                <img src="${img}" alt="${product.title}" class="quick-view-thumbnail"
+                            ${quickViewProduct.images.map(img => `
+                                <img src="${img}" alt="${quickViewProduct.title}" class="quick-view-thumbnail"
                                      onerror="this.onerror=null;
                                               for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
                                                 try {
@@ -915,44 +988,47 @@ class ProductManager {
                                                   continue;
                                                 }
                                               }
-                                              console.log('Thumbnail fallback used for ${product.id}');">
+                                              console.log('Thumbnail fallback used for ${quickViewProduct.id}');">
                             `).join('')}
                         </div>
                     ` : ''}
                 </div>
                 <div class="quick-view-details">
-                    <div class="product-category">${product.category.replace('-', ' ')}</div>
-                    <h2 class="product-title">${product.title}</h2>
+                    <div class="product-category">${quickViewProduct.category.replace('-', ' ')}</div>
+                    <h2 class="product-title">${quickViewProduct.title}</h2>
                     <div class="product-price">
-                        <span class="price-current">$${product.price.toFixed(2)}</span>
-                        ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}
+                        <span class="price-current">$${quickViewProduct.price.toFixed(2)}</span>
+                        ${quickViewProduct.comparePrice ? `<span class="price-original">$${quickViewProduct.comparePrice.toFixed(2)}</span>` : ''}
                     </div>
-                    <p class="product-description">${product.description}</p>
-                    ${product.colors.length > 0 ? `
+                    <p class="product-description">${quickViewProduct.description}</p>
+                    ${quickViewProduct.colors.length > 0 ? `
                         <div class="product-options">
                             <h4>Colors:</h4>
                             <div class="color-options">
-                                ${product.colors.map(color => `
-                                    <button class="color-option" style="background-color: ${this.getColorCode(color)}" title="${color}"></button>
+                                ${quickViewProduct.colors.map(color => `
+                                    <button class="color-option"
+                                            data-color="${typeof color === 'string' ? color : color.name}"
+                                            style="background-color: ${typeof color === 'string' ? this.getColorCode(color) : color.code}"
+                                            title="${typeof color === 'string' ? color : color.name}"></button>
                                 `).join('')}
                             </div>
                         </div>
                     ` : ''}
-                    ${product.sizes.length > 0 ? `
+                    ${quickViewProduct.sizes.length > 0 ? `
                         <div class="product-options">
                             <h4>Sizes:</h4>
                             <div class="size-options">
-                                ${product.sizes.map(size => `
+                                ${quickViewProduct.sizes.map(size => `
                                     <button class="size-option">${size}</button>
                                 `).join('')}
                             </div>
                         </div>
                     ` : ''}
                     <div class="quick-view-actions">
-                        <button class="add-to-cart-btn" onclick="productManager.addToCart('${product.id}')">
+                        <button class="add-to-cart-btn" onclick="productManager.addToCart('${quickViewProduct.id}')">
                             Add to Cart
                         </button>
-                        <button class="wishlist-btn" onclick="productManager.toggleWishlist('${product.id}')">
+                        <button class="wishlist-btn" onclick="productManager.toggleWishlist('${quickViewProduct.id}')">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
@@ -972,19 +1048,31 @@ class ProductManager {
         modalOverlay.onclick = () => modal.classList.remove('active');
 
         // Setup thumbnail clicks
-        document.querySelectorAll('.quick-view-thumbnail').forEach(thumb => {
+        document.querySelectorAll('.quick-view-thumbnail').forEach((thumb, index) => {
             thumb.addEventListener('click', (e) => {
                 const mainImage = document.querySelector('.quick-view-main-image');
                 mainImage.src = e.target.src;
+                currentImageIndex = index;
             });
         });
 
         // Setup option selections
-        document.querySelectorAll('.color-option').forEach(option => {
+        document.querySelectorAll('.color-option').forEach((option, index) => {
             option.addEventListener('click', (e) => {
                 document.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
                 e.target.classList.add('active');
+                
+                // Filter images based on selected color
+                const selectedColor = e.target.dataset.color;
+                filterImagesByColor(selectedColor);
             });
+            
+            // Activate the first color by default
+            if (index === 0) {
+                option.classList.add('active');
+                const initialColor = option.dataset.color;
+                filterImagesByColor(initialColor);
+            }
         });
 
         document.querySelectorAll('.size-option').forEach(option => {

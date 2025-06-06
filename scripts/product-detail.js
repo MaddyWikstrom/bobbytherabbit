@@ -9,6 +9,7 @@ class ProductDetailManager {
         };
         this.currentImageIndex = 0;
         this.recentlyViewed = [];
+        this.filteredImages = []; // Add array to store color-filtered images
         
         this.init();
     }
@@ -641,6 +642,9 @@ class ProductDetailManager {
         // Update page title
         this.updatePageTitle();
 
+        // Initialize filteredImages with all product images
+        this.filteredImages = [...this.currentProduct.images];
+
         const discount = this.currentProduct.comparePrice ?
             Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
 
@@ -793,6 +797,8 @@ class ProductDetailManager {
         // Set initial selections
         if (this.currentProduct.colors.length > 0) {
             this.selectedVariant.color = this.currentProduct.colors[0].name;
+            // Filter images based on the initial color selection
+            this.filterImagesByColor(this.selectedVariant.color);
         }
         
         this.updateInventoryDisplay();
@@ -887,8 +893,8 @@ class ProductDetailManager {
         const mainImage = document.getElementById('main-image');
         const thumbnails = document.querySelectorAll('.thumbnail');
         
-        if (mainImage && this.currentProduct.images[index]) {
-            mainImage.src = this.currentProduct.images[index];
+        if (mainImage && this.filteredImages[index]) {
+            mainImage.src = this.filteredImages[index];
             this.currentImageIndex = index;
             
             thumbnails.forEach((thumb, i) => {
@@ -904,7 +910,60 @@ class ProductDetailManager {
             option.classList.toggle('active', option.dataset.color === colorName);
         });
         
+        // Filter images based on selected color
+        this.filterImagesByColor(colorName);
+        
+        // Update inventory display
         this.updateInventoryDisplay();
+    }
+    
+    filterImagesByColor(colorName) {
+        if (!this.currentProduct || !this.currentProduct.images || !colorName) {
+            return;
+        }
+        
+        // Convert color name to lowercase for case-insensitive comparison
+        const color = colorName.toLowerCase();
+        
+        // Filter images that match the selected color
+        this.filteredImages = this.currentProduct.images.filter(imagePath => {
+            const imageName = imagePath.toLowerCase();
+            // Check if image filename contains the color name
+            // Common patterns: color-position (e.g., black-front, white-back)
+            return imageName.includes(`-${color}-`) ||
+                   imageName.includes(`/${color}-`) ||
+                   imageName.includes(`-${color.replace(' ', '-')}-`) ||
+                   imageName.includes(`/${color.replace(' ', '-')}-`) ||
+                   // Also try matching "color position" without hyphen
+                   imageName.includes(`${color} `);
+        });
+        
+        // If no images match the color, use all images as fallback
+        if (this.filteredImages.length === 0) {
+            console.log(`No images found for color: ${color}, using all images as fallback`);
+            this.filteredImages = [...this.currentProduct.images];
+        }
+        
+        // Update the thumbnail grid with filtered images
+        this.updateThumbnailGrid();
+        
+        // Reset current image index and update main image
+        this.currentImageIndex = 0;
+        const mainImage = document.getElementById('main-image');
+        if (mainImage && this.filteredImages.length > 0) {
+            mainImage.src = this.filteredImages[0];
+        }
+    }
+    
+    updateThumbnailGrid() {
+        const thumbnailGrid = document.querySelector('.thumbnail-grid');
+        if (!thumbnailGrid) return;
+        
+        thumbnailGrid.innerHTML = this.filteredImages.map((image, index) => `
+            <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="productDetailManager.changeImage(${index})">
+                <img src="${image}" alt="${this.currentProduct.title}">
+            </div>
+        `).join('');
     }
 
     selectSize(size) {
@@ -1072,7 +1131,7 @@ class ProductDetailManager {
         const modal = document.createElement('div');
         modal.className = 'image-zoom-modal';
         modal.innerHTML = `
-            <img src="${this.currentProduct.images[this.currentImageIndex]}" alt="${this.currentProduct.title}" class="zoom-image">
+            <img src="${this.filteredImages[this.currentImageIndex]}" alt="${this.currentProduct.title}" class="zoom-image">
             <button class="zoom-close" onclick="productDetailManager.closeImageZoom()">×</button>
         `;
         
