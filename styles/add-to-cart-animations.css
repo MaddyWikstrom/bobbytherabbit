@@ -170,6 +170,28 @@
     flex: 1;
 }
 
+/* Validation styling */
+.highlight-required {
+    animation: highlight-pulse 1.5s ease;
+    position: relative;
+}
+
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.option-group.highlight-required::after {
+    content: '↑ Required';
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    color: #ef4444;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 .view-cart-btn:hover {
     background: rgba(168, 85, 247, 0.3);
 }

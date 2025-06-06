@@ -1089,9 +1089,22 @@ class ProductDetailManager {
         // Update add to cart button
         const stock = this.getAvailableStock();
         if (addToCartBtn) {
-            addToCartBtn.disabled = stock === 0 || !this.selectedVariant.size;
-            addToCartBtn.textContent = stock === 0 ? 'Out of Stock' : 
-                                      !this.selectedVariant.size ? 'Select Size' : 'Add to Cart';
+            const needsSize = !this.selectedVariant.size;
+            const needsColor = !this.selectedVariant.color;
+            
+            addToCartBtn.disabled = stock === 0 || needsSize || needsColor;
+            
+            if (stock === 0) {
+                addToCartBtn.textContent = 'Out of Stock';
+            } else if (needsColor && needsSize) {
+                addToCartBtn.textContent = 'Select Options';
+            } else if (needsColor) {
+                addToCartBtn.textContent = 'Select Color';
+            } else if (needsSize) {
+                addToCartBtn.textContent = 'Select Size';
+            } else {
+                addToCartBtn.textContent = 'Add to Cart';
+            }
         }
     }
 
@@ -1588,10 +1601,17 @@ class ProductDetailManager {
             // Highlight color options section
             const colorOptionsGroup = document.querySelector('.option-group:has(.color-options)');
             if (colorOptionsGroup) {
+                colorOptionsGroup.classList.remove('highlight-required');
+                // Force reflow to restart animation
+                void colorOptionsGroup.offsetWidth;
+                
                 colorOptionsGroup.classList.add('highlight-required');
                 setTimeout(() => {
                     colorOptionsGroup.classList.remove('highlight-required');
                 }, 2000);
+                
+                // Scroll to the color options for better visibility
+                colorOptionsGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             
             return false;
@@ -1604,10 +1624,17 @@ class ProductDetailManager {
             // Highlight size options section
             const sizeOptionsGroup = document.querySelector('.option-group:has(.size-options)');
             if (sizeOptionsGroup) {
+                sizeOptionsGroup.classList.remove('highlight-required');
+                // Force reflow to restart animation
+                void sizeOptionsGroup.offsetWidth;
+                
                 sizeOptionsGroup.classList.add('highlight-required');
                 setTimeout(() => {
                     sizeOptionsGroup.classList.remove('highlight-required');
                 }, 2000);
+                
+                // Scroll to the size options for better visibility
+                sizeOptionsGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             
             return false;

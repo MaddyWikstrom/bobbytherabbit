@@ -27,7 +27,7 @@ const BobbyCarts = {
         mockupBasePath: '/mockups/',
         assetsBasePath: '/assets/',
         fallbackImage: '/assets/product-placeholder.png',
-        shopifyDomain: 'bobbytherabbit.myshopify.com',
+        shopifyDomain: 'mfdkk3-7g.myshopify.com',
         checkoutEndpoint: '/.netlify/functions/create-checkout-fixed',
         debug: true
     },
