@@ -58,6 +58,9 @@ class ProductManager {
             'bungi-x-bobby-cowboy-unisex-sweatshirt': 'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
         };
         
+        // Optional: Auto-generate image mappings from filenames
+        this.autoGenerateImageMap();
+        
         this.init();
     }
 
@@ -65,6 +68,73 @@ class ProductManager {
         await this.loadProducts();
         this.setupEventListeners();
         this.renderProducts();
+    }
+    
+    // Automatically register image IDs from filenames
+    autoGenerateImageMap() {
+        console.log('Auto-generating image mappings from filenames...');
+        const filenames = this.getAllMockupFilenames();
+        let newMappings = 0;
+        
+        filenames.forEach(file => {
+            // Extract the 13-character hex ID from the filename
+            const match = file.match(/(\w{13})\.png$/);
+            if (match) {
+                const id = match[1];
+                // Skip if we already have this ID mapped
+                if (this.imageIdToProductMap[id]) return;
+                
+                // Infer product handle from filename pattern
+                const handle = this.inferProductHandleFromId(id, file);
+                if (handle) {
+                    this.imageIdToProductMap[id] = handle;
+                    newMappings++;
+                    console.log(`Auto-mapped ID ${id} to product ${handle}`);
+                }
+            }
+        });
+        
+        console.log(`Added ${newMappings} new image mappings automatically`);
+    }
+    
+    // Infer product handle from image ID and filename
+    inferProductHandleFromId(id, filename) {
+        // Method 1: Try to infer from existing mappings
+        // Find product handles that share images with similar IDs (first 8 chars)
+        const idPrefix = id.substring(0, 8);
+        for (const [existingId, handle] of Object.entries(this.imageIdToProductMap)) {
+            if (existingId.startsWith(idPrefix)) {
+                return handle;
+            }
+        }
+        
+        // Method 2: Try to infer from filename patterns
+        if (filename) {
+            // Extract product type and color from filename
+            // Example: "unisex-premium-hoodie-black-front-683f9021c6f6d.png"
+            const parts = filename.split('-');
+            if (parts.length >= 3) {
+                const productType = parts.slice(0, parts.length - 3).join('-');
+                const color = parts[parts.length - 3];
+                
+                // Look for similar products in existing mappings
+                for (const handle of Object.values(this.imageIdToProductMap)) {
+                    if (handle.includes(productType) || handle.includes(color)) {
+                        return handle;
+                    }
+                }
+                
+                // If we have a match for hoodie or t-shirt, use default handles
+                if (productType.includes('hoodie')) {
+                    return 'bungi-x-bobby-rabbit-hardware-unisex-hoodie';
+                } else if (productType.includes('t-shirt')) {
+                    return 'bungi-x-bobby-rabbit-hardware-mens-t-shirt';
+                }
+            }
+        }
+        
+        // No match found
+        return null;
     }
 
     async loadProducts() {
@@ -423,11 +493,55 @@ class ProductManager {
             return mockupMappings[productHandle];
         }
 
-        // Try to find mockups based on product title keywords
-        const titleLower = productTitle ? productTitle.toLowerCase() : '';
-        for (const [handle, images] of Object.entries(mockupMappings)) {
-            if (titleLower.includes(handle.replace(/-/g, ' '))) {
-                return images;
+        // Try to find mockups based on product title keywords with improved matching
+        if (productTitle) {
+            const titleLower = productTitle.toLowerCase();
+            const titleWords = titleLower.split(/\s+/);
+            
+            // Track best match and its score
+            let bestMatch = null;
+            let bestScore = 0;
+            
+            for (const [handle, images] of Object.entries(mockupMappings)) {
+                // Extract keywords from handle
+                const handleWords = handle.replace(/-/g, ' ').toLowerCase().split(/\s+/);
+                
+                // Count how many handle words are in the title
+                let matchCount = 0;
+                let significantWords = 0;
+                
+                for (const word of handleWords) {
+                    // Skip common words that aren't very descriptive
+                    if (word.length < 3 || ['and', 'the', 'for', 'with'].includes(word)) {
+                        continue;
+                    }
+                    
+                    significantWords++;
+                    if (titleWords.includes(word) || titleLower.includes(word)) {
+                        matchCount++;
+                    }
+                }
+                
+                // Calculate match score (percentage of significant words that matched)
+                const score = significantWords > 0 ? (matchCount / significantWords) : 0;
+                
+                // If we have a better match, update our best match
+                if (score > bestScore && score >= 0.5) { // Require at least 50% match
+                    bestScore = score;
+                    bestMatch = images;
+                    
+                    // If we have a perfect match, return immediately
+                    if (score === 1) {
+                        console.log(`Perfect match found for "${productTitle}"`);
+                        return images;
+                    }
+                }
+            }
+            
+            // Return the best match if we found one
+            if (bestMatch) {
+                console.log(`Found best match for "${productTitle}" with score ${bestScore.toFixed(2)}`);
+                return bestMatch;
             }
         }
 
