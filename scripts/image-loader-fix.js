@@ -67,15 +67,45 @@ function generateFallbackSources(originalSrc, productType) {
     const urlParts = originalSrc.split('/');
     const filename = urlParts[urlParts.length - 1];
     
+    // Extract product identifier from filename or product type
+    let productIdentifier = '';
+    if (productType && typeof productType === 'string') {
+        productIdentifier = productType.toLowerCase().trim();
+    } else if (filename) {
+        // Try to extract identifier from filename
+        const filenameParts = filename.split('-');
+        if (filenameParts.length > 1) {
+            productIdentifier = filenameParts[0].toLowerCase();
+        }
+    }
+    
+    // Generate domain-relative and absolute URLs to try
+    const currentDomain = window.location.origin;
+    
     // Default fallbacks that are likely to exist
     const fallbacks = [
-        originalSrc,
-        // Try with /assets/ prefix
+        originalSrc, // Original source as provided
+        
+        // Try with domain-relative paths - these help with cross-domain issues
+        originalSrc.startsWith('/') ? originalSrc : `/${originalSrc}`,
+        
+        // Try with absolute URL if it's a relative path
+        originalSrc.startsWith('http') ? originalSrc : `${currentDomain}/${originalSrc}`,
+        
+        // Try common directory paths
+        `/assets/${filename}`,
+        `/mockups/${filename}`,
         `assets/${filename}`,
-        // Try mockups folder
         `mockups/${filename}`,
-        // Try common product images
+        
+        // Try variant paths for mockups with different naming patterns
+        `/mockups/${productIdentifier}-${filename}`,
+        `mockups/${productIdentifier}-${filename}`,
+        
+        // Default fallbacks
+        `/assets/product-placeholder.png`,
         `assets/product-placeholder.png`,
+        `/assets/featured-hoodie.svg`,
         `assets/featured-hoodie.svg`
     ];
     
