@@ -905,6 +905,11 @@ class ProductManager {
             
             // Filter images that match the selected color
             filteredImages = quickViewProduct.images.filter(imagePath => {
+                // First check if the image path exists (not a reference to a non-existent file)
+                if (!imagePath || typeof imagePath !== 'string') {
+                    return false;
+                }
+                
                 const imageName = imagePath.toLowerCase();
                 // Check if image filename contains the color name
                 return imageName.includes(`-${color}-`) ||
@@ -916,8 +921,8 @@ class ProductManager {
             });
             
             // If no images match the color, use all images as fallback
+            // but don't log an error since this is expected behavior
             if (filteredImages.length === 0) {
-                console.log(`No images found for color: ${color}, using all images as fallback`);
                 filteredImages = [...quickViewProduct.images];
             }
             
