@@ -19,10 +19,9 @@ class CartManager {
     setupEventListeners() {
         // Cart toggle - try multiple selectors for different pages
         const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn');
-        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartModal = document.getElementById('cart-modal');
         const cartClose = document.getElementById('cart-close');
-        const cartOverlay = document.getElementById('cart-overlay');
-
+        
         if (cartToggles.length > 0) {
             cartToggles.forEach(toggle => {
                 toggle.addEventListener('click', (e) => {
@@ -49,13 +48,20 @@ class CartManager {
         if (cartClose) {
             cartClose.addEventListener('click', () => this.closeCart());
         }
-
-        if (cartOverlay) {
-            cartOverlay.addEventListener('click', () => this.closeCart());
+        
+        // The cart modal background should also close the cart when clicked
+        // (there's no separate overlay in this HTML structure)
+        if (cartModal) {
+            cartModal.addEventListener('click', (e) => {
+                // Only close if clicking the modal background, not the content
+                if (e.target === cartModal) {
+                    this.closeCart();
+                }
+            });
         }
 
         // Checkout button
-        const checkoutBtn = document.getElementById('checkout-btn');
+        const checkoutBtn = document.querySelector('.checkout-btn');
         if (checkoutBtn) {
             checkoutBtn.addEventListener('click', () => this.proceedToCheckout());
         }
@@ -147,18 +153,15 @@ class CartManager {
 
     openCart() {
         console.log('Opening cart');
-        const cartSidebar = document.getElementById('cart-sidebar');
-        const cartOverlay = document.getElementById('cart-overlay');
+        const cartModal = document.getElementById('cart-modal');
         
-        if (cartSidebar && cartOverlay) {
+        if (cartModal) {
             // Ensure the cart is visible and on top
-            cartSidebar.style.display = 'flex';
-            cartSidebar.style.zIndex = '10000';
-            cartOverlay.style.zIndex = '9999';
+            cartModal.style.display = 'flex';
+            cartModal.style.zIndex = '10000';
             
             // Add active class (for animation)
-            cartSidebar.classList.add('active');
-            cartOverlay.classList.add('active');
+            cartModal.classList.remove('hidden');
             
             // Update state
             this.isOpen = true;
@@ -179,19 +182,17 @@ class CartManager {
 
     closeCart() {
         console.log('Closing cart');
-        const cartSidebar = document.getElementById('cart-sidebar');
-        const cartOverlay = document.getElementById('cart-overlay');
+        const cartModal = document.getElementById('cart-modal');
         
-        if (cartSidebar && cartOverlay) {
-            cartSidebar.classList.remove('active');
-            cartOverlay.classList.remove('active');
+        if (cartModal) {
+            cartModal.classList.add('hidden');
             this.isOpen = false;
             document.body.style.overflow = '';
             
             // Small delay before removing display to allow for animation
             setTimeout(() => {
                 if (!this.isOpen) { // Only if still closed
-                    cartOverlay.style.display = 'none';
+                    cartModal.style.display = 'none';
                 }
             }, 300);
         } else {
@@ -201,7 +202,7 @@ class CartManager {
 
     updateCartDisplay() {
         const cartItems = document.getElementById('cart-items');
-        const cartTotal = document.getElementById('cart-total');
+        const cartTotal = document.querySelector('.total-amount');
         
         if (!cartItems) return;
 
@@ -230,7 +231,7 @@ class CartManager {
         }
 
         if (cartTotal) {
-            cartTotal.textContent = this.total.toFixed(2);
+            cartTotal.textContent = '$' + this.total.toFixed(2);
         }
     }
 
@@ -341,11 +342,11 @@ class CartManager {
 
     showRemoveAnimation() {
         // Add a subtle shake animation to indicate removal
-        const cartSidebar = document.getElementById('cart-sidebar');
-        if (cartSidebar) {
-            cartSidebar.style.animation = 'shake 0.3s ease';
+        const cartModal = document.getElementById('cart-modal');
+        if (cartModal) {
+            cartModal.style.animation = 'shake 0.3s ease';
             setTimeout(() => {
-                cartSidebar.style.animation = '';
+                cartModal.style.animation = '';
             }, 300);
         }
     }
@@ -357,16 +358,16 @@ class CartManager {
         }
 
         // Show loading state
-        const checkoutBtn = document.getElementById('checkout-btn');
+        const checkoutBtn = document.querySelector('.checkout-btn');
         if (checkoutBtn) {
-            const originalText = checkoutBtn.textContent;
-            checkoutBtn.textContent = 'Processing...';
+            const originalText = checkoutBtn.querySelector('span').textContent;
+            checkoutBtn.querySelector('span').textContent = 'Processing...';
             checkoutBtn.disabled = true;
 
             // Simulate checkout process
             setTimeout(() => {
                 this.initiateShopifyCheckout();
-                checkoutBtn.textContent = originalText;
+                checkoutBtn.querySelector('span').textContent = originalText;
                 checkoutBtn.disabled = false;
             }, 1000);
         }
@@ -887,47 +888,39 @@ document.head.appendChild(cartStyleSheet);
 // Add enhanced cart styles to fix visibility issues
 const enhancedCartStyles = `
 /* Critical Cart Fixes */
-.cart-sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 380px !important;
-    max-width: 90vw !important;
-    height: 100vh !important;
-    background: rgba(20, 20, 35, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 10000 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5) !important;
-    border-left: 1px solid rgba(120, 119, 198, 0.3) !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    transition: transform 0.3s ease-in-out !important;
-    transform: translateX(100%) !important;
-}
-
-.cart-sidebar.active {
-    transform: translateX(0) !important;
-}
-
-.cart-overlay {
+.cart-modal {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
     background: rgba(0, 0, 0, 0.7) !important;
-    z-index: 9999 !important;
-    display: block !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
+    backdrop-filter: blur(5px) !important;
+    z-index: 10000 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    opacity: 1 !important;
     transition: opacity 0.3s ease, visibility 0.3s ease !important;
 }
 
-.cart-overlay.active {
-    opacity: 1 !important;
-    visibility: visible !important;
+.cart-modal.hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    display: none !important;
+}
+
+.cart-content {
+    position: relative !important;
+    width: 380px !important;
+    max-width: 90vw !important;
+    height: 100vh !important;
+    background: rgba(20, 20, 35, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5) !important;
+    border-left: 1px solid rgba(120, 119, 198, 0.3) !important;
 }
 
 /* Cart Items Styling */
@@ -1060,7 +1053,7 @@ const enhancedCartStyles = `
     font-weight: bold !important;
 }
 
-#checkout-btn {
+.checkout-btn {
     width: 100% !important;
     padding: 12px !important;
     background: linear-gradient(45deg, #a855f7, #3b82f6) !important;
@@ -1072,7 +1065,7 @@ const enhancedCartStyles = `
     transition: all 0.3s ease !important;
 }
 
-#checkout-btn:hover {
+.checkout-btn:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 5px 15px rgba(120, 119, 198, 0.4) !important;
 }
