@@ -54,16 +54,16 @@ class ProductManager {
                 return;
             }
             
-            // Final fallback: Use sample products
-            console.log('⚠️ No products from any source, using sample products');
-            this.products = this.getSampleProducts();
-            this.filteredProducts = [...this.products];
+            // No products found
+            console.log('⚠️ No products found from any source');
+            this.products = [];
+            this.filteredProducts = [];
             
         } catch (error) {
             console.error('❌ Error loading products:', error);
-            console.log('🔄 Falling back to sample products due to error');
-            this.products = this.getSampleProducts();
-            this.filteredProducts = [...this.products];
+            console.log('❌ No products loaded due to error');
+            this.products = [];
+            this.filteredProducts = [];
         }
     }
 
@@ -160,7 +160,7 @@ class ProductManager {
                     price: parseFloat(variant.price.amount),
                     comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
                     availableForSale: variant.availableForSale,
-                    image: images[0] || 'assets/placeholder.jpg'
+                    image: images[0] || ''
                 });
             });
             
@@ -180,8 +180,8 @@ class ProductManager {
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
-                images: images.length > 0 ? images : ['assets/placeholder.jpg'],
-                mainImage: images[0] || 'assets/placeholder.jpg',
+                images: images.length > 0 ? images : [],
+                mainImage: images[0] || '',
                 variants: variants,
                 colors: Array.from(colors),
                 sizes: Array.from(sizes),
@@ -243,14 +243,14 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
 
     parseCSVToProducts(csvText) {
         if (!csvText || csvText.trim() === '') {
-            console.log('CSV data is empty, using sample products');
-            return this.getSampleProducts();
+            console.log('CSV data is empty');
+            return [];
         }
 
         const lines = csvText.split('\n');
         if (lines.length < 2) {
-            console.log('CSV has insufficient data, using sample products');
-            return this.getSampleProducts();
+            console.log('CSV has insufficient data');
+            return [];
         }
 
         const headers = lines[0].split(',');
@@ -272,8 +272,8 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
             if (!handle || !title) continue;
 
             if (!products.has(handle)) {
-                // Map to local mockup images using the CSV image URL
-                const localImages = this.getLocalMockupImages(imageUrl);
+                // Use the image URL directly from CSV
+                const images = imageUrl ? [imageUrl] : [];
                 
                 products.set(handle, {
                     id: handle,
@@ -282,12 +282,12 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
                     category: this.extractCategory(title),
                     price: price,
                     comparePrice: comparePrice > price ? comparePrice : null,
-                    images: localImages,
+                    images: images,
                     variants: [],
                     colors: new Set(),
                     sizes: new Set(),
-                    featured: Math.random() > 0.7,
-                    new: Math.random() > 0.8,
+                    featured: title.toLowerCase().includes('featured'),
+                    new: title.toLowerCase().includes('new'),
                     sale: comparePrice > price
                 });
             }
@@ -296,20 +296,17 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
             if (color) product.colors.add(color);
             if (size) product.sizes.add(size);
             
-            // Add local mockup image for this variant using the CSV image URL
-            const variantImages = this.getLocalMockupImages(imageUrl);
-            variantImages.forEach(img => {
-                if (!product.images.includes(img)) {
-                    product.images.push(img);
-                }
-            });
+            // Add image URL if not already included
+            if (imageUrl && !product.images.includes(imageUrl)) {
+                product.images.push(imageUrl);
+            }
 
             product.variants.push({
                 color: color,
                 size: size,
                 price: price,
                 comparePrice: comparePrice > price ? comparePrice : null,
-                image: variantImages[0] || 'assets/placeholder.jpg'
+                image: imageUrl || ''
             });
         }
 
@@ -317,7 +314,7 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
             ...product,
             colors: Array.from(product.colors),
             sizes: Array.from(product.sizes),
-            mainImage: product.images[0] || 'assets/placeholder.jpg'
+            mainImage: product.images[0] || ''
         }));
     }
 
@@ -364,190 +361,8 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
     }
 
     getLocalMockupImages(imageUrl) {
-        if (!imageUrl) return ['assets/placeholder.jpg'];
-        
-        // Extract the unique identifier from the CSV image URL
-        // Example: https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462
-        // We want to extract: 683f9d11a7936
-        const match = imageUrl.match(/([a-f0-9]{13})\.png/);
-        if (!match) return ['assets/placeholder.jpg'];
-        
-        const identifier = match[1];
-        
-        // Find matching mockup files with this identifier
-        const mockupImages = this.findMockupsByIdentifier(identifier);
-        
-        return mockupImages.length > 0 ? mockupImages : ['assets/placeholder.jpg'];
-    }
-
-    findMockupsByIdentifier(identifier) {
-        // Create a mapping of known identifiers to mockup files
-        // This maps the CSV image identifiers to local mockup files
-        const identifierMap = {
-            // Black hoodie identifiers from CSV
-            '683f9d11a7936': ['mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'],
-            '683f9d11a9742': ['mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png'],
-            
-            // Navy Blazer hoodie identifiers
-            '683f9d11ab4fe': ['mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'],
-            '683f9d11ae0c4': ['mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png'],
-            
-            // Maroon hoodie identifiers
-            '683f9d11b1d12': ['mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png'],
-            '683f9d11b64a3': ['mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png'],
-            
-            // Charcoal Heather hoodie identifiers
-            '683f9d11bbc17': ['mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'],
-            '683f9d11c14f8': ['mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'],
-            
-            // Vintage Black hoodie identifiers
-            '683f9d11c724f': ['mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'],
-            '683f9d11ce1c5': ['mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png'],
-            
-            // White hoodie identifiers
-            '683f9ce1094eb': ['mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'],
-            '683f9ce10ab8f': ['mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'],
-            
-            // T-shirt identifiers
-            '683f9c9fdcac3': ['assets/hoodie-white.png'], // Lightmode mens t-shirt
-            '683f9c6a74d70': ['assets/hoodie-black.png'], // Rabbit hardware mens t-shirt
-            
-            // Sweatshirt identifiers
-            '683f9be9c4dea': ['assets/hoodie-white.png'], // Rabbit hardware sweatshirt
-            '683f9bbadb79f': ['assets/hoodie-white.png'], // Womens t-shirt
-            
-            // Organic sweatshirt identifiers
-            '683f9b628540b': ['assets/hoodie-black.png'], // Darkmode organic sweatshirt
-            '683f9b0bd823b': ['assets/hoodie-black.png'], // Lightmode organic sweatshirt
-            
-            // Beanie identifiers
-            '683f9a789ba58': ['assets/hoodie-black.png'], // Black beanie
-            '683f9a789c355': ['assets/hoodie-white.png'], // White beanie
-            
-            // Joggers identifiers
-            '683f99d4ba848': ['assets/hoodie-black.png'], // Dark mode joggers
-            '683f9920e04cf': ['assets/hoodie-white.png'], // Lightmode joggers
-            
-            // Windbreaker identifiers
-            '683f9890d7838': ['assets/hoodie-black.png'], // Cowboy windbreaker
-            
-            // Cowboy collection identifiers
-            '683f985018ab4': ['assets/hoodie-white.png'], // Cowboy sweatshirt
-            '683f97ee5c7af': ['assets/hoodie-white.png']  // Cowboy mens t-shirt
-        };
-        
-        // Check if we have a direct mapping for this identifier
-        if (identifierMap[identifier]) {
-            return identifierMap[identifier];
-        }
-        
-        // If no exact match, return fallback images
-        return this.findSimilarMockups(identifier);
-    }
-
-    findSimilarMockups(identifier) {
-        // Fallback: return a default set of hoodie images since most products are hoodies
-        return [
-            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-            'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-            'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'
-        ];
-    }
-
-
-    getSampleProducts() {
-        return [
-            {
-                id: 'bungi-hoodie-black',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Black',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: 65.00,
-                mainImage: 'assets/hoodie-black.png',
-                images: ['assets/hoodie-black.png'],
-                colors: ['Black'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: true,
-                new: true,
-                sale: true
-            },
-            {
-                id: 'bungi-hoodie-navy',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Navy Blazer',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'assets/hoodie-navy.png',
-                images: ['assets/hoodie-navy.png'],
-                colors: ['Navy Blazer'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: true,
-                new: false,
-                sale: false
-            },
-            {
-                id: 'bungi-hoodie-maroon',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Maroon',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'assets/hoodie-maroon.png',
-                images: ['assets/hoodie-maroon.png'],
-                colors: ['Maroon'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: false,
-                new: true,
-                sale: false
-            },
-            {
-                id: 'bungi-hoodie-charcoal',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Charcoal Heather',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: 58.00,
-                mainImage: 'assets/hoodie-charcoal.png',
-                images: ['assets/hoodie-charcoal.png'],
-                colors: ['Charcoal Heather'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: false,
-                new: false,
-                sale: true
-            },
-            {
-                id: 'bungi-hoodie-white',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - White',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'assets/hoodie-white.png',
-                images: ['assets/hoodie-white.png'],
-                colors: ['White'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: true,
-                new: false,
-                sale: false
-            },
-            {
-                id: 'bungi-hoodie-vintage-black',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Vintage Black',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'assets/hoodie-vintage-black.png',
-                images: ['assets/hoodie-vintage-black.png'],
-                colors: ['Vintage Black'],
-                sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                featured: false,
-                new: true,
-                sale: false
-            }
-        ];
+        // Return empty array - all images should come from Shopify
+        return [];
     }
 
     setupEventListeners() {

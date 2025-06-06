@@ -90,7 +90,7 @@ class ShopifyBuySDKManager {
                     price: parseFloat(variant.price.amount),
                     comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
                     availableForSale: variant.available,
-                    image: images[0] || 'assets/placeholder.jpg'
+                    image: images[0] || ''
                 });
             });
             
@@ -110,8 +110,8 @@ class ShopifyBuySDKManager {
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
-                images: images.length > 0 ? images : ['assets/placeholder.jpg'],
-                mainImage: images[0] || 'assets/placeholder.jpg',
+                images: images.length > 0 ? images : [],
+                mainImage: images[0] || '',
                 variants: variants,
                 colors: Array.from(colors),
                 sizes: Array.from(sizes),

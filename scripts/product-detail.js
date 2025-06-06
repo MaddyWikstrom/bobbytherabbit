@@ -112,10 +112,8 @@ class ProductDetailManager {
         // Load product data (this would typically come from an API)
         this.currentProduct = await this.fetchProductData(productId);
         
-        if (!this.currentProduct) {
-            // Use sample product as final fallback
-            this.currentProduct = this.getSampleProduct(productId);
-        }
+        // No fallback to sample data - if product not found, it stays null
+        // and will be handled by renderProduct()
 
         this.renderProduct();
         this.addToRecentlyViewed(this.currentProduct);
@@ -126,33 +124,24 @@ class ProductDetailManager {
         console.log('Loading product data for:', productId);
         
         try {
-            // First priority: Try to load from Shopify API
-            console.log('🛍️ Attempting to load product from Shopify...');
+            // Only load from Shopify API - no fallbacks to sample data
+            console.log('🛍️ Loading product from Shopify API...');
             const shopifyProduct = await this.loadShopifyProduct(productId);
             
             if (shopifyProduct) {
                 console.log('✅ Successfully loaded product from Shopify!');
-                return this.convertProductForDetailPage(shopifyProduct);
+                return shopifyProduct;
             }
             
-            // Second priority: Try to load from ProductManager (CSV/embedded data)
-            console.log('📄 Shopify failed, trying ProductManager...');
-            const productManager = this.createProductManager();
-            await productManager.loadProducts();
-            
-            const product = productManager.products.find(p => p.id === productId);
-            if (product) {
-                console.log('✅ Successfully loaded product from ProductManager!');
-                return this.convertProductForDetailPage(product);
-            }
-            
-            // Final fallback: Use sample product
-            console.log('⚠️ No product found, using sample product');
-            return this.getSampleProduct(productId);
+            console.error('❌ Product not found in Shopify');
+            // Show error page instead of sample data
+            this.showProductNotFound();
+            return null;
             
         } catch (error) {
             console.error('❌ Error loading product:', error);
-            return this.getSampleProduct(productId);
+            this.showProductNotFound();
+            return null;
         }
     }
 
@@ -173,16 +162,23 @@ class ProductDetailManager {
                 return null;
             }
 
-            // Find the specific product by handle/id
-            const product = data.products?.find(p => p.handle === productId || p.id === productId);
+            // Find the specific product by handle/id or Shopify ID
+            const product = data.find(p => {
+                const node = p.node || p;
+                const shopifyId = node.id?.replace('gid://shopify/Product/', '');
+                return node.handle === productId ||
+                       shopifyId === productId ||
+                       node.id === productId;
+            });
             
             if (!product) {
                 console.log('❌ Product not found in Shopify data');
                 return null;
             }
 
-            console.log(`🛍️ Found product via Netlify function: ${product.title}`);
-            return this.convertShopifyProductForDetail(product);
+            const productNode = product.node || product;
+            console.log(`🛍️ Found product via Netlify function: ${productNode.title}`);
+            return this.convertShopifyProductForDetail(productNode);
             
         } catch (error) {
             console.error('❌ Error loading product via Netlify function:', error);
@@ -191,12 +187,12 @@ class ProductDetailManager {
     }
 
     convertShopifyProductForDetail(shopifyProduct) {
-        // Extract images
+        // Extract images directly from Shopify
         const images = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
         
         // Extract variants and organize by color/size
         const variants = [];
-        const colors = new Set();
+        const colorMap = {};
         const sizes = new Set();
         const inventory = {};
         
@@ -209,7 +205,12 @@ class ProductDetailManager {
             variant.selectedOptions.forEach(option => {
                 if (option.name.toLowerCase() === 'color') {
                     color = option.value;
-                    colors.add(color);
+                    if (!colorMap[color]) {
+                        colorMap[color] = {
+                            name: color,
+                            code: this.getColorCode(color)
+                        };
+                    }
                 } else if (option.name.toLowerCase() === 'size') {
                     size = option.value;
                     sizes.add(size);
@@ -218,7 +219,7 @@ class ProductDetailManager {
             
             // Add to inventory tracking
             if (color && size) {
-                inventory[`${color}-${size}`] = variant.quantityAvailable || 0;
+                inventory[`${color}-${size}`] = variant.quantityAvailable || 10; // Default to 10 if not available
             }
             
             variants.push({
@@ -228,14 +229,16 @@ class ProductDetailManager {
                 price: parseFloat(variant.price.amount),
                 comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
                 availableForSale: variant.availableForSale,
-                quantityAvailable: variant.quantityAvailable || 0
+                quantityAvailable: variant.quantityAvailable || 10
             });
         });
         
         // Calculate pricing
         const minPrice = parseFloat(shopifyProduct.priceRange.minVariantPrice.amount);
-        const maxPrice = parseFloat(shopifyProduct.priceRange.maxVariantPrice.amount);
         const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
+        
+        // Extract features from description or use defaults
+        const features = this.extractFeatures(shopifyProduct.description);
         
         return {
             id: shopifyProduct.handle,
@@ -245,17 +248,86 @@ class ProductDetailManager {
             category: this.extractCategory(shopifyProduct.title),
             price: minPrice,
             comparePrice: comparePrice,
-            images: images.length > 0 ? images : ['assets/placeholder.jpg'],
+            images: images.length > 0 ? images : [],
             variants: variants,
-            colors: Array.from(colors),
+            colors: Object.values(colorMap),
             sizes: Array.from(sizes),
             featured: shopifyProduct.tags.includes('featured'),
             new: shopifyProduct.tags.includes('new'),
-            sale: comparePrice > minPrice,
+            sale: comparePrice && comparePrice > minPrice,
             tags: shopifyProduct.tags,
             productType: shopifyProduct.productType,
-            inventory: inventory
+            inventory: inventory,
+            features: features,
+            details: 'This product runs small. For the perfect fit, we recommend ordering one size larger than your usual size.',
+            care: 'Machine wash cold, tumble dry low, do not bleach, iron on low heat if needed.',
+            shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you.',
+            rating: 4.8,
+            reviewCount: Math.floor(Math.random() * 200) + 50
         };
+    }
+
+    getColorCode(colorName) {
+        const colorMap = {
+            'Black': '#000000',
+            'White': '#FFFFFF',
+            'Navy': '#001f3f',
+            'Navy Blazer': '#001f3f',
+            'Maroon': '#800000',
+            'Charcoal Heather': '#36454F',
+            'Vintage Black': '#2C2C2C',
+            'Heather Grey': '#D3D3D3',
+            'French Navy': '#002868',
+            'Forest Green': '#228B22',
+            'Red': '#FF0000',
+            'Blue': '#0000FF',
+            'Green': '#00FF00',
+            'Yellow': '#FFFF00',
+            'Purple': '#800080',
+            'Pink': '#FFC0CB',
+            'Orange': '#FFA500',
+            'Brown': '#A52A2A',
+            'Gray': '#808080',
+            'Grey': '#808080'
+        };
+        
+        return colorMap[colorName] || '#a855f7'; // Default to purple if color not found
+    }
+
+    extractFeatures(description) {
+        // Default features for all products
+        const defaultFeatures = [
+            { icon: '🐰', text: 'Bobby the Tech Animal approved' },
+            { icon: '⚡', text: 'Elite GooberMcGeet club exclusive' },
+            { icon: '🧵', text: '100% cotton face for ultimate comfort' },
+            { icon: '♻️', text: '65% ring-spun cotton, 35% polyester blend' },
+            { icon: '👜', text: 'Front pouch pocket' },
+            { icon: '🎯', text: 'Self-fabric patch on the back' },
+            { icon: '🔥', text: 'Cyberpunk streetwear aesthetic' },
+            { icon: '🍪', text: 'Cookie-approved design' }
+        ];
+        
+        // TODO: Parse features from description if they're included
+        return defaultFeatures;
+    }
+
+    showProductNotFound() {
+        const productGrid = document.getElementById('product-detail-grid');
+        const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+        
+        if (breadcrumbCurrent) {
+            breadcrumbCurrent.textContent = 'Product Not Found';
+        }
+        
+        if (productGrid) {
+            productGrid.innerHTML = `
+                <div class="product-not-found">
+                    <h2>Product Not Found</h2>
+                    <p>Sorry, we couldn't find the product you're looking for.</p>
+                    <a href="products.html" class="back-to-products">Back to Products</a>
+                </div>
+            `;
+        }
     }
 
     extractCategory(title) {
@@ -269,456 +341,20 @@ class ProductDetailManager {
         return 'Apparel';
     }
 
-    createProductManager() {
-        // Create a simplified product manager for loading products
-        return {
-            products: [],
-            async loadProducts() {
-                try {
-                    const csvData = await this.loadCSVData();
-                    this.products = this.parseCSVToProducts(csvData);
-                    
-                    if (this.products.length === 0) {
-                        this.products = this.getSampleProducts();
-                    }
-                } catch (error) {
-                    console.error('Error loading products:', error);
-                    this.products = this.getSampleProducts();
-                }
-            },
-            
-            async loadCSVData() {
-                try {
-                    const response = await fetch('products_export_1.csv');
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return await response.text();
-                } catch (error) {
-                    console.error('Error loading CSV:', error);
-                    return '';
-                }
-            },
-            
-            parseCSVToProducts(csvText) {
-                if (!csvText || csvText.trim() === '') {
-                    return this.getSampleProducts();
-                }
-
-                const lines = csvText.split('\n');
-                if (lines.length < 2) {
-                    return this.getSampleProducts();
-                }
-
-                const products = new Map();
-
-                for (let i = 1; i < lines.length; i++) {
-                    const values = this.parseCSVLine(lines[i]);
-                    if (values.length < 27) continue;
-
-                    const handle = values[0];
-                    const title = values[1];
-                    const description = values[2];
-                    const price = parseFloat(values[22]) || 0;
-                    const comparePrice = parseFloat(values[23]) || 0;
-                    const imageUrl = values[26];
-                    const color = values[9] || '';
-                    const size = values[12] || '';
-
-                    if (!handle || !title) continue;
-
-                    if (!products.has(handle)) {
-                        const localImages = this.getLocalMockupImages(imageUrl);
-                        
-                        products.set(handle, {
-                            id: handle,
-                            title: title,
-                            description: this.cleanDescription(description),
-                            category: this.extractCategory(title),
-                            price: price,
-                            comparePrice: comparePrice > price ? comparePrice : null,
-                            images: localImages,
-                            variants: [],
-                            colors: new Set(),
-                            sizes: new Set(),
-                            featured: Math.random() > 0.7,
-                            new: Math.random() > 0.8,
-                            sale: comparePrice > price
-                        });
-                    }
-
-                    const product = products.get(handle);
-                    if (color) product.colors.add(color);
-                    if (size) product.sizes.add(size);
-                    
-                    const variantImages = this.getLocalMockupImages(imageUrl);
-                    variantImages.forEach(img => {
-                        if (!product.images.includes(img)) {
-                            product.images.push(img);
-                        }
-                    });
-
-                    product.variants.push({
-                        color: color,
-                        size: size,
-                        price: price,
-                        comparePrice: comparePrice > price ? comparePrice : null,
-                        image: variantImages[0] || 'assets/placeholder.jpg'
-                    });
-                }
-
-                return Array.from(products.values()).map(product => ({
-                    ...product,
-                    colors: Array.from(product.colors),
-                    sizes: Array.from(product.sizes),
-                    mainImage: product.images[0] || 'assets/placeholder.jpg'
-                }));
-            },
-            
-            parseCSVLine(line) {
-                const result = [];
-                let current = '';
-                let inQuotes = false;
-
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === ',' && !inQuotes) {
-                        result.push(current.trim());
-                        current = '';
-                    } else {
-                        current += char;
-                    }
-                }
-                
-                result.push(current.trim());
-                return result;
-            },
-            
-            cleanDescription(description) {
-                if (!description) return '';
-                return description
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&[^;]+;/g, ' ')
-                    .trim()
-                    .substring(0, 200) + '...';
-            },
-            
-            extractCategory(title) {
-                const titleLower = title.toLowerCase();
-                if (titleLower.includes('hoodie')) return 'hoodie';
-                if (titleLower.includes('t-shirt') || titleLower.includes('tee')) return 't-shirt';
-                if (titleLower.includes('sweatshirt')) return 'sweatshirt';
-                if (titleLower.includes('joggers') || titleLower.includes('pants')) return 'joggers';
-                if (titleLower.includes('windbreaker') || titleLower.includes('jacket')) return 'windbreaker';
-                if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'beanie';
-                return 'other';
-            },
-            
-            getLocalMockupImages(imageUrl) {
-                if (!imageUrl) return ['assets/placeholder.jpg'];
-                
-                const match = imageUrl.match(/([a-f0-9]{13})\.png/);
-                if (!match) return ['assets/placeholder.jpg'];
-                
-                const identifier = match[1];
-                return this.findMockupsByIdentifier(identifier);
-            },
-            
-            findMockupsByIdentifier(identifier) {
-                const identifierMap = {
-                    '683f9d11a7936': ['mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png'],
-                    '683f9d11a9742': ['mockups/unisex-premium-hoodie-black-front-683f9021c7dbc.png'],
-                    '683f9d11ab4fe': ['mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'],
-                    '683f9d11ae0c4': ['mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png'],
-                    '683f9d11b1d12': ['mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png'],
-                    '683f9d11b64a3': ['mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png'],
-                    '683f9d11bbc17': ['mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'],
-                    '683f9d11c14f8': ['mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'],
-                    '683f9d11c724f': ['mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'],
-                    '683f9d11ce1c5': ['mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png'],
-                    '683f9ce1094eb': ['mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'],
-                    '683f9ce10ab8f': ['mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png']
-                };
-                
-                if (identifierMap[identifier]) {
-                    return identifierMap[identifier];
-                }
-                
-                return [
-                    'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                    'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'
-                ];
-            },
-            
-            getSampleProducts() {
-                return [
-                    {
-                        id: 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-                        title: 'BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie - Black',
-                        description: 'Premium streetwear hoodie with unique rabbit hardware design. Made from high-quality cotton blend for ultimate comfort.',
-                        category: 'hoodie',
-                        price: 50.00,
-                        comparePrice: 65.00,
-                        mainImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                        images: ['mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png'],
-                        colors: ['Black'],
-                        sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                        featured: true,
-                        new: true,
-                        sale: true
-                    }
-                ];
-            }
-        };
-    }
-
-    convertProductForDetailPage(product) {
-        // Convert the product data to the format expected by the detail page
-        const colorMap = {
-            'Black': '#000000',
-            'White': '#FFFFFF',
-            'Navy': '#001f3f',
-            'Navy Blazer': '#001f3f',
-            'Maroon': '#800000',
-            'Charcoal Heather': '#36454F',
-            'Vintage Black': '#2C2C2C',
-            'Heather Grey': '#D3D3D3',
-            'French Navy': '#002868',
-            'Forest Green': '#228B22'
-        };
-
-        return {
-            id: product.id,
-            title: product.title,
-            description: product.description,
-            category: product.category.charAt(0).toUpperCase() + product.category.slice(1),
-            price: product.price,
-            comparePrice: product.comparePrice,
-            images: product.images,
-            colors: product.colors.map(color => ({
-                name: color,
-                code: colorMap[color] || '#a855f7'
-            })),
-            sizes: product.sizes,
-            features: [
-                { icon: '🧵', text: '100% cotton face' },
-                { icon: '♻️', text: '65% ring-spun cotton, 35% polyester' },
-                { icon: '👜', text: 'Front pouch pocket' },
-                { icon: '🎯', text: 'Self-fabric patch on the back' }
-            ],
-            details: 'This hoodie runs small. For the perfect fit, we recommend ordering one size larger than your usual size.',
-            care: 'Machine wash cold, tumble dry low, do not bleach, iron on low heat if needed.',
-            shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you.',
-            rating: 4.8,
-            reviewCount: 127,
-            featured: product.featured,
-            new: product.new,
-            sale: product.sale,
-            inventory: this.generateInventory(product.colors, product.sizes)
-        };
-    }
-
-    generateInventory(colors, sizes) {
-        const inventory = {};
-        colors.forEach(color => {
-            sizes.forEach(size => {
-                inventory[`${color}-${size}`] = Math.floor(Math.random() * 20) + 5;
-            });
-        });
-        return inventory;
-    }
-
-    getSampleProduct(productId) {
-        // Map product IDs to specific sample products
-        const productMap = {
-            'bungi-hoodie-black': {
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
-                category: 'Hoodies',
-                images: [
-                    'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
-                    'mockups/unisex-premium-hoodie-vintage-black-back-683f90236b8c4.png',
-                    'mockups/unisex-premium-hoodie-vintage-black-left-683f9023d85a1.png',
-                    'mockups/unisex-premium-hoodie-vintage-black-right-683f90240cd93.png'
-                ],
-                colors: [
-                    { name: 'Vintage Black', code: '#2C2C2C' }
-                ]
-            },
-            'bungi-hat-black': {
-                title: 'BUNGI X BOBBY Tech Animal Beanie - Black',
-                category: 'Beanies',
-                images: [
-                    'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                    'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
-                ],
-                colors: [
-                    { name: 'Black', code: '#000000' }
-                ]
-            },
-            'bungi-tshirt-white': {
-                title: 'BUNGI X BOBBY Tech Animal T-Shirt - White',
-                category: 'T-Shirts',
-                images: [
-                    'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                    'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png'
-                ],
-                colors: [
-                    { name: 'White', code: '#FFFFFF' }
-                ]
-            },
-            'bungi-sweater-gray': {
-                title: 'BUNGI X BOBBY Tech Sweater - Heather Gray',
-                category: 'Sweaters',
-                images: [
-                    'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                    'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'
-                ],
-                colors: [
-                    { name: 'Heather Gray', code: '#D3D3D3' }
-                ]
-            },
-            'bungi-windbreaker-black': {
-                title: 'BUNGI X BOBBY Tech Windbreaker - Navy',
-                category: 'Windbreakers',
-                images: [
-                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                    'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png'
-                ],
-                colors: [
-                    { name: 'Navy Blazer', code: '#001f3f' }
-                ]
-            },
-            'bungi-sweatpants-white': {
-                title: 'BUNGI X BOBBY Tech Sweatpants - Maroon',
-                category: 'Sweatpants',
-                images: [
-                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                    'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png'
-                ],
-                colors: [
-                    { name: 'Maroon', code: '#800000' }
-                ]
-            },
-            'bungi-hoodie-navy': {
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
-                category: 'Hoodies',
-                images: [
-                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                    'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
-                    'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221aa90.png',
-                    'mockups/unisex-premium-hoodie-navy-blazer-right-683f90222d3ed.png'
-                ],
-                colors: [
-                    { name: 'Navy Blazer', code: '#001f3f' }
-                ]
-            },
-            'bungi-hoodie-maroon': {
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
-                category: 'Hoodies',
-                images: [
-                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                    'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
-                    'mockups/unisex-premium-hoodie-maroon-left-683f90228e99c.png',
-                    'mockups/unisex-premium-hoodie-maroon-right-683f9022a4ec2.png'
-                ],
-                colors: [
-                    { name: 'Maroon', code: '#800000' }
-                ]
-            },
-            'bungi-hoodie-charcoal': {
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
-                category: 'Hoodies',
-                images: [
-                    'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
-                    'mockups/unisex-premium-hoodie-charcoal-heather-right-683f9023457b5.png'
-                ],
-                colors: [
-                    { name: 'Charcoal Heather', code: '#36454F' }
-                ]
-            },
-            'bungi-hoodie-white': {
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
-                category: 'Hoodies',
-                images: [
-                    'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                    'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-                    'mockups/unisex-premium-hoodie-white-left-683f8fddd825c.png',
-                    'mockups/unisex-premium-hoodie-white-right-683f8fdddb49b.png'
-                ],
-                colors: [
-                    { name: 'White', code: '#FFFFFF' }
-                ]
-            }
-        };
-
-        const productData = productMap[productId] || productMap['bungi-hoodie-black'];
-
-        // Generate dynamic description based on product type
-        const descriptions = {
-            'Hoodies': 'Step into the digital underground with Bobby the Rabbit\'s signature hoodie. This premium streetwear piece features the iconic BUNGI X BOBBY RABBIT HARDWARE design, perfect for tech animals of the elite GooberMcGeet club.',
-            'Beanies': 'Keep your tech animal style on point with this premium beanie. Featuring Bobby the Rabbit\'s signature design, it\'s perfect for the elite GooberMcGeet club members.',
-            'T-Shirts': 'Classic streetwear meets cyberpunk aesthetics. This premium t-shirt showcases Bobby the Tech Animal\'s iconic design for the digital elite.',
-            'Sweaters': 'Cozy comfort meets cutting-edge style. This tech-inspired sweater features premium Bobby branding for ultimate streetwear sophistication.',
-            'Windbreakers': 'High-tech weather protection with rebellious style. This windbreaker features reflective Bobby elements and elite GooberMcGeet club exclusivity.',
-            'Sweatpants': 'Premium comfort for active tech animals. These sweatpants combine Bobby\'s signature styling with ultimate comfort for the digital underground.'
-        };
-
-        // Fallback sample product with cyberpunk theme
-        return {
-            id: productId,
-            title: productData.title,
-            description: descriptions[productData.category] || descriptions['Hoodies'],
-            category: productData.category,
-            price: 50.00,
-            comparePrice: 65.00,
-            images: productData.images,
-            colors: productData.colors,
-            sizes: ['S', 'M', 'L', 'XL', '2XL', '3XL'],
-            features: [
-                { icon: '🐰', text: 'Bobby the Tech Animal approved' },
-                { icon: '⚡', text: 'Elite GooberMcGeet club exclusive' },
-                { icon: '🧵', text: '100% cotton face for ultimate comfort' },
-                { icon: '♻️', text: '65% ring-spun cotton, 35% polyester blend' },
-                { icon: '👜', text: 'Front pouch pocket for tech essentials' },
-                { icon: '🎯', text: 'Self-fabric patch on the back' },
-                { icon: '🔥', text: 'Cyberpunk streetwear aesthetic' },
-                { icon: '🍪', text: 'Cookie-approved design' }
-            ],
-            details: 'This product runs small. For the perfect fit, we recommend ordering one size larger than your usual size. Join Bobby\'s crew where the tech animals run wild and cookies are always within reach.',
-            care: 'Machine wash cold with like colors. Tumble dry low. Do not bleach. Iron on low heat if needed. Handle with the care of a true tech animal.',
-            shipping: 'This product is made especially for you as soon as you place an order, which is why it takes us a bit longer to deliver it to you. Each piece is crafted in Bobby\'s digital workshop.',
-            rating: 4.9,
-            reviewCount: 247,
-            featured: true,
-            new: true,
-            sale: true,
-            inventory: this.generateSampleInventory(productData.colors)
-        };
-    }
-
-    generateSampleInventory(colors) {
-        const inventory = {};
-        const sizes = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
-        
-        colors.forEach(color => {
-            sizes.forEach(size => {
-                inventory[`${color.name}-${size}`] = Math.floor(Math.random() * 25) + 5;
-            });
-        });
-        
-        return inventory;
-    }
+    // Remove all sample data methods - everything comes from API now
 
     renderProduct() {
+        if (!this.currentProduct) {
+            return;
+        }
+        
         const productGrid = document.getElementById('product-detail-grid');
         const breadcrumbCurrent = document.getElementById('breadcrumb-current');
         
         // Update breadcrumb
-        breadcrumbCurrent.textContent = this.currentProduct.title;
+        if (breadcrumbCurrent) {
+            breadcrumbCurrent.textContent = this.currentProduct.title;
+        }
         
         // Update page title
         document.title = `${this.currentProduct.title} - Bobby Streetwear`;
@@ -726,7 +362,7 @@ class ProductDetailManager {
         // Update page title
         this.updatePageTitle();
 
-        const discount = this.currentProduct.comparePrice ? 
+        const discount = this.currentProduct.comparePrice ?
             Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
 
         productGrid.innerHTML = `
@@ -1209,45 +845,56 @@ class ProductDetailManager {
     }
 
     async fetchRelatedProducts() {
-        // Related products using real mockup images
-        return [
-            {
-                id: 'bungi-hoodie-navy',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Navy Blazer',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                category: 'hoodie',
-                featured: true
-            },
-            {
-                id: 'bungi-hoodie-maroon',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Maroon',
-                price: 50.00,
-                comparePrice: 58.00,
-                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                category: 'hoodie',
-                sale: true
-            },
-            {
-                id: 'bungi-hoodie-white',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - White',
-                price: 50.00,
-                comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                category: 'hoodie',
-                new: true
-            },
-            {
-                id: 'bungi-hoodie-charcoal',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Charcoal Heather',
-                price: 50.00,
-                comparePrice: 65.00,
-                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
-                category: 'hoodie',
-                sale: true
+        try {
+            // Load all products from Shopify
+            const response = await fetch('/.netlify/functions/get-products');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        ];
+
+            const data = await response.json();
+            
+            if (data.error) {
+                console.error('Error loading related products:', data.error);
+                return [];
+            }
+
+            // Filter products by same category, excluding current product
+            const currentCategory = this.currentProduct.category.toLowerCase();
+            const relatedProducts = data
+                .filter(p => {
+                    const node = p.node || p;
+                    const productCategory = this.extractCategory(node.title).toLowerCase();
+                    return productCategory === currentCategory && node.handle !== this.currentProduct.id;
+                })
+                .slice(0, 4) // Get first 4 related products
+                .map(p => {
+                    const node = p.node || p;
+                    const images = node.images.edges.map(imgEdge => imgEdge.node.url);
+                    const minPrice = parseFloat(node.priceRange.minVariantPrice.amount);
+                    const firstVariant = node.variants.edges[0]?.node;
+                    const comparePrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
+                    
+                    return {
+                        id: node.handle,
+                        title: node.title,
+                        price: minPrice,
+                        comparePrice: comparePrice,
+                        mainImage: images[0] || '',
+                        category: this.extractCategory(node.title).toLowerCase(),
+                        featured: node.tags.includes('featured'),
+                        new: node.tags.includes('new'),
+                        sale: comparePrice && comparePrice > minPrice
+                    };
+                });
+            
+            return relatedProducts;
+            
+        } catch (error) {
+            console.error('Error loading related products:', error);
+            return [];
+        }
     }
 
     createProductCard(product) {

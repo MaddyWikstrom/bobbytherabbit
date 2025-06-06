@@ -51,14 +51,14 @@ class HomepageProductLoader {
                 console.log('✅ Loaded filtered products from Shopify:', this.products.length);
                 console.log('Product IDs:', this.products.map(p => p.shopifyId));
             } else {
-                // Fallback to sample products
-                this.products = this.getSampleProducts();
-                console.log('⚠️ Using sample products as fallback');
+                // No products found
+                this.products = [];
+                console.log('⚠️ No products found in Shopify');
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            this.products = this.getSampleProducts();
-            console.log('⚠️ Using sample products due to error');
+            this.products = [];
+            console.log('⚠️ No products loaded due to error');
         }
     }
 
@@ -97,9 +97,9 @@ class HomepageProductLoader {
         const productId = product.id.replace('gid://shopify/Product/', '');
         const hoverConfig = this.hoverConfig && this.hoverConfig[productId];
         
-        // Get all images
+        // Get all images from Shopify
         const images = product.images.edges.map(edge => edge.node.url);
-        let mainImage = images.length > 0 ? images[0] : 'assets/placeholder-product.png';
+        let mainImage = images.length > 0 ? images[0] : '';
         let hoverImage = images.length > 1 ? images[1] : mainImage;
         
         // Configure images based on hover settings
@@ -122,8 +122,8 @@ class HomepageProductLoader {
             comparePrice: compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null,
             mainImage: mainImage,
             hoverImage: hoverImage,
-            featured: product.tags.includes('featured') || Math.random() > 0.7,
-            new: product.tags.includes('new') || Math.random() > 0.8,
+            featured: product.tags.includes('featured'),
+            new: product.tags.includes('new'),
             sale: compareAtPrice && compareAtPrice > minPrice,
             shopifyId: product.id,
             handle: product.handle
@@ -150,102 +150,6 @@ class HomepageProductLoader {
         return 'other';
     }
 
-    getSampleProducts() {
-        // Sample products representing the specific IDs you requested
-        // Since we can't access Shopify API in file:// protocol, these represent your target products
-        return [
-            {
-                id: '8535770792103',
-                title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
-                description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: 65.00,
-                // Show back first, then front on hover (as requested)
-                mainImage: 'mockups/unisex-premium-hoodie-vintage-black-back-683f90238c9e9.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
-                featured: true,
-                new: true,
-                sale: true,
-                shopifyId: 'gid://shopify/Product/8535770792103'
-            },
-            {
-                id: '8535752868007',
-                title: 'BUNGI X BOBBY Tech Animal Hoodie - White',
-                description: 'Premium tech-inspired hoodie featuring Bobby the Tech Animal branding.',
-                category: 'hoodie',
-                price: 55.00,
-                comparePrice: null,
-                // Default behavior: front first, then back on hover
-                mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
-                featured: true,
-                new: false,
-                sale: false,
-                shopifyId: 'gid://shopify/Product/8535752868007'
-            },
-            {
-                id: '8535752376487',
-                title: 'BUNGI X BOBBY LIGHTMODE Wide-leg Joggers',
-                description: 'Premium wide-leg joggers with tech animal styling.',
-                category: 'joggers',
-                price: 44.50,
-                comparePrice: null,
-                // Show the specific joggers image as front
-                mainImage: 'mockups/all-over-print-unisex-wide-leg-joggers-white-left-683f8d3f2d0ed.png',
-                hoverImage: 'mockups/all-over-print-unisex-wide-leg-joggers-white-right-683f8d3f2d0ed.png',
-                featured: true,
-                new: false,
-                sale: false,
-                shopifyId: 'gid://shopify/Product/8535752376487'
-            },
-            {
-                id: '8535752474791',
-                title: 'BUNGI X BOBBY Basic Unisex Windbreaker - Black',
-                description: 'Premium windbreaker with tech animal styling.',
-                category: 'windbreaker',
-                price: 55.00,
-                comparePrice: null,
-                // Show the specific windbreaker back image
-                mainImage: 'mockups/basic-unisex-windbreaker-black-back-683f8d141394e.png',
-                hoverImage: 'mockups/basic-unisex-windbreaker-black-front-683f8d141394e.png',
-                featured: true,
-                new: true,
-                sale: false,
-                shopifyId: 'gid://shopify/Product/8535752474791'
-            },
-            {
-                id: '8535759290535',
-                title: 'BUNGI X BOBBY Tech Animal Hoodie - Maroon',
-                description: 'High-tech hoodie with reflective Bobby elements.',
-                category: 'hoodie',
-                price: 58.00,
-                comparePrice: 65.00,
-                // Front first, then back on hover (as requested)
-                mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-maroon-back-683f90225eace.png',
-                featured: true,
-                new: true,
-                sale: true,
-                shopifyId: 'gid://shopify/Product/8535759290535'
-            },
-            {
-                id: '8535766007975',
-                title: 'BUNGI X BOBBY Tech Animal Hoodie - Black',
-                description: 'Premium black hoodie with tech animal styling.',
-                category: 'hoodie',
-                price: 50.00,
-                comparePrice: null,
-                // Show back first, then front on hover (as requested)
-                mainImage: 'mockups/unisex-premium-hoodie-black-back-683f9021c6f6d.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                featured: true,
-                new: false,
-                sale: false,
-                shopifyId: 'gid://shopify/Product/8535766007975'
-            }
-        ];
-    }
 
     renderProducts() {
         const container = document.getElementById('homepage-products');
@@ -549,8 +453,14 @@ class HomepageProductLoader {
     }
 
     viewProduct(productId) {
-        // Navigate to product detail page
-        window.location.href = `product.html?id=${productId}`;
+        // Navigate to product detail page with the handle or Shopify ID
+        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+        if (product) {
+            // Use the handle for the URL
+            window.location.href = `product.html?id=${product.handle || productId}`;
+        } else {
+            window.location.href = `product.html?id=${productId}`;
+        }
     }
 }
 
