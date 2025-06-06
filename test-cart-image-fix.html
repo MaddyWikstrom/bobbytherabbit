@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart Image Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f8;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background-color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .cart-btn {
+            background-color: #a855f7;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cart-count {
+            background-color: white;
+            color: #a855f7;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        .product-image {
+            height: 200px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-name {
+            margin: 0 0 10px;
+            font-size: 1.1rem;
+        }
+        .product-price {
+            font-weight: bold;
+            color: #a855f7;
+            margin-bottom: 15px;
+        }
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 8px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .add-to-cart-btn:hover {
+            background-color: #a855f7;
+        }
+        .status {
+            background-color: #e0e0e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .log {
+            background-color: #333;
+            color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Cart Image Fix Test</h1>
+        <button class="cart-btn" id="cart-btn">
+            <span>Cart</span>
+            <span class="cart-count">0</span>
+        </button>
+    </div>
+
+    <div class="status" id="status">
+        Status: Initializing...
+    </div>
+
+    <h2>Test Products</h2>
+    <div class="products" id="products">
+        <!-- Products will be populated from product.js -->
+        <div class="product-card" data-product-id="bungi-x-bobby-rabbit-hardware-unisex-hoodie">
+            <div class="product-image">
+                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462" alt="BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie">
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie</h3>
+                <div class="product-price">$50.00</div>
+                <button class="add-to-cart-btn">Add to Cart</button>
+            </div>
+        </div>
+        <div class="product-card" data-product-id="bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie">
+            <div class="product-image">
+                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411" alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie">
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie</h3>
+                <div class="product-price">$50.50</div>
+                <button class="add-to-cart-btn">Add to Cart</button>
+            </div>
+        </div>
+        <div class="product-card" data-product-id="bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt">
+            <div class="product-image">
+                <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335" alt="BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt">
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt</h3>
+                <div class="product-price">$27.50</div>
+                <button class="add-to-cart-btn">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <h2>Test Log</h2>
+    <div class="log" id="log"></div>
+
+    <!-- Include the product mapping script -->
+    <script src="scripts/product.js"></script>
+    
+    <!-- Include the cart system -->
+    <script src="scripts/cart-checkout-system.js"></script>
+    
+    <!-- Test script -->
+    <script>
+        // Simple logging system
+        const logElement = document.getElementById('log');
+        const statusElement = document.getElementById('status');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateStatus(message) {
+            statusElement.textContent = `Status: ${message}`;
+        }
+        
+        // When DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded, testing cart system...');
+            
+            // Verify product mapping is available
+            if (window.PRODUCT_MAPPING) {
+                log('✅ Product mapping found. Products available: ' + Object.keys(window.PRODUCT_MAPPING).length, 'success');
+            } else {
+                log('❌ Product mapping not found or not properly loaded!', 'error');
+            }
+            
+            // Verify cart system is initialized
+            if (window.BobbyCarts) {
+                log('✅ Cart system found', 'success');
+                updateStatus('Ready - Add products to test cart images');
+            } else {
+                log('❌ Cart system not found or not properly loaded!', 'error');
+                updateStatus('Error - Cart system not loaded');
+            }
+            
+            // Test adding each product to cart
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const productCard = btn.closest('.product-card');
+                    const productId = productCard.dataset.productId;
+                    log(`Adding product to cart: ${productId}`);
+                    
+                    // Check if product exists in mapping
+                    if (window.PRODUCT_MAPPING[productId]) {
+                        log(`✅ Product found in mapping: ${window.PRODUCT_MAPPING[productId].shopifyProductId}`, 'success');
+                    } else {
+                        log(`⚠️ Product not found in mapping: ${productId}`, 'error');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

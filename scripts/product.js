@@ -1,4 +1,5 @@
-let PRODUCT_MAPPING = {
+// Make product mapping available globally
+window.PRODUCT_MAPPING = {
   "bungi-x-bobby-rabbit-hardware-unisex-hoodie": {
     shopifyProductId: "BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie",
     variants: [

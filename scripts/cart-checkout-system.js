@@ -672,12 +672,40 @@ const BobbyCarts = {
     
     // Extract product image with careful handling
     extractProductImage: function(container) {
+        // Get Shopify ID if available (for direct lookup in product data)
+        const shopifyId = container.dataset.shopifyProductId || container.dataset.shopifyId;
+        
+        // First check if the product is in our direct product mappings from product.js
+        if (shopifyId && window.PRODUCT_MAPPING) {
+            for (const handle in window.PRODUCT_MAPPING) {
+                const product = window.PRODUCT_MAPPING[handle];
+                if (product.shopifyProductId === shopifyId && product.variants && product.variants.length > 0) {
+                    return product.variants[0].image; // Return first variant image
+                }
+            }
+        }
+        
         // Try to find image element
         const imgEl = container.querySelector('img');
         
         if (imgEl && imgEl.src) {
-            // Clean up image URL to prevent domain issues
+            // For Shopify CDN images, return directly without cleaning
+            if (imgEl.src.includes('cdn.shopify.com')) {
+                return imgEl.src;
+            }
+            // Otherwise clean up URL to prevent domain issues
             return this.cleanImageUrl(imgEl.src);
+        }
+        
+        // Try data attributes which may have direct image URLs
+        if (container.dataset.productImage) {
+            return container.dataset.productImage;
+        }
+        
+        // Try main-image or hover-image data attributes (used in homepage products)
+        const imgWithData = container.querySelector('img[data-main-image]');
+        if (imgWithData && imgWithData.dataset.mainImage) {
+            return imgWithData.dataset.mainImage;
         }
         
         // Try background image
@@ -704,12 +732,17 @@ const BobbyCarts = {
         if (!url) return this.config.fallbackImage;
         
         try {
+            // Preserve Shopify CDN URLs - they should work as-is
+            if (url.includes('cdn.shopify.com')) {
+                return url;
+            }
+            
             // Remove domain to get relative path
             const currentDomain = window.location.origin;
             let cleanUrl = url;
             
             // Fix domain duplication
-            if (url.includes(currentDomain + '/' + currentDomain) || 
+            if (url.includes(currentDomain + '/' + currentDomain) ||
                 url.includes(currentDomain + 'https://') ||
                 url.includes(currentDomain + 'http://')) {
                 
@@ -1067,22 +1100,86 @@ const BobbyCarts = {
             container.appendChild(loadingPlaceholder);
         }
         
+        // First try product mapping - this uses our direct product data from product.js
+        if (window.PRODUCT_MAPPING && item.productId) {
+            for (const handle in window.PRODUCT_MAPPING) {
+                const product = window.PRODUCT_MAPPING[handle];
+                if (handle === item.productId || product.shopifyProductId === item.shopifyId) {
+                    if (product.variants && product.variants.length > 0) {
+                        const imageUrl = product.variants[0].image;
+                        if (imageUrl) {
+                            // Found a product mapping image - use it
+                            imgElement.src = imageUrl;
+                            imgElement.style.display = 'block';
+                            item.image = imageUrl; // Update cart item
+                            BobbyCarts.saveCartToStorage();
+                            
+                            // Remove placeholder if exists
+                            if (placeholder) {
+                                placeholder.remove();
+                            }
+                            
+                            console.log('✅ Found image in product mapping:', imageUrl);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
         // Get filename from current path
         const currentSrc = imgElement.src;
         const parts = currentSrc.split('/');
         const filename = parts[parts.length - 1];
         
-        // Try these alternative paths
+        // If this is a Shopify CDN URL and it's still failing, try a different variant image
+        if (currentSrc.includes('cdn.shopify.com')) {
+            // Already using Shopify CDN but failed - try homepage product loader
+            if (window.homepageProductLoader && window.homepageProductLoader.products) {
+                const products = window.homepageProductLoader.products;
+                // Find by shopify ID or handle
+                const matchingProduct = products.find(p =>
+                    p.shopifyId === item.shopifyId ||
+                    p.id === item.productId ||
+                    p.handle === item.productId
+                );
+                
+                if (matchingProduct && matchingProduct.images && matchingProduct.images.length > 0) {
+                    // Try each image from the product
+                    for (const imageUrl of matchingProduct.images) {
+                        if (imageUrl && !imageUrl.includes(filename)) {
+                            // Try a different image from this product
+                            console.log('🔄 Trying alternative product image:', imageUrl);
+                            imgElement.src = imageUrl;
+                            imgElement.style.display = 'block';
+                            item.image = imageUrl;
+                            BobbyCarts.saveCartToStorage();
+                            
+                            if (placeholder) {
+                                placeholder.remove();
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Build a more comprehensive list of alternative paths
         const alternativePaths = [
-            // Try relative paths
+            // Try direct shop CDN paths with the filename
+            `https://cdn.shopify.com/s/files/1/0701/3947/8183/files/${filename}`,
+            `https://cdn.shopify.com/s/files/1/0701/3947/8183/products/${filename}`,
+            // Try relative paths with the filename
             `/mockups/${filename}`,
             `/assets/${filename}`,
             // Try with current domain
             `${window.location.origin}/mockups/${filename}`,
             `${window.location.origin}/assets/${filename}`,
-            // Try path without filename to find similar images
-            `/mockups/`,
-            `/assets/`,
+            // Try some known product images as fallbacks
+            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png',
+            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png',
+            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
             // Try fallback images
             '/assets/product-placeholder.png',
             '/assets/featured-hoodie.svg'
@@ -1167,9 +1264,9 @@ const BobbyCarts = {
         const price = item.price * item.quantity;
         
         return `
-            <div class="cart-item" data-item-id="${item.id}">
+            <div class="cart-item" data-item-id="${item.id}" data-product-id="${item.productId}" data-shopify-id="${item.shopifyId || ''}">
                 <div class="cart-item-image-container">
-                    <img src="${item.image}" alt="${item.title}" class="cart-item-image" 
+                    <img src="${item.image}" alt="${item.title}" class="cart-item-image"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.nextElementSibling.nextElementSibling.style.display='block';">
                     <div class="cart-item-placeholder" style="display:none;">?</div>
                     <button class="image-retry-btn" style="display:none;">Retry</button>
