@@ -97,8 +97,15 @@ class HomepageProductLoader {
         const productId = product.id.replace('gid://shopify/Product/', '');
         const hoverConfig = this.hoverConfig && this.hoverConfig[productId];
         
-        // Get all images from Shopify
-        const images = product.images.edges.map(edge => edge.node.url);
+        // Get images from Shopify
+        const shopifyImages = product.images.edges.map(edge => edge.node.url);
+        
+        // Get local mockup images
+        const localImages = this.getLocalMockupImages(product.handle, product.title);
+        
+        // Combine both image sources - local mockups first, then Shopify images
+        const images = [...localImages, ...shopifyImages];
+        
         let mainImage = images.length > 0 ? images[0] : '';
         let hoverImage = images.length > 1 ? images[1] : mainImage;
         
@@ -148,6 +155,279 @@ class HomepageProductLoader {
         if (titleLower.includes('windbreaker') || titleLower.includes('jacket')) return 'windbreaker';
         if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'beanie';
         return 'other';
+    }
+
+    getLocalMockupImages(productHandle, productTitle) {
+        // Map product handles to their local mockup images
+        const mockupMappings = {
+            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': [
+                // Black variants
+                'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021c7dbc.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021c454e.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021c613f.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021c5335.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021d1e6b.png',
+                'mockups/unisex-premium-hoodie-black-front-683f9021d10cf.png',
+                'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
+                'mockups/unisex-premium-hoodie-black-left-683f9021d48f6.png',
+                'mockups/unisex-premium-hoodie-black-left-683f9021d63b0.png',
+                'mockups/unisex-premium-hoodie-black-left-front-683f9021d3bb3.png',
+                'mockups/unisex-premium-hoodie-black-left-front-683f9021d719b.png',
+                'mockups/unisex-premium-hoodie-black-left-front-683f9021d5672.png',
+                'mockups/unisex-premium-hoodie-black-product-details-683f9021d031c.png',
+                'mockups/unisex-premium-hoodie-black-right-683f9021d7e69.png',
+                'mockups/unisex-premium-hoodie-black-right-683f9021d9a41.png',
+                'mockups/unisex-premium-hoodie-black-right-683f9021db0c8.png',
+                'mockups/unisex-premium-hoodie-black-right-front-683f9021d8c96.png',
+                'mockups/unisex-premium-hoodie-black-right-front-683f9021da77d.png',
+                'mockups/unisex-premium-hoodie-black-right-front-683f9021db96e.png',
+                // Charcoal Heather variants
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022dda27.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022e79ce.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022e274e.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022ec2ea.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022f0f8b.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f90230b140.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f902306bbf.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9023029ae.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f90231150c.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f902315348.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022af178.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022b4bc6.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022b9614.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022bf4ef.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022c3b59.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022c7f7d.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022cd03c.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022d1c31.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022d56a9.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f90231dc55.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9023221a7.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f90232db97.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f902335bde.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f9023265c1.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f90232a100.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f90233a0a8.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f9023315c6.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-product-details-683f90231950e.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f90233dd40.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f90234d7d9.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f9023457b5.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f902349507.png',
+                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f902351581.png',
+                // Maroon variants
+                'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f90225eace.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f90226c655.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f90226f069.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f90227c5b6.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f902266bfa.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f902278df8.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f9022632e7.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f9022698f9.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f9022725ab.png',
+                'mockups/unisex-premium-hoodie-maroon-back-683f9022757a0.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f90223e529.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f90224aec2.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f90224f7a0.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902237f8f.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902242d51.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902253f58.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902257a94.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902282a52.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902285fda.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f9022352a8.png',
+                'mockups/unisex-premium-hoodie-maroon-front-683f902247897.png',
+                'mockups/unisex-premium-hoodie-maroon-left-683f90228e99c.png',
+                'mockups/unisex-premium-hoodie-maroon-left-683f902288f36.png',
+                'mockups/unisex-premium-hoodie-maroon-left-683f902293d87.png',
+                'mockups/unisex-premium-hoodie-maroon-left-front-683f90228c159.png',
+                'mockups/unisex-premium-hoodie-maroon-left-front-683f9022912dc.png',
+                'mockups/unisex-premium-hoodie-maroon-left-front-683f902296816.png',
+                'mockups/unisex-premium-hoodie-maroon-product-details-683f90227f787.png',
+                'mockups/unisex-premium-hoodie-maroon-right-683f9022a4ec2.png',
+                'mockups/unisex-premium-hoodie-maroon-right-683f90229f0d8.png',
+                'mockups/unisex-premium-hoodie-maroon-right-683f9022996fd.png',
+                'mockups/unisex-premium-hoodie-maroon-right-front-683f9022a1ecc.png',
+                'mockups/unisex-premium-hoodie-maroon-right-front-683f9022a7df8.png',
+                'mockups/unisex-premium-hoodie-maroon-right-front-683f90229c199.png',
+                // Navy Blazer variants
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f340b.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220a49d.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220c026.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902202df1.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902207edc.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902211d54.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9022063c4.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220129d.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90221017f.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902204828.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021df6e7.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e1a2a.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e4de3.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e67ee.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e3452.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e8427.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021ea7ca.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021ecb13.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021eefd9.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9022165b9.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9022183ba.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221aa90.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221f43e.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-683f902223cf8.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f90221cad5.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f902221fe4.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f9022262e7.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-product-details-683f90221408e.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-683f90222d3ed.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-683f902227e4c.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-683f90223094d.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f90222a85d.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f90222eec5.png',
+                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f902233340.png',
+                // Vintage Black variants
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023ad2c6.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023b96cd.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023b2911.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023be376.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023c318e.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f90238c9e9.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f90239dcd9.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f902387cc2.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023918a7.png',
+                'mockups/unisex-premium-hoodie-vintage-black-back-683f902396748.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023d2ea2.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90236a5e6.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90236fe1c.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90237e394.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f902364bee.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f902382f2a.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023749ba.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235506f.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235970a.png',
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f902379677.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023d85a1.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023e21ce.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023eb72a.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023dd7aa.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023e6e1a.png',
+                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023f0cab.png',
+                'mockups/unisex-premium-hoodie-vintage-black-product-details-683f9023c7e67.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-683f90240cd93.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-683f902402ac4.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-683f902418707.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f90241faf5.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f902407984.png',
+                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f902413558.png'
+            ],
+            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
+                // White variants
+                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd2d80.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd3e2a.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd4edf.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd5fa6.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd14c9.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd25c8.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd35a9.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd4659.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd5753.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcc3c5.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddccd72.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcd618.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcdeaf.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddce7bf.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcf039.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcf92a.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddd0bf4.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddd70e7.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddd0201.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddd7977.png',
+                'mockups/unisex-premium-hoodie-white-left-683f8fddd825c.png',
+                'mockups/unisex-premium-hoodie-white-left-683f8fddd9327.png',
+                'mockups/unisex-premium-hoodie-white-left-683f8fddda3b7.png',
+                'mockups/unisex-premium-hoodie-white-left-front-683f8fddd8b54.png',
+                'mockups/unisex-premium-hoodie-white-left-front-683f8fddd9b64.png',
+                'mockups/unisex-premium-hoodie-white-left-front-683f8fdddaba1.png',
+                'mockups/unisex-premium-hoodie-white-product-details-683f8fddd68c9.png',
+                'mockups/unisex-premium-hoodie-white-right-683f8fdddb49b.png',
+                'mockups/unisex-premium-hoodie-white-right-683f8fdddc582.png',
+                'mockups/unisex-premium-hoodie-white-right-683f8fdddd5dc.png',
+                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddbd08.png',
+                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddcda0.png',
+                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddde59.png'
+            ],
+            'bungi-x-bobby-dark-mode-wide-leg-joggers': [
+                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
+                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png'
+            ],
+            'wide-leg-joggers': [
+                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085d00.png',
+                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085d01.png'
+            ],
+            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': [
+                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
+                'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png'
+            ],
+            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': [
+                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png'
+            ],
+            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': [
+                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png'
+            ],
+            'bungi-x-bobby-rabbit-hardware-womens-t-shirt': [
+                'mockups/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png'
+            ],
+            'bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt': [
+                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png',
+                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png'
+            ],
+            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': [
+                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png',
+                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png'
+            ],
+            'bungi-x-bobby-cuffed-beanie-1': [
+                'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
+                'mockups/cuffed-beanie-white-front-683f9a789c355.png'
+            ],
+            'bungi-x-bobby-cowboy-unisex-windbreaker': [
+                'mockups/basic-unisex-windbreaker-black-front-683f9890d7838.png'
+            ],
+            'bungi-x-bobby-cowboy-unisex-sweatshirt': [
+                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
+            ],
+            'bungi-x-bobby-cowboy-mens-t-shirt': [
+                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png'
+            ]
+        };
+
+        // Check if we have mockups for this product
+        if (mockupMappings[productHandle]) {
+            return mockupMappings[productHandle];
+        }
+
+        // Try to find mockups based on product title keywords
+        const titleLower = productTitle.toLowerCase();
+        for (const [handle, images] of Object.entries(mockupMappings)) {
+            if (titleLower.includes(handle.replace(/-/g, ' '))) {
+                return images;
+            }
+        }
+
+        return [];
     }
 
 
