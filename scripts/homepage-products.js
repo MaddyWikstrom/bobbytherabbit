@@ -100,14 +100,29 @@ class HomepageProductLoader {
         // Get images from Shopify
         const shopifyImages = product.images.edges.map(edge => edge.node.url);
         
-        // Get local mockup images
+        // Get local mockup images as fallback
         const localImages = this.getLocalMockupImages(product.handle, product.title);
         
-        // Combine both image sources - local mockups first, then Shopify images
-        const images = [...localImages, ...shopifyImages];
+        // Prioritize Shopify images over local mockups
+        const images = shopifyImages.length > 0 ? shopifyImages : localImages;
         
         let mainImage = images.length > 0 ? images[0] : '';
         let hoverImage = images.length > 1 ? images[1] : mainImage;
+        
+        // Extract color variants information from product
+        const colors = [];
+        if (product.variants && product.variants.edges) {
+            product.variants.edges.forEach(variantEdge => {
+                const variant = variantEdge.node;
+                variant.selectedOptions.forEach(option => {
+                    if (option.name.toLowerCase() === 'color') {
+                        if (!colors.includes(option.value)) {
+                            colors.push(option.value);
+                        }
+                    }
+                });
+            });
+        }
         
         // Configure images based on hover settings
         if (hoverConfig && hoverConfig.showBackFirst && images.length > 1) {
@@ -133,7 +148,9 @@ class HomepageProductLoader {
             new: product.tags.includes('new'),
             sale: compareAtPrice && compareAtPrice > minPrice,
             shopifyId: product.id,
-            handle: product.handle
+            handle: product.handle,
+            colors: colors, // Add available colors
+            images: images  // Store all images
         };
     }
 
@@ -455,7 +472,7 @@ class HomepageProductLoader {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         return `
-            <div class="product-card" data-product-id="${product.id}">
+            <div class="product-card" data-product-id="${product.id}" data-shopify-id="${product.shopifyId}">
                 <div class="product-image">
                     <img src="${product.mainImage}"
                          alt="${product.title}"
@@ -463,6 +480,14 @@ class HomepageProductLoader {
                          data-main-image="${product.mainImage}"
                          data-hover-image="${product.hoverImage || product.mainImage}"
                          class="product-main-img">
+                    <div class="product-overlay">
+                        <button class="product-action-btn quick-view-btn" title="Quick View">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                     ${product.new ? '<div class="product-badge new">New</div>' : ''}
                     ${product.sale ? `<div class="product-badge sale">-${discount}%</div>` : ''}
                     ${product.featured ? '<div class="product-badge featured">Featured</div>' : ''}
@@ -501,13 +526,24 @@ class HomepageProductLoader {
             
             // Add click handler with proper event checking
             card.addEventListener('click', (e) => {
-                // Check if the click is on an arrow button or inside an arrow button
-                if (e.target.closest('.arrow') || e.target.classList.contains('arrow')) {
+                // Check if the click is on a button or arrow
+                if (e.target.closest('.arrow') || e.target.classList.contains('arrow') ||
+                    e.target.closest('button') || e.target.tagName === 'BUTTON' ||
+                    e.target.closest('svg')) {
                     e.stopPropagation(); // Stop event propagation
-                    return; // Don't navigate if clicking on arrow
+                    return; // Don't navigate if clicking on controls
                 }
                 this.viewProduct(productId);
             });
+            
+            // Add quick view button handler
+            const quickViewBtn = card.querySelector('.quick-view-btn');
+            if (quickViewBtn) {
+                quickViewBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.showQuickView(productId);
+                });
+            }
         });
     }
 
@@ -734,13 +770,46 @@ class HomepageProductLoader {
     }
 
     viewProduct(productId) {
-        // Navigate to product detail page with the handle or Shopify ID
+        // Get the product
         const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
-        if (product) {
-            // Use the handle for the URL
-            window.location.href = `product.html?id=${product.handle || productId}`;
-        } else {
+        if (!product) {
             window.location.href = `product.html?id=${productId}`;
+            return;
+        }
+        
+        // Check if a specific color was selected
+        let selectedColor = '';
+        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+        
+        if (productCard) {
+            // If we had color selectors in homepage products, we would get the selected color here
+            // For now, just use the product's first available color if present
+            if (product.colors && product.colors.length > 0) {
+                selectedColor = product.colors[0];
+            }
+        }
+        
+        // Navigate to product detail page with the handle or Shopify ID and selected color
+        if (selectedColor) {
+            window.location.href = `product.html?id=${product.handle || productId}&color=${encodeURIComponent(selectedColor)}`;
+        } else {
+            window.location.href = `product.html?id=${product.handle || productId}`;
+        }
+    }
+    
+    showQuickView(productId) {
+        // Find the product
+        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+        if (!product) return;
+        
+        // Use the main product manager's showQuickView if available
+        if (window.productManager && typeof window.productManager.showQuickView === 'function') {
+            // Pass the product ID to the main product manager
+            window.productManager.showQuickView(product.id || productId);
+            console.log('Opening quick view for product:', product.title);
+        } else {
+            console.warn('Product manager not available for quick view, navigating to product page instead');
+            this.viewProduct(productId);
         }
     }
 }
