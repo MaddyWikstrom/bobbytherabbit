@@ -501,8 +501,9 @@ class HomepageProductLoader {
             
             // Add click handler with proper event checking
             card.addEventListener('click', (e) => {
-                // Check if the click is on an arrow button
+                // Check if the click is on an arrow button or inside an arrow button
                 if (e.target.closest('.arrow') || e.target.classList.contains('arrow')) {
+                    e.stopPropagation(); // Stop event propagation
                     return; // Don't navigate if clicking on arrow
                 }
                 this.viewProduct(productId);
