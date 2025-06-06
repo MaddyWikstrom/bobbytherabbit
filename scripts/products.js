@@ -10,56 +10,19 @@ class ProductManager {
         this.currentView = 'grid';
         this.searchQuery = '';
         
-        // Map image IDs to product IDs (from the filename to the Shopify product)
-        this.imageIdToProductMap = {
-            // Black hoodie images
-            '683f9021c6f6d': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            '683f9021c7dbc': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            '683f9021c454e': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            '683f9021d1e6b': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            '683f9021d10cf': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            '683f9021d2cb7': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
-            
-            // White hoodie images (back is main)
-            '683f8fddcabb2': 'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie',
-            '683f8fddcb92e': 'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie',
-            
-            // Organic sweatshirt images
-            '683f8e116fe10': 'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt',
-            '683f8e116cda5': 'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt',
-            
-            // Windbreaker images
-            '683f9890d7838': 'bungi-x-bobby-cowboy-unisex-windbreaker',
-            
-            // T-shirt images
-            '683f9c6a74d70': 'bungi-x-bobby-rabbit-hardware-mens-t-shirt',
-            '683f9c9fdcac3': 'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt',
-            '683f97ee5c7af': 'bungi-x-bobby-cowboy-mens-t-shirt',
-            
-            // Beanie images
-            '683f9a789ba58': 'bungi-x-bobby-cuffed-beanie-1',
-            
-            // Sweatshirt images
-            '683f9be9c4dea': 'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt',
-            '683f985018ab4': 'bungi-x-bobby-cowboy-unisex-sweatshirt'
-        };
-        
-        // Product ID to main cover image mapping
+        // Product ID to fallback cover image mapping (only used if Shopify images aren't available)
         this.productIdToCoverImage = {
-            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png',
-            'bungi-x-bobby-cowboy-unisex-windbreaker': 'mockups/basic-unisex-windbreaker-black-front-683f9890d7838.png',
-            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png',
-            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
-            'bungi-x-bobby-cowboy-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png',
-            'bungi-x-bobby-cuffed-beanie-1': 'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
-            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': 'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png',
-            'bungi-x-bobby-cowboy-unisex-sweatshirt': 'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
+            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'assets/placeholder.png',
+            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'assets/placeholder.png',
+            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'assets/placeholder.png',
+            'bungi-x-bobby-cowboy-unisex-windbreaker': 'assets/placeholder.png',
+            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': 'assets/placeholder.png',
+            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': 'assets/placeholder.png',
+            'bungi-x-bobby-cowboy-mens-t-shirt': 'assets/placeholder.png',
+            'bungi-x-bobby-cuffed-beanie-1': 'assets/placeholder.png',
+            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': 'assets/placeholder.png',
+            'bungi-x-bobby-cowboy-unisex-sweatshirt': 'assets/placeholder.png'
         };
-        
-        // Optional: Auto-generate image mappings from filenames
-        this.autoGenerateImageMap();
         
         this.init();
     }
@@ -68,73 +31,6 @@ class ProductManager {
         await this.loadProducts();
         this.setupEventListeners();
         this.renderProducts();
-    }
-    
-    // Automatically register image IDs from filenames
-    autoGenerateImageMap() {
-        console.log('Auto-generating image mappings from filenames...');
-        const filenames = this.getAllMockupFilenames();
-        let newMappings = 0;
-        
-        filenames.forEach(file => {
-            // Extract the 13-character hex ID from the filename
-            const match = file.match(/(\w{13})\.png$/);
-            if (match) {
-                const id = match[1];
-                // Skip if we already have this ID mapped
-                if (this.imageIdToProductMap[id]) return;
-                
-                // Infer product handle from filename pattern
-                const handle = this.inferProductHandleFromId(id, file);
-                if (handle) {
-                    this.imageIdToProductMap[id] = handle;
-                    newMappings++;
-                    console.log(`Auto-mapped ID ${id} to product ${handle}`);
-                }
-            }
-        });
-        
-        console.log(`Added ${newMappings} new image mappings automatically`);
-    }
-    
-    // Infer product handle from image ID and filename
-    inferProductHandleFromId(id, filename) {
-        // Method 1: Try to infer from existing mappings
-        // Find product handles that share images with similar IDs (first 8 chars)
-        const idPrefix = id.substring(0, 8);
-        for (const [existingId, handle] of Object.entries(this.imageIdToProductMap)) {
-            if (existingId.startsWith(idPrefix)) {
-                return handle;
-            }
-        }
-        
-        // Method 2: Try to infer from filename patterns
-        if (filename) {
-            // Extract product type and color from filename
-            // Example: "unisex-premium-hoodie-black-front-683f9021c6f6d.png"
-            const parts = filename.split('-');
-            if (parts.length >= 3) {
-                const productType = parts.slice(0, parts.length - 3).join('-');
-                const color = parts[parts.length - 3];
-                
-                // Look for similar products in existing mappings
-                for (const handle of Object.values(this.imageIdToProductMap)) {
-                    if (handle.includes(productType) || handle.includes(color)) {
-                        return handle;
-                    }
-                }
-                
-                // If we have a match for hoodie or t-shirt, use default handles
-                if (productType.includes('hoodie')) {
-                    return 'bungi-x-bobby-rabbit-hardware-unisex-hoodie';
-                } else if (productType.includes('t-shirt')) {
-                    return 'bungi-x-bobby-rabbit-hardware-mens-t-shirt';
-                }
-            }
-        }
-        
-        // No match found
-        return null;
     }
 
     async loadProducts() {
@@ -215,42 +111,27 @@ class ProductManager {
                 return;
             }
             
-            // Extract images from Shopify
+            // Extract images from Shopify - this will be our primary image source
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
             
-            // Get product cover image based on ID
-            // First try the explicit mapping, then fall back to automatic detection
-            const coverImage = this.productIdToCoverImage[product.handle] ||
-                               this.getProductCoverImageAuto(product.handle);
+            // Create a map to track which images are associated with which variants
+            const variantImageMap = new Map();
             
-            // Get other product images from the mockups folder using dynamic detection
-            const localImages = this.getLocalMockupImages(product.handle);
+            // Use images directly from Shopify API
+            let images = shopifyImages;
             
-            // Create image array with cover image first, then local images, then Shopify images
-            let images = [];
-            
-            // Add cover image as the first image if it exists
-            if (coverImage) {
-                images.push(coverImage);
-                
-                // Add remaining local images, excluding the cover image
-                localImages.forEach(img => {
-                    if (img !== coverImage) {
-                        images.push(img);
-                    }
-                });
-            } else {
-                // If no cover image, use all local images
-                images = [...localImages];
+            // If no Shopify images, use fallback
+            if (images.length === 0) {
+                images = ['assets/placeholder.png'];
             }
-            
-            // Add Shopify images if we need them (filtered for valid images)
-            images = [...images, ...shopifyImages].filter(img => img);
             
             // Extract variants and organize by color/size
             const variants = [];
             const colors = new Set();
             const sizes = new Set();
+            
+            // Maps to associate images with colors
+            const colorToImagesMap = new Map();
             
             product.variants.edges.forEach(variantEdge => {
                 const variant = variantEdge.node;
@@ -268,6 +149,14 @@ class ProductManager {
                     }
                 });
                 
+                // If variant has an image, associate it with the color
+                if (variant.image && variant.image.url) {
+                    if (!colorToImagesMap.has(color)) {
+                        colorToImagesMap.set(color, []);
+                    }
+                    colorToImagesMap.get(color).push(variant.image.url);
+                }
+                
                 variants.push({
                     id: variant.id,
                     color: color,
@@ -275,9 +164,17 @@ class ProductManager {
                     price: parseFloat(variant.price.amount),
                     comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
                     availableForSale: variant.availableForSale,
-                    image: images[0] || ''
+                    image: variant.image ? variant.image.url : (images[0] || '')
                 });
             });
+            
+            // Assign images to colors if we don't have explicit associations
+            if (colorToImagesMap.size === 0 && colors.size > 0) {
+                // If we don't have color-specific images, just assign all images to all colors
+                colors.forEach(color => {
+                    colorToImagesMap.set(color, [...images]);
+                });
+            }
             
             // Determine category from product type or title
             const category = this.extractCategory(product.title);
@@ -304,7 +201,9 @@ class ProductManager {
                 new: product.tags.includes('new'),
                 sale: comparePrice > minPrice,
                 tags: product.tags,
-                productType: product.productType
+                productType: product.productType,
+                // Add the color to images mapping for easy filtering
+                colorImages: Object.fromEntries(colorToImagesMap)
             };
             
             uniqueProductsMap.set(product.handle, convertedProduct);
@@ -354,204 +253,31 @@ class ProductManager {
         return 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png';
     }
 
-    // Helper method to find all mockup images for a product by its handle
-    getLocalMockupImagesFromFolder(productHandle) {
-        const matchedImages = [];
-
-        // Loop through all known image IDs
-        for (const [imageId, handle] of Object.entries(this.imageIdToProductMap)) {
-            if (handle === productHandle) {
-                // Find any image file that includes this ID
-                const filename = this.findImageFileById(imageId);
-                if (filename) matchedImages.push(`mockups/${filename}`);
-            }
+    // Get images for a product, prioritizing Shopify API images
+    getProductImages(productHandle, shopifyImages = []) {
+        // Use Shopify images if available
+        if (shopifyImages && shopifyImages.length > 0) {
+            return shopifyImages;
         }
-
-        return matchedImages;
-    }
-
-    // Helper method to find an image file by its ID
-    findImageFileById(imageId) {
-        // Get all filenames in the mockups folder
-        const allFilenames = this.getAllMockupFilenames();
         
-        // Find the first filename that includes the specified ID
-        return allFilenames.find(name => name.includes(imageId));
+        // Fallback to local placeholder
+        return ['assets/placeholder.png'];
     }
-
-    // Helper method to get all filenames in the mockups folder
-    getAllMockupFilenames() {
-        // In a browser context, we can't directly read the directory
-        // This method returns all known mockup filenames based on the file structure
-        return [
-            // Dynamically created list of all mockup filenames
-            "unisex-premium-hoodie-black-left-683f9021d2cb7.png",
-            "unisex-premium-hoodie-black-left-683f9021d63b0.png",
-            "unisex-premium-hoodie-black-left-front-683f9021d3bb3.png",
-            "unisex-premium-hoodie-black-left-front-683f9021d5672.png",
-            "unisex-premium-hoodie-black-product-details-683f9021d031c.png",
-            "unisex-premium-hoodie-black-right-683f9021d7e69.png",
-            "unisex-premium-hoodie-black-right-683f9021d9a41.png",
-            "unisex-premium-hoodie-black-right-683f9021db0c8.png",
-            "unisex-premium-hoodie-black-right-front-683f9021d8c96.png",
-            "unisex-premium-hoodie-black-right-front-683f9021da77d.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f9022dda27.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f9022e274e.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f9022ec2ea.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f90230b140.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f902306bbf.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f9023029ae.png",
-            "unisex-premium-hoodie-charcoal-heather-back-683f902315348.png",
-            "unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png",
-            "unisex-premium-hoodie-charcoal-heather-front-683f9022af178.png",
-            "unisex-premium-hoodie-black-front-683f9021c6f6d.png",
-            "unisex-premium-hoodie-white-back-683f8fddcabb2.png",
-            "unisex-premium-hoodie-white-front-683f8fddcb92e.png",
-            "all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png",
-            "all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png",
-            "all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png",
-            "all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png",
-            "unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png",
-            "unisex-organic-oversized-sweatshirt-heather-grey-front-683f8e116cda5.png",
-            "cuffed-beanie-black-front-683f9a789ba58.png",
-            "basic-unisex-windbreaker-black-front-683f9890d7838.png",
-            "all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png",
-            "all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png",
-            "all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png",
-            "all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png"
-            // Add more filenames as needed - these should be kept in sync with actual files
-        ];
-    }
-
-    // Updated method to get local mockup images with dynamic detection
-    getLocalMockupImages(productHandle, productTitle) {
-        // First try dynamic detection based on imageIdToProductMap
-        const dynamicImages = this.getLocalMockupImagesFromFolder(productHandle);
-        if (dynamicImages.length > 0) {
-            return dynamicImages;
+    
+    // Get the cover image for a product
+    getProductCoverImage(productHandle, shopifyImages = []) {
+        // Use first Shopify image if available
+        if (shopifyImages && shopifyImages.length > 0) {
+            return shopifyImages[0];
         }
-
-        // Fallback to hardcoded mapping for backward compatibility
-        const mockupMappings = {
-            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': [
-                'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'
-            ],
-            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
-                // White hoodie - starts with back image as requested
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'
-            ],
-            // Other mappings remain the same for backward compatibility
-            'bungi-x-bobby-dark-mode-wide-leg-joggers': [
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png'
-            ],
-            'wide-leg-joggers': [
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085d00.png',
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085d01.png'
-            ],
-            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': [
-                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-womens-t-shirt': [
-                'mockups/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': [
-                'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png',
-                'mockups/unisex-organic-oversized-sweatshirt-heather-grey-front-683f8e116cda5.png'
-            ],
-            'bungi-x-bobby-cuffed-beanie-1': [
-                'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
-                'mockups/cuffed-beanie-white-front-683f9a789c355.png'
-            ],
-            'bungi-x-bobby-cowboy-unisex-windbreaker': [
-                'mockups/basic-unisex-windbreaker-black-front-683f9890d7838.png'
-            ],
-            'bungi-x-bobby-cowboy-unisex-sweatshirt': [
-                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
-            ],
-            'bungi-x-bobby-cowboy-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png'
-            ]
-        };
-
-        // Check if we have mockups for this product
-        if (mockupMappings[productHandle]) {
-            return mockupMappings[productHandle];
+        
+        // Fallback to product mapping if exists
+        if (this.productIdToCoverImage[productHandle]) {
+            return this.productIdToCoverImage[productHandle];
         }
-
-        // Try to find mockups based on product title keywords with improved matching
-        if (productTitle) {
-            const titleLower = productTitle.toLowerCase();
-            const titleWords = titleLower.split(/\s+/);
-            
-            // Track best match and its score
-            let bestMatch = null;
-            let bestScore = 0;
-            
-            for (const [handle, images] of Object.entries(mockupMappings)) {
-                // Extract keywords from handle
-                const handleWords = handle.replace(/-/g, ' ').toLowerCase().split(/\s+/);
-                
-                // Count how many handle words are in the title
-                let matchCount = 0;
-                let significantWords = 0;
-                
-                for (const word of handleWords) {
-                    // Skip common words that aren't very descriptive
-                    if (word.length < 3 || ['and', 'the', 'for', 'with'].includes(word)) {
-                        continue;
-                    }
-                    
-                    significantWords++;
-                    if (titleWords.includes(word) || titleLower.includes(word)) {
-                        matchCount++;
-                    }
-                }
-                
-                // Calculate match score (percentage of significant words that matched)
-                const score = significantWords > 0 ? (matchCount / significantWords) : 0;
-                
-                // If we have a better match, update our best match
-                if (score > bestScore && score >= 0.5) { // Require at least 50% match
-                    bestScore = score;
-                    bestMatch = images;
-                    
-                    // If we have a perfect match, return immediately
-                    if (score === 1) {
-                        console.log(`Perfect match found for "${productTitle}"`);
-                        return images;
-                    }
-                }
-            }
-            
-            // Return the best match if we found one
-            if (bestMatch) {
-                console.log(`Found best match for "${productTitle}" with score ${bestScore.toFixed(2)}`);
-                return bestMatch;
-            }
-        }
-
-        return [];
-    }
-
-    // Optional: Get product cover image automatically from the first matched image
-    getProductCoverImageAuto(productHandle) {
-        const localImages = this.getLocalMockupImagesFromFolder(productHandle);
-        return localImages[0] || 'assets/placeholder.png'; // Default to first image
+        
+        // Default placeholder
+        return 'assets/placeholder.png';
     }
 
     setupEventListeners() {
@@ -1081,34 +807,42 @@ class ProductManager {
         
         // Function to filter images by color
         const filterImagesByColor = (colorName) => {
-            if (!quickViewProduct || !quickViewProduct.images || !colorName) {
+            if (!quickViewProduct || !colorName) {
                 return;
             }
             
-            // Convert color name to lowercase for case-insensitive comparison
-            const color = colorName.toLowerCase();
-            
-            // Filter images that match the selected color
-            filteredImages = quickViewProduct.images.filter(imagePath => {
-                // First check if the image path exists (not a reference to a non-existent file)
-                if (!imagePath || typeof imagePath !== 'string') {
-                    return false;
-                }
+            // Check if we have color-specific images from Shopify
+            if (quickViewProduct.colorImages && quickViewProduct.colorImages[colorName]) {
+                // Use the color-specific images from our mapping
+                filteredImages = quickViewProduct.colorImages[colorName];
+                console.log(`Using ${filteredImages.length} images for color: ${colorName}`);
+            } else {
+                // If we don't have explicit color images, try filtering by name
+                // Convert color name to lowercase for case-insensitive comparison
+                const color = colorName.toLowerCase();
                 
-                const imageName = imagePath.toLowerCase();
-                // Check if image filename contains the color name
-                return imageName.includes(`-${color}-`) ||
-                       imageName.includes(`/${color}-`) ||
-                       imageName.includes(`-${color.replace(' ', '-')}-`) ||
-                       imageName.includes(`/${color.replace(' ', '-')}-`) ||
-                       // Also try matching "color position" without hyphen
-                       imageName.includes(`${color} `);
-            });
-            
-            // If no images match the color, use all images as fallback
-            // but don't log an error since this is expected behavior
-            if (filteredImages.length === 0) {
-                filteredImages = [...quickViewProduct.images];
+                // Filter images that match the selected color
+                filteredImages = quickViewProduct.images.filter(imagePath => {
+                    // First check if the image path exists (not a reference to a non-existent file)
+                    if (!imagePath || typeof imagePath !== 'string') {
+                        return false;
+                    }
+                    
+                    const imageName = imagePath.toLowerCase();
+                    // Check if image filename contains the color name
+                    return imageName.includes(`-${color}-`) ||
+                           imageName.includes(`/${color}-`) ||
+                           imageName.includes(`-${color.replace(' ', '-')}-`) ||
+                           imageName.includes(`/${color.replace(' ', '-')}-`) ||
+                           // Also try matching "color position" without hyphen
+                           imageName.includes(`${color} `);
+                });
+                
+                // If no images match the color, use all images as fallback
+                if (filteredImages.length === 0) {
+                    console.log(`No specific images found for color: ${colorName}, using all images`);
+                    filteredImages = [...quickViewProduct.images];
+                }
             }
             
             // Update thumbnails
@@ -1309,6 +1043,36 @@ class ProductManager {
     }
     // Mock products for local testing
     getMockProducts() {
+        // Define color-specific images for mock products
+        const blackHoodieImages = [
+            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+            'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
+        ];
+        
+        const charcoalHoodieImages = [
+            'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
+            'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'
+        ];
+        
+        const navyHoodieImages = [
+            'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'
+        ];
+        
+        const whiteHoodieImages = [
+            'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
+            'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
+        ];
+        
+        const whiteTshirtImages = [
+            'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
+            'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f8c07d91c8.png'
+        ];
+        
+        const blackJoggersImages = [
+            'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+            'mockups/all-over-print-unisex-wide-leg-joggers-white-back-683f8d3f2c76f.png'
+        ];
+        
         return [
             {
                 id: 'mock-hoodie-1',
@@ -1318,30 +1082,32 @@ class ProductManager {
                 category: 'hoodie',
                 price: 59.99,
                 comparePrice: 79.99,
+                // All images combined for general display
                 images: [
-                    'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                    'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
-                    'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'
+                    ...blackHoodieImages,
+                    ...charcoalHoodieImages,
+                    ...navyHoodieImages,
+                    ...whiteHoodieImages
                 ],
-                mainImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+                mainImage: blackHoodieImages[0],
                 variants: [
                     {
+                        id: 'mock-variant-1',
                         color: 'Black',
                         size: 'M',
                         price: 59.99,
                         comparePrice: 79.99,
                         availableForSale: true,
-                        image: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png'
+                        image: blackHoodieImages[0]
                     },
                     {
+                        id: 'mock-variant-2',
                         color: 'Charcoal',
                         size: 'L',
                         price: 59.99,
                         comparePrice: 79.99,
                         availableForSale: true,
-                        image: 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'
+                        image: charcoalHoodieImages[0]
                     }
                 ],
                 colors: ['Black', 'Charcoal', 'Navy', 'White'],
@@ -1349,7 +1115,14 @@ class ProductManager {
                 featured: true,
                 new: true,
                 sale: true,
-                tags: ['featured', 'new']
+                tags: ['featured', 'new'],
+                // Color-specific image mapping for color filtering
+                colorImages: {
+                    'Black': blackHoodieImages,
+                    'Charcoal': charcoalHoodieImages,
+                    'Navy': navyHoodieImages,
+                    'White': whiteHoodieImages
+                }
             },
             {
                 id: 'mock-tshirt-1',
@@ -1359,20 +1132,17 @@ class ProductManager {
                 category: 't-shirt',
                 price: 29.99,
                 comparePrice: null,
-                images: [
-                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
-                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f8c07d91c8.png',
-                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8f8fdb3bc.png'
-                ],
-                mainImage: 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
+                images: whiteTshirtImages,
+                mainImage: whiteTshirtImages[0],
                 variants: [
                     {
+                        id: 'mock-variant-3',
                         color: 'White',
                         size: 'M',
                         price: 29.99,
                         comparePrice: null,
                         availableForSale: true,
-                        image: 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png'
+                        image: whiteTshirtImages[0]
                     }
                 ],
                 colors: ['White', 'Black'],
@@ -1380,7 +1150,11 @@ class ProductManager {
                 featured: false,
                 new: true,
                 sale: false,
-                tags: ['new']
+                tags: ['new'],
+                colorImages: {
+                    'White': whiteTshirtImages,
+                    'Black': whiteTshirtImages // No actual black images, so use white as fallback
+                }
             },
             {
                 id: 'mock-joggers-1',
@@ -1390,20 +1164,17 @@ class ProductManager {
                 category: 'joggers',
                 price: 49.99,
                 comparePrice: 69.99,
-                images: [
-                    'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
-                    'mockups/all-over-print-unisex-wide-leg-joggers-white-back-683f8d3f2c76f.png',
-                    'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085adc.png'
-                ],
-                mainImage: 'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+                images: blackJoggersImages,
+                mainImage: blackJoggersImages[0],
                 variants: [
                     {
+                        id: 'mock-variant-4',
                         color: 'Black',
                         size: 'M',
                         price: 49.99,
                         comparePrice: 69.99,
                         availableForSale: true,
-                        image: 'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png'
+                        image: blackJoggersImages[0]
                     }
                 ],
                 colors: ['Black', 'Navy'],
@@ -1411,7 +1182,11 @@ class ProductManager {
                 featured: true,
                 new: false,
                 sale: true,
-                tags: ['featured']
+                tags: ['featured'],
+                colorImages: {
+                    'Black': blackJoggersImages,
+                    'Navy': blackJoggersImages // No actual navy images, so use black as fallback
+                }
             }
         ];
     }
