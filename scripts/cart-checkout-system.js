@@ -8,6 +8,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize our cart system
     BobbyCarts.init();
+    
+    // Load cart animations CSS
+    if (!document.querySelector('link[href*="add-to-cart-animations.css"]')) {
+        const cartAnimationsLink = document.createElement('link');
+        cartAnimationsLink.rel = 'stylesheet';
+        cartAnimationsLink.href = '/styles/add-to-cart-animations.css';
+        document.head.appendChild(cartAnimationsLink);
+    }
 });
 
 // Main Cart System Namespace
@@ -40,7 +48,8 @@ const BobbyCarts = {
         cartItems: null,
         cartCount: null,
         cartTotal: null,
-        checkoutButton: null
+        checkoutButton: null,
+        cartIcons: null
     },
     
     // Initialize the cart system
@@ -135,6 +144,12 @@ const BobbyCarts = {
         const cartCounts = document.querySelectorAll('.cart-count');
         if (cartCounts.length > 0) {
             this.elements.cartCount = cartCounts;
+        }
+        
+        // Cache cart icons
+        const cartIcons = document.querySelectorAll('.cart-icon');
+        if (cartIcons.length > 0) {
+            this.elements.cartIcons = cartIcons;
         }
         
         // Create elements if they don't exist
@@ -498,6 +513,25 @@ const BobbyCarts = {
                 transition: transform 0.3s ease;
                 box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
                 max-width: 300px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .notification-icon {
+                margin-right: 12px;
+                font-size: 18px;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            .notification-content {
+                flex: 1;
+                position: relative;
             }
             
             .notification.show {
@@ -860,9 +894,10 @@ const BobbyCarts = {
                 // Update quantity
                 existingItem.quantity += 1;
                 this.showNotification(`Added another ${product.title} to your cart`, 'success');
+                this.showAddedFeedback(null, existingItem.title, existingItem.image, existingItem.price);
             } else {
                 // Create new item
-                const variantText = product.variants ? 
+                const variantText = product.variants ?
                     Object.entries(product.variants)
                         .map(([key, value]) => `${key}: ${value}`)
                         .join(', ') : '';
@@ -882,6 +917,7 @@ const BobbyCarts = {
                 
                 this.state.items.push(newItem);
                 this.showNotification(`${product.title} added to your cart`, 'success');
+                this.showAddedFeedback(null, product.title, product.image, product.price);
             }
             
             // Update everything
@@ -1452,23 +1488,115 @@ const BobbyCarts = {
     },
     
     // Show added to cart feedback
-    showAddedFeedback: function(button) {
-        // Save original text
-        const originalText = button.textContent;
-        const originalBackground = button.style.background;
-        const originalColor = button.style.color;
+    showAddedFeedback: function(button, productTitle, productImage, price) {
+        if (button) {
+            // Add animation class instead of changing styles directly
+            button.classList.add('adding');
+            
+            // Reset after animation completes
+            setTimeout(() => {
+                button.classList.remove('adding');
+            }, 1200);
+        }
         
-        // Update button
-        button.textContent = 'ADDED!';
-        button.style.background = '#10b981';
-        button.style.color = 'white';
+        // Animate cart icon
+        this.animateCartIcon();
         
-        // Reset after delay
+        // Show notification
+        this.showCartNotification(productTitle, productImage, price);
+    },
+    
+    // Show cart notification with product details
+    showCartNotification: function(productTitle, productImage, price) {
+        // Get product details if not provided
+        if (!productTitle || !productImage) {
+            // Try to get from the most recently added item
+            if (this.state.items.length > 0) {
+                const latestItem = this.state.items[this.state.items.length - 1];
+                productTitle = productTitle || latestItem.title;
+                productImage = productImage || latestItem.image;
+                price = price || latestItem.price;
+            }
+        }
+        
+        // Create or get existing notification
+        let notification = document.querySelector('.cart-notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.className = 'cart-notification';
+            document.body.appendChild(notification);
+        }
+        
+        // Set notification content
+        notification.innerHTML = `
+            <img src="${productImage || this.config.fallbackImage}" class="cart-notification-image"
+                 alt="${productTitle || 'Product'}"
+                 onerror="this.src='${this.config.fallbackImage}';">
+            <div class="cart-notification-content">
+                <div class="cart-notification-title">${productTitle || 'Item'} added to cart</div>
+                <div class="cart-notification-info">
+                    <span class="cart-notification-variant">${this.state.itemCount} items in cart</span>
+                    <span class="cart-notification-price">$${(price || 0).toFixed(2)}</span>
+                </div>
+                <div class="cart-notification-buttons">
+                    <button class="cart-notification-btn view-cart-btn" onclick="BobbyCarts.toggleCart()">View Cart</button>
+                    <button class="cart-notification-btn checkout-btn" onclick="BobbyCarts.proceedToCheckout()">Checkout</button>
+                </div>
+            </div>
+            <button class="cart-notification-close" onclick="this.parentNode.classList.remove('show')">&times;</button>
+        `;
+        
+        // Show notification
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Auto-hide after delay
         setTimeout(() => {
-            button.textContent = originalText;
-            button.style.background = originalBackground;
-            button.style.color = originalColor;
-        }, 2000);
+            notification.classList.remove('show');
+        }, 5000);
+    },
+    
+    // Animate the cart icon when item is added
+    animateCartIcon: function() {
+        // Find all cart count elements
+        const cartCounts = document.querySelectorAll('.cart-count');
+        if (!cartCounts.length) return;
+        
+        // Find cart icons
+        const cartIcons = document.querySelectorAll('.cart-icon');
+        
+        // Add animation class to cart counts
+        cartCounts.forEach(count => {
+            // Remove existing animation class if present
+            count.classList.remove('updated');
+            
+            // Trigger reflow to restart animation
+            void count.offsetWidth;
+            
+            // Add animation class
+            count.classList.add('updated');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                count.classList.remove('updated');
+            }, 600);
+        });
+        
+        // Add animation to cart icons
+        cartIcons.forEach(icon => {
+            // Remove existing animation class if present
+            icon.classList.remove('pop');
+            
+            // Trigger reflow to restart animation
+            void icon.offsetWidth;
+            
+            // Add animation class
+            icon.classList.add('pop');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+                icon.classList.remove('pop');
+            }, 500);
+        });
     },
     
     // Save cart to local storage
@@ -1542,8 +1670,11 @@ const BobbyCarts = {
         
         // Set content
         notification.innerHTML = `
-            ${message}
-            <div class="notification-progress"></div>
+            <div class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
+            <div class="notification-content">
+                ${message}
+                <div class="notification-progress"></div>
+            </div>
         `;
         
         // Show notification
@@ -1562,12 +1693,58 @@ const BobbyCarts = {
                 }
             }, 300);
         }, 5000);
+        
+        // Update cart count display immediately
+        this.updateCartCount();
+    },
+    
+    // Validate cart items before checkout
+    validateCartItems: function() {
+        const invalidItems = [];
+        
+        this.state.items.forEach(item => {
+            // Check if item has required properties
+            if (!item.title) {
+                invalidItems.push('Item missing title');
+            }
+            
+            // Check if item has quantity
+            if (!item.quantity || item.quantity <= 0) {
+                invalidItems.push(`${item.title || 'Item'} has invalid quantity`);
+            }
+            
+            // Check if item has price
+            if (!item.price || isNaN(item.price) || item.price <= 0) {
+                invalidItems.push(`${item.title || 'Item'} has invalid price`);
+            }
+            
+            // Check if item has valid image
+            if (!item.image) {
+                console.warn(`Item ${item.title} missing image`);
+                item.image = this.config.fallbackImage;
+            }
+            
+            // Check if Shopify variant ID is present
+            if (!item.shopifyId) {
+                console.warn(`Item ${item.title} missing Shopify variant ID`);
+                // Not adding to invalidItems as this might be handled later
+            }
+        });
+        
+        return invalidItems;
     },
     
     // Proceed to checkout
     proceedToCheckout: function() {
         if (this.state.items.length === 0) {
             this.showNotification('Your cart is empty', 'error');
+            return;
+        }
+        
+        // Validate cart items before proceeding
+        const invalidItems = this.validateCartItems();
+        if (invalidItems.length > 0) {
+            this.showNotification(`Please check your cart: ${invalidItems.join(', ')}`, 'error');
             return;
         }
         
@@ -1617,6 +1794,18 @@ const BobbyCarts = {
             if (data.checkoutUrl) {
                 // Show success notification
                 this.showNotification('Redirecting to checkout...', 'success');
+                
+                // Store order information in localStorage for confirmation
+                try {
+                    localStorage.setItem('bobby-last-order', JSON.stringify({
+                        items: this.state.items,
+                        total: this.state.total,
+                        timestamp: new Date().toISOString(),
+                        checkoutUrl: data.checkoutUrl
+                    }));
+                } catch (e) {
+                    console.error('Could not save order info to localStorage', e);
+                }
                 
                 // Clear cart
                 this.clearCart();

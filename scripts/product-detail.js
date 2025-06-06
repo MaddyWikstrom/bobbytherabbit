@@ -17,8 +17,22 @@ class ProductDetailManager {
     async init() {
         this.setupEventListeners();
         this.loadRecentlyViewed();
+        // Load animation styles
+        this.loadAnimationStyles();
         // Start loading immediately without password protection
         this.startLoadingSequence();
+    }
+    
+    // Load animation styles
+    loadAnimationStyles() {
+        // Check if animation styles are already loaded
+        if (!document.querySelector('link[href*="add-to-cart-animations.css"]')) {
+            const styleLink = document.createElement('link');
+            styleLink.rel = 'stylesheet';
+            styleLink.href = '/styles/add-to-cart-animations.css';
+            document.head.appendChild(styleLink);
+            console.log('Cart animation styles loaded');
+        }
     }
 
     setupPasswordProtection() {
@@ -1082,15 +1096,15 @@ class ProductDetailManager {
     }
 
     addToCart() {
-        if (!this.selectedVariant.color || !this.selectedVariant.size) {
-            this.showNotification('Please select color and size', 'error');
-            return;
+        // Validate product selection
+        if (!this.validateProductSelection()) {
+            return false;
         }
         
         const stock = this.getAvailableStock();
         if (stock < this.selectedVariant.quantity) {
             this.showNotification('Not enough stock available', 'error');
-            return;
+            return false;
         }
         
         // Find the Shopify variant ID for the selected options
@@ -1185,7 +1199,18 @@ class ProductDetailManager {
         this.currentProduct.inventory[variantKey] -= this.selectedVariant.quantity;
         this.updateInventoryDisplay();
         
-        this.showNotification('Added to cart!', 'success');
+        // Get the current product image for the notification
+        const currentImage = document.getElementById('main-image')?.getAttribute('src') ||
+                             this.filteredImages[0] ||
+                             this.currentProduct.mainImage;
+        
+        // Show success notification and update the add to cart button
+        this.showAddedFeedback();
+        
+        // Animate the cart icon
+        this.animateCartIcon();
+        
+        return true;
     }
 
     toggleWishlist() {
@@ -1392,11 +1417,144 @@ class ProductDetailManager {
         `;
     }
 
+    // Show added to cart feedback with button animation
+    showAddedFeedback() {
+        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+        if (!addToCartBtn) return;
+        
+        // Remove any existing animation classes
+        addToCartBtn.classList.remove('adding', 'success');
+        
+        // Force browser reflow to restart animation
+        void addToCartBtn.offsetWidth;
+        
+        // Add animation class
+        addToCartBtn.classList.add('adding');
+        
+        // Show the cart notification with product image
+        this.showCartAddedNotification();
+        
+        // Remove animation class after it completes
+        setTimeout(() => {
+            addToCartBtn.classList.remove('adding');
+        }, 1200);
+    }
+    
+    // Show a cart notification with product details
+    showCartAddedNotification() {
+        if (!this.currentProduct) return;
+        
+        // Try to use BobbyCarts notification system first
+        if (window.BobbyCarts && window.BobbyCarts.showCartNotification) {
+            const currentImage = document.getElementById('main-image')?.getAttribute('src') ||
+                                 this.filteredImages[0] ||
+                                 this.currentProduct.mainImage;
+                                 
+            window.BobbyCarts.showCartNotification(
+                this.currentProduct.title,
+                currentImage,
+                this.currentProduct.price
+            );
+            return;
+        }
+        
+        // Fallback to our own notification system
+        const productImage = document.getElementById('main-image')?.getAttribute('src') ||
+                             this.filteredImages[0] ||
+                             this.currentProduct.mainImage;
+                             
+        const notification = document.createElement('div');
+        notification.className = 'cart-notification';
+        notification.innerHTML = `
+            <img src="${productImage}" class="cart-notification-image" alt="${this.currentProduct.title}">
+            <div class="cart-notification-content">
+                <div class="cart-notification-title">${this.currentProduct.title} added to cart</div>
+                <div class="cart-notification-info">
+                    <span class="cart-notification-variant">${this.selectedVariant.color}, ${this.selectedVariant.size}</span>
+                    <span class="cart-notification-price">$${this.currentProduct.price.toFixed(2)}</span>
+                </div>
+                <div class="cart-notification-buttons">
+                    <button class="cart-notification-btn view-cart-btn" onclick="window.cartManager?.openCart()">View Cart</button>
+                    <button class="cart-notification-btn checkout-btn" onclick="window.cartManager?.proceedToCheckout()">Checkout</button>
+                </div>
+            </div>
+            <button class="cart-notification-close" onclick="this.parentNode.classList.remove('show')">&times;</button>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Auto hide after delay
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.remove();
+                }
+            }, 400);
+        }, 5000);
+    }
+    
+    // Animate the cart icon
+    animateCartIcon() {
+        // First check if BobbyCarts has its own animation method
+        if (window.BobbyCarts && typeof window.BobbyCarts.animateCartIcon === 'function') {
+            window.BobbyCarts.animateCartIcon();
+            return;
+        }
+        
+        // Fallback to our own animation
+        const cartCounts = document.querySelectorAll('.cart-count');
+        const cartIcons = document.querySelectorAll('.cart-icon');
+        
+        // Animate cart count badges
+        if (cartCounts.length) {
+            cartCounts.forEach(count => {
+                // Remove existing animation class if present
+                count.classList.remove('updated');
+                
+                // Trigger reflow to restart animation
+                void count.offsetWidth;
+                
+                // Add animation class
+                count.classList.add('updated');
+                
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    count.classList.remove('updated');
+                }, 600);
+            });
+        }
+        
+        // Animate cart icons
+        if (cartIcons.length) {
+            cartIcons.forEach(icon => {
+                // Remove existing animation class if present
+                icon.classList.remove('pop');
+                
+                // Trigger reflow to restart animation
+                void icon.offsetWidth;
+                
+                // Add animation class
+                icon.classList.add('pop');
+                
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    icon.classList.remove('pop');
+                }, 500);
+            });
+        }
+    }
+
     showNotification(message, type = 'info') {
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
+            <div class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
             <div class="notification-content">
                 <span class="notification-message">${message}</span>
                 <button class="notification-close">×</button>
@@ -1420,6 +1578,42 @@ class ProductDetailManager {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         });
+    }
+    // Validate product selection
+    validateProductSelection() {
+        // Check if color is selected
+        if (!this.selectedVariant.color) {
+            this.showNotification('Please select a color', 'error');
+            
+            // Highlight color options section
+            const colorOptionsGroup = document.querySelector('.option-group:has(.color-options)');
+            if (colorOptionsGroup) {
+                colorOptionsGroup.classList.add('highlight-required');
+                setTimeout(() => {
+                    colorOptionsGroup.classList.remove('highlight-required');
+                }, 2000);
+            }
+            
+            return false;
+        }
+        
+        // Check if size is selected
+        if (!this.selectedVariant.size) {
+            this.showNotification('Please select a size', 'error');
+            
+            // Highlight size options section
+            const sizeOptionsGroup = document.querySelector('.option-group:has(.size-options)');
+            if (sizeOptionsGroup) {
+                sizeOptionsGroup.classList.add('highlight-required');
+                setTimeout(() => {
+                    sizeOptionsGroup.classList.remove('highlight-required');
+                }, 2000);
+            }
+            
+            return false;
+        }
+        
+        return true;
     }
 }
 
