@@ -159,19 +159,28 @@
         </section>
 
         <!-- Shopping Cart Sidebar -->
-        <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-sidebar" id="cart-sidebar" style="background: rgba(20, 20, 35, 0.95); box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5); border-left: 1px solid rgba(120, 119, 198, 0.3); z-index: 10000;">
             <div class="cart-header">
                 <h3>Shopping Cart</h3>
                 <button class="cart-close" id="cart-close">×</button>
             </div>
-            <div class="cart-items" id="cart-items">
-                <!-- Cart items will be populated here -->
+            <div class="cart-items-container">
+                <div id="cart-items" class="cart-items">
+                    <!-- Cart items will be populated here -->
+                </div>
             </div>
             <div class="cart-footer">
                 <div class="cart-total">
-                    <span>Total: $<span id="cart-total">0.00</span></span>
+                    <span>Total:</span>
+                    <span>$<span id="cart-total">0.00</span></span>
                 </div>
-                <button class="checkout-btn" id="checkout-btn">Checkout</button>
+                <button class="checkout-btn" id="checkout-btn">
+                    <span>Checkout</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -251,8 +260,71 @@
     </div>
 
     <!-- Overlays -->
-    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-overlay" id="cart-overlay" style="background-color: rgba(0, 0, 0, 0.5); z-index: 9999;"></div>
     <div class="wishlist-overlay" id="wishlist-overlay"></div>
+    
+    <!-- Cart styles -->
+    <style>
+        /* Ensure cart sidebar is properly visible */
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 380px;
+            max-width: 90vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .cart-sidebar.active {
+            transform: translateX(0);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .cart-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            z-index: 9999;
+        }
+        
+        .cart-items-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 20px;
+        }
+        
+        .cart-btn {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #a855f7;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
 
     <!-- Scripts -->
     <script src="scripts/product-detail.js"></script>

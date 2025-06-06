@@ -1160,11 +1160,24 @@ class ProductDetailManager {
                     window.cartManager.openCart();
                     console.log('Forcing cart to open after adding item');
                 }
-            }, 200);
+            }, 100);
         } else {
             console.error('Cart manager not available, cannot add item to cart');
             this.showNotification('Cart system not available', 'error');
-            return;
+            
+            // Try to initialize cart manager if it doesn't exist
+            if (typeof CartManager !== 'undefined') {
+                window.cartManager = new CartManager();
+                // Try again after initialization
+                setTimeout(() => {
+                    if (window.cartManager) {
+                        window.cartManager.addItem(cartItem, variantData);
+                        window.cartManager.openCart();
+                    }
+                }, 100);
+            } else {
+                return;
+            }
         }
         
         // Update inventory

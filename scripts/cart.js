@@ -56,6 +56,9 @@ class CartManager {
             });
         }
         
+        // Find cart modal first
+        const cartModal = document.getElementById('cart-modal');
+        
         // The cart modal background should also close the cart when clicked
         if (cartModal) {
             cartModal.addEventListener('click', (e) => {
@@ -211,6 +214,12 @@ class CartManager {
             cartSidebar.classList.add('active');
             cartOverlay.classList.add('active');
             
+            // Fix for cart content visibility and styling
+            cartSidebar.style.transform = 'translateX(0)';
+            cartSidebar.style.opacity = '1';
+            cartSidebar.style.visibility = 'visible';
+            cartOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            
             this.isOpen = true;
             document.body.style.overflow = 'hidden';
             
@@ -228,6 +237,11 @@ class CartManager {
         if (!cartImplementationFound) {
             console.error('Cart elements not found in the DOM - attempting to inject cart HTML');
             this.injectCartHTML();
+            
+            // Try again immediately after injection
+            setTimeout(() => {
+                this.openCart();
+            }, 50);
         }
     }
 
@@ -254,6 +268,11 @@ class CartManager {
             // Products.html sidebar implementation
             cartSidebar.classList.remove('active');
             cartOverlay.classList.remove('active');
+            
+            // Reset transform and opacity for proper animation
+            cartSidebar.style.transform = 'translateX(100%)';
+            cartSidebar.style.opacity = '0';
+            
             this.isOpen = false;
             document.body.style.overflow = '';
             
@@ -261,41 +280,12 @@ class CartManager {
             setTimeout(() => {
                 if (!this.isOpen) { // Only if still closed
                     cartOverlay.style.display = 'none';
+                    cartSidebar.style.visibility = 'hidden';
                 }
             }, 300);
         } else {
             console.error('Cart sidebar or overlay not found in the DOM - attempting to inject cart HTML');
             this.injectCartHTML();
-            
-            // Try again after injection
-            setTimeout(() => {
-                const newCartModal = document.getElementById('cart-modal');
-                const newCartSidebar = document.getElementById('cart-sidebar');
-                const newCartOverlay = document.getElementById('cart-overlay');
-                
-                if (newCartModal) {
-                    newCartModal.style.display = 'flex';
-                    newCartModal.style.zIndex = '10000';
-                    newCartModal.classList.remove('hidden');
-                    this.isOpen = true;
-                    document.body.style.overflow = 'hidden';
-                } else if (newCartSidebar && newCartOverlay) {
-                    newCartSidebar.style.display = 'flex';
-                    newCartSidebar.style.zIndex = '10000';
-                    newCartOverlay.style.display = 'block';
-                    newCartOverlay.style.zIndex = '9999';
-                    
-                    newCartSidebar.classList.add('active');
-                    newCartOverlay.classList.add('active');
-                    
-                    this.isOpen = true;
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    console.error('Failed to inject cart HTML');
-                }
-                
-                this.updateCartDisplay();
-            }, 100);
         }
     }
     
