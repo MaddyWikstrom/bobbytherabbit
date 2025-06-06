@@ -18,13 +18,25 @@ class CartManager {
 
     setupEventListeners() {
         // Cart toggle
-        const cartToggle = document.getElementById('cart-toggle');
+        const cartToggle = document.getElementById('cart-btn');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartClose = document.getElementById('cart-close');
         const cartOverlay = document.getElementById('cart-overlay');
 
         if (cartToggle) {
-            cartToggle.addEventListener('click', () => this.toggleCart());
+            cartToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleCart();
+            });
+            // Make sure we handle clicks on child elements
+            cartToggle.querySelectorAll('*').forEach(child => {
+                child.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleCart();
+                });
+            });
         }
 
         if (cartClose) {
@@ -274,7 +286,7 @@ class CartManager {
     }
 
     showCartAnimation() {
-        const cartToggle = document.getElementById('cart-toggle');
+        const cartToggle = document.getElementById('cart-btn');
         if (cartToggle) {
             cartToggle.style.animation = 'cartPulse 0.6s ease';
             setTimeout(() => {

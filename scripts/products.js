@@ -59,11 +59,12 @@ class ProductManager {
                 this.filteredProducts = [...this.products];
                 return;
             }
+            // No products found from API or CSV, use mock products for local testing
+            console.log('⚠️ No products found from API or CSV, using mock products for local testing');
+            this.products = this.getMockProducts();
+            this.filteredProducts = [...this.products];
+            console.log(`✅ Loaded ${this.products.length} mock products for testing`);
             
-            // No products found
-            console.log('⚠️ No products found from any source');
-            this.products = [];
-            this.filteredProducts = [];
             
         } catch (error) {
             console.error('❌ Error loading products:', error);
@@ -692,8 +693,14 @@ class ProductManager {
         document.querySelectorAll('.add-to-cart-btn, .add-to-cart-quick').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const productId = e.target.closest('.product-card').dataset.productId || e.target.dataset.productId;
-                this.addToCart(productId);
+                const productCard = e.target.closest('.product-card');
+                const productId = productCard ? productCard.dataset.productId : e.target.dataset.productId;
+                
+                if (productId) {
+                    this.addToCart(productId);
+                } else {
+                    console.error('Product ID not found for add to cart button', e.target);
+                }
             });
         });
 
@@ -779,7 +786,10 @@ class ProductManager {
 
     addToCart(productId) {
         const product = this.products.find(p => p.id === productId);
-        if (!product) return;
+        if (!product) {
+            console.error(`Product with ID ${productId} not found`);
+            return;
+        }
 
         // Add animation effect
         const button = document.querySelector(`[data-product-id="${productId}"] .add-to-cart-btn`);
@@ -794,7 +804,16 @@ class ProductManager {
 
         // Trigger cart update (handled by cart.js)
         if (window.cartManager) {
+            console.log(`Adding product to cart:`, product);
             window.cartManager.addItem(product);
+        } else {
+            console.error('Cart manager not initialized');
+            // Try to initialize cart manager if it doesn't exist
+            if (typeof CartManager !== 'undefined') {
+                console.log('Initializing cart manager');
+                window.cartManager = new CartManager();
+                window.cartManager.addItem(product);
+            }
         }
 
         // Show success notification
@@ -946,6 +965,100 @@ class ProductManager {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         });
+    }
+    // Mock products for local testing
+    getMockProducts() {
+        return [
+            {
+                id: 'mock-hoodie-1',
+                shopifyId: 'mock-shop-1',
+                title: 'Bungi x Bobby Rabbit Hardware Hoodie',
+                description: 'Premium quality hoodie featuring the Bobby Rabbit hardware design.',
+                category: 'hoodie',
+                price: 59.99,
+                comparePrice: 79.99,
+                images: ['assets/hoodie-black.png', 'assets/hoodie-front.svg'],
+                mainImage: 'assets/hoodie-black.png',
+                variants: [
+                    {
+                        color: 'Black',
+                        size: 'M',
+                        price: 59.99,
+                        comparePrice: 79.99,
+                        availableForSale: true,
+                        image: 'assets/hoodie-black.png'
+                    },
+                    {
+                        color: 'Charcoal',
+                        size: 'L',
+                        price: 59.99,
+                        comparePrice: 79.99,
+                        availableForSale: true,
+                        image: 'assets/hoodie-charcoal.png'
+                    }
+                ],
+                colors: ['Black', 'Charcoal', 'Navy', 'White'],
+                sizes: ['S', 'M', 'L', 'XL'],
+                featured: true,
+                new: true,
+                sale: true,
+                tags: ['featured', 'new']
+            },
+            {
+                id: 'mock-tshirt-1',
+                shopifyId: 'mock-shop-2',
+                title: 'Bungi x Bobby Tech Animal T-Shirt',
+                description: 'Classic t-shirt with the Tech Animal design.',
+                category: 't-shirt',
+                price: 29.99,
+                comparePrice: null,
+                images: ['assets/tee-1.svg', 'assets/tee-2.png'],
+                mainImage: 'assets/tee-1.svg',
+                variants: [
+                    {
+                        color: 'White',
+                        size: 'M',
+                        price: 29.99,
+                        comparePrice: null,
+                        availableForSale: true,
+                        image: 'assets/tee-1.svg'
+                    }
+                ],
+                colors: ['White', 'Black'],
+                sizes: ['S', 'M', 'L', 'XL'],
+                featured: false,
+                new: true,
+                sale: false,
+                tags: ['new']
+            },
+            {
+                id: 'mock-joggers-1',
+                shopifyId: 'mock-shop-3',
+                title: 'Bungi x Bobby Wide Leg Joggers',
+                description: 'Comfortable wide leg joggers with Bobby the Rabbit design.',
+                category: 'joggers',
+                price: 49.99,
+                comparePrice: 69.99,
+                images: ['assets/pants-1.svg'],
+                mainImage: 'assets/pants-1.svg',
+                variants: [
+                    {
+                        color: 'Black',
+                        size: 'M',
+                        price: 49.99,
+                        comparePrice: 69.99,
+                        availableForSale: true,
+                        image: 'assets/pants-1.svg'
+                    }
+                ],
+                colors: ['Black', 'Navy'],
+                sizes: ['S', 'M', 'L', 'XL'],
+                featured: true,
+                new: false,
+                sale: true,
+                tags: ['featured']
+            }
+        ];
     }
 }
 
