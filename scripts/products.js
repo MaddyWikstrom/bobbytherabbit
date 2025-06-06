@@ -801,6 +801,8 @@ class ProductManager {
     }
 
     addToCart(productId) {
+        console.log(`Adding product to cart: ${productId}`);
+        
         const product = this.products.find(p => p.id === productId);
         if (!product) {
             console.error(`Product with ID ${productId} not found`);
@@ -818,22 +820,40 @@ class ProductManager {
             }, 1000);
         }
 
-        // Trigger cart update (handled by cart.js)
-        if (window.cartManager) {
-            console.log(`Adding product to cart:`, product);
-            window.cartManager.addItem(product);
-        } else {
-            console.error('Cart manager not initialized');
-            // Try to initialize cart manager if it doesn't exist
-            if (typeof CartManager !== 'undefined') {
-                console.log('Initializing cart manager');
-                window.cartManager = new CartManager();
+        try {
+            // Check for cart manager or initialize it
+            if (!window.cartManager) {
+                console.log('Cart manager not found, initializing...');
+                if (typeof CartManager !== 'undefined') {
+                    window.cartManager = new CartManager();
+                    // Allow time for initialization
+                    setTimeout(() => {
+                        window.cartManager.addItem(product);
+                        console.log('Item added to cart with new cart manager');
+                    }, 100);
+                } else {
+                    throw new Error('CartManager class not available');
+                }
+            } else {
+                // Add to existing cart manager
                 window.cartManager.addItem(product);
+                console.log('Item added to existing cart manager');
+                
+                // Force cart to open after adding item
+                setTimeout(() => {
+                    if (window.cartManager && !window.cartManager.isOpen) {
+                        window.cartManager.openCart();
+                    }
+                }, 300);
             }
-        }
 
-        // Show success notification
-        this.showNotification('Product added to cart!', 'success');
+            // Show success notification
+            this.showNotification('Product added to cart!', 'success');
+            
+        } catch (error) {
+            console.error('Error adding product to cart:', error);
+            this.showNotification('Error adding to cart. Please try again.', 'error');
+        }
     }
 
     toggleWishlist(productId) {

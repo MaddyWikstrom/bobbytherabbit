@@ -17,26 +17,33 @@ class CartManager {
     }
 
     setupEventListeners() {
-        // Cart toggle
-        const cartToggle = document.getElementById('cart-btn');
+        // Cart toggle - try multiple selectors for different pages
+        const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartClose = document.getElementById('cart-close');
         const cartOverlay = document.getElementById('cart-overlay');
 
-        if (cartToggle) {
-            cartToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleCart();
-            });
-            // Make sure we handle clicks on child elements
-            cartToggle.querySelectorAll('*').forEach(child => {
-                child.addEventListener('click', (e) => {
+        if (cartToggles.length > 0) {
+            cartToggles.forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    console.log('Cart button clicked');
                     this.toggleCart();
                 });
+                
+                // Also add event listeners to all children
+                toggle.querySelectorAll('*').forEach(child => {
+                    child.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Cart button child clicked');
+                        this.toggleCart();
+                    });
+                });
             });
+        } else {
+            console.error('No cart toggle button found');
         }
 
         if (cartClose) {
@@ -130,6 +137,7 @@ class CartManager {
     }
 
     toggleCart() {
+        console.log('Toggling cart, current state:', this.isOpen);
         if (this.isOpen) {
             this.closeCart();
         } else {
@@ -138,12 +146,21 @@ class CartManager {
     }
 
     openCart() {
+        console.log('Opening cart');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartOverlay = document.getElementById('cart-overlay');
         
         if (cartSidebar && cartOverlay) {
+            // Ensure the cart is visible and on top
+            cartSidebar.style.display = 'flex';
+            cartSidebar.style.zIndex = '10000';
+            cartOverlay.style.zIndex = '9999';
+            
+            // Add active class (for animation)
             cartSidebar.classList.add('active');
             cartOverlay.classList.add('active');
+            
+            // Update state
             this.isOpen = true;
             document.body.style.overflow = 'hidden';
             
@@ -152,10 +169,16 @@ class CartManager {
             if (firstFocusable) {
                 firstFocusable.focus();
             }
+            
+            // Update display with latest cart items
+            this.updateCartDisplay();
+        } else {
+            console.error('Cart sidebar or overlay not found in the DOM');
         }
     }
 
     closeCart() {
+        console.log('Closing cart');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartOverlay = document.getElementById('cart-overlay');
         
@@ -164,6 +187,15 @@ class CartManager {
             cartOverlay.classList.remove('active');
             this.isOpen = false;
             document.body.style.overflow = '';
+            
+            // Small delay before removing display to allow for animation
+            setTimeout(() => {
+                if (!this.isOpen) { // Only if still closed
+                    cartOverlay.style.display = 'none';
+                }
+            }, 300);
+        } else {
+            console.error('Cart sidebar or overlay not found in the DOM');
         }
     }
 
@@ -270,28 +302,40 @@ class CartManager {
 
     updateCartCount() {
         this.calculateTotal();
-        const cartCount = document.getElementById('cart-count');
-        if (cartCount) {
-            cartCount.textContent = this.itemCount;
-            cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
-            
-            // Add bounce animation
-            if (this.itemCount > 0) {
-                cartCount.style.animation = 'bounce 0.5s ease';
-                setTimeout(() => {
-                    cartCount.style.animation = '';
-                }, 500);
-            }
+        // Try to find cart count elements using multiple selectors
+        const cartCounts = document.querySelectorAll('#cart-count, .cart-count');
+        
+        if (cartCounts.length > 0) {
+            cartCounts.forEach(cartCount => {
+                cartCount.textContent = this.itemCount;
+                cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
+                
+                // Add bounce animation
+                if (this.itemCount > 0) {
+                    cartCount.style.animation = 'bounce 0.5s ease';
+                    setTimeout(() => {
+                        cartCount.style.animation = '';
+                    }, 500);
+                }
+            });
+        } else {
+            console.error('No cart count element found');
         }
     }
 
     showCartAnimation() {
-        const cartToggle = document.getElementById('cart-btn');
-        if (cartToggle) {
-            cartToggle.style.animation = 'cartPulse 0.6s ease';
-            setTimeout(() => {
-                cartToggle.style.animation = '';
-            }, 600);
+        // Try multiple selectors to find cart buttons
+        const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn');
+        
+        if (cartToggles.length > 0) {
+            cartToggles.forEach(toggle => {
+                toggle.style.animation = 'cartPulse 0.6s ease';
+                setTimeout(() => {
+                    toggle.style.animation = '';
+                }, 600);
+            });
+        } else {
+            console.error('No cart toggle button found for animation');
         }
     }
 
@@ -839,3 +883,201 @@ const cartStyles = `
 const cartStyleSheet = document.createElement('style');
 cartStyleSheet.textContent = cartStyles;
 document.head.appendChild(cartStyleSheet);
+
+// Add enhanced cart styles to fix visibility issues
+const enhancedCartStyles = `
+/* Critical Cart Fixes */
+.cart-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 380px !important;
+    max-width: 90vw !important;
+    height: 100vh !important;
+    background: rgba(20, 20, 35, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 10000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5) !important;
+    border-left: 1px solid rgba(120, 119, 198, 0.3) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: transform 0.3s ease-in-out !important;
+    transform: translateX(100%) !important;
+}
+
+.cart-sidebar.active {
+    transform: translateX(0) !important;
+}
+
+.cart-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    z-index: 9999 !important;
+    display: block !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+}
+
+.cart-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Cart Items Styling */
+.cart-item {
+    display: flex !important;
+    padding: 15px !important;
+    border-bottom: 1px solid rgba(120, 119, 198, 0.2) !important;
+    position: relative !important;
+    background: rgba(30, 30, 50, 0.5) !important;
+    margin-bottom: 10px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.cart-item:hover {
+    background: rgba(40, 40, 60, 0.7) !important;
+}
+
+.cart-item-image {
+    width: 70px !important;
+    height: 70px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    margin-right: 15px !important;
+    border: 1px solid rgba(120, 119, 198, 0.3) !important;
+}
+
+.cart-item-info {
+    flex: 1 !important;
+}
+
+.cart-item-title {
+    font-weight: bold !important;
+    color: #fff !important;
+    margin-bottom: 5px !important;
+}
+
+.cart-item-price {
+    color: #a855f7 !important;
+    font-weight: bold !important;
+    margin-top: 5px !important;
+}
+
+.cart-item-controls {
+    display: flex !important;
+    align-items: center !important;
+    margin-top: 10px !important;
+}
+
+.quantity-btn {
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(120, 119, 198, 0.2) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.quantity-btn:hover {
+    background: rgba(120, 119, 198, 0.4) !important;
+}
+
+.quantity-display {
+    margin: 0 10px !important;
+    color: white !important;
+    min-width: 20px !important;
+    text-align: center !important;
+}
+
+.remove-item-btn {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    background: none !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: pointer !important;
+    transition: color 0.2s ease !important;
+}
+
+.remove-item-btn:hover {
+    color: #ff5555 !important;
+}
+
+/* Cart Header & Footer */
+.cart-header {
+    padding: 20px !important;
+    border-bottom: 1px solid rgba(120, 119, 198, 0.3) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: rgba(20, 20, 35, 0.9) !important;
+}
+
+.cart-header h3 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 1.2rem !important;
+}
+
+.cart-close {
+    background: none !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 1.5rem !important;
+    cursor: pointer !important;
+    transition: color 0.2s ease !important;
+}
+
+.cart-close:hover {
+    color: #ffffff !important;
+}
+
+.cart-footer {
+    padding: 20px !important;
+    border-top: 1px solid rgba(120, 119, 198, 0.3) !important;
+    background: rgba(20, 20, 35, 0.9) !important;
+}
+
+.cart-total {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 15px !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
+
+#checkout-btn {
+    width: 100% !important;
+    padding: 12px !important;
+    background: linear-gradient(45deg, #a855f7, #3b82f6) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+#checkout-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 15px rgba(120, 119, 198, 0.4) !important;
+}
+`;
+
+const enhancedStyleSheet = document.createElement('style');
+enhancedStyleSheet.textContent = enhancedCartStyles;
+document.head.appendChild(enhancedStyleSheet);
