@@ -20,7 +20,9 @@ class CartManager {
         // Cart toggle - try multiple selectors for different pages
         const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn');
         const cartModal = document.getElementById('cart-modal');
-        const cartClose = document.getElementById('cart-close');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
+        const cartCloseButtons = document.querySelectorAll('.cart-close');
         
         if (cartToggles.length > 0) {
             cartToggles.forEach(toggle => {
@@ -45,12 +47,14 @@ class CartManager {
             console.error('No cart toggle button found');
         }
 
-        if (cartClose) {
-            cartClose.addEventListener('click', () => this.closeCart());
+        // Add click listeners to all close buttons
+        if (cartCloseButtons.length > 0) {
+            cartCloseButtons.forEach(btn => {
+                btn.addEventListener('click', () => this.closeCart());
+            });
         }
         
         // The cart modal background should also close the cart when clicked
-        // (there's no separate overlay in this HTML structure)
         if (cartModal) {
             cartModal.addEventListener('click', (e) => {
                 // Only close if clicking the modal background, not the content
@@ -58,6 +62,11 @@ class CartManager {
                     this.closeCart();
                 }
             });
+        }
+        
+        // The cart overlay should also close the cart when clicked
+        if (cartOverlay) {
+            cartOverlay.addEventListener('click', () => this.closeCart());
         }
 
         // Checkout button
@@ -153,15 +162,31 @@ class CartManager {
 
     openCart() {
         console.log('Opening cart');
+        // Try to find either cart implementation
         const cartModal = document.getElementById('cart-modal');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
         
         if (cartModal) {
-            // Ensure the cart is visible and on top
+            // Index.html modal implementation
             cartModal.style.display = 'flex';
             cartModal.style.zIndex = '10000';
+            cartModal.classList.remove('hidden');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
+        } else if (cartSidebar && cartOverlay) {
+            // Products.html sidebar implementation
+            cartSidebar.style.display = 'flex';
+            cartSidebar.style.zIndex = '10000';
+            cartOverlay.style.display = 'block';
+            cartOverlay.style.zIndex = '9999';
             
             // Add active class (for animation)
-            cartModal.classList.remove('hidden');
+            cartSidebar.classList.add('active');
+            cartOverlay.classList.add('active');
+            
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
             
             // Update state
             this.isOpen = true;
@@ -182,9 +207,13 @@ class CartManager {
 
     closeCart() {
         console.log('Closing cart');
+        // Try to find either cart implementation
         const cartModal = document.getElementById('cart-modal');
+        const cartSidebar = document.getElementById('cart-sidebar');
+        const cartOverlay = document.getElementById('cart-overlay');
         
         if (cartModal) {
+            // Index.html modal implementation
             cartModal.classList.add('hidden');
             this.isOpen = false;
             document.body.style.overflow = '';
@@ -195,6 +224,19 @@ class CartManager {
                     cartModal.style.display = 'none';
                 }
             }, 300);
+        } else if (cartSidebar && cartOverlay) {
+            // Products.html sidebar implementation
+            cartSidebar.classList.remove('active');
+            cartOverlay.classList.remove('active');
+            this.isOpen = false;
+            document.body.style.overflow = '';
+            
+            // Small delay before removing display to allow for animation
+            setTimeout(() => {
+                if (!this.isOpen) { // Only if still closed
+                    cartOverlay.style.display = 'none';
+                }
+            }, 300);
         } else {
             console.error('Cart sidebar or overlay not found in the DOM');
         }
@@ -202,7 +244,9 @@ class CartManager {
 
     updateCartDisplay() {
         const cartItems = document.getElementById('cart-items');
-        const cartTotal = document.querySelector('.total-amount');
+        // Try to find total elements in both implementations
+        const modalCartTotal = document.querySelector('.total-amount'); // index.html
+        const sidebarCartTotal = document.getElementById('cart-total'); // products.html
         
         if (!cartItems) return;
 
@@ -230,15 +274,55 @@ class CartManager {
             this.attachCartItemListeners();
         }
 
-        if (cartTotal) {
-            cartTotal.textContent = '$' + this.total.toFixed(2);
+        // Update the cart total in whichever element exists
+        if (modalCartTotal) {
+            modalCartTotal.textContent = '$' + this.total.toFixed(2);
+        }
+        
+        if (sidebarCartTotal) {
+            sidebarCartTotal.textContent = this.total.toFixed(2);
         }
     }
 
     createCartItemHTML(item) {
+        // First try to find a valid image for the product
+        const tryImageSources = [
+            item.image,
+            // Try mockup folder if normal path fails
+            item.image?.replace(/^(.*\/)?/, 'mockups/'),
+            // Try common paths for the product
+            `mockups/${item.category?.toLowerCase()}-${item.color?.toLowerCase()}.png`,
+            // Generic fallback that's likely to exist in the site
+            'assets/featured-hoodie.svg'
+        ];
+        
+        // Filter out any undefined or null paths
+        const validImageSources = tryImageSources.filter(src => src);
+        
+        // Generate multiple fallbacks with onerror handlers
+        const imgWithFallbacks = `
+            <img src="${validImageSources[0]}"
+                 alt="${item.title}"
+                 class="cart-item-image"
+                 onerror="
+                    if (this.src !== '${validImageSources[1]}' && '${validImageSources[1]}') {
+                        this.src = '${validImageSources[1]}';
+                    } else if (this.src !== '${validImageSources[2]}' && '${validImageSources[2]}') {
+                        this.src = '${validImageSources[2]}';
+                    } else if (this.src !== '${validImageSources[3]}' && '${validImageSources[3]}') {
+                        this.src = '${validImageSources[3]}';
+                    } else {
+                        this.style.display = 'none';
+                        this.nextElementSibling.style.display = 'flex';
+                    }
+                 "
+            >
+            <div class="cart-item-placeholder" style="display: none; width: 70px; height: 70px; background: rgba(168, 85, 247, 0.2); border-radius: 8px; justify-content: center; align-items: center; font-size: 24px; color: rgba(168, 85, 247, 0.6);">?</div>
+        `;
+        
         return `
             <div class="cart-item" data-item-id="${item.id}">
-                <img src="${item.image}" alt="${item.title}" class="cart-item-image">
+                ${imgWithFallbacks}
                 <div class="cart-item-info">
                     <div class="cart-item-title">${item.title}</div>
                     <div class="cart-item-variant">
