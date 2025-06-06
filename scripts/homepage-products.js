@@ -207,7 +207,7 @@ class HomepageProductLoader {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         return `
-            <div class="product-card" data-product-id="${product.id}" onclick="homepageProductLoader.viewProduct('${product.id}', event)">
+            <div class="product-card" data-product-id="${product.id}">
                 <div class="product-image">
                     <img src="${product.mainImage}"
                          alt="${product.title}"
@@ -232,11 +232,12 @@ class HomepageProductLoader {
     }
 
     attachEventListeners() {
-        // Add hover effects with image switching
+        // Add hover effects with image switching and click handlers
         document.querySelectorAll('#homepage-products .product-card').forEach(card => {
             const img = card.querySelector('.product-main-img');
             const mainImage = img.dataset.mainImage;
             const hoverImage = img.dataset.hoverImage;
+            const productId = card.dataset.productId;
             
             card.addEventListener('mouseenter', () => {
                 card.style.transform = 'translateY(-10px)';
@@ -248,6 +249,15 @@ class HomepageProductLoader {
             card.addEventListener('mouseleave', () => {
                 card.style.transform = '';
                 img.src = mainImage;
+            });
+            
+            // Add click handler with proper event checking
+            card.addEventListener('click', (e) => {
+                // Check if the click is on an arrow button
+                if (e.target.closest('.arrow') || e.target.classList.contains('arrow')) {
+                    return; // Don't navigate if clicking on arrow
+                }
+                this.viewProduct(productId);
             });
         });
     }
@@ -385,12 +395,7 @@ class HomepageProductLoader {
         updateArrows();
     }
 
-    viewProduct(productId, event) {
-        // Check if the click is coming from an arrow button
-        if (event && (event.target.closest('.arrow') || event.target.classList.contains('arrow'))) {
-            return; // Don't navigate if clicking on arrow
-        }
-        
+    viewProduct(productId) {
         // Navigate to product detail page
         window.location.href = `product.html?id=${productId}`;
     }

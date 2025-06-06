@@ -540,7 +540,7 @@ class ProductDetailManager {
                 category: 'Hoodies',
                 images: [
                     'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
-                    'mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png',
+                    'mockups/unisex-premium-hoodie-vintage-black-back-683f90236b8c4.png',
                     'mockups/unisex-premium-hoodie-vintage-black-left-683f9023d85a1.png',
                     'mockups/unisex-premium-hoodie-vintage-black-right-683f90240cd93.png'
                 ],
