@@ -140,16 +140,22 @@ const BobbyCarts = {
         this.elements.cartTotal = document.querySelector('.total-amount, #cart-total');
         this.elements.checkoutButton = document.querySelector('.checkout-btn');
         
-        // Cart count badges
-        const cartCounts = document.querySelectorAll('.cart-count');
+        // Cart count badges - explicitly look in the navigation and any other places
+        const cartCounts = document.querySelectorAll('.cart-count, #cart-btn .cart-count, .nav-actions .cart-count');
         if (cartCounts.length > 0) {
             this.elements.cartCount = cartCounts;
+            console.log('Found', cartCounts.length, 'cart count elements');
+        } else {
+            console.warn('No cart count elements found');
         }
         
-        // Cache cart icons
-        const cartIcons = document.querySelectorAll('.cart-icon');
+        // Cache cart icons - explicitly look in the navigation
+        const cartIcons = document.querySelectorAll('.cart-icon, #cart-btn .cart-icon, .nav-actions .cart-icon');
         if (cartIcons.length > 0) {
             this.elements.cartIcons = cartIcons;
+            console.log('Found', cartIcons.length, 'cart icon elements');
+        } else {
+            console.warn('No cart icon elements found');
         }
         
         // Create elements if they don't exist
@@ -635,9 +641,10 @@ const BobbyCarts = {
         
         // Cart toggle
         document.addEventListener('click', function(e) {
-            const cartToggle = e.target.closest('#cart-btn, .cart-btn, .cart-icon');
+            const cartToggle = e.target.closest('#cart-btn, .cart-btn, .cart-icon, .nav-actions .cart-btn');
             if (cartToggle) {
                 e.preventDefault();
+                console.log('Cart toggle clicked');
                 self.toggleCart();
             }
         });
@@ -1459,10 +1466,16 @@ const BobbyCarts = {
     
     // Update cart count
     updateCartCount: function() {
-        const cartCounts = this.elements.cartCount || 
-                           document.querySelectorAll('.cart-count');
+        // Try to get cart counts again in case new elements were added after initialization
+        const cartCounts = this.elements.cartCount ||
+                           document.querySelectorAll('.cart-count, #cart-btn .cart-count, .nav-actions .cart-count');
         
-        if (!cartCounts) return;
+        if (!cartCounts || (!cartCounts.length && !cartCounts.textContent)) {
+            console.warn('No cart count elements found to update');
+            return;
+        }
+        
+        console.log('Updating cart count to', this.state.itemCount);
         
         if (NodeList.prototype.isPrototypeOf(cartCounts)) {
             // Handle nodelist
@@ -1474,6 +1487,12 @@ const BobbyCarts = {
                 } else {
                     countEl.style.display = 'none';
                 }
+                
+                // Add updated class for animation if count changed
+                countEl.classList.add('updated');
+                setTimeout(() => {
+                    countEl.classList.remove('updated');
+                }, 600);
             });
         } else {
             // Handle single element
@@ -1484,6 +1503,12 @@ const BobbyCarts = {
             } else {
                 cartCounts.style.display = 'none';
             }
+            
+            // Add updated class for animation
+            cartCounts.classList.add('updated');
+            setTimeout(() => {
+                cartCounts.classList.remove('updated');
+            }, 600);
         }
     },
     

@@ -388,22 +388,9 @@ class ProductDetailManager {
     }
 
     showProductNotFound() {
-        const productGrid = document.getElementById('product-detail-grid');
-        const breadcrumbCurrent = document.getElementById('breadcrumb-current');
-        
-        if (breadcrumbCurrent) {
-            breadcrumbCurrent.textContent = 'Product Not Found';
-        }
-        
-        if (productGrid) {
-            productGrid.innerHTML = `
-                <div class="product-not-found">
-                    <h2>Product Not Found</h2>
-                    <p>Sorry, we couldn't find the product you're looking for.</p>
-                    <a href="products.html" class="back-to-products">Back to Products</a>
-                </div>
-            `;
-        }
+        // Redirect to the product-not-found.html page instead of rendering inline
+        console.log('Product not found, redirecting to product-not-found.html');
+        window.location.href = 'product-not-found.html';
     }
 
     extractCategory(title) {
