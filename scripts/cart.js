@@ -18,7 +18,7 @@ class CartManager {
 
     setupEventListeners() {
         // Cart toggle - try multiple selectors for different pages
-        const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn');
+        const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn, .cart-icon, [data-cart-toggle]');
         const cartModal = document.getElementById('cart-modal');
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartOverlay = document.getElementById('cart-overlay');
@@ -44,7 +44,17 @@ class CartManager {
                 });
             });
         } else {
-            console.error('No cart toggle button found');
+            console.warn('No cart toggle button found on this page, adding a global click handler for common cart buttons');
+            // Add a global document listener for cart buttons that might be added dynamically
+            document.addEventListener('click', (e) => {
+                const cartButton = e.target.closest('#cart-btn, .cart-btn, .cart-icon, [data-cart-toggle]');
+                if (cartButton) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Cart button clicked via global handler');
+                    this.toggleCart();
+                }
+            });
         }
 
         // Add click listeners to all close buttons
@@ -94,6 +104,26 @@ class CartManager {
         const itemId = `${product.id}-${variant.color}-${variant.size}`;
         const existingItem = this.items.find(item => item.id === itemId);
 
+        // Determine the best image to use for this product/variant
+        let productImage = null;
+        
+        // If there's a variant with a specific image, use that first
+        if (variant.image) {
+            productImage = variant.image;
+        }
+        // If there are color-specific images, use the first one for the selected color
+        else if (product.colorImages && product.colorImages[variant.color] && product.colorImages[variant.color].length > 0) {
+            productImage = product.colorImages[variant.color][0];
+        }
+        // Otherwise use the main product image
+        else if (product.mainImage) {
+            productImage = product.mainImage;
+        }
+        // Last resort - try the first product image if available
+        else if (product.images && product.images.length > 0) {
+            productImage = product.images[0];
+        }
+        
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
@@ -104,7 +134,7 @@ class CartManager {
                 shopifyVariantId: variant.shopifyVariantId || product.shopifyVariantId,
                 title: product.title,
                 price: variant.price || product.price,
-                image: product.mainImage,
+                image: productImage,
                 color: variant.color,
                 size: variant.size,
                 quantity: variant.quantity || 1,
@@ -167,6 +197,9 @@ class CartManager {
         const cartSidebar = document.getElementById('cart-sidebar');
         const cartOverlay = document.getElementById('cart-overlay');
         
+        // First check if we have the elements
+        let cartImplementationFound = false;
+        
         if (cartModal) {
             // Index.html modal implementation
             cartModal.style.display = 'flex';
@@ -174,6 +207,7 @@ class CartManager {
             cartModal.classList.remove('hidden');
             this.isOpen = true;
             document.body.style.overflow = 'hidden';
+            cartImplementationFound = true;
         } else if (cartSidebar && cartOverlay) {
             // Products.html sidebar implementation
             cartSidebar.style.display = 'flex';
@@ -188,10 +222,6 @@ class CartManager {
             this.isOpen = true;
             document.body.style.overflow = 'hidden';
             
-            // Update state
-            this.isOpen = true;
-            document.body.style.overflow = 'hidden';
-            
             // Focus management for accessibility
             const firstFocusable = cartSidebar.querySelector('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
             if (firstFocusable) {
@@ -200,8 +230,12 @@ class CartManager {
             
             // Update display with latest cart items
             this.updateCartDisplay();
-        } else {
-            console.error('Cart sidebar or overlay not found in the DOM');
+            cartImplementationFound = true;
+        }
+        
+        if (!cartImplementationFound) {
+            console.error('Cart elements not found in the DOM - attempting to inject cart HTML');
+            this.injectCartHTML();
         }
     }
 
@@ -238,17 +272,117 @@ class CartManager {
                 }
             }, 300);
         } else {
-            console.error('Cart sidebar or overlay not found in the DOM');
+            console.error('Cart sidebar or overlay not found in the DOM - attempting to inject cart HTML');
+            this.injectCartHTML();
+            
+            // Try again after injection
+            setTimeout(() => {
+                const newCartModal = document.getElementById('cart-modal');
+                const newCartSidebar = document.getElementById('cart-sidebar');
+                const newCartOverlay = document.getElementById('cart-overlay');
+                
+                if (newCartModal) {
+                    newCartModal.style.display = 'flex';
+                    newCartModal.style.zIndex = '10000';
+                    newCartModal.classList.remove('hidden');
+                    this.isOpen = true;
+                    document.body.style.overflow = 'hidden';
+                } else if (newCartSidebar && newCartOverlay) {
+                    newCartSidebar.style.display = 'flex';
+                    newCartSidebar.style.zIndex = '10000';
+                    newCartOverlay.style.display = 'block';
+                    newCartOverlay.style.zIndex = '9999';
+                    
+                    newCartSidebar.classList.add('active');
+                    newCartOverlay.classList.add('active');
+                    
+                    this.isOpen = true;
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    console.error('Failed to inject cart HTML');
+                }
+                
+                this.updateCartDisplay();
+            }, 100);
         }
+    }
+    
+    // Inject cart HTML if not present in the DOM
+    injectCartHTML() {
+        console.log('Injecting cart HTML');
+        
+        // Check if cart already exists
+        if (document.getElementById('cart-modal') || document.getElementById('cart-sidebar')) {
+            console.log('Cart already exists in DOM');
+            return;
+        }
+        
+        // Create cart HTML structure
+        const cartHTML = `
+            <div id="cart-modal" class="cart-modal hidden">
+                <div class="cart-overlay" id="cart-overlay"></div>
+                <div class="cart-sidebar" id="cart-sidebar">
+                    <div class="cart-header">
+                        <h3>Your Cart</h3>
+                        <button class="cart-close">×</button>
+                    </div>
+                    <div class="cart-items-container">
+                        <div id="cart-items" class="cart-items"></div>
+                    </div>
+                    <div class="cart-footer">
+                        <div class="cart-total">
+                            <span>Total:</span>
+                            <span>$<span id="cart-total">0.00</span></span>
+                        </div>
+                        <button class="checkout-btn">
+                            <span>Checkout</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Append to body
+        const cartContainer = document.createElement('div');
+        cartContainer.innerHTML = cartHTML;
+        document.body.appendChild(cartContainer);
+        
+        // Add event listeners to newly created elements
+        const cartCloseButton = document.querySelector('.cart-close');
+        const cartOverlay = document.getElementById('cart-overlay');
+        const checkoutButton = document.querySelector('.checkout-btn');
+        
+        if (cartCloseButton) {
+            cartCloseButton.addEventListener('click', () => this.closeCart());
+        }
+        
+        if (cartOverlay) {
+            cartOverlay.addEventListener('click', () => this.closeCart());
+        }
+        
+        if (checkoutButton) {
+            checkoutButton.addEventListener('click', () => this.proceedToCheckout());
+        }
+        
+        console.log('Cart HTML injected successfully');
     }
 
     updateCartDisplay() {
+        // Try to find cart items container in both implementations
         const cartItems = document.getElementById('cart-items');
+        
         // Try to find total elements in both implementations
         const modalCartTotal = document.querySelector('.total-amount'); // index.html
         const sidebarCartTotal = document.getElementById('cart-total'); // products.html
         
-        if (!cartItems) return;
+        if (!cartItems) {
+            console.warn('Cart items container not found in the DOM. The cart may not be initialized on this page.');
+            return;
+        }
 
         if (this.items.length === 0) {
             cartItems.innerHTML = `
@@ -287,12 +421,15 @@ class CartManager {
     createCartItemHTML(item) {
         // First try to find a valid image for the product
         const tryImageSources = [
-            item.image,
+            item.image, // Shopify image (primary source)
+            // Try direct Shopify CDN URL if it's partial
+            item.image?.startsWith('/') ? `https://cdn.shopify.com${item.image}` : null,
             // Try mockup folder if normal path fails
             item.image?.replace(/^(.*\/)?/, 'mockups/'),
             // Try common paths for the product
             `mockups/${item.category?.toLowerCase()}-${item.color?.toLowerCase()}.png`,
             // Generic fallback that's likely to exist in the site
+            'assets/placeholder.png',
             'assets/featured-hoodie.svg'
         ];
         
@@ -304,14 +441,25 @@ class CartManager {
             <img src="${validImageSources[0]}"
                  alt="${item.title}"
                  class="cart-item-image"
+                 style="display: block; width: 70px; height: 70px; object-fit: cover; border-radius: 8px;"
                  onerror="
                     if (this.src !== '${validImageSources[1]}' && '${validImageSources[1]}') {
+                        console.log('Trying fallback image 1 for ${item.title}');
                         this.src = '${validImageSources[1]}';
                     } else if (this.src !== '${validImageSources[2]}' && '${validImageSources[2]}') {
+                        console.log('Trying fallback image 2 for ${item.title}');
                         this.src = '${validImageSources[2]}';
                     } else if (this.src !== '${validImageSources[3]}' && '${validImageSources[3]}') {
+                        console.log('Trying fallback image 3 for ${item.title}');
                         this.src = '${validImageSources[3]}';
+                    } else if (this.src !== '${validImageSources[4]}' && '${validImageSources[4]}') {
+                        console.log('Trying fallback image 4 for ${item.title}');
+                        this.src = '${validImageSources[4]}';
+                    } else if (this.src !== '${validImageSources[5]}' && '${validImageSources[5]}') {
+                        console.log('Trying fallback image 5 for ${item.title}');
+                        this.src = '${validImageSources[5]}';
                     } else {
+                        console.log('All fallback images failed for ${item.title}');
                         this.style.display = 'none';
                         this.nextElementSibling.style.display = 'flex';
                     }
