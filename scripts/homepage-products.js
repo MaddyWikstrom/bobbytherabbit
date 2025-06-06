@@ -358,12 +358,15 @@ class HomepageProductLoader {
         // Fixed card width based on CSS
         const gap = 32; // 2rem gap from CSS
         let cardWidth = 350 + gap; // Fixed width from CSS + gap
+        let scrollAmount = cardWidth; // Default scroll amount
         
         // Adjust for mobile
         if (window.innerWidth <= 768) {
             cardWidth = 300 + gap;
+            scrollAmount = cardWidth;
         } else if (window.innerWidth <= 480) {
             cardWidth = 280 + 16; // smaller gap on mobile
+            scrollAmount = cardWidth;
         }
         
         // Get container width
@@ -372,27 +375,38 @@ class HomepageProductLoader {
         // Calculate how many cards can be visible at once
         const visibleCards = Math.max(1, Math.floor(containerWidth / cardWidth));
         
-        // Calculate maximum scroll index - only scroll if we have more products than visible
-        const maxIndex = Math.max(0, this.products.length - visibleCards);
+        // For desktop, scroll by fewer cards to show partial cards
+        if (window.innerWidth > 768 && visibleCards > 1) {
+            // Scroll by visibleCards - 1 to always show a partial card
+            scrollAmount = cardWidth * Math.max(1, visibleCards - 1);
+        }
+        
+        // Calculate maximum scroll position based on actual content width
+        const totalWidth = this.products.length * cardWidth;
+        const maxScroll = Math.max(0, totalWidth - containerWidth);
+        const maxIndex = Math.max(0, Math.ceil(maxScroll / scrollAmount));
         
         console.log('Card width calculation:', {
             cardWidth,
+            scrollAmount,
             containerWidth,
             visibleCards,
             totalProducts: this.products.length,
-            maxIndex
+            maxIndex,
+            maxScroll
         });
 
         console.log('Scroll setup:', {
             totalProducts: this.products.length,
             cardWidth,
+            scrollAmount,
             containerWidth,
             visibleCards,
             maxIndex
         });
 
         const updateTransform = () => {
-            const translateX = -currentIndex * cardWidth;
+            const translateX = Math.min(0, Math.max(-maxScroll, -currentIndex * scrollAmount));
             scrollContainer.style.transform = `translateX(${translateX}px)`;
             scrollContainer.style.transition = 'transform 0.5s ease';
         };
@@ -459,10 +473,10 @@ class HomepageProductLoader {
             
             const currentX = e.touches[0].clientX;
             const diff = startX - currentX;
-            const translateX = -startIndex * cardWidth - diff;
+            const translateX = -startIndex * scrollAmount - diff;
             
             // Prevent scrolling beyond bounds
-            const minTranslate = -maxIndex * cardWidth;
+            const minTranslate = -maxScroll;
             const maxTranslate = 0;
             const clampedTranslate = Math.max(minTranslate, Math.min(maxTranslate, translateX));
             
@@ -493,19 +507,34 @@ class HomepageProductLoader {
         window.addEventListener('resize', () => {
             // Recalculate card width based on new window size
             let newCardWidth = 350 + 32; // Fixed width from CSS + gap
+            let newScrollAmount = newCardWidth;
             
             if (window.innerWidth <= 768) {
                 newCardWidth = 300 + 32;
+                newScrollAmount = newCardWidth;
             } else if (window.innerWidth <= 480) {
                 newCardWidth = 280 + 16;
+                newScrollAmount = newCardWidth;
             }
             
             const newContainerWidth = scrollContainer.parentElement.clientWidth;
             const newVisibleCards = Math.floor(newContainerWidth / newCardWidth);
-            const newMaxIndex = Math.max(0, this.products.length - newVisibleCards);
             
-            // Update card width for transform calculations
+            // For desktop, scroll by fewer cards to show partial cards
+            if (window.innerWidth > 768 && newVisibleCards > 1) {
+                newScrollAmount = newCardWidth * Math.max(1, newVisibleCards - 1);
+            }
+            
+            // Recalculate maximum scroll
+            const newTotalWidth = this.products.length * newCardWidth;
+            const newMaxScroll = Math.max(0, newTotalWidth - newContainerWidth);
+            const newMaxIndex = Math.max(0, Math.ceil(newMaxScroll / newScrollAmount));
+            
+            // Update values for transform calculations
             cardWidth = newCardWidth;
+            scrollAmount = newScrollAmount;
+            maxScroll = newMaxScroll;
+            maxIndex = newMaxIndex;
             
             // Adjust current index if it's now beyond the new limit
             if (currentIndex > newMaxIndex) {
