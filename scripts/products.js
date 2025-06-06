@@ -605,11 +605,27 @@ class ProductManager {
 
     createProductCard(product) {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
+        const fallbackImages = [
+            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+            'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
+            'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+            'assets/featured-hoodie.svg'
+        ];
         
         return `
             <div class="product-card" data-product-id="${product.id}">
                 <div class="product-image-container">
-                    <img src="${product.mainImage}" alt="${product.title}" class="product-image">
+                    <img src="${product.mainImage}" alt="${product.title}" class="product-image"
+                         onerror="this.onerror=null;
+                                  for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
+                                    try {
+                                      this.src=${JSON.stringify(fallbackImages)}[i];
+                                      break;
+                                    } catch(e) {
+                                      continue;
+                                    }
+                                  }
+                                  console.log('Image fallback used for ${product.id}');">
                     <div class="product-overlay">
                         <button class="product-action-btn quick-view-btn" title="Quick View">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -845,14 +861,41 @@ class ProductManager {
         const modal = document.getElementById('quick-view-modal');
         const modalBody = document.getElementById('modal-body');
         
+        const fallbackImages = [
+            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+            'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
+            'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+            'assets/featured-hoodie.svg'
+        ];
+        
         modalBody.innerHTML = `
             <div class="quick-view-content">
                 <div class="quick-view-images">
-                    <img src="${product.mainImage}" alt="${product.title}" class="quick-view-main-image">
+                    <img src="${product.mainImage}" alt="${product.title}" class="quick-view-main-image"
+                         onerror="this.onerror=null;
+                                  for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
+                                    try {
+                                      this.src=${JSON.stringify(fallbackImages)}[i];
+                                      break;
+                                    } catch(e) {
+                                      continue;
+                                    }
+                                  }
+                                  console.log('Image fallback used in modal for ${product.id}');">
                     ${product.images.length > 1 ? `
                         <div class="quick-view-thumbnails">
                             ${product.images.map(img => `
-                                <img src="${img}" alt="${product.title}" class="quick-view-thumbnail">
+                                <img src="${img}" alt="${product.title}" class="quick-view-thumbnail"
+                                     onerror="this.onerror=null;
+                                              for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
+                                                try {
+                                                  this.src=${JSON.stringify(fallbackImages)}[i];
+                                                  break;
+                                                } catch(e) {
+                                                  continue;
+                                                }
+                                              }
+                                              console.log('Thumbnail fallback used for ${product.id}');">
                             `).join('')}
                         </div>
                     ` : ''}
@@ -977,8 +1020,14 @@ class ProductManager {
                 category: 'hoodie',
                 price: 59.99,
                 comparePrice: 79.99,
-                images: ['assets/hoodie-black.png', 'assets/hoodie-front.svg'],
-                mainImage: 'assets/hoodie-black.png',
+                images: [
+                    'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+                    'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
+                    'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
+                    'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
+                    'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'
+                ],
+                mainImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
                 variants: [
                     {
                         color: 'Black',
@@ -986,7 +1035,7 @@ class ProductManager {
                         price: 59.99,
                         comparePrice: 79.99,
                         availableForSale: true,
-                        image: 'assets/hoodie-black.png'
+                        image: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png'
                     },
                     {
                         color: 'Charcoal',
@@ -994,7 +1043,7 @@ class ProductManager {
                         price: 59.99,
                         comparePrice: 79.99,
                         availableForSale: true,
-                        image: 'assets/hoodie-charcoal.png'
+                        image: 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png'
                     }
                 ],
                 colors: ['Black', 'Charcoal', 'Navy', 'White'],
@@ -1012,8 +1061,12 @@ class ProductManager {
                 category: 't-shirt',
                 price: 29.99,
                 comparePrice: null,
-                images: ['assets/tee-1.svg', 'assets/tee-2.png'],
-                mainImage: 'assets/tee-1.svg',
+                images: [
+                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
+                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f8c07d91c8.png',
+                    'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8f8fdb3bc.png'
+                ],
+                mainImage: 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
                 variants: [
                     {
                         color: 'White',
@@ -1021,7 +1074,7 @@ class ProductManager {
                         price: 29.99,
                         comparePrice: null,
                         availableForSale: true,
-                        image: 'assets/tee-1.svg'
+                        image: 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png'
                     }
                 ],
                 colors: ['White', 'Black'],
@@ -1039,8 +1092,12 @@ class ProductManager {
                 category: 'joggers',
                 price: 49.99,
                 comparePrice: 69.99,
-                images: ['assets/pants-1.svg'],
-                mainImage: 'assets/pants-1.svg',
+                images: [
+                    'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+                    'mockups/all-over-print-unisex-wide-leg-joggers-white-back-683f8d3f2c76f.png',
+                    'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085adc.png'
+                ],
+                mainImage: 'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
                 variants: [
                     {
                         color: 'Black',
@@ -1048,7 +1105,7 @@ class ProductManager {
                         price: 49.99,
                         comparePrice: 69.99,
                         availableForSale: true,
-                        image: 'assets/pants-1.svg'
+                        image: 'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png'
                     }
                 ],
                 colors: ['Black', 'Navy'],
