@@ -868,6 +868,16 @@ class ProductManager {
         // Store filtered images
         let filteredImages = [...quickViewProduct.images];
         let currentImageIndex = 0;
+        
+        // Check if there's a selected color in the product card
+        let initialSelectedColor = '';
+        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+        if (productCard) {
+            const activeColorOption = productCard.querySelector('.variant-option.active');
+            if (activeColorOption) {
+                initialSelectedColor = activeColorOption.dataset.color;
+            }
+        }
 
         const modal = document.getElementById('quick-view-modal');
         const modalBody = document.getElementById('modal-body');
@@ -1064,14 +1074,30 @@ class ProductManager {
                 const selectedColor = e.target.dataset.color;
                 filterImagesByColor(selectedColor);
             });
-            
-            // Activate the first color by default
-            if (index === 0) {
-                option.classList.add('active');
-                const initialColor = option.dataset.color;
-                filterImagesByColor(initialColor);
-            }
         });
+        
+        // Activate the appropriate color option
+        let colorActivated = false;
+        
+        // First try to match with the initially selected color from product card
+        if (initialSelectedColor) {
+            const matchingOption = Array.from(document.querySelectorAll('.color-option')).find(
+                option => option.dataset.color === initialSelectedColor
+            );
+            
+            if (matchingOption) {
+                matchingOption.classList.add('active');
+                filterImagesByColor(initialSelectedColor);
+                colorActivated = true;
+            }
+        }
+        
+        // If no color was activated yet, default to the first one
+        if (!colorActivated && document.querySelector('.color-option')) {
+            const firstOption = document.querySelector('.color-option');
+            firstOption.classList.add('active');
+            filterImagesByColor(firstOption.dataset.color);
+        }
 
         document.querySelectorAll('.size-option').forEach(option => {
             option.addEventListener('click', (e) => {
@@ -1082,8 +1108,23 @@ class ProductManager {
     }
 
     viewProduct(productId) {
-        // Navigate to individual product page
-        window.location.href = `product.html?id=${productId}`;
+        // Get the selected color from the product card if available
+        let selectedColor = '';
+        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+        
+        if (productCard) {
+            const activeColorOption = productCard.querySelector('.variant-option.active');
+            if (activeColorOption) {
+                selectedColor = activeColorOption.dataset.color;
+            }
+        }
+        
+        // Navigate to individual product page with product ID and selected color
+        if (selectedColor) {
+            window.location.href = `product.html?id=${productId}&color=${encodeURIComponent(selectedColor)}`;
+        } else {
+            window.location.href = `product.html?id=${productId}`;
+        }
     }
 
     showNotification(message, type = 'info') {
