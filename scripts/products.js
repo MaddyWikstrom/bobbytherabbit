@@ -480,14 +480,34 @@ class ProductManager {
     createProductCard(product) {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         const fallbackImages = [
-            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-            'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
-            'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
+            'assets/placeholder.png',
             'assets/featured-hoodie.svg'
         ];
         
+        // Store color-specific data for JavaScript handling
+        const colorImagesJSON = product.colorImages ? JSON.stringify(product.colorImages) : '{}';
+        
+        // Create HTML for variant options with data attributes for main page color switching
+        const variantOptionsHTML = product.colors.length > 0
+            ? product.colors.slice(0, 4).map((color, index) => {
+                // Get the first image for this color
+                const colorImage = product.colorImages && product.colorImages[color] && product.colorImages[color].length > 0
+                    ? product.colorImages[color][0]
+                    : product.mainImage;
+                
+                // Set the first color as active by default
+                const isActive = index === 0 ? 'active' : '';
+                
+                return `<div class="variant-option ${isActive}"
+                           data-color="${color}"
+                           data-color-image="${colorImage}"
+                           style="background-color: ${this.getColorCode(color)}"
+                           title="${color}"></div>`;
+            }).join('')
+            : '';
+        
         return `
-            <div class="product-card" data-product-id="${product.id}">
+            <div class="product-card" data-product-id="${product.id}" data-color-images='${colorImagesJSON}'>
                 <div class="product-image-container">
                     <img src="${product.mainImage}" alt="${product.title}" class="product-image"
                          onerror="this.onerror=null;
@@ -537,9 +557,7 @@ class ProductManager {
                     </div>
                     ${product.colors.length > 0 ? `
                         <div class="product-variants">
-                            ${product.colors.slice(0, 4).map(color => `
-                                <div class="variant-option" style="background-color: ${this.getColorCode(color)}" title="${color}"></div>
-                            `).join('')}
+                            ${variantOptionsHTML}
                             ${product.colors.length > 4 ? `<span class="variant-more">+${product.colors.length - 4}</span>` : ''}
                         </div>
                     ` : ''}
@@ -603,10 +621,66 @@ class ProductManager {
             });
         });
 
+        // Color variant options for product cards
+        document.querySelectorAll('.variant-option').forEach(option => {
+            // Change product image on hover
+            option.addEventListener('mouseenter', (e) => {
+                const colorOption = e.target;
+                const productCard = colorOption.closest('.product-card');
+                const productImage = productCard.querySelector('.product-image');
+                const colorImage = colorOption.dataset.colorImage;
+                
+                // Store original image to restore on mouseleave
+                if (!productImage.dataset.originalSrc) {
+                    productImage.dataset.originalSrc = productImage.src;
+                }
+                
+                // Change to color-specific image
+                if (colorImage) {
+                    productImage.src = colorImage;
+                }
+            });
+            
+            // Restore original image on mouse leave
+            option.addEventListener('mouseleave', (e) => {
+                const productCard = e.target.closest('.product-card');
+                const productImage = productCard.querySelector('.product-image');
+                
+                // Only restore if not the active color
+                if (!e.target.classList.contains('active') && productImage.dataset.originalSrc) {
+                    productImage.src = productImage.dataset.originalSrc;
+                }
+            });
+            
+            // Set active color on click
+            option.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card click
+                
+                const colorOption = e.target;
+                const productCard = colorOption.closest('.product-card');
+                const productImage = productCard.querySelector('.product-image');
+                const colorImage = colorOption.dataset.colorImage;
+                
+                // Remove active class from all options in this card
+                productCard.querySelectorAll('.variant-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                
+                // Add active class to clicked option
+                colorOption.classList.add('active');
+                
+                // Update main image and save as new original
+                if (colorImage) {
+                    productImage.src = colorImage;
+                    productImage.dataset.originalSrc = colorImage;
+                }
+            });
+        });
+
         // Product card clicks
         document.querySelectorAll('.product-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                if (!e.target.closest('button')) {
+                if (!e.target.closest('button') && !e.target.closest('.variant-option')) {
                     const productId = card.dataset.productId;
                     this.viewProduct(productId);
                 }
