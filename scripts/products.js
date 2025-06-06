@@ -10,6 +10,13 @@ class ProductManager {
         this.currentView = 'grid';
         this.searchQuery = '';
         
+        // Map product handles to their specific cover images
+        this.coverImageMap = {
+            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
+            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png'
+        };
+        
         this.init();
     }
 
@@ -121,8 +128,29 @@ class ProductManager {
             // Get local mockup images
             const localImages = this.getLocalMockupImages(product.handle, product.title);
             
-            // Combine both image sources - local mockups first, then Shopify images
-            const images = [...localImages, ...shopifyImages].filter(img => img); // Filter out empty strings
+            // Get specific cover image
+            const coverImage = this.getProductCoverImage(product.handle, product.title);
+            
+            // Create image array with cover image first, then other local images, then Shopify images
+            let images = [];
+            
+            // Add cover image as the first image if it exists
+            if (coverImage) {
+                images.push(coverImage);
+                
+                // Add remaining local images, excluding the cover image to avoid duplication
+                localImages.forEach(img => {
+                    if (img !== coverImage) {
+                        images.push(img);
+                    }
+                });
+            } else {
+                // If no cover image, use all local images
+                images = [...localImages];
+            }
+            
+            // Add Shopify images
+            images = [...images, ...shopifyImages].filter(img => img); // Filter out empty strings
             
             // Extract variants and organize by color/size
             const variants = [];
@@ -240,8 +268,28 @@ class ProductManager {
                 // Get local mockup images
                 const localImages = this.getLocalMockupImages(handle, title);
                 
-                // Combine local mockups with CSV image URL
-                const images = [...localImages];
+                // Get specific cover image
+                const coverImage = this.getProductCoverImage(handle, title);
+                
+                // Create image array with cover image first
+                let images = [];
+                
+                // Add cover image as the first image if it exists
+                if (coverImage) {
+                    images.push(coverImage);
+                    
+                    // Add remaining local images, excluding the cover image to avoid duplication
+                    localImages.forEach(img => {
+                        if (img !== coverImage) {
+                            images.push(img);
+                        }
+                    });
+                } else {
+                    // If no cover image, use all local images
+                    images = [...localImages];
+                }
+                
+                // Add CSV image URL if it exists and isn't already included
                 if (imageUrl && !images.includes(imageUrl)) {
                     images.push(imageUrl);
                 }
@@ -331,6 +379,25 @@ class ProductManager {
         return 'other';
     }
 
+    // Helper to provide cover images for products (separate from regular images)
+    getProductCoverImage(productHandle, productTitle) {
+        // First try exact match
+        if (this.coverImageMap[productHandle]) {
+            return this.coverImageMap[productHandle];
+        }
+        
+        // Try to find by title match
+        const titleLower = productTitle ? productTitle.toLowerCase() : '';
+        for (const [handle, image] of Object.entries(this.coverImageMap)) {
+            if (titleLower.includes(handle.replace(/-/g, ' '))) {
+                return image;
+            }
+        }
+        
+        // Default cover image if no match
+        return 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png';
+    }
+
     getLocalMockupImages(productHandle, productTitle) {
         // Map product handles to their local mockup images - simplified to show key images
         const mockupMappings = {
@@ -343,8 +410,9 @@ class ProductManager {
                 'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'
             ],
             'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
+                // White hoodie - starts with back image as requested
+                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
+                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'
             ],
             'bungi-x-bobby-dark-mode-wide-leg-joggers': [
                 'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
@@ -367,13 +435,9 @@ class ProductManager {
             'bungi-x-bobby-rabbit-hardware-womens-t-shirt': [
                 'mockups/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png'
             ],
-            'bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt': [
-                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png',
-                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png'
-            ],
             'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': [
-                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png',
-                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png'
+                'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png',
+                'mockups/unisex-organic-oversized-sweatshirt-heather-grey-front-683f8e116cda5.png'
             ],
             'bungi-x-bobby-cuffed-beanie-1': [
                 'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
@@ -396,7 +460,7 @@ class ProductManager {
         }
 
         // Try to find mockups based on product title keywords
-        const titleLower = productTitle.toLowerCase();
+        const titleLower = productTitle ? productTitle.toLowerCase() : '';
         for (const [handle, images] of Object.entries(mockupMappings)) {
             if (titleLower.includes(handle.replace(/-/g, ' '))) {
                 return images;

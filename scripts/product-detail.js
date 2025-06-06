@@ -194,8 +194,29 @@ class ProductDetailManager {
         // Get local mockup images
         const localImages = this.getLocalMockupImages(shopifyProduct.handle, shopifyProduct.title);
         
-        // Combine both image sources - local mockups first, then Shopify images
-        const images = [...localImages, ...shopifyImages];
+        // Get specific cover image
+        const coverImage = this.getProductCoverImage(shopifyProduct.handle, shopifyProduct.title);
+        
+        // Create image array with cover image first, then other local images, then Shopify images
+        let images = [];
+        
+        // Add cover image as the first image if it exists
+        if (coverImage) {
+            images.push(coverImage);
+            
+            // Add remaining local images, excluding the cover image to avoid duplication
+            localImages.forEach(img => {
+                if (img !== coverImage) {
+                    images.push(img);
+                }
+            });
+        } else {
+            // If no cover image, use all local images
+            images = [...localImages];
+        }
+        
+        // Add Shopify images
+        images = [...images, ...shopifyImages];
         
         // Extract variants and organize by color/size
         const variants = [];
@@ -348,6 +369,32 @@ class ProductDetailManager {
         return 'Apparel';
     }
 
+    // Helper to provide cover images for products (separate from regular images)
+    getProductCoverImage(productHandle, productTitle) {
+        // Map product handles to their specific cover images
+        const coverImageMap = {
+            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
+            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
+            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png'
+        };
+        
+        // First try exact match
+        if (coverImageMap[productHandle]) {
+            return coverImageMap[productHandle];
+        }
+        
+        // Try to find by title match
+        const titleLower = productTitle ? productTitle.toLowerCase() : '';
+        for (const [handle, image] of Object.entries(coverImageMap)) {
+            if (titleLower.includes(handle.replace(/-/g, ' '))) {
+                return image;
+            }
+        }
+        
+        // Default cover image if no match
+        return 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png';
+    }
+
     getLocalMockupImages(productHandle, productTitle) {
         // Map product handles to their local mockup images that we've verified exist
         const mockupMappings = {
@@ -496,16 +543,8 @@ class ProductDetailManager {
                 'mockups/unisex-premium-hoodie-vintage-black-right-front-683f902413558.png'
             ],
             'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
-                // White variants
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd2d80.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd3e2a.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd5fa6.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd14c9.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd35a9.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd4659.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd5753.png',
+                // White variants - start with the back image as requested
+                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png', // MAIN COVER IMAGE (BACK VIEW)
                 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddcc3c5.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddccd72.png',
@@ -517,6 +556,14 @@ class ProductDetailManager {
                 'mockups/unisex-premium-hoodie-white-front-683f8fddd70e7.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddd0201.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddd7977.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd2d80.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd3e2a.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd5fa6.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd14c9.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd35a9.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd4659.png',
+                'mockups/unisex-premium-hoodie-white-back-683f8fddd5753.png',
                 'mockups/unisex-premium-hoodie-white-left-683f8fddd825c.png',
                 'mockups/unisex-premium-hoodie-white-left-683f8fddd9327.png',
                 'mockups/unisex-premium-hoodie-white-left-683f8fddda3b7.png',
