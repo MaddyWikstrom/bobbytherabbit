@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby Streetwear - Consolidation Test</title>
+    <link rel="stylesheet" href="./styles/main.css">
+    <style>
+        body {
+            background-color: #0f0f1e;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .test-section {
+            background: rgba(30, 30, 50, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(120, 119, 198, 0.3);
+        }
+
+        .test-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #a855f7;
+        }
+
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .test-result {
+            background: rgba(20, 20, 35, 0.7);
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 50px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .product-card {
+            background: rgba(30, 30, 50, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-image {
+            height: 280px;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: #a855f7;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .success { color: #10b981; }
+        .warning { color: #f59e0b; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bobby Streetwear - Consolidation Test</h1>
+            <p>Test the consolidated cart and Shopify integration files</p>
+        </header>
+
+        <div class="test-section">
+            <h2>System Health Check</h2>
+            <div class="test-buttons">
+                <button id="check-cart">Check Cart System</button>
+                <button id="check-shopify">Check Shopify Integration</button>
+                <button id="check-quick-view">Check Quick View</button>
+            </div>
+            <div id="health-result" class="test-result">Results will appear here...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>Cart Operations</h2>
+            <div class="test-buttons">
+                <button id="add-test-item">Add Test Item</button>
+                <button id="view-cart">View Cart</button>
+                <button id="clear-cart">Clear Cart</button>
+            </div>
+            <div id="cart-result" class="test-result">Results will appear here...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test Products</h2>
+            <div class="product-grid">
+                <!-- Test Product 1 -->
+                <div class="product-card" data-product-id="bungi-x-bobby-rabbit-hardware-unisex-hoodie">
+                    <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png" alt="Black Hoodie" class="product-image">
+                    <div class="product-info">
+                        <div class="product-title">BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie</div>
+                        <div class="product-price">$50.00</div>
+                    </div>
+                </div>
+
+                <!-- Test Product 2 -->
+                <div class="product-card" data-product-id="bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie">
+                    <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png" alt="White Hoodie" class="product-image">
+                    <div class="product-info">
+                        <div class="product-title">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie</div>
+                        <div class="product-price">$50.50</div>
+                    </div>
+                </div>
+
+                <!-- Test Product 3 -->
+                <div class="product-card" data-product-id="bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt">
+                    <img src="https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png" alt="White T-Shirt" class="product-image">
+                    <div class="product-info">
+                        <div class="product-title">BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's T-Shirt</div>
+                        <div class="product-price">$27.50</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Console -->
+    <div class="test-section" style="position: fixed; bottom: 20px; right: 20px; width: 300px; max-height: 300px; overflow-y: auto;">
+        <h2>Test Console</h2>
+        <div id="test-console" class="test-result" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Load consolidated scripts -->
+    <script src="./scripts/shopify-integration-consolidated.js"></script>
+    <script src="./scripts/cart-consolidated.js"></script>
+    <script src="./scripts/quick-view.js"></script>
+
+    <script>
+        // Helper function to log to console
+        function logToConsole(message, type = 'info') {
+            const console = document.getElementById('test-console');
+            const timestamp = new Date().toLocaleTimeString();
+            console.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Health check functions
+        document.getElementById('check-cart').addEventListener('click', function() {
+            const result = document.getElementById('health-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.BobbyCart) {
+                    result.innerHTML += `<div class="success">✓ BobbyCart is loaded</div>`;
+                    result.innerHTML += `<div class="info">Cart Version: ${BobbyCart.config.cartVersion}</div>`;
+                    result.innerHTML += `<div class="info">Items in Cart: ${BobbyCart.state.items.length}</div>`;
+                    result.innerHTML += `<div class="info">Total: $${BobbyCart.state.total.toFixed(2)}</div>`;
+                    logToConsole('Cart system check: SUCCESS');
+                } else {
+                    result.innerHTML += `<div class="error">✗ BobbyCart is not loaded</div>`;
+                    logToConsole('Cart system check: FAILED - BobbyCart not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error checking cart: ${error.message}</div>`;
+                logToConsole(`Cart system check error: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('check-shopify').addEventListener('click', function() {
+            const result = document.getElementById('health-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.shopifyDebug) {
+                    result.innerHTML += `<div class="success">✓ Shopify integration is loaded</div>`;
+                    
+                    // Perform health check
+                    const healthCheck = window.shopifyDebug.performHealthCheck();
+                    result.innerHTML += `<div class="info">SDK Loaded: ${healthCheck.sdkLoaded ? '✓' : '✗'}</div>`;
+                    result.innerHTML += `<div class="info">Client Initialized: ${healthCheck.clientInitialized ? '✓' : '✗'}</div>`;
+                    result.innerHTML += `<div class="info">Checkout Available: ${healthCheck.checkoutAvailable ? '✓' : '✗'}</div>`;
+                    result.innerHTML += `<div class="info">Working Domain: ${healthCheck.workingDomain}</div>`;
+                    
+                    logToConsole('Shopify integration check: SUCCESS');
+                } else {
+                    result.innerHTML += `<div class="error">✗ Shopify integration is not loaded</div>`;
+                    logToConsole('Shopify integration check: FAILED - shopifyDebug not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error checking Shopify integration: ${error.message}</div>`;
+                logToConsole(`Shopify integration check error: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('check-quick-view').addEventListener('click', function() {
+            const result = document.getElementById('health-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.quickViewManager) {
+                    result.innerHTML += `<div class="success">✓ Quick View is loaded</div>`;
+                    
+                    // Check for product cards with quick view buttons
+                    const cards = document.querySelectorAll('.product-card');
+                    const cardsWithQuickView = document.querySelectorAll('.product-card .product-quick-view-btn');
+                    
+                    result.innerHTML += `<div class="info">Product Cards: ${cards.length}</div>`;
+                    result.innerHTML += `<div class="info">Cards with Quick View: ${cardsWithQuickView.length}</div>`;
+                    
+                    if (cardsWithQuickView.length === cards.length) {
+                        result.innerHTML += `<div class="success">✓ All product cards have Quick View buttons</div>`;
+                    } else {
+                        result.innerHTML += `<div class="warning">⚠ Not all product cards have Quick View buttons</div>`;
+                    }
+                    
+                    logToConsole('Quick View check: SUCCESS');
+                } else {
+                    result.innerHTML += `<div class="error">✗ Quick View is not loaded</div>`;
+                    logToConsole('Quick View check: FAILED - quickViewManager not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error checking Quick View: ${error.message}</div>`;
+                logToConsole(`Quick View check error: ${error.message}`, 'error');
+            }
+        });
+
+        // Cart operation functions
+        document.getElementById('add-test-item').addEventListener('click', function() {
+            const result = document.getElementById('cart-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.BobbyCart) {
+                    // Create a test product
+                    const testProduct = {
+                        id: 'test-product-' + Date.now(),
+                        title: 'Test Product',
+                        price: 19.99,
+                        image: 'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png',
+                        variants: {},
+                        shopifyId: 'gid://shopify/ProductVariant/123456789'
+                    };
+
+                    // Add to cart
+                    const success = BobbyCart.addToCart(testProduct);
+
+                    if (success) {
+                        result.innerHTML += `<div class="success">✓ Test product added to cart</div>`;
+                        result.innerHTML += `<div class="info">Items in Cart: ${BobbyCart.state.items.length}</div>`;
+                        result.innerHTML += `<div class="info">Total: $${BobbyCart.state.total.toFixed(2)}</div>`;
+                        logToConsole('Added test product to cart');
+                    } else {
+                        result.innerHTML += `<div class="error">✗ Failed to add test product to cart</div>`;
+                        logToConsole('Failed to add test product to cart', 'error');
+                    }
+                } else {
+                    result.innerHTML += `<div class="error">✗ BobbyCart is not loaded</div>`;
+                    logToConsole('Cannot add test product - BobbyCart not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error adding test product: ${error.message}</div>`;
+                logToConsole(`Error adding test product: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('view-cart').addEventListener('click', function() {
+            const result = document.getElementById('cart-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.BobbyCart) {
+                    BobbyCart.openCart();
+                    
+                    result.innerHTML += `<div class="success">✓ Cart opened</div>`;
+                    result.innerHTML += `<div class="info">Items in Cart: ${BobbyCart.state.items.length}</div>`;
+                    result.innerHTML += `<div class="info">Total: $${BobbyCart.state.total.toFixed(2)}</div>`;
+                    
+                    // Display cart items
+                    if (BobbyCart.state.items.length > 0) {
+                        result.innerHTML += `<div class="info">Cart Items:</div>`;
+                        BobbyCart.state.items.forEach((item, index) => {
+                            result.innerHTML += `<div class="info">${index + 1}. ${item.title} - $${(item.price * item.quantity).toFixed(2)} (x${item.quantity})</div>`;
+                        });
+                    } else {
+                        result.innerHTML += `<div class="info">Cart is empty</div>`;
+                    }
+                    
+                    logToConsole('Opened cart');
+                } else {
+                    result.innerHTML += `<div class="error">✗ BobbyCart is not loaded</div>`;
+                    logToConsole('Cannot open cart - BobbyCart not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error opening cart: ${error.message}</div>`;
+                logToConsole(`Error opening cart: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('clear-cart').addEventListener('click', function() {
+            const result = document.getElementById('cart-result');
+            result.innerHTML = '';
+
+            try {
+                if (window.BobbyCart) {
+                    const success = BobbyCart.clearCart();
+                    
+                    if (success) {
+                        result.innerHTML += `<div class="success">✓ Cart cleared</div>`;
+                        logToConsole('Cleared cart');
+                    } else {
+                        result.innerHTML += `<div class="info">Cart was already empty</div>`;
+                        logToConsole('Cart was already empty');
+                    }
+                    
+                    result.innerHTML += `<div class="info">Items in Cart: ${BobbyCart.state.items.length}</div>`;
+                    result.innerHTML += `<div class="info">Total: $${BobbyCart.state.total.toFixed(2)}</div>`;
+                } else {
+                    result.innerHTML += `<div class="error">✗ BobbyCart is not loaded</div>`;
+                    logToConsole('Cannot clear cart - BobbyCart not found', 'error');
+                }
+            } catch (error) {
+                result.innerHTML += `<div class="error">✗ Error clearing cart: ${error.message}</div>`;
+                logToConsole(`Error clearing cart: ${error.message}`, 'error');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            logToConsole('Test page loaded');
+            
+            // Check if our systems are loaded
+            setTimeout(function() {
+                if (window.BobbyCart) {
+                    logToConsole('BobbyCart loaded successfully', 'success');
+                } else {
+                    logToConsole('BobbyCart not loaded', 'error');
+                }
+                
+                if (window.shopifyDebug) {
+                    logToConsole('Shopify integration loaded successfully', 'success');
+                } else {
+                    logToConsole('Shopify integration not loaded', 'error');
+                }
+                
+                if (window.quickViewManager) {
+                    logToConsole('Quick View loaded successfully', 'success');
+                } else {
+                    logToConsole('Quick View not loaded', 'error');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

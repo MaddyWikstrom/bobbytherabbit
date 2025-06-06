@@ -865,9 +865,18 @@ class QuickViewManager {
                     image: product.images[0]
                 };
                 
-                if (window.cartManager) {
-                    window.cartManager.addItem(cartItem, variantData);
+                if (window.BobbyCart) {
+                    window.BobbyCart.addToCart(cartItem);
+                    
+                    // Dispatch custom event for other components
+                    document.dispatchEvent(new CustomEvent('quickview:addtocart', {
+                        detail: {
+                            product: cartItem,
+                            variant: variantData
+                        }
+                    }));
                 } else if (window.BobbyCarts) {
+                    // Fallback to old system if present
                     window.BobbyCarts.addToCart(cartItem);
                 } else {
                     console.error('Cart system not available');
@@ -1229,10 +1238,19 @@ class QuickViewManager {
             addButton.classList.remove('adding');
         }, 1200);
         
-        // Use appropriate cart system
-        if (window.cartManager) {
-            window.cartManager.addItem(cartItem, variantData);
+        // Use consolidated cart system
+        if (window.BobbyCart) {
+            window.BobbyCart.addToCart(cartItem);
+            
+            // Dispatch custom event for other components
+            document.dispatchEvent(new CustomEvent('quickview:addtocart', {
+                detail: {
+                    product: cartItem,
+                    variant: variantData
+                }
+            }));
         } else if (window.BobbyCarts) {
+            // Fallback to old system if present
             window.BobbyCarts.addToCart(cartItem);
         } else {
             console.error('Cart system not available');
