@@ -24,3 +24,10 @@
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, X-Shopify-Storefront-Access-Token"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Max-Age = "86400"
+
+# Redirect the original checkout endpoint to our fixed version
+[[redirects]]
+  from = "/.netlify/functions/create-checkout"
+  to = "/.netlify/functions/create-checkout-fixed"
+  status = 200
+  force = true
