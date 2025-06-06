@@ -149,9 +149,11 @@ class ProductManager {
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
             
             // Get product cover image based on ID
-            const coverImage = this.productIdToCoverImage[product.handle];
+            // First try the explicit mapping, then fall back to automatic detection
+            const coverImage = this.productIdToCoverImage[product.handle] ||
+                               this.getProductCoverImageAuto(product.handle);
             
-            // Get other product images from the mockups folder
+            // Get other product images from the mockups folder using dynamic detection
             const localImages = this.getLocalMockupImages(product.handle);
             
             // Create image array with cover image first, then local images, then Shopify images
@@ -266,13 +268,13 @@ class ProductManager {
     // Helper to provide cover images for products (separate from regular images)
     getProductCoverImage(productHandle, productTitle) {
         // First try exact match
-        if (this.coverImageMap[productHandle]) {
-            return this.coverImageMap[productHandle];
+        if (this.productIdToCoverImage[productHandle]) {
+            return this.productIdToCoverImage[productHandle];
         }
         
         // Try to find by title match
         const titleLower = productTitle ? productTitle.toLowerCase() : '';
-        for (const [handle, image] of Object.entries(this.coverImageMap)) {
+        for (const [handle, image] of Object.entries(this.productIdToCoverImage)) {
             if (titleLower.includes(handle.replace(/-/g, ' '))) {
                 return image;
             }
@@ -282,8 +284,85 @@ class ProductManager {
         return 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png';
     }
 
+    // Helper method to find all mockup images for a product by its handle
+    getLocalMockupImagesFromFolder(productHandle) {
+        const matchedImages = [];
+
+        // Loop through all known image IDs
+        for (const [imageId, handle] of Object.entries(this.imageIdToProductMap)) {
+            if (handle === productHandle) {
+                // Find any image file that includes this ID
+                const filename = this.findImageFileById(imageId);
+                if (filename) matchedImages.push(`mockups/${filename}`);
+            }
+        }
+
+        return matchedImages;
+    }
+
+    // Helper method to find an image file by its ID
+    findImageFileById(imageId) {
+        // Get all filenames in the mockups folder
+        const allFilenames = this.getAllMockupFilenames();
+        
+        // Find the first filename that includes the specified ID
+        return allFilenames.find(name => name.includes(imageId));
+    }
+
+    // Helper method to get all filenames in the mockups folder
+    getAllMockupFilenames() {
+        // In a browser context, we can't directly read the directory
+        // This method returns all known mockup filenames based on the file structure
+        return [
+            // Dynamically created list of all mockup filenames
+            "unisex-premium-hoodie-black-left-683f9021d2cb7.png",
+            "unisex-premium-hoodie-black-left-683f9021d63b0.png",
+            "unisex-premium-hoodie-black-left-front-683f9021d3bb3.png",
+            "unisex-premium-hoodie-black-left-front-683f9021d5672.png",
+            "unisex-premium-hoodie-black-product-details-683f9021d031c.png",
+            "unisex-premium-hoodie-black-right-683f9021d7e69.png",
+            "unisex-premium-hoodie-black-right-683f9021d9a41.png",
+            "unisex-premium-hoodie-black-right-683f9021db0c8.png",
+            "unisex-premium-hoodie-black-right-front-683f9021d8c96.png",
+            "unisex-premium-hoodie-black-right-front-683f9021da77d.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f9022dda27.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f9022e274e.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f9022ec2ea.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f90230b140.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f902306bbf.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f9023029ae.png",
+            "unisex-premium-hoodie-charcoal-heather-back-683f902315348.png",
+            "unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png",
+            "unisex-premium-hoodie-charcoal-heather-front-683f9022af178.png",
+            "unisex-premium-hoodie-black-front-683f9021c6f6d.png",
+            "unisex-premium-hoodie-white-back-683f8fddcabb2.png",
+            "unisex-premium-hoodie-white-front-683f8fddcb92e.png",
+            "all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png",
+            "all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png",
+            "all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png",
+            "all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png",
+            "unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png",
+            "unisex-organic-oversized-sweatshirt-heather-grey-front-683f8e116cda5.png",
+            "cuffed-beanie-black-front-683f9a789ba58.png",
+            "basic-unisex-windbreaker-black-front-683f9890d7838.png",
+            "all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png",
+            "all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png",
+            "all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png",
+            "all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png"
+            // Add more filenames as needed - these should be kept in sync with actual files
+        ];
+    }
+
+    // Updated method to get local mockup images with dynamic detection
     getLocalMockupImages(productHandle, productTitle) {
-        // Map product handles to their local mockup images - simplified to show key images
+        // First try dynamic detection based on imageIdToProductMap
+        const dynamicImages = this.getLocalMockupImagesFromFolder(productHandle);
+        if (dynamicImages.length > 0) {
+            return dynamicImages;
+        }
+
+        // Fallback to hardcoded mapping for backward compatibility
         const mockupMappings = {
             'bungi-x-bobby-rabbit-hardware-unisex-hoodie': [
                 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
@@ -298,6 +377,7 @@ class ProductManager {
                 'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png'
             ],
+            // Other mappings remain the same for backward compatibility
             'bungi-x-bobby-dark-mode-wide-leg-joggers': [
                 'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
                 'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png'
@@ -352,6 +432,12 @@ class ProductManager {
         }
 
         return [];
+    }
+
+    // Optional: Get product cover image automatically from the first matched image
+    getProductCoverImageAuto(productHandle) {
+        const localImages = this.getLocalMockupImagesFromFolder(productHandle);
+        return localImages[0] || 'assets/placeholder.png'; // Default to first image
     }
 
     setupEventListeners() {
