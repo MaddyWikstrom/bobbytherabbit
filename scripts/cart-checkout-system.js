@@ -20,7 +20,8 @@ const BobbyCarts = {
         assetsBasePath: '/assets/',
         fallbackImage: '/assets/product-placeholder.png',
         shopifyDomain: 'bobbytherabbit.myshopify.com',
-        checkoutEndpoint: '/.netlify/functions/create-checkout-fixed'
+        checkoutEndpoint: '/.netlify/functions/create-checkout-fixed',
+        debug: true
     },
     
     // Cart state
@@ -1577,19 +1578,29 @@ const BobbyCarts = {
         // Prepare items for checkout
         const checkoutItems = this.prepareCheckoutItems();
         
+        if (this.config.debug) {
+            console.log('Checkout items prepared:', checkoutItems);
+        }
+        
         // Call checkout endpoint
         fetch(this.config.checkoutEndpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 items: checkoutItems
             })
         })
         .then(response => {
+            if (this.config.debug) {
+                console.log('Checkout response status:', response.status);
+            }
+            
             if (!response.ok) {
                 return response.json().then(err => {
+                    console.error('Checkout error details:', err);
                     throw new Error(err.error || 'Error creating checkout');
                 });
             }
@@ -1704,22 +1715,101 @@ const BobbyCarts = {
     
     // Prepare items for checkout
     prepareCheckoutItems: function() {
+        // First try to convert any items that might not have proper Shopify variant IDs
+        this.ensureShopifyVariantIds();
+        
         return this.state.items.map(item => {
             // For Shopify checkout, we need variantId and quantity
+            let variantId = item.shopifyId || item.variantId || item.id;
+            
+            // Format check - Shopify variant IDs often start with "gid://"
+            if (!variantId.includes('gid://') && !variantId.includes('/')) {
+                // Try to convert from numeric ID if needed
+                if (/^\d+$/.test(variantId)) {
+                    variantId = `gid://shopify/ProductVariant/${variantId}`;
+                }
+            }
+            
+            if (this.config.debug) {
+                console.log(`Prepared checkout item: ${item.title}, variantId: ${variantId}, quantity: ${item.quantity}`);
+            }
+            
             return {
-                variantId: item.shopifyId || item.id,
+                variantId: variantId,
                 quantity: item.quantity
             };
         });
     },
     
+    // Ensure all cart items have proper Shopify variant IDs
+    ensureShopifyVariantIds: function() {
+        if (this.config.debug) {
+            console.log('Ensuring all cart items have proper Shopify variant IDs');
+        }
+        
+        let updatedItems = false;
+        
+        // Try to fix any items without proper Shopify IDs
+        this.state.items.forEach(item => {
+            // Skip items that already have shopifyId
+            if (item.shopifyId && item.shopifyId.includes('gid://')) {
+                return;
+            }
+            
+            // Try to find variant ID from product mapping
+            if (window.PRODUCT_MAPPING) {
+                for (const handle in window.PRODUCT_MAPPING) {
+                    const product = window.PRODUCT_MAPPING[handle];
+                    
+                    // Check if this product matches our item
+                    if (item.productId === handle ||
+                        (item.title && product.shopifyProductId.toLowerCase().includes(item.title.toLowerCase()))) {
+                        
+                        // Use first variant ID as fallback
+                        if (product.variants && product.variants.length > 0) {
+                            const variant = product.variants[0];
+                            item.shopifyId = `gid://shopify/ProductVariant/${variant.sku.split('_')[1]}`;
+                            updatedItems = true;
+                            
+                            if (this.config.debug) {
+                                console.log(`Fixed shopifyId for ${item.title}: ${item.shopifyId}`);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Save if we made changes
+        if (updatedItems) {
+            this.saveCartToStorage();
+        }
+    },
+    
     // Try fallback checkout method
     tryFallbackCheckout: function() {
-        // Simply redirect to /cart
+        // Try direct Shopify URL
         this.showNotification('Using alternative checkout method...', 'info');
         
+        const shopifyDomain = this.config.shopifyDomain;
+        
+        // Construct a basic checkout URL with cart items
+        let cartItems = this.state.items.map(item => {
+            const variantId = item.shopifyId ?
+                              item.shopifyId.split('/').pop() :
+                              (item.id.includes('_') ? item.id.split('_').pop() : item.id);
+            return `${variantId}:${item.quantity}`;
+        }).join(',');
+        
+        const checkoutUrl = `https://${shopifyDomain}/cart/${cartItems}`;
+        
+        if (this.config.debug) {
+            console.log('Using fallback checkout URL:', checkoutUrl);
+        }
+        
         setTimeout(() => {
-            window.location.href = '/cart';
+            window.location.href = checkoutUrl;
         }, 1000);
     }
 };
