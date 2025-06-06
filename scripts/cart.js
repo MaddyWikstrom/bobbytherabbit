@@ -53,7 +53,8 @@ class CartManager {
         const variant = selectedVariant || {
             color: product.colors?.[0] || 'Default',
             size: product.sizes?.[0] || 'One Size',
-            price: product.price
+            price: product.price,
+            shopifyVariantId: null
         };
 
         const itemId = `${product.id}-${variant.color}-${variant.size}`;
@@ -65,12 +66,14 @@ class CartManager {
             this.items.push({
                 id: itemId,
                 productId: product.id,
+                shopifyProductId: product.shopifyId || product.shopifyProductId,
+                shopifyVariantId: variant.shopifyVariantId || product.shopifyVariantId,
                 title: product.title,
-                price: variant.price,
+                price: variant.price || product.price,
                 image: product.mainImage,
                 color: variant.color,
                 size: variant.size,
-                quantity: 1,
+                quantity: variant.quantity || 1,
                 category: product.category
             });
         }
@@ -313,17 +316,143 @@ class CartManager {
         }
     }
 
-    initiateShopifyCheckout() {
-        // Create Shopify checkout URL with cart items
-        const checkoutData = {
-            items: this.items.map(item => ({
-                variant_id: this.getShopifyVariantId(item),
-                quantity: item.quantity
-            }))
-        };
+    async initiateShopifyCheckout() {
+        try {
+            // Show loading state
+            this.showNotification('Creating checkout...', 'info');
+            
+            // First, we need to get the actual Shopify variant IDs
+            // This requires mapping our local product data to Shopify variants
+            const checkoutItems = await this.prepareCheckoutItems();
+            
+            if (!checkoutItems || checkoutItems.length === 0) {
+                this.showNotification('Unable to process checkout. Please try again.', 'error');
+                return;
+            }
 
-        // For now, show a modal with checkout options
-        this.showCheckoutModal();
+            // Create checkout via Netlify function
+            const response = await fetch('/.netlify/functions/create-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: checkoutItems
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Checkout creation failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Redirect to Shopify checkout
+            if (data.checkoutUrl) {
+                this.showNotification('Redirecting to checkout...', 'success');
+                
+                // Clear cart after successful checkout creation
+                this.clearCart();
+                
+                // Redirect to Shopify checkout
+                setTimeout(() => {
+                    window.location.href = data.checkoutUrl;
+                }, 1000);
+            } else {
+                throw new Error('No checkout URL received');
+            }
+            
+        } catch (error) {
+            console.error('Checkout error:', error);
+            this.showNotification('Failed to create checkout. Please try again.', 'error');
+            // Show the modal as fallback
+            this.showCheckoutModal();
+        }
+    }
+
+    async prepareCheckoutItems() {
+        try {
+            const checkoutItems = [];
+            
+            // First try to use stored Shopify variant IDs
+            for (const cartItem of this.items) {
+                if (cartItem.shopifyVariantId) {
+                    checkoutItems.push({
+                        variantId: cartItem.shopifyVariantId,
+                        quantity: cartItem.quantity
+                    });
+                }
+            }
+            
+            // If we have all items with variant IDs, return them
+            if (checkoutItems.length === this.items.length) {
+                return checkoutItems;
+            }
+            
+            // Otherwise, load products to find missing variant IDs
+            const response = await fetch('/.netlify/functions/get-products');
+            if (!response.ok) {
+                throw new Error('Failed to load products');
+            }
+            
+            const products = await response.json();
+            
+            // Process items that don't have variant IDs
+            for (const cartItem of this.items) {
+                if (!cartItem.shopifyVariantId) {
+                    // Find the product in Shopify data
+                    const shopifyProduct = products.find(p => {
+                        const node = p.node || p;
+                        return node.handle === cartItem.productId ||
+                               node.id === cartItem.shopifyProductId ||
+                               node.id.includes(cartItem.productId);
+                    });
+                    
+                    if (shopifyProduct) {
+                        const product = shopifyProduct.node || shopifyProduct;
+                        
+                        // Find the matching variant
+                        const variant = product.variants.edges.find(v => {
+                            const variantNode = v.node;
+                            let colorMatch = true;
+                            let sizeMatch = true;
+                            
+                            variantNode.selectedOptions.forEach(option => {
+                                if (option.name.toLowerCase() === 'color' && cartItem.color !== 'Default') {
+                                    colorMatch = option.value === cartItem.color;
+                                }
+                                if (option.name.toLowerCase() === 'size' && cartItem.size !== 'One Size') {
+                                    sizeMatch = option.value === cartItem.size;
+                                }
+                            });
+                            
+                            return colorMatch && sizeMatch;
+                        });
+                        
+                        if (variant) {
+                            // Update the cart item with the variant ID for future use
+                            cartItem.shopifyVariantId = variant.node.id;
+                            this.saveCartToStorage();
+                            
+                            checkoutItems.push({
+                                variantId: variant.node.id,
+                                quantity: cartItem.quantity
+                            });
+                        }
+                    }
+                }
+            }
+            
+            return checkoutItems;
+            
+        } catch (error) {
+            console.error('Error preparing checkout items:', error);
+            return null;
+        }
     }
 
     showCheckoutModal() {
@@ -388,10 +517,9 @@ class CartManager {
         modal.querySelector('.checkout-modal-overlay').onclick = closeModal;
 
         // Setup checkout options
-        modal.querySelector('.shopify-checkout').onclick = () => {
-            this.showNotification('Redirecting to Shopify checkout...', 'info');
+        modal.querySelector('.shopify-checkout').onclick = async () => {
             closeModal();
-            // Implement actual Shopify checkout redirect
+            await this.initiateShopifyCheckout();
         };
 
         modal.querySelector('.paypal-checkout').onclick = () => {

@@ -980,15 +980,33 @@ class ProductDetailManager {
             return;
         }
         
+        // Find the Shopify variant ID for the selected options
+        let shopifyVariantId = null;
+        if (this.currentProduct.variants) {
+            const matchingVariant = this.currentProduct.variants.find(v =>
+                v.color === this.selectedVariant.color &&
+                v.size === this.selectedVariant.size
+            );
+            if (matchingVariant) {
+                shopifyVariantId = matchingVariant.id;
+            }
+        }
+        
         const cartItem = {
             ...this.currentProduct,
             selectedColor: this.selectedVariant.color,
             selectedSize: this.selectedVariant.size,
-            quantity: this.selectedVariant.quantity
+            quantity: this.selectedVariant.quantity,
+            shopifyVariantId: shopifyVariantId
+        };
+        
+        const variantData = {
+            ...this.selectedVariant,
+            shopifyVariantId: shopifyVariantId
         };
         
         if (window.cartManager) {
-            window.cartManager.addItem(cartItem, this.selectedVariant);
+            window.cartManager.addItem(cartItem, variantData);
         }
         
         // Update inventory
