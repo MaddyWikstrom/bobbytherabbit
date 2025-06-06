@@ -10,11 +10,52 @@ class ProductManager {
         this.currentView = 'grid';
         this.searchQuery = '';
         
-        // Map product handles to their specific cover images
-        this.coverImageMap = {
+        // Map image IDs to product IDs (from the filename to the Shopify product)
+        this.imageIdToProductMap = {
+            // Black hoodie images
+            '683f9021c6f6d': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            '683f9021c7dbc': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            '683f9021c454e': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            '683f9021d1e6b': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            '683f9021d10cf': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            '683f9021d2cb7': 'bungi-x-bobby-rabbit-hardware-unisex-hoodie',
+            
+            // White hoodie images (back is main)
+            '683f8fddcabb2': 'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie',
+            '683f8fddcb92e': 'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie',
+            
+            // Organic sweatshirt images
+            '683f8e116fe10': 'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt',
+            '683f8e116cda5': 'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt',
+            
+            // Windbreaker images
+            '683f9890d7838': 'bungi-x-bobby-cowboy-unisex-windbreaker',
+            
+            // T-shirt images
+            '683f9c6a74d70': 'bungi-x-bobby-rabbit-hardware-mens-t-shirt',
+            '683f9c9fdcac3': 'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt',
+            '683f97ee5c7af': 'bungi-x-bobby-cowboy-mens-t-shirt',
+            
+            // Beanie images
+            '683f9a789ba58': 'bungi-x-bobby-cuffed-beanie-1',
+            
+            // Sweatshirt images
+            '683f9be9c4dea': 'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt',
+            '683f985018ab4': 'bungi-x-bobby-cowboy-unisex-sweatshirt'
+        };
+        
+        // Product ID to main cover image mapping
+        this.productIdToCoverImage = {
             'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
             'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png'
+            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'mockups/unisex-organic-oversized-sweatshirt-white-front-683f8e116fe10.png',
+            'bungi-x-bobby-cowboy-unisex-windbreaker': 'mockups/basic-unisex-windbreaker-black-front-683f9890d7838.png',
+            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png',
+            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
+            'bungi-x-bobby-cowboy-mens-t-shirt': 'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png',
+            'bungi-x-bobby-cuffed-beanie-1': 'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
+            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': 'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png',
+            'bungi-x-bobby-cowboy-unisex-sweatshirt': 'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
         };
         
         this.init();
@@ -47,25 +88,7 @@ class ProductManager {
                 return;
             }
             
-            // Fallback: Try to parse CSV data
-            console.log('📄 API failed, loading products from CSV data...');
-            const csvData = await this.loadCSVData();
-            const csvProducts = this.parseCSVToProducts(csvData);
-            
-            if (csvProducts.length > 0) {
-                // Deduplicate CSV products by handle
-                const uniqueProducts = new Map();
-                csvProducts.forEach(product => {
-                    if (!uniqueProducts.has(product.id)) {
-                        uniqueProducts.set(product.id, product);
-                    }
-                });
-                
-                this.products = Array.from(uniqueProducts.values());
-                console.log(`✅ Successfully loaded ${this.products.length} unique products from CSV`);
-                this.filteredProducts = [...this.products];
-                return;
-            }
+            // No CSV fallback needed anymore
             // No products found from API or CSV, use mock products for local testing
             console.log('⚠️ No products found from API or CSV, using mock products for local testing');
             this.products = this.getMockProducts();
@@ -125,20 +148,20 @@ class ProductManager {
             // Extract images from Shopify
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
             
-            // Get local mockup images
-            const localImages = this.getLocalMockupImages(product.handle, product.title);
+            // Get product cover image based on ID
+            const coverImage = this.productIdToCoverImage[product.handle];
             
-            // Get specific cover image
-            const coverImage = this.getProductCoverImage(product.handle, product.title);
+            // Get other product images from the mockups folder
+            const localImages = this.getLocalMockupImages(product.handle);
             
-            // Create image array with cover image first, then other local images, then Shopify images
+            // Create image array with cover image first, then local images, then Shopify images
             let images = [];
             
             // Add cover image as the first image if it exists
             if (coverImage) {
                 images.push(coverImage);
                 
-                // Add remaining local images, excluding the cover image to avoid duplication
+                // Add remaining local images, excluding the cover image
                 localImages.forEach(img => {
                     if (img !== coverImage) {
                         images.push(img);
@@ -149,8 +172,8 @@ class ProductManager {
                 images = [...localImages];
             }
             
-            // Add Shopify images
-            images = [...images, ...shopifyImages].filter(img => img); // Filter out empty strings
+            // Add Shopify images if we need them (filtered for valid images)
+            images = [...images, ...shopifyImages].filter(img => img);
             
             // Extract variants and organize by color/size
             const variants = [];
@@ -218,146 +241,7 @@ class ProductManager {
         return Array.from(uniqueProductsMap.values());
     }
 
-    async loadCSVData() {
-        try {
-            // First try to fetch the CSV file (works when deployed)
-            const response = await fetch('products_export_1.csv');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const csvText = await response.text();
-            return csvText;
-        } catch (error) {
-            console.error('Error loading CSV:', error);
-            // Return empty string for now
-            return '';
-        }
-    }
-
-    parseCSVToProducts(csvText) {
-        if (!csvText || csvText.trim() === '') {
-            console.log('CSV data is empty');
-            return [];
-        }
-
-        const lines = csvText.split('\n');
-        if (lines.length < 2) {
-            console.log('CSV has insufficient data');
-            return [];
-        }
-
-        const headers = lines[0].split(',');
-        const products = new Map();
-
-        for (let i = 1; i < lines.length; i++) {
-            const values = this.parseCSVLine(lines[i]);
-            if (values.length < headers.length) continue;
-
-            const handle = values[0];
-            const title = values[1];
-            const description = values[2];
-            const price = parseFloat(values[22]) || 0;
-            const comparePrice = parseFloat(values[23]) || 0;
-            const imageUrl = values[26];
-            const color = values[9] || '';
-            const size = values[12] || '';
-
-            if (!handle || !title) continue;
-
-            if (!products.has(handle)) {
-                // Get local mockup images
-                const localImages = this.getLocalMockupImages(handle, title);
-                
-                // Get specific cover image
-                const coverImage = this.getProductCoverImage(handle, title);
-                
-                // Create image array with cover image first
-                let images = [];
-                
-                // Add cover image as the first image if it exists
-                if (coverImage) {
-                    images.push(coverImage);
-                    
-                    // Add remaining local images, excluding the cover image to avoid duplication
-                    localImages.forEach(img => {
-                        if (img !== coverImage) {
-                            images.push(img);
-                        }
-                    });
-                } else {
-                    // If no cover image, use all local images
-                    images = [...localImages];
-                }
-                
-                // Add CSV image URL if it exists and isn't already included
-                if (imageUrl && !images.includes(imageUrl)) {
-                    images.push(imageUrl);
-                }
-                
-                products.set(handle, {
-                    id: handle,
-                    title: title,
-                    description: this.cleanDescription(description),
-                    category: this.extractCategory(title),
-                    price: price,
-                    comparePrice: comparePrice > price ? comparePrice : null,
-                    images: images,
-                    variants: [],
-                    colors: new Set(),
-                    sizes: new Set(),
-                    featured: title.toLowerCase().includes('featured'),
-                    new: title.toLowerCase().includes('new'),
-                    sale: comparePrice > price
-                });
-            }
-
-            const product = products.get(handle);
-            if (color) product.colors.add(color);
-            if (size) product.sizes.add(size);
-            
-            // Add image URL if not already included
-            if (imageUrl && !product.images.includes(imageUrl)) {
-                product.images.push(imageUrl);
-            }
-
-            product.variants.push({
-                color: color,
-                size: size,
-                price: price,
-                comparePrice: comparePrice > price ? comparePrice : null,
-                image: imageUrl || ''
-            });
-        }
-
-        return Array.from(products.values()).map(product => ({
-            ...product,
-            colors: Array.from(product.colors),
-            sizes: Array.from(product.sizes),
-            mainImage: product.images[0] || ''
-        }));
-    }
-
-    parseCSVLine(line) {
-        const result = [];
-        let current = '';
-        let inQuotes = false;
-
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(current.trim());
-                current = '';
-            } else {
-                current += char;
-            }
-        }
-        
-        result.push(current.trim());
-        return result;
-    }
+    // CSV functions removed - not needed anymore
 
     cleanDescription(description) {
         if (!description) return '';
