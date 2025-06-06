@@ -1095,6 +1095,8 @@ class ProductDetailManager {
         
         // Find the Shopify variant ID for the selected options
         let shopifyVariantId = null;
+        let variantImage = null;
+        
         if (this.currentProduct.variants) {
             const matchingVariant = this.currentProduct.variants.find(v =>
                 v.color === this.selectedVariant.color &&
@@ -1102,7 +1104,35 @@ class ProductDetailManager {
             );
             if (matchingVariant) {
                 shopifyVariantId = matchingVariant.id;
+                variantImage = matchingVariant.image;
             }
+        }
+        
+        // Get color-specific image - important for cart display
+        let productImage = null;
+        
+        // If we have color-specific images for this product, use the first one for this color
+        if (this.currentProduct.colorImages &&
+            this.currentProduct.colorImages[this.selectedVariant.color] &&
+            this.currentProduct.colorImages[this.selectedVariant.color].length > 0) {
+            
+            productImage = this.currentProduct.colorImages[this.selectedVariant.color][0];
+            console.log(`Using color-specific image for cart: ${productImage}`);
+        }
+        // If we have filtered images (currently showing), use the first one
+        else if (this.filteredImages && this.filteredImages.length > 0) {
+            productImage = this.filteredImages[0];
+            console.log(`Using filtered image for cart: ${productImage}`);
+        }
+        // If we have a variant image, use that
+        else if (variantImage) {
+            productImage = variantImage;
+            console.log(`Using variant image for cart: ${productImage}`);
+        }
+        // Last resort - use main product image
+        else {
+            productImage = this.currentProduct.mainImage || this.currentProduct.images[0];
+            console.log(`Using main product image for cart: ${productImage}`);
         }
         
         const cartItem = {
@@ -1110,16 +1140,31 @@ class ProductDetailManager {
             selectedColor: this.selectedVariant.color,
             selectedSize: this.selectedVariant.size,
             quantity: this.selectedVariant.quantity,
-            shopifyVariantId: shopifyVariantId
+            shopifyVariantId: shopifyVariantId,
+            mainImage: productImage, // Use the color-specific image as the main image
+            image: productImage     // Also set as image property for compatibility
         };
         
         const variantData = {
             ...this.selectedVariant,
-            shopifyVariantId: shopifyVariantId
+            shopifyVariantId: shopifyVariantId,
+            image: productImage
         };
         
         if (window.cartManager) {
             window.cartManager.addItem(cartItem, variantData);
+            
+            // Try to force cart to open properly
+            setTimeout(() => {
+                if (window.cartManager && window.cartManager.isOpen === false) {
+                    window.cartManager.openCart();
+                    console.log('Forcing cart to open after adding item');
+                }
+            }, 200);
+        } else {
+            console.error('Cart manager not available, cannot add item to cart');
+            this.showNotification('Cart system not available', 'error');
+            return;
         }
         
         // Update inventory

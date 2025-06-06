@@ -17,44 +17,36 @@ class CartManager {
     }
 
     setupEventListeners() {
-        // Cart toggle - try multiple selectors for different pages
-        const cartToggles = document.querySelectorAll('#cart-btn, .cart-btn, .cart-icon, [data-cart-toggle]');
-        const cartModal = document.getElementById('cart-modal');
-        const cartSidebar = document.getElementById('cart-sidebar');
-        const cartOverlay = document.getElementById('cart-overlay');
-        const cartCloseButtons = document.querySelectorAll('.cart-close');
+        // Add global document click handler for all cart buttons across all pages
+        document.addEventListener('click', (e) => {
+            const cartButton = e.target.closest('#cart-btn, .cart-btn, .cart-icon, [data-cart-toggle], .header-cart-btn, .nav-cart-btn');
+            if (cartButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Cart button clicked via global handler');
+                this.toggleCart();
+            }
+        });
         
-        if (cartToggles.length > 0) {
-            cartToggles.forEach(toggle => {
-                toggle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Cart button clicked');
-                    this.toggleCart();
-                });
-                
-                // Also add event listeners to all children
-                toggle.querySelectorAll('*').forEach(child => {
-                    child.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Cart button child clicked');
-                        this.toggleCart();
-                    });
-                });
+        // Add global listener for the "esc" key to close cart
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.closeCart();
+            }
+        });
+        
+        // Find and add listeners to any close buttons already in the DOM
+        const cartCloseButtons = document.querySelectorAll('.cart-close');
+        if (cartCloseButtons.length > 0) {
+            cartCloseButtons.forEach(btn => {
+                btn.addEventListener('click', () => this.closeCart());
             });
-        } else {
-            console.warn('No cart toggle button found on this page, adding a global click handler for common cart buttons');
-            // Add a global document listener for cart buttons that might be added dynamically
-            document.addEventListener('click', (e) => {
-                const cartButton = e.target.closest('#cart-btn, .cart-btn, .cart-icon, [data-cart-toggle]');
-                if (cartButton) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Cart button clicked via global handler');
-                    this.toggleCart();
-                }
-            });
+        }
+        
+        // Setup overlay click to close cart
+        const cartOverlay = document.getElementById('cart-overlay');
+        if (cartOverlay) {
+            cartOverlay.addEventListener('click', () => this.closeCart());
         }
 
         // Add click listeners to all close buttons
