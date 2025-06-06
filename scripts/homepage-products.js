@@ -10,16 +10,46 @@ class HomepageProductLoader {
     async init() {
         await this.loadProducts();
         this.renderProducts();
-        this.setupScrolling();
+        // Add a small delay to ensure DOM is fully rendered before setting up scrolling
+        setTimeout(() => {
+            this.setupScrolling();
+        }, 100);
     }
 
     async loadProducts() {
         try {
+            // Specific product IDs to show on homepage
+            const targetProductIds = [
+                '8535770792103', // show back first, then front on hover
+                '8535752868007', // default behavior (front first, then back on hover)
+                '8535752376487', // default behavior
+                '8535752474791', // default behavior
+                '8535759290535', // show front first, then back on hover
+                '8535766007975'  // show back first, then front on hover
+            ];
+
+            // Product hover configurations
+            this.hoverConfig = {
+                '8535770792103': { showBackFirst: true },
+                '8535752868007': { showBackFirst: false },
+                '8535752376487': { showBackFirst: false },
+                '8535752474791': { showBackFirst: false },
+                '8535759290535': { showBackFirst: false },
+                '8535766007975': { showBackFirst: true }
+            };
+
             // Try to load from Shopify via Netlify function first
             const shopifyProducts = await this.loadShopifyProducts();
             if (shopifyProducts && shopifyProducts.length > 0) {
-                this.products = shopifyProducts.slice(0, 12); // Limit to 12 products for homepage
-                console.log('✅ Loaded products from Shopify:', this.products.length);
+                // Filter products to only show the specific IDs
+                this.products = shopifyProducts.filter(product => {
+                    // Check if product ID matches any of our target IDs
+                    const productId = product.shopifyId ? product.shopifyId.replace('gid://shopify/Product/', '') : null;
+                    return targetProductIds.includes(productId);
+                }).slice(0, 6); // Limit to 6 specific products
+                
+                console.log('✅ Loaded filtered products from Shopify:', this.products.length);
+                console.log('Product IDs:', this.products.map(p => p.shopifyId));
             } else {
                 // Fallback to sample products
                 this.products = this.getSampleProducts();
@@ -62,7 +92,26 @@ class HomepageProductLoader {
         const hasVariants = product.variants.edges.length > 0;
         const firstVariant = hasVariants ? product.variants.edges[0].node : null;
         const compareAtPrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
-        const mainImage = product.images.edges.length > 0 ? product.images.edges[0].node.url : 'assets/placeholder-product.png';
+        
+        // Get product ID for hover configuration
+        const productId = product.id.replace('gid://shopify/Product/', '');
+        const hoverConfig = this.hoverConfig && this.hoverConfig[productId];
+        
+        // Get all images
+        const images = product.images.edges.map(edge => edge.node.url);
+        let mainImage = images.length > 0 ? images[0] : 'assets/placeholder-product.png';
+        let hoverImage = images.length > 1 ? images[1] : mainImage;
+        
+        // Configure images based on hover settings
+        if (hoverConfig && hoverConfig.showBackFirst && images.length > 1) {
+            // Show back first, then front on hover
+            mainImage = images[1]; // back image
+            hoverImage = images[0]; // front image
+        } else if (images.length > 1) {
+            // Default: show front first, then back on hover
+            mainImage = images[0]; // front image
+            hoverImage = images[1]; // back image
+        }
 
         return {
             id: product.handle,
@@ -72,6 +121,7 @@ class HomepageProductLoader {
             price: minPrice,
             comparePrice: compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null,
             mainImage: mainImage,
+            hoverImage: hoverImage,
             featured: product.tags.includes('featured') || Math.random() > 0.7,
             new: product.tags.includes('new') || Math.random() > 0.8,
             sale: compareAtPrice && compareAtPrice > minPrice,
@@ -101,84 +151,98 @@ class HomepageProductLoader {
     }
 
     getSampleProducts() {
+        // Sample products representing the specific IDs you requested
+        // Since we can't access Shopify API in file:// protocol, these represent your target products
         return [
             {
-                id: 'bungi-hoodie-black',
+                id: '8535770792103',
                 title: 'BUNGI X BOBBY RABBIT HARDWARE Hoodie - Vintage Black',
                 description: 'Premium streetwear hoodie with unique rabbit hardware design featuring Bobby the Tech Animal.',
                 category: 'hoodie',
                 price: 50.00,
                 comparePrice: 65.00,
-                mainImage: 'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-vintage-black-back-683f90236b8c4.png',
+                // Show back first, then front on hover (as requested)
+                mainImage: 'mockups/unisex-premium-hoodie-vintage-black-back-683f90238c9e9.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
                 featured: true,
                 new: true,
-                sale: true
+                sale: true,
+                shopifyId: 'gid://shopify/Product/8535770792103'
             },
             {
-                id: 'bungi-hat-black',
-                title: 'BUNGI X BOBBY Tech Animal Beanie - Black',
-                description: 'Premium tech-inspired beanie featuring Bobby the Tech Animal branding.',
-                category: 'hat',
-                price: 25.00,
+                id: '8535752868007',
+                title: 'BUNGI X BOBBY Tech Animal Hoodie - White',
+                description: 'Premium tech-inspired hoodie featuring Bobby the Tech Animal branding.',
+                category: 'hoodie',
+                price: 55.00,
                 comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
-                featured: true,
-                new: false,
-                sale: false
-            },
-            {
-                id: 'bungi-tshirt-white',
-                title: 'BUNGI X BOBBY Tech Animal T-Shirt - White',
-                description: 'Classic streetwear t-shirt with cyberpunk Bobby design.',
-                category: 't-shirt',
-                price: 30.00,
-                comparePrice: 35.00,
+                // Default behavior: front first, then back on hover
                 mainImage: 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
                 hoverImage: 'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
                 featured: true,
                 new: false,
-                sale: true
+                sale: false,
+                shopifyId: 'gid://shopify/Product/8535752868007'
             },
             {
-                id: 'bungi-sweater-gray',
-                title: 'BUNGI X BOBBY Tech Sweater - Heather Gray',
-                description: 'Cozy tech-inspired sweater with premium Bobby branding.',
-                category: 'sweater',
+                id: '8535752376487',
+                title: 'BUNGI X BOBBY Tech Animal Hoodie - Charcoal Heather',
+                description: 'Classic streetwear hoodie with cyberpunk Bobby design.',
+                category: 'hoodie',
+                price: 52.00,
+                comparePrice: 60.00,
+                // Default behavior: front first, then back on hover
+                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f90232a100.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-charcoal-heather-back-683f90232db97.png',
+                featured: true,
+                new: false,
+                sale: true,
+                shopifyId: 'gid://shopify/Product/8535752376487'
+            },
+            {
+                id: '8535752474791',
+                title: 'BUNGI X BOBBY Tech Animal Hoodie - Navy Blazer',
+                description: 'Cozy tech-inspired hoodie with premium Bobby branding.',
+                category: 'hoodie',
                 price: 55.00,
                 comparePrice: null,
-                mainImage: 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png',
-                featured: true,
-                new: true,
-                sale: false
-            },
-            {
-                id: 'bungi-windbreaker-black',
-                title: 'BUNGI X BOBBY Tech Windbreaker - Black',
-                description: 'High-tech windbreaker with reflective Bobby elements.',
-                category: 'windbreaker',
-                price: 75.00,
-                comparePrice: 85.00,
+                // Default behavior: front first, then back on hover
                 mainImage: 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
                 hoverImage: 'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
                 featured: true,
                 new: true,
-                sale: true
+                sale: false,
+                shopifyId: 'gid://shopify/Product/8535752474791'
             },
             {
-                id: 'bungi-sweatpants-white',
-                title: 'BUNGI X BOBBY Tech Sweatpants - White',
-                description: 'Premium white sweatpants with tech animal styling.',
-                category: 'sweatpants',
-                price: 45.00,
-                comparePrice: null,
+                id: '8535759290535',
+                title: 'BUNGI X BOBBY Tech Animal Hoodie - Maroon',
+                description: 'High-tech hoodie with reflective Bobby elements.',
+                category: 'hoodie',
+                price: 58.00,
+                comparePrice: 65.00,
+                // Front first, then back on hover (as requested)
                 mainImage: 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                hoverImage: 'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-maroon-back-683f90225eace.png',
+                featured: true,
+                new: true,
+                sale: true,
+                shopifyId: 'gid://shopify/Product/8535759290535'
+            },
+            {
+                id: '8535766007975',
+                title: 'BUNGI X BOBBY Tech Animal Hoodie - Black',
+                description: 'Premium black hoodie with tech animal styling.',
+                category: 'hoodie',
+                price: 50.00,
+                comparePrice: null,
+                // Show back first, then front on hover (as requested)
+                mainImage: 'mockups/unisex-premium-hoodie-black-back-683f9021c6f6d.png',
+                hoverImage: 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
                 featured: true,
                 new: false,
-                sale: false
+                sale: false,
+                shopifyId: 'gid://shopify/Product/8535766007975'
             }
         ];
     }
@@ -267,25 +331,61 @@ class HomepageProductLoader {
         const leftArrow = document.getElementById('scroll-left');
         const rightArrow = document.getElementById('scroll-right');
 
-        if (!scrollContainer || !leftArrow || !rightArrow) return;
+        console.log('Setting up scrolling:', {
+            scrollContainer: !!scrollContainer,
+            leftArrow: !!leftArrow,
+            rightArrow: !!rightArrow
+        });
+
+        if (!scrollContainer || !leftArrow || !rightArrow) {
+            console.error('Missing scroll elements:', {
+                scrollContainer: !!scrollContainer,
+                leftArrow: !!leftArrow,
+                rightArrow: !!rightArrow
+            });
+            return;
+        }
 
         let currentIndex = 0;
         
         // Calculate actual card dimensions
         const firstCard = scrollContainer.querySelector('.product-card');
-        if (!firstCard) return;
+        if (!firstCard) {
+            console.error('No product cards found for scroll calculation');
+            return;
+        }
         
         const cardStyle = window.getComputedStyle(firstCard);
-        const cardWidth = firstCard.offsetWidth + parseInt(cardStyle.marginRight) + parseInt(cardStyle.marginLeft);
+        const marginRight = parseInt(cardStyle.marginRight) || 0;
+        const marginLeft = parseInt(cardStyle.marginLeft) || 0;
+        let cardWidth = firstCard.offsetWidth + marginRight + marginLeft;
+        
+        // Fallback if card width is 0 or invalid
+        if (cardWidth <= 0) {
+            console.warn('Card width is 0, using fallback calculation');
+            // Use a fallback based on CSS or default values
+            cardWidth = 550 + 32; // min-width from CSS + gap
+        }
         
         // Get container width
-        const containerWidth = scrollContainer.parentElement.clientWidth;
+        const containerWidth = scrollContainer.parentElement.clientWidth || 900;
         
         // Calculate how many cards can be visible at once
-        const visibleCards = Math.floor(containerWidth / cardWidth);
+        const visibleCards = Math.max(1, Math.floor(containerWidth / cardWidth));
         
         // Calculate maximum scroll index - only scroll if we have more products than visible
         const maxIndex = Math.max(0, this.products.length - visibleCards);
+        
+        // Validate calculations
+        if (isNaN(cardWidth) || cardWidth <= 0) {
+            console.error('Invalid card width calculation:', cardWidth, 'using fallback');
+            cardWidth = 582; // fallback value
+        }
+        
+        if (isNaN(maxIndex)) {
+            console.error('Invalid maxIndex calculation:', maxIndex);
+            return;
+        }
 
         console.log('Scroll setup:', {
             totalProducts: this.products.length,
@@ -313,23 +413,39 @@ class HomepageProductLoader {
         leftArrow.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Left arrow clicked! Current index:', currentIndex, 'Max index:', maxIndex);
             if (currentIndex > 0) {
                 currentIndex--;
                 updateTransform();
                 updateArrows();
                 console.log('Scrolled left to index:', currentIndex);
+            } else {
+                console.log('Cannot scroll left - already at beginning');
             }
         });
 
         rightArrow.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Right arrow clicked! Current index:', currentIndex, 'Max index:', maxIndex);
             if (currentIndex < maxIndex) {
                 currentIndex++;
                 updateTransform();
                 updateArrows();
                 console.log('Scrolled right to index:', currentIndex);
+            } else {
+                console.log('Cannot scroll right - already at end');
             }
+        });
+
+        // Add debugging for arrow visibility and styling
+        console.log('Arrow setup complete:', {
+            leftArrowVisible: window.getComputedStyle(leftArrow).display !== 'none',
+            rightArrowVisible: window.getComputedStyle(rightArrow).display !== 'none',
+            leftArrowOpacity: window.getComputedStyle(leftArrow).opacity,
+            rightArrowOpacity: window.getComputedStyle(rightArrow).opacity,
+            leftArrowPointerEvents: window.getComputedStyle(leftArrow).pointerEvents,
+            rightArrowPointerEvents: window.getComputedStyle(rightArrow).pointerEvents
         });
 
         // Touch/swipe support for mobile
