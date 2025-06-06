@@ -1,4 +1,4 @@
-// Products Management System
+// Products Management System - Fixed Version
 class ProductManager {
     constructor() {
         this.products = [];
@@ -21,35 +21,41 @@ class ProductManager {
 
     async loadProducts() {
         try {
-            // First priority: Try Shopify Buy SDK (bypasses CORS)
-            console.log('🛍️ Attempting to load products via Shopify Buy SDK...');
-            const shopifySDKProducts = await this.loadShopifySDKProducts();
-            
-            if (shopifySDKProducts && shopifySDKProducts.length > 0) {
-                this.products = shopifySDKProducts;
-                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify Buy SDK!`);
-                this.filteredProducts = [...this.products];
-                return;
-            }
-            
-            // Second priority: Try to parse CSV data
-            console.log('📄 SDK failed, loading products from CSV data...');
-            const csvData = await this.loadCSVData();
-            this.products = this.parseCSVToProducts(csvData);
-            
-            if (this.products.length > 0) {
-                console.log(`✅ Successfully loaded ${this.products.length} products from CSV`);
-                this.filteredProducts = [...this.products];
-                return;
-            }
-            
-            // Third priority: Try to load from Shopify API via Netlify function
-            console.log('🛍️ CSV failed, attempting to load products from Shopify API...');
+            // Try to load from Shopify API via Netlify function first
+            console.log('🛍️ Loading products from Shopify API...');
             const shopifyProducts = await this.loadShopifyProducts();
             
             if (shopifyProducts && shopifyProducts.length > 0) {
-                this.products = shopifyProducts;
-                console.log(`✅ Successfully loaded ${this.products.length} products from Shopify API!`);
+                // Deduplicate products by handle
+                const uniqueProducts = new Map();
+                shopifyProducts.forEach(product => {
+                    if (!uniqueProducts.has(product.id)) {
+                        uniqueProducts.set(product.id, product);
+                    }
+                });
+                
+                this.products = Array.from(uniqueProducts.values());
+                console.log(`✅ Successfully loaded ${this.products.length} unique products from Shopify API!`);
+                this.filteredProducts = [...this.products];
+                return;
+            }
+            
+            // Fallback: Try to parse CSV data
+            console.log('📄 API failed, loading products from CSV data...');
+            const csvData = await this.loadCSVData();
+            const csvProducts = this.parseCSVToProducts(csvData);
+            
+            if (csvProducts.length > 0) {
+                // Deduplicate CSV products by handle
+                const uniqueProducts = new Map();
+                csvProducts.forEach(product => {
+                    if (!uniqueProducts.has(product.id)) {
+                        uniqueProducts.set(product.id, product);
+                    }
+                });
+                
+                this.products = Array.from(uniqueProducts.values());
+                console.log(`✅ Successfully loaded ${this.products.length} unique products from CSV`);
                 this.filteredProducts = [...this.products];
                 return;
             }
@@ -64,34 +70,6 @@ class ProductManager {
             console.log('❌ No products loaded due to error');
             this.products = [];
             this.filteredProducts = [];
-        }
-    }
-
-    async loadShopifySDKProducts() {
-        try {
-            // Initialize Shopify Buy SDK Manager
-            if (!window.shopifySDKManager) {
-                window.shopifySDKManager = new ShopifyBuySDKManager();
-            }
-            
-            // Wait for SDK to load and initialize
-            let attempts = 0;
-            while (!window.shopifySDKManager.isLoaded && attempts < 30) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                attempts++;
-            }
-            
-            if (!window.shopifySDKManager.isLoaded) {
-                throw new Error('Shopify Buy SDK failed to load within 30 seconds');
-            }
-            
-            // Load products via SDK
-            const products = await window.shopifySDKManager.loadProducts();
-            return products;
-            
-        } catch (error) {
-            console.error('❌ Error loading products via Shopify Buy SDK:', error);
-            return null;
         }
     }
 
@@ -124,10 +102,17 @@ class ProductManager {
         }
     }
 
-
     convertShopifyProducts(shopifyProducts) {
-        return shopifyProducts.map(edge => {
+        // Create a map to track unique products by handle
+        const uniqueProductsMap = new Map();
+        
+        shopifyProducts.forEach(edge => {
             const product = edge.node;
+            
+            // Skip if we already have this product
+            if (uniqueProductsMap.has(product.handle)) {
+                return;
+            }
             
             // Extract images from Shopify
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
@@ -136,7 +121,7 @@ class ProductManager {
             const localImages = this.getLocalMockupImages(product.handle, product.title);
             
             // Combine both image sources - local mockups first, then Shopify images
-            const images = [...localImages, ...shopifyImages];
+            const images = [...localImages, ...shopifyImages].filter(img => img); // Filter out empty strings
             
             // Extract variants and organize by color/size
             const variants = [];
@@ -178,7 +163,7 @@ class ProductManager {
             const maxPrice = parseFloat(product.priceRange.maxVariantPrice.amount);
             const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
             
-            return {
+            const convertedProduct = {
                 id: product.handle,
                 shopifyId: product.id,
                 title: product.title,
@@ -186,18 +171,22 @@ class ProductManager {
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
-                images: images.length > 0 ? images : [],
-                mainImage: images[0] || '',
+                images: images.length > 0 ? images : ['assets/placeholder.png'], // Fallback to placeholder
+                mainImage: images[0] || 'assets/placeholder.png',
                 variants: variants,
                 colors: Array.from(colors),
                 sizes: Array.from(sizes),
-                featured: product.tags.includes('featured') || Math.random() > 0.7,
-                new: product.tags.includes('new') || Math.random() > 0.8,
+                featured: product.tags.includes('featured'),
+                new: product.tags.includes('new'),
                 sale: comparePrice > minPrice,
                 tags: product.tags,
                 productType: product.productType
             };
+            
+            uniqueProductsMap.set(product.handle, convertedProduct);
         });
+        
+        return Array.from(uniqueProductsMap.values());
     }
 
     async loadCSVData() {
@@ -211,40 +200,9 @@ class ProductManager {
             return csvText;
         } catch (error) {
             console.error('Error loading CSV:', error);
-            // Return embedded CSV data for local development
-            return this.getEmbeddedCSVData();
+            // Return empty string for now
+            return '';
         }
-    }
-
-    getEmbeddedCSVData() {
-        // Embedded CSV data to bypass CORS restrictions during local development
-        return `Handle,Title,Body (HTML),Vendor,Product Category,Type,Tags,Published,Option1 Name,Option1 Value,Option1 Linked To,Option2 Name,Option2 Value,Option2 Linked To,Option3 Name,Option3 Value,Option3 Linked To,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Variant Barcode,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Google Shopping / Google Product Category,Google Shopping / Gender,Google Shopping / Age Group,Google Shopping / MPN,Google Shopping / Condition,Google Shopping / Custom Product,Google Shopping / Custom Label 0,Google Shopping / Custom Label 1,Google Shopping / Custom Label 2,Google Shopping / Custom Label 3,Google Shopping / Custom Label 4,Variant Image,Variant Weight Unit,Variant Tax Code,Cost per item,Status
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie,"Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.",My Store,Uncategorized,"","",false,Color,Black,,Size,S,,,,,9004018_10779,487.61179775,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,active
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,M,,,,,9004018_10780,532.97103475,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-back-683f9d11a9742.png?v=1748999463,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,L,,,,,9004018_10781,566.9904625,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,3,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Black,,,XL,,,,,9004018_10782,609.5147471875,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-back-683f9d11ae0c4.png?v=1748999462,4,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,S,,,,,9004018_11491,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,7,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Navy Blazer,,,M,,,,,9004018_11492,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-back-683f9d11c14f8.png?v=1748999462,8,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,S,,,,,9004018_11486,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Maroon,,,M,,,,,9004018_11487,532.97103475,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-maroon-front-683f9d11b1d12.png?v=1748999463,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Charcoal Heather,,,S,,,,,9004018_11481,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-charcoal-heather-front-683f9d11bbc17.png?v=1748999463,oz,PC040100,45.79,
-bungi-x-bobby-rabbit-hardware-unisex-hoodie,,,,,,,,,Vintage Black,,,S,,,,,9004018_20272,487.61179775,shopify,deny,manual,50.00,,true,true,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-vintage-black-front-683f9d11c724f.png?v=1748999462,oz,PC040100,45.79,
-bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie,"Who knew that the softest hoodie you'll ever own comes with such a cool design. You won't regret buying this classic streetwear piece of apparel with a convenient pouch pocket and warm hood for chilly evenings.",My Store,,"","",false,Size,S,,,,,,,,4356716_10774,487.61179775,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,active
-bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie,,,,,,,,,M,,,,,,,,4356716_10775,532.97103475,shopify,deny,manual,50.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-back-683f9ce10ab8f.png?v=1748999410,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411,oz,PC040100,45.79,
-bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,7836547_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,active
-bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt,,,,,,,,,S,,,,,,,,7836547_8851,174.34956721875,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png?v=1748999335,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335,oz,PC040100,22.39,
-bungi-x-bobby-rabbit-hardware-mens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,3735441_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png?v=1748999286,oz,PC040100,22.39,active
-bungi-x-bobby-rabbit-hardware-unisex-sweatshirt,BUNGI X BOBBY RABBIT HARDWARE Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design.",My Store,,"","",false,Size,2XS,,,,,,,,8966477_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png?v=1748999157,oz,PC040100,34.63,active
-bungi-x-bobby-rabbit-hardware-womens-t-shirt,BUNGI X BOBBY RABBIT HARDWARE Women's T-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton-touch polyester jersey that won't fade after washing.",My Store,,"","",false,Size,XS,,,,,,,,5932847_8884,104.3262451,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png?v=1748999112,oz,PC040100,21.37,active
-bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT DARKMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere.",My Store,,"","",false,Color,Black,,Size,S,,,,,1039392_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png?v=1748999022,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png?v=1748999022,oz,PC040100,44.76,active
-bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt,BUNGI X BOBBY RABBIT LIGHTMODE EMBROIDERED Unisex organic oversized sweatshirt,"Get comfy in this organic oversized sweatshirt, an excellent companion for getting warm and cozy anywhere.",My Store,,"","",false,Color,Black,,Size,S,,,,,5234695_20831,498.951607,shopify,deny,manual,50.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png?v=1748998934,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png?v=1748998934,oz,PC040100,44.76,active
-bungi-x-bobby-cuffed-beanie-1,BUNGI X BOBBY Cuffed Beanie,"A snug, form-fitting beanie. It's not only a great head-warming piece but a staple accessory in anyone's wardrobe.",My Store,,"","",false,Color,Black,,,,,,,,4804417_8936,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-black-front-683f9a789ba58.png?v=1748998784,oz,PC040129,12.79,active
-bungi-x-bobby-cuffed-beanie-1,,,,,,,,,White,,,,,,,,4804417_8938,85.048569375,shopify,deny,manual,15.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,2,Product mockup,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/cuffed-beanie-white-front-683f9a789c355.png?v=1748998784,oz,PC040129,12.79,
-bungi-x-bobby-dark-mode-wide-leg-joggers,BUNGI X BOBBY DARK MODE Wide-leg joggers,"Rediscover '90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings.",My Store,,"","",false,Size,2XS,,,,,,,,6222891_19889,479.95742650625,shopify,deny,manual,43.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png?v=1748998622,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png?v=1748998622,oz,,38.95,active
-wide-leg-joggers,BUNGI X BOBBY LIGHTMODE Wide-leg joggers,"Rediscover '90s fashion with these all-over print wide-leg joggers. Ideal for athleisure looks and casual outings.",My Store,,"","",false,Size,2XS,,,,,,,,7529383_19889,479.95742650625,shopify,deny,manual,44.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085d00.png?v=1748998443,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085d01.png?v=1748998443,oz,,38.95,active
-bungi-x-bobby-cowboy-unisex-windbreaker,BUNGI X BOBBY COWBOY Unisex windbreaker,"Whether you're hiking, camping, or just running errands, this casual, sporty windbreaker's got you covered.",My Store,Uncategorized,"","",true,Color,Black,,Size,S,,,,,2813074_16424,192.011320125625,shopify,deny,manual,41.00,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/basic-unisex-windbreaker-black-front-683f9890d7838.png?v=1748998298,oz,,33.25,active
-bungi-x-bobby-cowboy-unisex-sweatshirt,BUNGI X BOBBY COWBOY Unisex Sweatshirt,"Each unique, all-over printed sweatshirt is precision-cut and hand-sewn to achieve the best possible look and bring out the intricate design.",My Store,,"","",true,Size,2XS,,,,,,,,7066242_19769,379.883609875,shopify,deny,manual,42.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png?v=1748998234,oz,PC040100,34.63,active
-bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to know your new favorite tee—it's super smooth, super comfortable, and made from a cotton touch polyester jersey that won't fade after washing.",My Store,,"","",true,Size,XS,,,,,,,,9951917_8850,155.07189149375,shopify,deny,manual,27.50,,true,true,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,1,Product mockup,false,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png?v=1748998137,oz,PC040100,22.39,active`;
     }
 
     parseCSVToProducts(csvText) {
@@ -373,217 +331,19 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
     }
 
     getLocalMockupImages(productHandle, productTitle) {
-        // Map product handles to their local mockup images
+        // Map product handles to their local mockup images - simplified to show key images
         const mockupMappings = {
             'bungi-x-bobby-rabbit-hardware-unisex-hoodie': [
-                // Black variants
                 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c7dbc.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c454e.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c613f.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021c5335.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021d1e6b.png',
-                'mockups/unisex-premium-hoodie-black-front-683f9021d10cf.png',
                 'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
-                'mockups/unisex-premium-hoodie-black-left-683f9021d48f6.png',
-                'mockups/unisex-premium-hoodie-black-left-683f9021d63b0.png',
-                'mockups/unisex-premium-hoodie-black-left-front-683f9021d3bb3.png',
-                'mockups/unisex-premium-hoodie-black-left-front-683f9021d719b.png',
-                'mockups/unisex-premium-hoodie-black-left-front-683f9021d5672.png',
-                'mockups/unisex-premium-hoodie-black-product-details-683f9021d031c.png',
-                'mockups/unisex-premium-hoodie-black-right-683f9021d7e69.png',
-                'mockups/unisex-premium-hoodie-black-right-683f9021d9a41.png',
-                'mockups/unisex-premium-hoodie-black-right-683f9021db0c8.png',
-                'mockups/unisex-premium-hoodie-black-right-front-683f9021d8c96.png',
-                'mockups/unisex-premium-hoodie-black-right-front-683f9021da77d.png',
-                'mockups/unisex-premium-hoodie-black-right-front-683f9021db96e.png',
-                // Charcoal Heather variants
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022dda27.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022e79ce.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022e274e.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022ec2ea.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022f0f8b.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f90230b140.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f902306bbf.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9023029ae.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f90231150c.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-back-683f902315348.png',
                 'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022af178.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022b4bc6.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022b9614.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022bf4ef.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022c3b59.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022c7f7d.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022cd03c.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022d1c31.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022d56a9.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f90231dc55.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9023221a7.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f90232db97.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f902335bde.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-683f9023265c1.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f90232a100.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f90233a0a8.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-left-front-683f9023315c6.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-product-details-683f90231950e.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f90233dd40.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f90234d7d9.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-683f9023457b5.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f90234190a.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f902349507.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-right-front-683f902351581.png',
-                // Maroon variants
-                'mockups/unisex-premium-hoodie-maroon-back-683f90225ac87.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f90225eace.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f90226c655.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f90226f069.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f90227c5b6.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f902266bfa.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f902278df8.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f9022632e7.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f9022698f9.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f9022725ab.png',
-                'mockups/unisex-premium-hoodie-maroon-back-683f9022757a0.png',
                 'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f90223e529.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f90224aec2.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f90224f7a0.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902237f8f.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902242d51.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902253f58.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902257a94.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902282a52.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902285fda.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f9022352a8.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f902247897.png',
-                'mockups/unisex-premium-hoodie-maroon-left-683f90228e99c.png',
-                'mockups/unisex-premium-hoodie-maroon-left-683f902288f36.png',
-                'mockups/unisex-premium-hoodie-maroon-left-683f902293d87.png',
-                'mockups/unisex-premium-hoodie-maroon-left-front-683f90228c159.png',
-                'mockups/unisex-premium-hoodie-maroon-left-front-683f9022912dc.png',
-                'mockups/unisex-premium-hoodie-maroon-left-front-683f902296816.png',
-                'mockups/unisex-premium-hoodie-maroon-product-details-683f90227f787.png',
-                'mockups/unisex-premium-hoodie-maroon-right-683f9022a4ec2.png',
-                'mockups/unisex-premium-hoodie-maroon-right-683f90229f0d8.png',
-                'mockups/unisex-premium-hoodie-maroon-right-683f9022996fd.png',
-                'mockups/unisex-premium-hoodie-maroon-right-front-683f9022a1ecc.png',
-                'mockups/unisex-premium-hoodie-maroon-right-front-683f9022a7df8.png',
-                'mockups/unisex-premium-hoodie-maroon-right-front-683f90229c199.png',
-                // Navy Blazer variants
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f12b2.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9021f340b.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220a49d.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220c026.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902202df1.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902207edc.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902211d54.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f9022063c4.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90220129d.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f90221017f.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-back-683f902204828.png',
                 'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021df6e7.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e1a2a.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e4de3.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e67ee.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e3452.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021e8427.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021ea7ca.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021ecb13.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021eefd9.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9022165b9.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9022183ba.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221aa90.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-683f90221f43e.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-683f902223cf8.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f90221cad5.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f902221fe4.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-left-front-683f9022262e7.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-product-details-683f90221408e.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-683f90222d3ed.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-683f902227e4c.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-683f90223094d.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f90222a85d.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f90222eec5.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-right-front-683f902233340.png',
-                // Vintage Black variants
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023a579e.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023ad2c6.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023b96cd.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023b2911.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023be376.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023c318e.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f90238c9e9.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f90239dcd9.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f902387cc2.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f9023918a7.png',
-                'mockups/unisex-premium-hoodie-vintage-black-back-683f902396748.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023d2ea2.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235e599.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90236a5e6.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90236fe1c.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90237e394.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f902364bee.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f902382f2a.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023749ba.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235506f.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f90235970a.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f902379677.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023d85a1.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023e21ce.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-683f9023eb72a.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023dd7aa.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023e6e1a.png',
-                'mockups/unisex-premium-hoodie-vintage-black-left-front-683f9023f0cab.png',
-                'mockups/unisex-premium-hoodie-vintage-black-product-details-683f9023c7e67.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-683f90240cd93.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-683f902402ac4.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-683f902418707.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f90241faf5.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f902407984.png',
-                'mockups/unisex-premium-hoodie-vintage-black-right-front-683f902413558.png'
+                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'
             ],
             'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
-                // White variants
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd1d6d.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd2d80.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd3e2a.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd4edf.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd5fa6.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd14c9.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd25c8.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd35a9.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd4659.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddd5753.png',
                 'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcc3c5.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddccd72.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcd618.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcdeaf.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddce7bf.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcf039.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcf92a.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddd0bf4.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddd70e7.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddd0201.png',
-                'mockups/unisex-premium-hoodie-white-front-683f8fddd7977.png',
-                'mockups/unisex-premium-hoodie-white-left-683f8fddd825c.png',
-                'mockups/unisex-premium-hoodie-white-left-683f8fddd9327.png',
-                'mockups/unisex-premium-hoodie-white-left-683f8fddda3b7.png',
-                'mockups/unisex-premium-hoodie-white-left-front-683f8fddd8b54.png',
-                'mockups/unisex-premium-hoodie-white-left-front-683f8fddd9b64.png',
-                'mockups/unisex-premium-hoodie-white-left-front-683f8fdddaba1.png',
-                'mockups/unisex-premium-hoodie-white-product-details-683f8fddd68c9.png',
-                'mockups/unisex-premium-hoodie-white-right-683f8fdddb49b.png',
-                'mockups/unisex-premium-hoodie-white-right-683f8fdddc582.png',
-                'mockups/unisex-premium-hoodie-white-right-683f8fdddd5dc.png',
-                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddbd08.png',
-                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddcda0.png',
-                'mockups/unisex-premium-hoodie-white-right-front-683f8fdddde59.png'
+                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
             ],
             'bungi-x-bobby-dark-mode-wide-leg-joggers': [
                 'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
@@ -1193,85 +953,3 @@ bungi-x-bobby-cowboy-mens-t-shirt,BUNGI X BOBBY COWBOY Men's t-shirt,"Get to kno
 document.addEventListener('DOMContentLoaded', () => {
     window.productManager = new ProductManager();
 });
-
-// Add notification styles
-const notificationStyles = `
-    .notification {
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: rgba(26, 26, 46, 0.95);
-        border: 1px solid rgba(168, 85, 247, 0.3);
-        border-radius: 12px;
-        padding: 1rem 1.5rem;
-        color: #ffffff;
-        z-index: 10000;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        backdrop-filter: blur(10px);
-        max-width: 300px;
-    }
-
-    .notification.show {
-        transform: translateX(0);
-    }
-
-    .notification-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-
-    .notification-message {
-        flex: 1;
-        font-weight: 500;
-    }
-
-    .notification-close {
-        background: none;
-        border: none;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.5rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-    }
-
-    .notification-close:hover {
-        color: #ffffff;
-    }
-
-    .notification-success {
-        border-color: rgba(34, 197, 94, 0.5);
-        background: rgba(34, 197, 94, 0.1);
-    }
-
-    .notification-error {
-        border-color: rgba(239, 68, 68, 0.5);
-        background: rgba(239, 68, 68, 0.1);
-    }
-
-    .notification-info {
-        border-color: rgba(59, 130, 246, 0.5);
-        background: rgba(59, 130, 246, 0.1);
-    }
-
-    @media (max-width: 768px) {
-        .notification {
-            right: 10px;
-            left: 10px;
-            max-width: none;
-            transform: translateY(-100px);
-        }
-
-        .notification.show {
-            transform: translateY(0);
-        }
-    }
-`;
-
-// Inject notification styles
-const styleSheet = document.createElement('style');
-styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet);
