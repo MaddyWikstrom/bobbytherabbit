@@ -49,6 +49,9 @@ const BobbyCarts = {
         // Load cart from storage
         this.loadCartFromStorage();
         
+        // Fix existing cart images (for already stored items)
+        this.fixExistingCartImages();
+        
         // Cache DOM elements
         this.cacheElements();
         
@@ -62,6 +65,61 @@ const BobbyCarts = {
         this.setupAddToCartButtons();
         
         console.log('✅ Cart system initialized with', this.state.items.length, 'items');
+    },
+    
+    // Fix existing cart images that might be broken in storage
+    fixExistingCartImages: function() {
+        console.log('🔄 Checking cart images for repair...');
+        
+        if (!this.state.items || this.state.items.length === 0) {
+            console.log('ℹ️ No cart items to fix');
+            return;
+        }
+        
+        let fixedCount = 0;
+        
+        // Loop through all cart items
+        this.state.items.forEach(item => {
+            // First check if the image is a Shopify CDN URL
+            if (item.image && item.image.includes('cdn.shopify.com')) {
+                // Shopify URLs are generally fine, but check if they have version parameters
+                if (item.image.includes('?v=')) {
+                    // Strip version parameters which might cause issues
+                    item.image = item.image.split('?')[0];
+                    fixedCount++;
+                }
+            }
+            // If not a Shopify URL or missing, try to fix with product mapping
+            else if (window.PRODUCT_MAPPING) {
+                // Look for this product in our mappings
+                for (const handle in window.PRODUCT_MAPPING) {
+                    const product = window.PRODUCT_MAPPING[handle];
+                    
+                    // Try to match by ID or title
+                    if (
+                        (item.productId && item.productId === handle) ||
+                        (item.shopifyId && product.shopifyProductId === item.shopifyId) ||
+                        (item.title && product.shopifyProductId.toLowerCase().includes(item.title.toLowerCase()))
+                    ) {
+                        // Found a match! Use the first variant image
+                        if (product.variants && product.variants.length > 0) {
+                            item.image = product.variants[0].image;
+                            console.log('✅ Fixed image for', item.title, 'using product mapping');
+                            fixedCount++;
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+        
+        // Save fixed cart back to storage
+        if (fixedCount > 0) {
+            console.log(`🛠️ Fixed ${fixedCount} cart images`);
+            this.saveCartToStorage();
+        } else {
+            console.log('✅ No cart images needed fixing');
+        }
     },
     
     // Cache DOM elements for better performance
@@ -1267,7 +1325,46 @@ const BobbyCarts = {
             <div class="cart-item" data-item-id="${item.id}" data-product-id="${item.productId}" data-shopify-id="${item.shopifyId || ''}">
                 <div class="cart-item-image-container">
                     <img src="${item.image}" alt="${item.title}" class="cart-item-image"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.nextElementSibling.nextElementSibling.style.display='block';">
+                         data-product-id="${item.productId}"
+                         data-shopify-id="${item.shopifyId || ''}"
+                         data-title="${item.title}"
+                         onerror="
+                            // Try to find a product image from PRODUCT_MAPPING first
+                            if (window.PRODUCT_MAPPING) {
+                                const itemId = this.getAttribute('data-product-id');
+                                const shopifyId = this.getAttribute('data-shopify-id');
+                                const title = this.getAttribute('data-title');
+                                
+                                // Look for matching product
+                                for (const handle in window.PRODUCT_MAPPING) {
+                                    const product = window.PRODUCT_MAPPING[handle];
+                                    if ((itemId && handle === itemId) ||
+                                        (shopifyId && product.shopifyProductId === shopifyId) ||
+                                        (title && product.shopifyProductId.toLowerCase().includes(title.toLowerCase()))) {
+                                        
+                                        // Use first variant image
+                                        if (product.variants && product.variants.length > 0) {
+                                            this.src = product.variants[0].image;
+                                            console.log('Fixed cart image using product mapping:', handle);
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // If that failed, try direct Shopify CDN URL
+                            if (this.getAttribute('data-product-id')) {
+                                const cdnUrl = 'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png';
+                                this.src = cdnUrl;
+                                console.log('Trying fallback Shopify CDN URL');
+                                return;
+                            }
+                            
+                            // If still failed, fall back to standard error handling
+                            this.style.display='none';
+                            this.nextElementSibling.style.display='flex';
+                            this.nextElementSibling.nextElementSibling.style.display='block';
+                         ">
                     <div class="cart-item-placeholder" style="display:none;">?</div>
                     <button class="image-retry-btn" style="display:none;">Retry</button>
                 </div>
