@@ -109,6 +109,7 @@ class ProductDetailManager {
     async loadProduct() {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
+        const selectedColor = urlParams.get('color'); // Get color from URL if available
 
         // Load product data (this would typically come from an API)
         this.currentProduct = await this.fetchProductData(productId);
@@ -117,6 +118,13 @@ class ProductDetailManager {
         // and will be handled by renderProduct()
 
         this.renderProduct();
+        
+        // Set the selected color if it was passed in the URL
+        if (selectedColor && this.currentProduct &&
+            this.currentProduct.colors.some(c => c.name === selectedColor)) {
+            this.selectColor(selectedColor);
+        }
+        
         this.addToRecentlyViewed(this.currentProduct);
         this.loadRelatedProducts();
     }
@@ -191,38 +199,34 @@ class ProductDetailManager {
         // Extract images from Shopify
         const shopifyImages = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
         
-        // Get local mockup images
+        // Get local mockup images (only as fallback)
         const localImages = this.getLocalMockupImages(shopifyProduct.handle, shopifyProduct.title);
         
-        // Get specific cover image
-        const coverImage = this.getProductCoverImage(shopifyProduct.handle, shopifyProduct.title);
-        
-        // Create image array with cover image first, then other local images, then Shopify images
+        // PRIORITIZE SHOPIFY IMAGES: Create image array with Shopify images first, then fallback to local images
         let images = [];
         
-        // Add cover image as the first image if it exists
-        if (coverImage) {
-            images.push(coverImage);
-            
-            // Add remaining local images, excluding the cover image to avoid duplication
-            localImages.forEach(img => {
-                if (img !== coverImage) {
-                    images.push(img);
-                }
-            });
-        } else {
-            // If no cover image, use all local images
-            images = [...localImages];
+        // Use Shopify images if available (preferred source)
+        if (shopifyImages && shopifyImages.length > 0) {
+            images = [...shopifyImages];
+            console.log(`Using ${images.length} Shopify API images for product`);
         }
-        
-        // Add Shopify images
-        images = [...images, ...shopifyImages];
+        // Fallback to local images if no Shopify images
+        else if (localImages && localImages.length > 0) {
+            images = [...localImages];
+            console.log(`Falling back to ${images.length} local mockup images`);
+        }
+        // Last resort - generic placeholder
+        else {
+            images = ['assets/placeholder.png'];
+            console.log('No product images found, using placeholder');
+        }
         
         // Extract variants and organize by color/size
         const variants = [];
         const colorMap = {};
         const sizes = new Set();
         const inventory = {};
+        const colorToImagesMap = new Map(); // Create map for color-specific images
         
         shopifyProduct.variants.edges.forEach(variantEdge => {
             const variant = variantEdge.node;
@@ -250,6 +254,18 @@ class ProductDetailManager {
                 inventory[`${color}-${size}`] = variant.quantityAvailable || 10; // Default to 10 if not available
             }
             
+            // If variant has an image, associate it with the color
+            if (variant.image && variant.image.url && color) {
+                if (!colorToImagesMap.has(color)) {
+                    colorToImagesMap.set(color, []);
+                }
+                
+                // Only add if not already in the array
+                if (!colorToImagesMap.get(color).includes(variant.image.url)) {
+                    colorToImagesMap.get(color).push(variant.image.url);
+                }
+            }
+            
             variants.push({
                 id: variant.id,
                 color: color,
@@ -260,6 +276,23 @@ class ProductDetailManager {
                 quantityAvailable: variant.quantityAvailable || 10
             });
         });
+        
+        // If we have color-specific images but not for all colors,
+        // assign general images to colors without specific images
+        if (colorToImagesMap.size > 0 && colorToImagesMap.size < Object.keys(colorMap).length) {
+            Object.keys(colorMap).forEach(color => {
+                if (!colorToImagesMap.has(color)) {
+                    colorToImagesMap.set(color, [...images]);
+                }
+            });
+        }
+        // If we don't have any color-specific images but do have colors
+        else if (colorToImagesMap.size === 0 && Object.keys(colorMap).length > 0) {
+            // Just assign all images to all colors
+            Object.keys(colorMap).forEach(color => {
+                colorToImagesMap.set(color, [...images]);
+            });
+        }
         
         // Calculate pricing
         const minPrice = parseFloat(shopifyProduct.priceRange.minVariantPrice.amount);
@@ -280,6 +313,7 @@ class ProductDetailManager {
             variants: variants,
             colors: Object.values(colorMap),
             sizes: Array.from(sizes),
+            colorImages: Object.fromEntries(colorToImagesMap), // Add the color to images mapping
             featured: shopifyProduct.tags.includes('featured'),
             new: shopifyProduct.tags.includes('new'),
             sale: comparePrice && comparePrice > minPrice,
@@ -928,32 +962,40 @@ class ProductDetailManager {
             return;
         }
         
-        // Convert color name to lowercase for case-insensitive comparison
-        const color = colorName.toLowerCase();
-        
-        // Filter images that match the selected color
-        this.filteredImages = this.currentProduct.images.filter(imagePath => {
-            // First check if the image path exists (not a reference to a non-existent file)
-            if (!imagePath || typeof imagePath !== 'string') {
-                return false;
-            }
+        // Check if we have explicit color-specific images from Shopify
+        if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
+            // Use the color-specific images from our mapping
+            this.filteredImages = this.currentProduct.colorImages[colorName];
+            console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
+        } else {
+            // Fallback to filename-based filtering if no explicit color mapping
             
-            const imageName = imagePath.toLowerCase();
-            // Check if image filename contains the color name
-            // Common patterns: color-position (e.g., black-front, white-back)
-            return imageName.includes(`-${color}-`) ||
-                   imageName.includes(`/${color}-`) ||
-                   imageName.includes(`-${color.replace(' ', '-')}-`) ||
-                   imageName.includes(`/${color.replace(' ', '-')}-`) ||
-                   // Also try matching "color position" without hyphen
-                   imageName.includes(`${color} `);
-        });
-        
-        // If no images match the color, use all images as fallback
-        // but don't log an error since this is expected behavior when a product
-        // doesn't have color-specific images
-        if (this.filteredImages.length === 0) {
-            this.filteredImages = [...this.currentProduct.images];
+            // Convert color name to lowercase for case-insensitive comparison
+            const color = colorName.toLowerCase();
+            
+            // Filter images that match the selected color
+            this.filteredImages = this.currentProduct.images.filter(imagePath => {
+                // First check if the image path exists (not a reference to a non-existent file)
+                if (!imagePath || typeof imagePath !== 'string') {
+                    return false;
+                }
+                
+                const imageName = imagePath.toLowerCase();
+                // Check if image filename contains the color name
+                // Common patterns: color-position (e.g., black-front, white-back)
+                return imageName.includes(`-${color}-`) ||
+                       imageName.includes(`/${color}-`) ||
+                       imageName.includes(`-${color.replace(' ', '-')}-`) ||
+                       imageName.includes(`/${color.replace(' ', '-')}-`) ||
+                       // Also try matching "color position" without hyphen
+                       imageName.includes(`${color} `);
+            });
+            
+            // If no images match the color, use all images as fallback
+            if (this.filteredImages.length === 0) {
+                console.log(`No specific images found for color: ${colorName}, using all images`);
+                this.filteredImages = [...this.currentProduct.images];
+            }
         }
         
         // Update the thumbnail grid with filtered images
