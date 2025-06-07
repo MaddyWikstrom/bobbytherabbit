@@ -525,6 +525,64 @@ class QuickViewManager {
                 align-items: center;
             }
             
+            .quick-add-colors {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: center;
+                width: 100%;
+                margin-top: 10px;
+            }
+            
+            .quick-add-color-btn {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                position: relative;
+            }
+            
+            .quick-add-color-btn:hover,
+            .quick-add-color-btn.selected {
+                transform: scale(1.2);
+                border-color: white;
+                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            }
+            
+            .quick-add-color-btn:after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background-color: currentColor;
+            }
+            
+            .quick-add-color-name {
+                position: absolute;
+                bottom: -22px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                font-size: 10px;
+                padding: 2px 5px;
+                border-radius: 2px;
+                white-space: nowrap;
+                opacity: 0;
+                transition: opacity 0.2s;
+                pointer-events: none;
+            }
+            
+            .quick-add-color-btn:hover .quick-add-color-name {
+                opacity: 1;
+            }
+            
             .product-card:hover .product-quick-add-overlay {
                 opacity: 1;
                 transform: translateY(0);
@@ -861,6 +919,9 @@ class QuickViewManager {
         quickAddOverlay.className = 'product-quick-add-overlay';
         quickAddOverlay.innerHTML = `
             <div class="quick-add-title">QUICK ADD TO BAG</div>
+            <div class="quick-add-colors" data-product-id="${productId}" style="display: none;">
+                <!-- Color buttons will be added dynamically -->
+            </div>
             <div class="quick-add-sizes" data-product-id="${productId}">
                 <!-- Size buttons will be added dynamically -->
                 <div class="quick-add-sizes-loading">Loading sizes...</div>
@@ -869,37 +930,124 @@ class QuickViewManager {
         
         card.appendChild(quickAddOverlay);
         
-        // Fetch sizes for this product
-        this.fetchProductSizes(productId, quickAddOverlay.querySelector('.quick-add-sizes'));
+        // Fetch product data (colors and sizes)
+        this.fetchProductOptions(productId, quickAddOverlay);
     }
     
-    async fetchProductSizes(productId, sizesContainer) {
+    async fetchProductOptions(productId, overlay) {
         try {
             const product = await this.fetchProductData(productId);
-            if (!product || !product.sizes || product.sizes.length === 0) {
-                sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+            if (!product) {
+                overlay.querySelector('.quick-add-sizes').innerHTML = '<div class="quick-add-error">Product not available</div>';
                 return;
             }
             
-            // Render size buttons
-            sizesContainer.innerHTML = product.sizes.map(size => `
-                <button class="quick-add-size-btn" data-size="${size}">${size}</button>
-            `).join('');
+            const colorsContainer = overlay.querySelector('.quick-add-colors');
+            const sizesContainer = overlay.querySelector('.quick-add-sizes');
             
-            // Add click event listeners to size buttons
-            const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
-            sizeButtons.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const size = btn.getAttribute('data-size');
-                    this.quickAddToCart(productId, size);
+            // Product with colors
+            if (product.colors && product.colors.length > 0) {
+                // Show and populate colors container
+                colorsContainer.style.display = 'flex';
+                
+                // Create color buttons
+                colorsContainer.innerHTML = product.colors.map((color, index) => `
+                    <div class="quick-add-color-btn ${index === 0 ? 'selected' : ''}"
+                         style="color: ${color.code}"
+                         data-color="${color.name}">
+                        <span class="quick-add-color-name">${color.name}</span>
+                    </div>
+                `).join('');
+                
+                // Initially selected color
+                const selectedColor = product.colors[0].name;
+                
+                // Populate sizes for the initially selected color
+                this.updateSizesForColor(product, selectedColor, sizesContainer, productId);
+                
+                // Add event listeners to color buttons
+                const colorButtons = colorsContainer.querySelectorAll('.quick-add-color-btn');
+                colorButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Update UI for selected color
+                        colorButtons.forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        
+                        // Get the selected color
+                        const color = btn.getAttribute('data-color');
+                        
+                        // Update sizes based on the selected color
+                        this.updateSizesForColor(product, color, sizesContainer, productId);
+                    });
                 });
-            });
+            } else {
+                // Product without colors - just show sizes
+                colorsContainer.style.display = 'none';
+                
+                if (!product.sizes || product.sizes.length === 0) {
+                    sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+                    return;
+                }
+                
+                // Render size buttons
+                sizesContainer.innerHTML = product.sizes.map(size => `
+                    <button class="quick-add-size-btn" data-size="${size}">${size}</button>
+                `).join('');
+                
+                // Add click event listeners to size buttons
+                const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
+                sizeButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const size = btn.getAttribute('data-size');
+                        this.quickAddToCart(productId, size);
+                    });
+                });
+            }
         } catch (error) {
-            console.error('Error fetching product sizes:', error);
-            sizesContainer.innerHTML = '<div class="quick-add-error">Error loading sizes</div>';
+            console.error('Error fetching product options:', error);
+            overlay.querySelector('.quick-add-sizes').innerHTML = '<div class="quick-add-error">Error loading options</div>';
         }
+    }
+    
+    updateSizesForColor(product, colorName, sizesContainer, productId) {
+        if (!product || !product.sizes || product.sizes.length === 0) {
+            sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+            return;
+        }
+        
+        // Filter sizes available for this color based on inventory
+        const availableSizes = product.sizes.filter(size => {
+            const inventoryKey = `${colorName}-${size}`;
+            const stockLevel = product.inventory[inventoryKey] || 0;
+            return stockLevel > 0;
+        });
+        
+        if (availableSizes.length === 0) {
+            sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available for this color</div>';
+            return;
+        }
+        
+        // Render size buttons for this color
+        sizesContainer.innerHTML = availableSizes.map(size => `
+            <button class="quick-add-size-btn" data-size="${size}" data-color="${colorName}">${size}</button>
+        `).join('');
+        
+        // Add click event listeners to size buttons
+        const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
+        sizeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const size = btn.getAttribute('data-size');
+                const color = btn.getAttribute('data-color');
+                this.quickAddToCart(productId, size, color);
+            });
+        });
     }
     
     async openQuickView(productId) {
@@ -947,12 +1095,12 @@ class QuickViewManager {
         }
     }
     
-    async quickAddToCart(productId, size) {
-        console.log(`QuickAddToCart: Adding product ${productId} with size ${size} to cart`);
+    async quickAddToCart(productId, size, color = null) {
+        console.log(`QuickAddToCart: Adding product ${productId} with size ${size}${color ? ' and color ' + color : ''} to cart`);
         
         try {
             // Show loading/processing indicator
-            this.showAddingFeedback(productId, size);
+            this.showAddingFeedback(productId, size, color);
             
             // Fetch product data
             const product = await this.fetchProductData(productId);
@@ -962,24 +1110,43 @@ class QuickViewManager {
                 return;
             }
             
+            // Determine which color to use (passed color or first available color)
+            const selectedColor = color || (product.colors && product.colors.length > 0 ? product.colors[0].name : null);
+            
+            // Find the image for the selected color if possible
+            let productImage = product.images && product.images.length > 0 ? product.images[0] : null;
+            
+            // If we have color and multiple images, try to find matching image
+            if (selectedColor && product.images && product.images.length > 1 && product.variants) {
+                // Try to find a variant with matching color
+                const colorVariant = product.variants.find(v => v.color === selectedColor);
+                if (colorVariant && colorVariant.id) {
+                    // If variant has its own image, use it
+                    const variantImageIndex = Math.min(product.variants.indexOf(colorVariant), product.images.length - 1);
+                    if (variantImageIndex >= 0) {
+                        productImage = product.images[variantImageIndex];
+                    }
+                }
+            }
+            
             // Create cart item
             const cartItem = {
                 ...product,
                 selectedSize: size,
-                selectedColor: product.colors && product.colors.length > 0 ? product.colors[0].name : null,
+                selectedColor: selectedColor,
                 quantity: 1,
                 variants: {
                     size: size,
-                    color: product.colors && product.colors.length > 0 ? product.colors[0].name : null
+                    color: selectedColor
                 },
                 variant: {
                     size: size,
-                    color: product.colors && product.colors.length > 0 ? product.colors[0].name : null
+                    color: selectedColor
                 },
                 size: size,
-                color: product.colors && product.colors.length > 0 ? product.colors[0].name : null,
-                image: product.images && product.images.length > 0 ? product.images[0] : null,
-                mainImage: product.images && product.images.length > 0 ? product.images[0] : null
+                color: selectedColor,
+                image: productImage,
+                mainImage: productImage
             };
             
             // Add to cart
@@ -1030,10 +1197,12 @@ class QuickViewManager {
         }
     }
     
-    showAddingFeedback(productId, selectedSize) {
-        // Find all size buttons for this product
+    showAddingFeedback(productId, selectedSize, selectedColor = null) {
+        // Find all size and color containers for this product
         const sizeContainers = document.querySelectorAll(`.quick-add-sizes[data-product-id="${productId}"]`);
+        const colorContainers = document.querySelectorAll(`.quick-add-colors[data-product-id="${productId}"]`);
         
+        // Highlight the selected size buttons and disable all
         sizeContainers.forEach(container => {
             const sizeButtons = container.querySelectorAll('.quick-add-size-btn');
             
@@ -1060,6 +1229,29 @@ class QuickViewManager {
                 });
             }, 1500);
         });
+        
+        // If a color was selected, highlight it
+        if (selectedColor) {
+            colorContainers.forEach(container => {
+                const colorButtons = container.querySelectorAll('.quick-add-color-btn');
+                
+                colorButtons.forEach(btn => {
+                    // Find the color button that matches the selected color
+                    if (btn.getAttribute('data-color') === selectedColor) {
+                        // Add extra highlight
+                        const originalScale = btn.style.transform;
+                        btn.style.transform = 'scale(1.3)';
+                        btn.style.boxShadow = '0 0 8px rgba(255, 255, 255, 0.8)';
+                        
+                        // Reset after a delay
+                        setTimeout(() => {
+                            btn.style.transform = originalScale;
+                            btn.style.boxShadow = '';
+                        }, 1500);
+                    }
+                });
+            });
+        }
     }
     
     showNotification(message, type = 'info') {
