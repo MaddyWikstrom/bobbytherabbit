@@ -991,13 +991,15 @@ class QuickViewManager {
             
             // Handle different selectedOptions formats
             if (variant.selectedOptions && Array.isArray(variant.selectedOptions)) {
-                console.log('QuickView: Processing selectedOptions array:', variant.selectedOptions);
+                console.log('QuickView: Processing selectedOptions array:', JSON.stringify(variant.selectedOptions));
+                console.log(`QuickView: Variant title: "${variant.title}"`);
+                
+                // First pass: Look for exact "Size" option
+                let foundSize = false;
                 variant.selectedOptions.forEach(option => {
                     // Safely check option name, normalize to lowercase
                     const optionName = option.name?.toLowerCase() || '';
                     const optionValue = option.value || '';
-                    
-                    console.log(`QuickView: Processing option: ${optionName} = ${optionValue}`);
                     
                     if (optionName === 'color') {
                         color = optionValue;
@@ -1009,83 +1011,101 @@ class QuickViewManager {
                         }
                     } else if (optionName === 'size') {
                         size = optionValue;
-                        if (size) {
-                            console.log(`QuickView: Adding size: ${size}`);
-                            sizes.add(size);
-                        }
-                    } else {
-                        // Check if this might be a size option with a different name
+                        foundSize = true;
+                        console.log(`QuickView: Found direct size option: ${size}`);
+                        sizes.add(size);
+                    }
+                });
+                
+                // Second pass: Look for size-like values in any option (if size not found)
+                if (!foundSize) {
+                    variant.selectedOptions.forEach(option => {
+                        const optionName = option.name?.toLowerCase() || '';
+                        const optionValue = option.value || '';
+                        
+                        // Skip options we already processed as color
+                        if (optionName === 'color') return;
+                        
+                        // Check if this looks like a size value
                         const upperValue = optionValue.toUpperCase().trim();
                         if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperValue) ||
                             upperValue.includes('SMALL') ||
                             upperValue.includes('MEDIUM') ||
                             upperValue.includes('LARGE') ||
-                            upperValue.match(/^\d+$/) || // Numeric sizes
-                            upperValue.match(/^\d+\.\d+$/) // Decimal sizes
-                        ) {
+                            /^\d+$/.test(upperValue) || // Numeric sizes
+                            /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
+                            
                             console.log(`QuickView: Detected size "${optionValue}" from option "${optionName}"`);
                             size = optionValue;
                             sizes.add(size);
+                            foundSize = true;
                         }
-                    }
-                });
+                    });
+                }
             } else if (variant.title) {
                 // Alternative format: parse from title (e.g. "Black / XL")
                 const variantTitle = variant.title.trim();
                 console.log(`QuickView: Parsing variant from title: "${variantTitle}"`);
                 
-                // Try splitting by slash with spaces
-                let parts = variantTitle.split(' / ');
-                
-                // If that didn't work, try other common separators
-                if (parts.length < 2) {
-                    parts = variantTitle.split('/');
-                }
-                
-                // Last resort - try splitting by space, assuming first word is color, last is size
-                if (parts.length < 2 && variantTitle.includes(' ')) {
-                    const words = variantTitle.split(' ');
-                    parts = [words[0], words[words.length - 1]];
-                }
-                
-                if (parts.length >= 2) {
-                    console.log(`QuickView: Split title into parts:`, parts);
-                    // Assume first part is color, second is size (common Shopify pattern)
-                    color = parts[0].trim();
-                    size = parts[1].trim();
-                    
-                    if (color && !colorMap[color]) {
-                        colorMap[color] = {
-                            name: color,
-                            code: this.getColorCode(color)
-                        };
+                // Skip if we already found a size
+                if (!size) {
+                    // Check for slash format (Color / Size)
+                    if (variantTitle.includes('/')) {
+                        // Try splitting by slash with spaces
+                        let parts = variantTitle.split(' / ');
+                        
+                        // If that didn't work, try simple slash
+                        if (parts.length < 2) {
+                            parts = variantTitle.split('/');
+                        }
+                        
+                        if (parts.length >= 2) {
+                            console.log(`QuickView: Split title into parts:`, parts);
+                            // Assume first part is color, second is size (common Shopify pattern)
+                            color = parts[0].trim();
+                            size = parts[1].trim();
+                            
+                            if (color && !colorMap[color]) {
+                                colorMap[color] = {
+                                    name: color,
+                                    code: this.getColorCode(color)
+                                };
+                            }
+                            
+                            if (size) {
+                                console.log(`QuickView: Adding size from title: ${size}`);
+                                sizes.add(size);
+                            }
+                        }
                     }
-                    
-                    if (size) {
-                        console.log(`QuickView: Adding size from title: ${size}`);
+                    // Check for "One Size" variants
+                    else if (variantTitle.toLowerCase().includes('one size')) {
+                        size = 'One Size';
+                        console.log(`QuickView: Found "One Size" variant`);
                         sizes.add(size);
                     }
-                } else {
-                    // Try to identify if the single part might be a size
-                    const upperTitle = variantTitle.toUpperCase();
-                    const sizePatterns = ['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', 'SMALL', 'MEDIUM', 'LARGE'];
-                    
-                    // Check if this title contains a size pattern
-                    for (const pattern of sizePatterns) {
-                        if (upperTitle === pattern || upperTitle.includes(` ${pattern}`) ||
-                            upperTitle.includes(`${pattern} `)) {
+                    // Check for size-only variants
+                    else {
+                        const upperTitle = variantTitle.toUpperCase();
+                        // Check if the entire title is a common size
+                        if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperTitle) ||
+                            upperTitle.includes('SMALL') ||
+                            upperTitle.includes('MEDIUM') ||
+                            upperTitle.includes('LARGE') ||
+                            /^\d+$/.test(upperTitle)) { // Numeric sizes
+                            
                             size = variantTitle;
                             console.log(`QuickView: Detected size "${size}" from title`);
                             sizes.add(size);
-                            break;
                         }
-                    }
-                    
-                    // Check for numeric sizes (e.g., 30, 32, 34)
-                    if (!size && upperTitle.match(/^\d+$/)) {
-                        size = variantTitle;
-                        console.log(`QuickView: Detected numeric size "${size}" from title`);
-                        sizes.add(size);
+                        // For single variants with no size specified
+                        else if (variantTitle !== 'Default Title') {
+                            // For a product with only one variant, it might not have size
+                            // Use title as is or default to "One Size"
+                            size = 'One Size';
+                            console.log(`QuickView: Single variant with title "${variantTitle}", using "One Size"`);
+                            sizes.add(size);
+                        }
                     }
                 }
             }
@@ -1261,6 +1281,15 @@ class QuickViewManager {
         if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
             console.log(`QuickView: No sizes found, adding "One Size" as default`);
             this.currentProduct.sizes = ["One Size"];
+            
+            // Add inventory entries for One Size
+            if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+                this.currentProduct.colors.forEach(color => {
+                    const inventoryKey = `${color.name}-One Size`;
+                    this.currentProduct.inventory[inventoryKey] = 10; // Default stock of 10
+                    console.log(`QuickView: Added inventory for ${inventoryKey}`);
+                });
+            }
         }
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {

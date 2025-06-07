@@ -65,47 +65,69 @@ function generateProductMapping(products) {
         product.variants.edges.forEach(variantEdge => {
             const variant = variantEdge.node;
             
-            // Extract size from variant options - enhanced with better fallbacks
-            let size = 'Default';
+            // Extract size from variant options
+            let size = null;
             
-            // First try to find a direct size option
+            // Debug output to diagnose the variant structure
+            console.log(`Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
+            
+            // Method 1: Try to find a direct size option
             const sizeOption = variant.selectedOptions.find(opt =>
                 opt.name.toLowerCase() === 'size'
             );
             
             if (sizeOption) {
                 size = sizeOption.value;
+                console.log(`Found size option directly: ${size}`);
             }
-            // If no size option found, try to extract from title (common format: "Color / Size")
-            else if (variant.title && variant.title !== 'Default Title') {
-                const titleParts = variant.title.split('/');
-                if (titleParts.length > 1) {
-                    // Usually the size is the second part after color
-                    size = titleParts[1].trim();
-                } else {
-                    size = variant.title.trim();
+            
+            // Method 2: Look for size-like values in any option (regardless of name)
+            if (!size && variant.selectedOptions && variant.selectedOptions.length > 0) {
+                for (const opt of variant.selectedOptions) {
+                    const value = opt.value.toUpperCase().trim();
+                    // Check for common size patterns
+                    if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(value) ||
+                        value.includes('SMALL') || value.includes('MEDIUM') || value.includes('LARGE') ||
+                        /^\d+$/.test(value) || // Numeric sizes
+                        /^[0-9]+\.[0-9]+$/.test(value)) { // Decimal sizes
+                        
+                        size = opt.value;
+                        console.log(`Found size-like value "${size}" in option "${opt.name}"`);
+                        break;
+                    }
                 }
             }
             
-            // Additional extraction fallback - try common size formats
-            if (size === 'Default' && variant.selectedOptions && variant.selectedOptions.length > 0) {
-                // Try to find any option that looks like a size (S, M, L, XL, XXL, etc.)
-                const possibleSizeOption = variant.selectedOptions.find(opt => {
-                    const val = opt.value.toUpperCase().trim();
-                    return val === 'S' || val === 'M' || val === 'L' || val === 'XL' ||
-                           val === '2XL' || val === 'XXL' || val === '3XL' || val === 'XXXL' ||
-                           val.match(/^\d+$/) || // Numeric sizes like 30, 32, etc.
-                           val.includes('SMALL') || val.includes('MEDIUM') ||
-                           val.includes('LARGE') || val.includes('EXTRA');
-                });
-                
-                if (possibleSizeOption) {
-                    size = possibleSizeOption.value;
-                    console.log(`Extracted size "${size}" from option "${possibleSizeOption.name}"`);
+            // Method 3: Try to extract from variant title (format: "Color / Size" or similar)
+            if (!size && variant.title && variant.title !== 'Default Title') {
+                // Check for slash format
+                if (variant.title.includes('/')) {
+                    const parts = variant.title.split('/').map(p => p.trim());
+                    // Usually size is the second part (after color)
+                    if (parts.length > 1) {
+                        size = parts[1];
+                        console.log(`Extracted size "${size}" from title with slash: ${variant.title}`);
+                    }
+                }
+                // Check for special "One Size" variant
+                else if (variant.title.toLowerCase().includes('one size')) {
+                    size = 'One Size';
+                    console.log(`Found "One Size" variant`);
+                }
+                // If only one variant exists and it's not "Default Title", use it as is
+                else {
+                    size = variant.title;
+                    console.log(`Using variant title as size: ${size}`);
                 }
             }
             
-            // Store all sizes in a complete object to ensure none are missed
+            // Final fallback: if nothing worked, use "One Size"
+            if (!size) {
+                size = 'One Size';
+                console.log(`Defaulting to "One Size" for variant: ${variant.title}`);
+            }
+            
+            // Store the size-to-variant mapping
             variants[size] = variant.id;
             console.log(`Mapped variant "${variant.title}" to size "${size}"`);
         });

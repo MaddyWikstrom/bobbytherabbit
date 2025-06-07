@@ -144,6 +144,11 @@ class ProductManager {
                 let color = '';
                 let size = '';
                 
+                // Debug output to help diagnose issues
+                console.log(`Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
+                
+                // First pass: Look for exact "Size" option
+                let foundSize = false;
                 variant.selectedOptions.forEach(option => {
                     if (option.name.toLowerCase() === 'color') {
                         color = option.value;
@@ -151,31 +156,69 @@ class ProductManager {
                     } else if (option.name.toLowerCase() === 'size') {
                         size = option.value;
                         sizes.add(size);
-                    } else {
-                        // Check if this might be a size option with a different name
+                        foundSize = true;
+                        console.log(`Found direct size option: ${size}`);
+                    }
+                });
+                
+                // Second pass: Look for size-like values in any option (if size not found)
+                if (!foundSize) {
+                    variant.selectedOptions.forEach(option => {
+                        // Skip options we already processed as color
+                        if (option.name.toLowerCase() === 'color') return;
+                        
+                        // Check if this might be a size value
                         const upperValue = option.value.toUpperCase().trim();
                         if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperValue) ||
                             upperValue.includes('SMALL') ||
                             upperValue.includes('MEDIUM') ||
                             upperValue.includes('LARGE') ||
-                            upperValue.match(/^\d+$/) || // Numeric sizes
-                            upperValue.match(/^\d+\.\d+$/) // Decimal sizes
-                        ) {
+                            /^\d+$/.test(upperValue) || // Numeric sizes
+                            /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
+                            
                             console.log(`Detected size "${option.value}" from option "${option.name}"`);
                             size = option.value;
                             sizes.add(size);
+                            foundSize = true;
+                        }
+                    });
+                }
+                
+                // Extract size from variant title if still not found
+                if (!foundSize && variant.title && variant.title !== 'Default Title') {
+                    // Check for slash format (Color / Size)
+                    if (variant.title.includes('/')) {
+                        const parts = variant.title.split('/').map(p => p.trim());
+                        // Usually size is the second part (after color)
+                        if (parts.length > 1) {
+                            size = parts[1];
+                            console.log(`Extracted size "${size}" from title with slash: ${variant.title}`);
+                            sizes.add(size);
+                            foundSize = true;
                         }
                     }
-                });
-                
-                // Extract size from variant title if not found in options
-                if (size === '' && variant.title && variant.title !== 'Default Title') {
-                    // Common format: "Color / Size"
-                    const titleParts = variant.title.split('/');
-                    if (titleParts.length > 1) {
-                        size = titleParts[1].trim();
+                    // Check for "One Size" variant
+                    else if (variant.title.toLowerCase().includes('one size')) {
+                        size = 'One Size';
+                        console.log(`Found "One Size" variant`);
                         sizes.add(size);
-                        console.log(`Extracted size "${size}" from variant title`);
+                        foundSize = true;
+                    }
+                    // Check for size-only variants
+                    else {
+                        const upperTitle = variant.title.toUpperCase();
+                        // Check if the entire title is a common size
+                        if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperTitle) ||
+                            upperTitle.includes('SMALL') ||
+                            upperTitle.includes('MEDIUM') ||
+                            upperTitle.includes('LARGE') ||
+                            /^\d+$/.test(upperTitle)) { // Numeric sizes
+                            
+                            size = variant.title;
+                            console.log(`Detected size "${size}" from title`);
+                            sizes.add(size);
+                            foundSize = true;
+                        }
                     }
                 }
                 
