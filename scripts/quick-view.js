@@ -1298,6 +1298,12 @@ class QuickViewManager {
         debugInfo.textContent = `Available sizes: ${this.currentProduct.sizes ? Array.from(this.currentProduct.sizes).join(', ') : 'None'}`;
         debugInfo.style.display = 'block';
         
+        // Create a local sizes Set using the product's sizes or an empty set
+        const sizes = new Set(this.currentProduct.sizes || []);
+        
+        // Get variant data from product
+        const variantsToProcess = this.currentProduct.variants || [];
+        
         // Log all discovered sizes before processing
         console.log(`QuickView: All discovered sizes before processing: ${Array.from(sizes).join(', ')}`);
         
