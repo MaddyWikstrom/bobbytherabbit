@@ -1049,10 +1049,12 @@ class QuickViewManager {
                     return;
                 }
                 
-                // Render size buttons
-                sizesContainer.innerHTML = product.sizes.map(size => `
-                    <button class="quick-add-size-btn" data-size="${size}">${size}</button>
-                `).join('');
+                // Render size buttons with simplified display
+                sizesContainer.innerHTML = product.sizes.map(size => {
+                    // Store original size as data attribute but display simplified version
+                    const displaySize = this.simplifySize(size);
+                    return `<button class="quick-add-size-btn" data-size="${size}">${displaySize}</button>`;
+                }).join('');
                 
                 // Add click event listeners to size buttons
                 const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
@@ -1089,10 +1091,12 @@ class QuickViewManager {
             return;
         }
         
-        // Render size buttons for this color
-        sizesContainer.innerHTML = availableSizes.map(size => `
-            <button class="quick-add-size-btn" data-size="${size}" data-color="${colorName}">${size}</button>
-        `).join('');
+        // Render size buttons for this color with simplified display
+        sizesContainer.innerHTML = availableSizes.map(size => {
+            // Store original size as data attribute but display simplified version
+            const displaySize = this.simplifySize(size);
+            return `<button class="quick-add-size-btn" data-size="${size}" data-color="${colorName}">${displaySize}</button>`;
+        }).join('');
         
         // Add click event listeners to size buttons
         const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
@@ -1246,7 +1250,9 @@ class QuickViewManager {
             }
             
             if (cartAddSuccess) {
-                this.showNotification(`Added ${product.title} (${size}) to cart`, 'success');
+                // Use simplified size in notification
+                const displaySize = this.simplifySize(size);
+                this.showNotification(`Added ${product.title} (${displaySize}) to cart`, 'success');
             }
         } catch (error) {
             console.error('QuickAddToCart: Error adding to cart:', error);
@@ -1281,7 +1287,8 @@ class QuickViewManager {
                     
                     if (btn.getAttribute('data-size') === selectedSize) {
                         btn.classList.remove('selected');
-                        btn.innerText = selectedSize; // Reset text
+                        // Reset text with simplified size
+                        btn.innerText = this.simplifySize(selectedSize);
                     }
                 });
             }, 1500);
@@ -1463,9 +1470,21 @@ class QuickViewManager {
             // IMPORTANT: Always add the variant title as a size option first
             // This ensures we capture all possible variants regardless of structure
             if (variant.title && variant.title !== 'Default Title') {
-                size = variant.title;
+                // Simplify size display by extracting only the size part or simplifying it
+                let simplifiedSize = variant.title;
+                
+                // Check if it contains a slash (like "Black / Small")
+                if (simplifiedSize.includes('/')) {
+                    // Extract the size part (usually after the slash)
+                    simplifiedSize = simplifiedSize.split('/').pop().trim();
+                }
+                
+                // Simplify common size formats
+                simplifiedSize = this.simplifySize(simplifiedSize);
+                
+                size = simplifiedSize;
                 sizes.add(size);
-                console.log(`QuickView: Added variant title directly as size: ${size}`);
+                console.log(`QuickView: Added simplified size: ${size} (from ${variant.title})`);
             }
             
             // Handle different selectedOptions formats
@@ -1488,17 +1507,20 @@ class QuickViewManager {
                             };
                         }
                     } else if (optionName === 'size') {
-                        size = optionValue;
+                        // Simplify the size value
+                        size = this.simplifySize(optionValue);
                         foundSize = true;
-                        console.log(`QuickView: Found direct size option: ${size}`);
+                        console.log(`QuickView: Found direct size option: ${size} (from ${optionValue})`);
                         sizes.add(size);
                     }
                     
                     // IMPORTANT: Add ALL option values as potential sizes
                     // This ensures we don't miss any possible size variants
                     if (optionValue && optionValue !== 'Default Title') {
-                        sizes.add(optionValue);
-                        console.log(`QuickView: Added option value as potential size: ${optionValue}`);
+                        // Simplify the size value before adding
+                        const simplifiedSize = this.simplifySize(optionValue);
+                        sizes.add(simplifiedSize);
+                        console.log(`QuickView: Added simplified size: ${simplifiedSize} (from ${optionValue})`);
                     }
                 });
                 
@@ -1521,7 +1543,8 @@ class QuickViewManager {
                             /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
                             
                             console.log(`QuickView: Detected size "${optionValue}" from option "${optionName}"`);
-                            size = optionValue;
+                            // Simplify the size value
+                            size = this.simplifySize(optionValue);
                             sizes.add(size);
                             foundSize = true;
                         }
@@ -1548,7 +1571,8 @@ class QuickViewManager {
                             console.log(`QuickView: Split title into parts:`, parts);
                             // Assume first part is color, second is size (common Shopify pattern)
                             color = parts[0].trim();
-                            size = parts[1].trim();
+                            // Simplify the size value
+                            size = this.simplifySize(parts[1].trim());
                             
                             if (color && !colorMap[color]) {
                                 colorMap[color] = {
@@ -1558,7 +1582,7 @@ class QuickViewManager {
                             }
                             
                             if (size) {
-                                console.log(`QuickView: Adding size from title: ${size}`);
+                                console.log(`QuickView: Adding simplified size from title: ${size}`);
                                 sizes.add(size);
                             }
                         }
@@ -1580,8 +1604,9 @@ class QuickViewManager {
                             /^\d+$/.test(upperTitle) || // Numeric sizes
                             upperTitle) { // Just use the title as is if nothing else works
                             
-                            size = variantTitle;
-                            console.log(`QuickView: Using variant title "${size}" as size`);
+                            // Simplify the size value
+                            size = this.simplifySize(variantTitle);
+                            console.log(`QuickView: Using simplified size "${size}" (from "${variantTitle}")`);
                             sizes.add(size);
                         }
                         // For single variants with no size specified
@@ -1665,6 +1690,73 @@ class QuickViewManager {
         if (titleLower.includes('windbreaker') || titleLower.includes('jacket')) return 'Windbreakers';
         if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'Beanies';
         return 'Apparel';
+    }
+    
+    // Helper method to simplify size strings
+    simplifySize(sizeString) {
+        if (!sizeString) return '';
+        
+        // Convert to uppercase for comparison
+        const upperSize = sizeString.toUpperCase().trim();
+        
+        // Simple size mappings
+        const sizeMap = {
+            'SMALL': 'S',
+            'MEDIUM': 'M',
+            'LARGE': 'L',
+            'EXTRA LARGE': 'XL',
+            'EXTRA-LARGE': 'XL',
+            'EXTRA SMALL': 'XS',
+            'EXTRA-SMALL': 'XS',
+            '2XL': 'XXL',
+            '2X': 'XXL',
+            '3XL': '3XL',
+            '3X': '3XL',
+            'ONE SIZE': 'OS'
+        };
+        
+        // Check for exact matches in our mapping
+        if (sizeMap[upperSize]) {
+            return sizeMap[upperSize];
+        }
+        
+        // Check for partial matches
+        for (const [key, value] of Object.entries(sizeMap)) {
+            if (upperSize.includes(key)) {
+                return value;
+            }
+        }
+        
+        // Check for common size abbreviations
+        if (['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize)) {
+            return upperSize;
+        }
+        
+        // For sizes like "S / Black", extract just the size part
+        if (upperSize.includes('/')) {
+            const parts = upperSize.split('/').map(p => p.trim());
+            for (const part of parts) {
+                // Try to find a standard size in the parts
+                if (['S', 'M', 'L', 'XL', 'XXL', 'XS'].includes(part)) {
+                    return part;
+                }
+                
+                // Check for mapped sizes in the parts
+                for (const [key, value] of Object.entries(sizeMap)) {
+                    if (part.includes(key)) {
+                        return value;
+                    }
+                }
+            }
+        }
+        
+        // If it's a numeric size (like 32, 34, etc.), keep it as is
+        if (/^\d+$/.test(upperSize)) {
+            return upperSize;
+        }
+        
+        // If we can't simplify it, return the original string
+        return sizeString;
     }
     
     getColorCode(colorName) {
@@ -1840,10 +1932,13 @@ class QuickViewManager {
                 
                 console.log(`QuickView: Size ${size} - Stock: ${stockLevel}, Available: ${available}`);
                 
+                // Use simplified size for display
+                const displaySize = this.simplifySize(size);
+                
                 return `
                     <div class="quick-view-size-option ${available ? '' : 'unavailable'}"
                          data-size="${size}">
-                        ${size}
+                        ${displaySize}
                     </div>
                 `;
             }).join('');
@@ -1900,10 +1995,12 @@ class QuickViewManager {
                     if (sizeOptionsContainer && sizeGroup) {
                         // Show ALL sizes regardless of color/inventory in product details view
                         sizeOptionsContainer.innerHTML = this.currentProduct.sizes.map((size) => {
+                            // Use simplified size for display
+                            const displaySize = this.simplifySize(size);
                             return `
                                 <div class="quick-view-size-option"
                                     data-size="${size}">
-                                    ${size}
+                                    ${displaySize}
                                 </div>
                             `;
                         }).join('');
@@ -1991,7 +2088,7 @@ class QuickViewManager {
         return this.currentProduct.inventory[variantKey] || 0;
     }
     
-    // Filter images in the quick view to show only those for the selected color
+    // Improved filter images in the quick view to show only those for the selected color
     filterImagesByColor(colorName) {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             console.log('QuickView: No images to filter');
@@ -2000,53 +2097,77 @@ class QuickViewManager {
         
         console.log(`QuickView: Filtering images for color: ${colorName}`);
         
-        // Get all variants for this color
-        const colorVariants = this.currentProduct.variants.filter(v => v.color === colorName);
-        
-        // If we don't have color-specific variants, don't filter
-        if (!colorVariants.length) {
-            console.log('QuickView: No color-specific variants found, showing all images');
+        // If no colorName is provided, don't filter
+        if (!colorName) {
             return;
         }
         
-        // Try to match images to this color
-        // Strategy 1: Use image names/urls that contain color name
-        let colorImages = this.currentProduct.images.filter(imgUrl =>
-            imgUrl.toLowerCase().includes(colorName.toLowerCase()));
+        // Get all variants for this color
+        const colorVariants = this.currentProduct.variants.filter(v => v.color === colorName);
+        
+        // Try multiple strategies to find color-specific images
+        let colorImages = [];
+        
+        // Strategy 1: Check if image URLs contain the color name
+        const colorNameLower = colorName.toLowerCase();
+        colorImages = this.currentProduct.images.filter(imgUrl =>
+            imgUrl.toLowerCase().includes(colorNameLower));
+        
+        console.log(`QuickView: Strategy 1 - Found ${colorImages.length} images by color name match`);
+        
+        // Strategy 2: If strategy 1 didn't work, use variant index matching
+        if (colorImages.length === 0 && colorVariants.length > 0) {
+            const variantIndices = colorVariants.map(variant =>
+                this.currentProduct.variants.findIndex(v => v.id === variant.id)
+            ).filter(index => index >= 0);
             
-        // If no images matched by name, use strategy 2: Associate variants with images by index
-        if (!colorImages.length && colorVariants.length > 0) {
-            // Get the first variant for this color
-            const firstColorVariant = colorVariants[0];
-            const variantIndex = this.currentProduct.variants.findIndex(v => v.id === firstColorVariant.id);
+            console.log(`QuickView: Strategy 2 - Found variant indices: ${variantIndices.join(', ')}`);
             
-            if (variantIndex >= 0 && variantIndex < this.currentProduct.images.length) {
-                // Use the image at the matching index
-                colorImages = [this.currentProduct.images[variantIndex]];
+            if (variantIndices.length > 0) {
+                // Get images at matching indices
+                colorImages = variantIndices
+                    .filter(index => index < this.currentProduct.images.length)
+                    .map(index => this.currentProduct.images[index]);
                 
-                // Also include neighboring images if they exist (assuming they're for the same color)
-                if (variantIndex > 0) {
-                    colorImages.unshift(this.currentProduct.images[variantIndex - 1]);
-                }
-                if (variantIndex < this.currentProduct.images.length - 1) {
-                    colorImages.push(this.currentProduct.images[variantIndex + 1]);
+                console.log(`QuickView: Strategy 2 - Found ${colorImages.length} images by variant index match`);
+            }
+        }
+        
+        // Strategy 3: If we have at least one variant and a limited number of colors,
+        // try to group images evenly among colors
+        if (colorImages.length === 0 && this.currentProduct.colors.length > 0) {
+            const totalColors = this.currentProduct.colors.length;
+            const imagesPerColor = Math.floor(this.currentProduct.images.length / totalColors);
+            
+            if (imagesPerColor > 0) {
+                // Find the index of the selected color
+                const colorIndex = this.currentProduct.colors.findIndex(c => c.name === colorName);
+                
+                if (colorIndex >= 0) {
+                    // Calculate the start and end indices for this color's images
+                    const startIndex = colorIndex * imagesPerColor;
+                    const endIndex = (colorIndex === totalColors - 1)
+                        ? this.currentProduct.images.length  // Last color gets all remaining images
+                        : (colorIndex + 1) * imagesPerColor;
+                    
+                    colorImages = this.currentProduct.images.slice(startIndex, endIndex);
+                    console.log(`QuickView: Strategy 3 - Allocated ${colorImages.length} images for color ${colorName} (color ${colorIndex+1}/${totalColors})`);
                 }
             }
         }
         
-        // If we still have no images, use all images (don't filter)
-        if (!colorImages.length) {
-            console.log('QuickView: No color-specific images found, showing all images');
-            return;
+        // If we still don't have any images specific to this color,
+        // default to showing just the first image to avoid showing other colors
+        if (colorImages.length === 0 && this.currentProduct.images.length > 0) {
+            colorImages = [this.currentProduct.images[0]];
+            console.log(`QuickView: No color-specific images found, showing only first image`);
         }
-        
-        console.log(`QuickView: Found ${colorImages.length} images for color ${colorName}`);
         
         // Update main image and thumbnails
         const mainImage = document.getElementById('quick-view-main-image');
         const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
         
-        if (mainImage && thumbnailsContainer) {
+        if (mainImage && thumbnailsContainer && colorImages.length > 0) {
             // Set main image to first color image
             mainImage.src = colorImages[0];
             
@@ -2054,10 +2175,12 @@ class QuickViewManager {
             thumbnailsContainer.innerHTML = colorImages.map((image, index) => `
                 <img src="${image}" alt="${this.currentProduct.title}" class="quick-view-thumbnail ${index === 0 ? 'active' : ''}">
             `).join('');
+            
+            console.log(`QuickView: Updated gallery with ${colorImages.length} images for color ${colorName}`);
         }
     }
     
-    // Update product card image when a color is selected
+    // Improved update product card image when a color is selected
     updateProductCardImage(colorName, productCard) {
         if (!productCard || !colorName) return;
         
@@ -2065,27 +2188,63 @@ class QuickViewManager {
         const productId = productCard.getAttribute('data-product-id');
         if (!productId) return;
         
+        console.log(`QuickView: Updating product card image for color ${colorName}`);
+        
         // Fetch the product data if we need it
         this.fetchProductData(productId).then(product => {
             if (!product || !product.images || product.images.length === 0) return;
-            
-            // Find a variant matching this color
-            const colorVariant = product.variants.find(v => v.color === colorName);
-            if (!colorVariant) return;
-            
-            // Find variant index
-            const variantIndex = product.variants.indexOf(colorVariant);
-            if (variantIndex < 0) return;
             
             // Find the main product image in the card
             const productImage = productCard.querySelector('img');
             if (!productImage) return;
             
-            // If we have an image for this variant, use it
-            if (variantIndex < product.images.length) {
-                console.log(`QuickView: Updating product card image for color ${colorName}`);
-                productImage.src = product.images[variantIndex];
+            // Try multiple strategies to find color-specific images (similar to filterImagesByColor)
+            
+            // Strategy 1: Check if image URLs contain the color name
+            const colorNameLower = colorName.toLowerCase();
+            const colorImages = product.images.filter(imgUrl =>
+                imgUrl.toLowerCase().includes(colorNameLower));
+            
+            if (colorImages.length > 0) {
+                console.log(`QuickView: Found image by color name match`);
+                productImage.src = colorImages[0];
+                return;
             }
+            
+            // Strategy 2: Try to use variant index matching
+            const colorVariant = product.variants.find(v => v.color === colorName);
+            if (colorVariant) {
+                const variantIndex = product.variants.indexOf(colorVariant);
+                if (variantIndex >= 0 && variantIndex < product.images.length) {
+                    console.log(`QuickView: Found image by variant index match`);
+                    productImage.src = product.images[variantIndex];
+                    return;
+                }
+            }
+            
+            // Strategy 3: If there are multiple colors, try to allocate images evenly
+            if (product.colors && product.colors.length > 0) {
+                const totalColors = product.colors.length;
+                const imagesPerColor = Math.floor(product.images.length / totalColors);
+                
+                if (imagesPerColor > 0) {
+                    // Find the index of the selected color
+                    const colorIndex = product.colors.findIndex(c => c.name === colorName);
+                    
+                    if (colorIndex >= 0) {
+                        // Calculate the start index for this color's images
+                        const startIndex = colorIndex * imagesPerColor;
+                        if (startIndex < product.images.length) {
+                            console.log(`QuickView: Allocated image for color ${colorName}`);
+                            productImage.src = product.images[startIndex];
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // If no color-specific image is found, don't change the image
+            console.log(`QuickView: No specific image found for color ${colorName}`);
         });
     }
     
