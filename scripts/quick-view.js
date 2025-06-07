@@ -546,7 +546,7 @@ class QuickViewManager {
             /* Position the overlay to avoid covering color selector */
             .product-quick-add-overlay {
                 position: absolute;
-                bottom: 40px; /* Leave space at bottom for color selector */
+                bottom: 80px; /* Increased space for color selector */
                 left: 0;
                 right: 0;
                 background: rgba(0, 0, 0, 0.85);
@@ -560,7 +560,7 @@ class QuickViewManager {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                max-height: calc(100% - 60px); /* Ensure it doesn't take up too much space */
+                max-height: calc(100% - 100px); /* Ensure it doesn't take up too much space */
                 overflow-y: auto; /* Allow scrolling if needed */
             }
             
