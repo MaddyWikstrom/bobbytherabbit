@@ -502,55 +502,115 @@ class QuickViewManager {
                 100% { transform: rotate(360deg); }
             }
             
-            /* Quick View Icon */
+            /* Quick Add Overlay */
             .product-card {
                 position: relative;
             }
             
-            .product-quick-view-icon {
+            .product-quick-add-overlay {
                 position: absolute;
-                top: 10px;
-                right: 10px;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                background: rgba(20, 20, 35, 0.7);
-                backdrop-filter: blur(5px);
-                border: 1px solid rgba(168, 85, 247, 0.3);
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.3s ease;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(3px);
+                padding: 15px;
                 opacity: 0;
-                transform: scale(0.8);
-                z-index: 5;
-            }
-            
-            .product-card:hover .product-quick-view-icon {
-                opacity: 1;
-                transform: scale(1);
-            }
-            
-            .product-quick-view-icon:hover {
-                background: rgba(59, 130, 246, 0.7);
-                border-color: rgba(59, 130, 246, 0.8);
-                transform: scale(1.1);
-                box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-            }
-            
-            .product-quick-view-icon svg {
-                width: 20px;
-                height: 20px;
-                stroke: white;
-                stroke-width: 2;
+                transform: translateY(10px);
                 transition: all 0.3s ease;
+                pointer-events: none;
+                z-index: 5;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
             
-            .product-quick-view-icon:hover svg {
-                stroke: #ffffff;
-                transform: scale(1.1);
+            .product-card:hover .product-quick-add-overlay {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+            
+            .quick-add-title {
+                color: white;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 12px;
+                text-align: center;
+            }
+            
+            .quick-add-sizes {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .quick-add-size-btn {
+                background: #000;
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 50px;
+                padding: 5px 10px;
+                min-width: 40px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-transform: uppercase;
+            }
+            
+            .quick-add-size-btn:hover,
+            .quick-add-size-btn.selected {
+                background: white;
+                color: black;
+                border-color: white;
+            }
+            
+            .quick-add-size-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            
+            .quick-add-sizes-loading,
+            .quick-add-error {
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 12px;
+                text-align: center;
+                padding: 5px 0;
+            }
+            
+            /* Simple notification */
+            .quick-notification {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 4px;
+                font-size: 14px;
+                z-index: 10000;
+                transition: transform 0.3s ease;
+            }
+            
+            .quick-notification.show {
+                transform: translateX(-50%) translateY(0);
+            }
+            
+            .quick-notification.success {
+                border-left: 3px solid #10b981;
+            }
+            
+            .quick-notification.error {
+                border-left: 3px solid #ef4444;
+            }
+            
+            .quick-notification.info {
+                border-left: 3px solid #3b82f6;
             }
             
             @media (max-width: 768px) {
@@ -621,8 +681,7 @@ class QuickViewManager {
                         </div>
                     </div>
                     <div class="quick-view-actions">
-                        <button class="quick-add-btn" id="quick-add-btn">Add to Cart</button>
-                        <button class="quick-view-btn" id="quick-view-full-btn">View Details</button>
+                        <button class="quick-view-btn" id="quick-view-full-btn" style="width: 100%;">View Details</button>
                     </div>
                 </div>
             </div>
@@ -645,20 +704,18 @@ class QuickViewManager {
     setupEventListeners() {
         const self = this;
         
-        // Handle product card quick view buttons
+        // Handle product card clicks
         document.addEventListener('click', function(e) {
-            // Quick View icon
-            if (e.target.matches('.product-quick-view-icon, .product-quick-view-icon svg, .product-quick-view-icon *') ||
-                e.target.closest('.product-quick-view-icon')) {
+            // Delegated event handling for size buttons (they're added dynamically)
+            if (e.target.matches('.quick-add-size-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                const productCard = e.target.closest('.product-card');
-                if (productCard) {
-                    const productId = productCard.getAttribute('data-product-id');
-                    if (productId) {
-                        self.openQuickView(productId);
-                    }
+                const productId = e.target.closest('.quick-add-sizes').getAttribute('data-product-id');
+                const size = e.target.getAttribute('data-size');
+                
+                if (productId && size) {
+                    self.quickAddToCart(productId, size);
                 }
             }
         });
@@ -721,9 +778,6 @@ class QuickViewManager {
                 
                 self.selectedVariant.size = selectedSize;
                 
-                // Force UI update
-                document.getElementById('quick-add-btn').textContent = 'Add to Cart';
-                
                 // Hide debug info after a delay
                 setTimeout(() => {
                     debugInfo.style.display = 'none';
@@ -748,10 +802,7 @@ class QuickViewManager {
                 }
             }
             
-            // Add to cart button
-            if (e.target.matches('#quick-add-btn')) {
-                self.addToCart();
-            }
+            // Add to cart button in modal was removed
             
             // View full details button
             if (e.target.matches('#quick-view-full-btn')) {
@@ -798,19 +849,57 @@ class QuickViewManager {
     }
     
     addQuickViewButtonToCard(card) {
-        // Check if card already has quick view buttons
-        if (card.querySelector('.product-quick-view-icon')) return;
+        // Check if card already has quick add to bag overlay
+        if (card.querySelector('.product-quick-add-overlay')) return;
         
-        const quickViewIcon = document.createElement('button');
-        quickViewIcon.className = 'product-quick-view-icon';
-        quickViewIcon.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+        // Get product data
+        const productId = card.getAttribute('data-product-id');
+        if (!productId) return;
+        
+        // Create the quick add overlay
+        const quickAddOverlay = document.createElement('div');
+        quickAddOverlay.className = 'product-quick-add-overlay';
+        quickAddOverlay.innerHTML = `
+            <div class="quick-add-title">QUICK ADD TO BAG</div>
+            <div class="quick-add-sizes" data-product-id="${productId}">
+                <!-- Size buttons will be added dynamically -->
+                <div class="quick-add-sizes-loading">Loading sizes...</div>
+            </div>
         `;
         
-        card.appendChild(quickViewIcon);
+        card.appendChild(quickAddOverlay);
+        
+        // Fetch sizes for this product
+        this.fetchProductSizes(productId, quickAddOverlay.querySelector('.quick-add-sizes'));
+    }
+    
+    async fetchProductSizes(productId, sizesContainer) {
+        try {
+            const product = await this.fetchProductData(productId);
+            if (!product || !product.sizes || product.sizes.length === 0) {
+                sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+                return;
+            }
+            
+            // Render size buttons
+            sizesContainer.innerHTML = product.sizes.map(size => `
+                <button class="quick-add-size-btn" data-size="${size}">${size}</button>
+            `).join('');
+            
+            // Add click event listeners to size buttons
+            const sizeButtons = sizesContainer.querySelectorAll('.quick-add-size-btn');
+            sizeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const size = btn.getAttribute('data-size');
+                    this.quickAddToCart(productId, size);
+                });
+            });
+        } catch (error) {
+            console.error('Error fetching product sizes:', error);
+            sizesContainer.innerHTML = '<div class="quick-add-error">Error loading sizes</div>';
+        }
     }
     
     async openQuickView(productId) {
@@ -858,23 +947,149 @@ class QuickViewManager {
         }
     }
     
-    async quickAddToCart(productId) {
-        // Instead of automatically adding to cart, open the quick view modal
-        // to force user to select size before adding to cart
-        this.openQuickView(productId);
+    async quickAddToCart(productId, size) {
+        console.log(`QuickAddToCart: Adding product ${productId} with size ${size} to cart`);
         
-        // Show a notification reminding users to select a size
-        setTimeout(() => {
-            if (window.productManager && typeof window.productManager.showNotification === 'function') {
-                window.productManager.showNotification('Please select a size before adding to cart', 'info');
-            } else if (window.BobbyCart && typeof window.BobbyCart.showNotification === 'function') {
-                window.BobbyCart.showNotification('Please select a size before adding to cart', 'info');
-            } else if (window.BobbyCarts && typeof window.BobbyCarts.showNotification === 'function') {
-                window.BobbyCarts.showNotification('Please select a size before adding to cart', 'info');
-            } else {
-                console.log('INFO: Please select a size before adding to cart');
+        try {
+            // Show loading/processing indicator
+            this.showAddingFeedback(productId, size);
+            
+            // Fetch product data
+            const product = await this.fetchProductData(productId);
+            
+            if (!product) {
+                this.showNotification('Product not found', 'error');
+                return;
             }
-        }, 500);
+            
+            // Create cart item
+            const cartItem = {
+                ...product,
+                selectedSize: size,
+                selectedColor: product.colors && product.colors.length > 0 ? product.colors[0].name : null,
+                quantity: 1,
+                variants: {
+                    size: size,
+                    color: product.colors && product.colors.length > 0 ? product.colors[0].name : null
+                },
+                variant: {
+                    size: size,
+                    color: product.colors && product.colors.length > 0 ? product.colors[0].name : null
+                },
+                size: size,
+                color: product.colors && product.colors.length > 0 ? product.colors[0].name : null,
+                image: product.images && product.images.length > 0 ? product.images[0] : null,
+                mainImage: product.images && product.images.length > 0 ? product.images[0] : null
+            };
+            
+            // Add to cart
+            let cartAddSuccess = false;
+            
+            if (window.BobbyCart) {
+                window.BobbyCart.addToCart(cartItem);
+                console.log('QuickAddToCart: Added to cart using BobbyCart');
+                cartAddSuccess = true;
+                
+                // Open cart after a delay
+                setTimeout(() => {
+                    if (typeof window.BobbyCart.openCart === 'function') {
+                        window.BobbyCart.openCart();
+                    }
+                }, 500);
+            } else if (window.BobbyCarts) {
+                window.BobbyCarts.addToCart(cartItem);
+                console.log('QuickAddToCart: Added to cart using BobbyCarts');
+                cartAddSuccess = true;
+                
+                setTimeout(() => {
+                    if (typeof window.BobbyCarts.openCart === 'function') {
+                        window.BobbyCarts.openCart();
+                    }
+                }, 500);
+            } else if (window.cartManager) {
+                window.cartManager.addItem(cartItem);
+                console.log('QuickAddToCart: Added to cart using cartManager');
+                cartAddSuccess = true;
+                
+                setTimeout(() => {
+                    if (typeof window.cartManager.openCart === 'function') {
+                        window.cartManager.openCart();
+                    }
+                }, 500);
+            } else {
+                this.showNotification('Cart system not available', 'error');
+                return;
+            }
+            
+            if (cartAddSuccess) {
+                this.showNotification(`Added ${product.title} (${size}) to cart`, 'success');
+            }
+        } catch (error) {
+            console.error('QuickAddToCart: Error adding to cart:', error);
+            this.showNotification('Error adding to cart', 'error');
+        }
+    }
+    
+    showAddingFeedback(productId, selectedSize) {
+        // Find all size buttons for this product
+        const sizeContainers = document.querySelectorAll(`.quick-add-sizes[data-product-id="${productId}"]`);
+        
+        sizeContainers.forEach(container => {
+            const sizeButtons = container.querySelectorAll('.quick-add-size-btn');
+            
+            // Disable all buttons
+            sizeButtons.forEach(btn => {
+                btn.disabled = true;
+                
+                // Highlight the selected size
+                if (btn.getAttribute('data-size') === selectedSize) {
+                    btn.classList.add('selected');
+                    btn.innerText = 'Adding...';
+                }
+            });
+            
+            // Re-enable after a delay
+            setTimeout(() => {
+                sizeButtons.forEach(btn => {
+                    btn.disabled = false;
+                    
+                    if (btn.getAttribute('data-size') === selectedSize) {
+                        btn.classList.remove('selected');
+                        btn.innerText = selectedSize; // Reset text
+                    }
+                });
+            }, 1500);
+        });
+    }
+    
+    showNotification(message, type = 'info') {
+        if (window.productManager && typeof window.productManager.showNotification === 'function') {
+            window.productManager.showNotification(message, type);
+        } else if (window.BobbyCart && typeof window.BobbyCart.showNotification === 'function') {
+            window.BobbyCart.showNotification(message, type);
+        } else if (window.BobbyCarts && typeof window.BobbyCarts.showNotification === 'function') {
+            window.BobbyCarts.showNotification(message, type);
+        } else {
+            console.log(`${type.toUpperCase()}: ${message}`);
+            
+            // Simple fallback notification
+            const notification = document.createElement('div');
+            notification.className = `quick-notification ${type}`;
+            notification.innerText = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
     }
     
     async fetchProductData(productId) {
@@ -1476,45 +1691,33 @@ class QuickViewManager {
             }
         }
         
-        // Update add to cart button
-        const addButton = document.getElementById('quick-add-btn');
-        if (!addButton) {
-            console.error('QuickView: Add to cart button not found');
-            return;
-        }
+        // The Add to Cart button has been removed from the modal
+        // Update state logic for future reference
+        let canAddToCart = false;
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
-            // Need to select size
             if (!this.selectedVariant.size) {
-                addButton.disabled = true;
-                addButton.textContent = 'Select Size';
                 console.log('QuickView: Size selection required');
+                canAddToCart = false;
             } else if (!this.selectedVariant.color && this.currentProduct.colors.length > 0) {
-                addButton.disabled = true;
-                addButton.textContent = 'Select Color';
                 console.log('QuickView: Color selection required');
+                canAddToCart = false;
             } else {
                 const stock = this.getAvailableStock();
                 console.log(`QuickView: Stock available: ${stock}`);
-                
-                if (stock > 0) {
-                    addButton.disabled = false;
-                    addButton.textContent = 'Add to Cart';
-                } else {
-                    addButton.disabled = true;
-                    addButton.textContent = 'Out of Stock';
-                }
+                canAddToCart = stock > 0;
             }
         } else {
             // No sizes needed
             if (!this.selectedVariant.color && this.currentProduct.colors.length > 0) {
-                addButton.disabled = true;
-                addButton.textContent = 'Select Color';
+                canAddToCart = false;
             } else {
-                addButton.disabled = false;
-                addButton.textContent = 'Add to Cart';
+                canAddToCart = true;
             }
         }
+        
+        // Store the state for potential future use
+        this.canAddToCart = canAddToCart;
         
         // Hide debug info after a delay
         setTimeout(() => {
@@ -1630,15 +1833,7 @@ class QuickViewManager {
         
         debugInfo.textContent = 'Adding item to cart...';
         
-        // Add to cart
-        const addButton = document.getElementById('quick-add-btn');
-        
-        // Show animation
-        addButton.classList.add('adding');
-        addButton.textContent = 'Adding...';
-        setTimeout(() => {
-            addButton.classList.remove('adding');
-        }, 1200);
+        // Add to cart - no UI animation needed since button was removed
         
         // Try all available cart systems
         try {
@@ -1691,7 +1886,6 @@ class QuickViewManager {
             } else {
                 console.error('QuickView: No cart system available');
                 debugInfo.textContent = 'Error: Cart system not available';
-                addButton.textContent = 'Add to Cart';
                 
                 // Show an alert to the user
                 alert('The cart system is not available. This is likely because the site needs to be deployed to work correctly.');
@@ -1700,7 +1894,6 @@ class QuickViewManager {
             
             if (cartAddSuccess) {
                 debugInfo.textContent = 'Success! Added to cart';
-                addButton.textContent = 'Added to Cart ✓';
                 
                 // Close modal after a delay
                 setTimeout(() => {
@@ -1710,8 +1903,6 @@ class QuickViewManager {
         } catch (error) {
             console.error('QuickView: Error adding to cart:', error);
             debugInfo.textContent = `Error adding to cart: ${error.message}`;
-            addButton.textContent = 'Add to Cart';
-            addButton.classList.remove('adding');
         }
     }
     
