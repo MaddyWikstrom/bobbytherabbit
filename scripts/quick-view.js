@@ -859,7 +859,14 @@ class QuickViewManager {
                 colorOptions.forEach(option => option.classList.remove('active'));
                 colorOption.classList.add('active');
                 
-                self.selectedVariant.color = colorOption.getAttribute('data-color');
+                const selectedColor = colorOption.getAttribute('data-color');
+                self.selectedVariant.color = selectedColor;
+                
+                // Filter images to show only those for this color
+                if (self.currentProduct && self.currentProduct.images) {
+                    self.filterImagesByColor(selectedColor);
+                }
+                
                 self.updateQuickViewState();
             }
             
@@ -1025,6 +1032,9 @@ class QuickViewManager {
                         
                         // Get the selected color
                         const color = btn.getAttribute('data-color');
+                        
+                        // Update product card image if possible
+                        this.updateProductCardImage(color, overlay.closest('.product-card'));
                         
                         // Update sizes based on the selected color
                         this.updateSizesForColor(product, color, sizesContainer, productId);
@@ -1869,29 +1879,29 @@ class QuickViewManager {
         debugInfo.textContent = `Updating state: Color=${this.selectedVariant.color}, Size=${this.selectedVariant.size}`;
         debugInfo.style.display = 'block';
         
-        // Update size availability based on selected color
-        if (this.selectedVariant.color) {
+        // Check if we're in the quick view modal (product details) or quick add overlay
+        const isInQuickViewModal = document.getElementById('quick-view-modal').classList.contains('active');
+        
+        // In product details view, show all sizes regardless of color selection
+        if (isInQuickViewModal) {
             const sizeOptions = document.querySelectorAll('.quick-view-size-option');
-            console.log(`QuickView: Updating ${sizeOptions.length} size options based on color: ${this.selectedVariant.color}`);
+            console.log(`QuickView: In product details view - showing all ${sizeOptions.length} sizes regardless of color`);
             
             if (sizeOptions.length === 0) {
                 console.warn('QuickView: No size options found in DOM to update');
                 debugInfo.textContent = 'Warning: Size options not found';
                 
-                // Attempt to re-render sizes if they're missing
+                // Attempt to re-render all sizes if they're missing
                 if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
-                    console.log('QuickView: Attempting to re-render size options');
+                    console.log('QuickView: Attempting to re-render size options in product details view');
                     const sizeOptionsContainer = document.getElementById('quick-view-size-options');
                     const sizeGroup = document.getElementById('quick-view-size-group');
                     
                     if (sizeOptionsContainer && sizeGroup) {
+                        // Show ALL sizes regardless of color/inventory in product details view
                         sizeOptionsContainer.innerHTML = this.currentProduct.sizes.map((size) => {
-                            const inventoryKey = `${this.selectedVariant.color}-${size}`;
-                            const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
-                            const available = stockLevel > 0;
-                            
                             return `
-                                <div class="quick-view-size-option ${available ? '' : 'unavailable'}"
+                                <div class="quick-view-size-option"
                                     data-size="${size}">
                                     ${size}
                                 </div>
@@ -1899,11 +1909,25 @@ class QuickViewManager {
                         }).join('');
                         
                         sizeGroup.style.display = 'block';
-                        debugInfo.textContent = 'Size options regenerated';
+                        debugInfo.textContent = 'All sizes shown in product details view';
                     }
                 }
             } else {
-                // Normal flow - update existing size options
+                // In product details view, enable all size options
+                sizeOptions.forEach(option => {
+                    option.classList.remove('unavailable');
+                });
+                
+                debugInfo.textContent = `All sizes available in product details view`;
+            }
+        }
+        // In quick add overlay, filter sizes by color availability
+        else if (this.selectedVariant.color) {
+            const sizeOptions = document.querySelectorAll('.quick-add-size-btn');
+            console.log(`QuickView: In quick add - updating ${sizeOptions.length} size options based on color: ${this.selectedVariant.color}`);
+            
+            if (sizeOptions.length > 0) {
+                // Update existing size options in quick add overlay
                 let availableSizes = [];
                 
                 sizeOptions.forEach(option => {
@@ -1913,16 +1937,10 @@ class QuickViewManager {
                     const available = stockLevel > 0;
                     
                     console.log(`QuickView: Size ${size} availability: ${available} (stock: ${stockLevel})`);
-                    option.classList.toggle('unavailable', !available);
+                    option.disabled = !available;
                     
                     if (available) {
                         availableSizes.push(size);
-                    }
-                    
-                    // If the currently selected size is now unavailable, deselect it
-                    if (!available && this.selectedVariant.size === size) {
-                        this.selectedVariant.size = null;
-                        option.classList.remove('active');
                     }
                 });
                 
@@ -1971,6 +1989,104 @@ class QuickViewManager {
         
         const variantKey = `${this.selectedVariant.color}-${this.selectedVariant.size}`;
         return this.currentProduct.inventory[variantKey] || 0;
+    }
+    
+    // Filter images in the quick view to show only those for the selected color
+    filterImagesByColor(colorName) {
+        if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
+            console.log('QuickView: No images to filter');
+            return;
+        }
+        
+        console.log(`QuickView: Filtering images for color: ${colorName}`);
+        
+        // Get all variants for this color
+        const colorVariants = this.currentProduct.variants.filter(v => v.color === colorName);
+        
+        // If we don't have color-specific variants, don't filter
+        if (!colorVariants.length) {
+            console.log('QuickView: No color-specific variants found, showing all images');
+            return;
+        }
+        
+        // Try to match images to this color
+        // Strategy 1: Use image names/urls that contain color name
+        let colorImages = this.currentProduct.images.filter(imgUrl =>
+            imgUrl.toLowerCase().includes(colorName.toLowerCase()));
+            
+        // If no images matched by name, use strategy 2: Associate variants with images by index
+        if (!colorImages.length && colorVariants.length > 0) {
+            // Get the first variant for this color
+            const firstColorVariant = colorVariants[0];
+            const variantIndex = this.currentProduct.variants.findIndex(v => v.id === firstColorVariant.id);
+            
+            if (variantIndex >= 0 && variantIndex < this.currentProduct.images.length) {
+                // Use the image at the matching index
+                colorImages = [this.currentProduct.images[variantIndex]];
+                
+                // Also include neighboring images if they exist (assuming they're for the same color)
+                if (variantIndex > 0) {
+                    colorImages.unshift(this.currentProduct.images[variantIndex - 1]);
+                }
+                if (variantIndex < this.currentProduct.images.length - 1) {
+                    colorImages.push(this.currentProduct.images[variantIndex + 1]);
+                }
+            }
+        }
+        
+        // If we still have no images, use all images (don't filter)
+        if (!colorImages.length) {
+            console.log('QuickView: No color-specific images found, showing all images');
+            return;
+        }
+        
+        console.log(`QuickView: Found ${colorImages.length} images for color ${colorName}`);
+        
+        // Update main image and thumbnails
+        const mainImage = document.getElementById('quick-view-main-image');
+        const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
+        
+        if (mainImage && thumbnailsContainer) {
+            // Set main image to first color image
+            mainImage.src = colorImages[0];
+            
+            // Update thumbnails
+            thumbnailsContainer.innerHTML = colorImages.map((image, index) => `
+                <img src="${image}" alt="${this.currentProduct.title}" class="quick-view-thumbnail ${index === 0 ? 'active' : ''}">
+            `).join('');
+        }
+    }
+    
+    // Update product card image when a color is selected
+    updateProductCardImage(colorName, productCard) {
+        if (!productCard || !colorName) return;
+        
+        // Try to find cached product data
+        const productId = productCard.getAttribute('data-product-id');
+        if (!productId) return;
+        
+        // Fetch the product data if we need it
+        this.fetchProductData(productId).then(product => {
+            if (!product || !product.images || product.images.length === 0) return;
+            
+            // Find a variant matching this color
+            const colorVariant = product.variants.find(v => v.color === colorName);
+            if (!colorVariant) return;
+            
+            // Find variant index
+            const variantIndex = product.variants.indexOf(colorVariant);
+            if (variantIndex < 0) return;
+            
+            // Find the main product image in the card
+            const productImage = productCard.querySelector('img');
+            if (!productImage) return;
+            
+            // If we have an image for this variant, use it
+            if (variantIndex < product.images.length) {
+                console.log(`QuickView: Updating product card image for color ${colorName}`);
+                productImage.src = product.images[variantIndex];
+            }
+        });
     }
     
     addToCart() {
