@@ -501,54 +501,55 @@ class QuickViewManager {
                 100% { transform: rotate(360deg); }
             }
             
-            /* Quick View Product Card Button */
+            /* Quick View Icon */
             .product-card {
                 position: relative;
             }
             
-            .product-quick-actions {
+            .product-quick-view-icon {
                 position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                display: flex;
-                gap: 0.5rem;
-                padding: 0.75rem;
-                background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-                opacity: 0;
-                transform: translateY(10px);
-                transition: all 0.3s ease;
-                z-index: 5;
-            }
-            
-            .product-card:hover .product-quick-actions {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            
-            .product-quick-view-btn, .product-quick-add-btn {
-                flex: 1;
-                background: rgba(20, 20, 35, 0.8);
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: rgba(20, 20, 35, 0.7);
                 backdrop-filter: blur(5px);
                 border: 1px solid rgba(168, 85, 247, 0.3);
                 color: white;
-                padding: 0.4rem;
-                border-radius: 4px;
-                font-size: 0.8rem;
-                font-weight: 500;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 cursor: pointer;
-                transition: all 0.2s ease;
-                text-align: center;
+                transition: all 0.3s ease;
+                opacity: 0;
+                transform: scale(0.8);
+                z-index: 5;
             }
             
-            .product-quick-view-btn:hover {
-                background: rgba(59, 130, 246, 0.5);
+            .product-card:hover .product-quick-view-icon {
+                opacity: 1;
+                transform: scale(1);
+            }
+            
+            .product-quick-view-icon:hover {
+                background: rgba(59, 130, 246, 0.7);
                 border-color: rgba(59, 130, 246, 0.8);
+                transform: scale(1.1);
+                box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
             }
             
-            .product-quick-add-btn:hover {
-                background: rgba(168, 85, 247, 0.5);
-                border-color: rgba(168, 85, 247, 0.8);
+            .product-quick-view-icon svg {
+                width: 20px;
+                height: 20px;
+                stroke: white;
+                stroke-width: 2;
+                transition: all 0.3s ease;
+            }
+            
+            .product-quick-view-icon:hover svg {
+                stroke: #ffffff;
+                transform: scale(1.1);
             }
             
             @media (max-width: 768px) {
@@ -645,9 +646,9 @@ class QuickViewManager {
         
         // Handle product card quick view buttons
         document.addEventListener('click', function(e) {
-            // Quick View button - match all possible class names
-            if (e.target.matches('.product-action-btn.quick-view-btn, .product-quick-view-btn, .quick-view-btn') ||
-                e.target.closest('.product-action-btn.quick-view-btn, .product-quick-view-btn, .quick-view-btn')) {
+            // Quick View icon
+            if (e.target.matches('.product-quick-view-icon, .product-quick-view-icon svg, .product-quick-view-icon *') ||
+                e.target.closest('.product-quick-view-icon')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -656,21 +657,6 @@ class QuickViewManager {
                     const productId = productCard.getAttribute('data-product-id');
                     if (productId) {
                         self.openQuickView(productId);
-                    }
-                }
-            }
-            
-            // Quick Add button - match all possible class names
-            if (e.target.matches('.product-action-btn.add-to-cart-quick, .product-quick-add-btn, .add-to-cart-quick') ||
-                e.target.closest('.product-action-btn.add-to-cart-quick, .product-quick-add-btn, .add-to-cart-quick')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const productCard = e.target.closest('.product-card');
-                if (productCard) {
-                    const productId = productCard.getAttribute('data-product-id');
-                    if (productId) {
-                        self.quickAddToCart(productId);
                     }
                 }
             }
@@ -812,16 +798,18 @@ class QuickViewManager {
     
     addQuickViewButtonToCard(card) {
         // Check if card already has quick view buttons
-        if (card.querySelector('.product-quick-actions')) return;
+        if (card.querySelector('.product-quick-view-icon')) return;
         
-        const quickActions = document.createElement('div');
-        quickActions.className = 'product-quick-actions';
-        quickActions.innerHTML = `
-            <button class="product-quick-view-btn">Quick View</button>
-            <button class="product-quick-add-btn">Add to Cart</button>
+        const quickViewIcon = document.createElement('button');
+        quickViewIcon.className = 'product-quick-view-icon';
+        quickViewIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
         `;
         
-        card.appendChild(quickActions);
+        card.appendChild(quickViewIcon);
     }
     
     async openQuickView(productId) {

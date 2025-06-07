@@ -470,54 +470,55 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Quick View Product Card Button */
+/* Quick View Icon */
 .product-card {
     position: relative;
 }
 
-.product-quick-actions {
+.product-quick-view-icon {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-    opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
-    z-index: 5;
-}
-
-.product-card:hover .product-quick-actions {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.product-quick-view-btn, .product-quick-add-btn {
-    flex: 1;
-    background: rgba(20, 20, 35, 0.8);
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(20, 20, 35, 0.7);
     backdrop-filter: blur(5px);
     border: 1px solid rgba(168, 85, 247, 0.3);
     color: white;
-    padding: 0.4rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0.8);
+    z-index: 5;
 }
 
-.product-quick-view-btn:hover {
-    background: rgba(59, 130, 246, 0.5);
+.product-card:hover .product-quick-view-icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.product-quick-view-icon:hover {
+    background: rgba(59, 130, 246, 0.7);
     border-color: rgba(59, 130, 246, 0.8);
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
 }
 
-.product-quick-add-btn:hover {
-    background: rgba(168, 85, 247, 0.5);
-    border-color: rgba(168, 85, 247, 0.8);
+.product-quick-view-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+    stroke-width: 2;
+    transition: all 0.3s ease;
+}
+
+.product-quick-view-icon:hover svg {
+    stroke: #ffffff;
+    transform: scale(1.1);
 }
 
 /* Animation for add to cart success */
