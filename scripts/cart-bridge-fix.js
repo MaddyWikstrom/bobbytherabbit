@@ -201,6 +201,17 @@ const CartBridgeFix = {
             addToCart: function(product) {
                 console.log('BobbyCarts.addToCart -> CartManager', product);
                 
+                // Check for size selection
+                if ((!product.variants || !product.variants.size) && !product.selectedSize) {
+                    console.error('Size not selected for product:', product);
+                    if (this.showNotification) {
+                        this.showNotification('Please select a size before adding to cart', 'error');
+                    } else if (window.cartManager && window.cartManager.showNotification) {
+                        window.cartManager.showNotification('Please select a size before adding to cart', 'error');
+                    }
+                    return false;
+                }
+                
                 // Extract variant info if present
                 const variant = {
                     color: product.variants?.color || product.selectedColor || 'Default',

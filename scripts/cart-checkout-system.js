@@ -882,6 +882,13 @@ const BobbyCarts = {
             return false;
         }
         
+        // Check for size selection
+        if (!product.variants || !product.variants.size) {
+            console.error('Size not selected for product:', product);
+            this.showNotification('Please select a size before adding to cart', 'error');
+            return false;
+        }
+        
         try {
             // Generate cart item ID (unique per variant combination)
             const variantString = product.variants ? 
@@ -1799,8 +1806,6 @@ const BobbyCarts = {
         if (updatedItems) {
             this.saveCartToStorage();
         }
-    },
-    
     }
 };
 

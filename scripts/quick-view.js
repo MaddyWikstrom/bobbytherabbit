@@ -833,63 +833,18 @@ class QuickViewManager {
     }
     
     async quickAddToCart(productId) {
-        this.showLoading(true);
+        // Instead of automatically adding to cart, open the quick view modal
+        // to force user to select size before adding to cart
+        this.openQuickView(productId);
         
-        try {
-            // Fetch product data
-            const product = await this.fetchProductData(productId);
-            
-            if (!product) {
-                console.error('Product not found');
-                return;
-            }
-            
-            // Add first variant to cart
-            if (product.variants && product.variants.length > 0) {
-                const firstVariant = product.variants[0];
-                const cartItem = {
-                    ...product,
-                    selectedColor: firstVariant.color,
-                    selectedSize: firstVariant.size,
-                    quantity: 1,
-                    shopifyVariantId: firstVariant.id,
-                    mainImage: product.images[0],
-                    image: product.images[0]
-                };
-                
-                const variantData = {
-                    color: firstVariant.color,
-                    size: firstVariant.size,
-                    quantity: 1,
-                    shopifyVariantId: firstVariant.id,
-                    image: product.images[0]
-                };
-                
-                if (window.BobbyCart) {
-                    window.BobbyCart.addToCart(cartItem);
-                    
-                    // Dispatch custom event for other components
-                    document.dispatchEvent(new CustomEvent('quickview:addtocart', {
-                        detail: {
-                            product: cartItem,
-                            variant: variantData
-                        }
-                    }));
-                } else if (window.BobbyCarts) {
-                    // Fallback to old system if present
-                    window.BobbyCarts.addToCart(cartItem);
-                } else {
-                    console.error('Cart system not available');
-                }
+        // Show a notification reminding users to select a size
+        setTimeout(() => {
+            if (window.productManager && typeof window.productManager.showNotification === 'function') {
+                window.productManager.showNotification('Please select a size before adding to cart', 'info');
             } else {
-                console.error('No variants available for product');
+                console.log('INFO: Please select a size before adding to cart');
             }
-            
-        } catch (error) {
-            console.error('Error quick adding to cart:', error);
-        } finally {
-            this.showLoading(false);
-        }
+        }, 500);
     }
     
     async fetchProductData(productId) {

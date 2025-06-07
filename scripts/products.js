@@ -698,89 +698,390 @@ class ProductManager {
             return;
         }
 
-        // Ensure product has all required properties for cart
-        const cartProduct = {
-            ...product,
-            id: product.id || 'unknown-product',
-            title: product.title || 'Product',
-            price: product.price || 0,
-            mainImage: product.mainImage || '',
-            quantity: 1
-        };
-
-        // Add animation effect
-        const button = document.querySelector(`[data-product-id="${productId}"] .add-to-cart-btn`);
-        if (button) {
-            button.style.transform = 'scale(0.95)';
-            button.textContent = 'Added!';
-            setTimeout(() => {
-                button.style.transform = '';
-                button.textContent = 'Add to Cart';
-            }, 1000);
-        }
-
-        try {
-            // Check for cart manager or initialize it
-            if (!window.cartManager) {
-                console.log('Cart manager not found, initializing...');
-                if (typeof CartManager !== 'undefined') {
-                    window.cartManager = new CartManager();
-                    // Allow time for initialization
-                    setTimeout(() => {
-                        try {
-                            window.cartManager.addItem(cartProduct);
-                            window.cartManager.openCart();
-                            console.log('Item added to cart with new cart manager');
-                        } catch (e) {
-                            console.error('Error adding to cart:', e);
-                            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
-                        }
-                    }, 100);
-                } else {
-                    // Simple notification if CartManager not available
-                    this.showNotification('This app requires deployment to Netlify to function properly.', 'error');
-                    console.warn('CartManager class not available');
-                }
-            } else {
-                // Add to existing cart manager
-                window.cartManager.addItem(cartProduct);
-                console.log('Item added to existing cart manager');
+        // Show size selection modal before adding to cart
+        this.showSizeSelectionModal(product);
+    }
+    
+    // Method to show size selection modal
+    showSizeSelectionModal(product) {
+        // Create modal overlay
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'size-selection-modal-overlay';
+        
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.className = 'size-selection-modal';
+        
+        // Get color options for the product
+        const colorOptionsHTML = product.colors && product.colors.length > 0
+            ? product.colors.map(color => `
+                <button class="color-option" data-color="${color}" style="background-color: ${this.getColorCode(color)}" title="${color}">
+                    <span class="color-name">${color}</span>
+                </button>
+            `).join('')
+            : '<div class="no-options">No color options available</div>';
+        
+        // Get size options - find available sizes from product variants
+        const sizeOptionsHTML = product.sizes && product.sizes.length > 0
+            ? product.sizes.map(size => `
+                <button class="size-option" data-size="${size}">${size}</button>
+            `).join('')
+            : '<div class="no-options">No size options available</div>';
+        
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h3>Select Options</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="product-preview">
+                    <img src="${product.mainImage}" alt="${product.title}">
+                    <div class="product-info">
+                        <h4>${product.title}</h4>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                    </div>
+                </div>
                 
-                // Force cart to open after adding item and fix styling
-                setTimeout(() => {
-                    try {
+                ${product.colors && product.colors.length > 0 ? `
+                    <div class="option-group">
+                        <label>Color:</label>
+                        <div class="color-options">
+                           ${colorOptionsHTML}
+                       </div>
+                    </div>
+                ` : ''}
+                
+                <div class="option-group">
+                    <label>Size: <span class="required">*</span></label>
+                    <div class="size-options">
+                        ${sizeOptionsHTML}
+                    </div>
+                    <div class="size-error" style="display: none; color: red; margin-top: 5px;">
+                        Please select a size before adding to cart
+                    </div>
+                </div>
+                
+                <button class="confirm-add-to-cart" disabled>Add to Cart</button>
+            </div>
+        `;
+        
+        // Append modal to body
+        modalOverlay.appendChild(modalContent);
+        document.body.appendChild(modalOverlay);
+        
+        // Add CSS styles for the modal
+        const styleEl = document.createElement('style');
+        styleEl.textContent = `
+            .size-selection-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px);
+                z-index: 9999;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .size-selection-modal {
+                width: 400px;
+                max-width: 90vw;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                overflow: hidden;
+                animation: modalFadeIn 0.3s ease;
+            }
+            
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .modal-header h3 {
+                margin: 0;
+                font-size: 18px;
+            }
+            
+            .close-modal {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #555;
+            }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .product-preview {
+                display: flex;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .product-preview img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 4px;
+                margin-right: 15px;
+            }
+            
+            .product-info h4 {
+                margin: 0 0 5px 0;
+                font-size: 16px;
+            }
+            
+            .option-group {
+                margin-bottom: 20px;
+            }
+            
+            .option-group label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+            
+            .color-options, .size-options {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .color-option {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                border: 2px solid #ddd;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .color-option.active {
+                border-color: #a855f7;
+                transform: scale(1.1);
+            }
+            
+            .color-option .color-name {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                clip: rect(0 0 0 0);
+                clip-path: inset(50%);
+                overflow: hidden;
+            }
+            
+            .size-option {
+                min-width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background: #f8f8f8;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+            }
+            
+            .size-option:hover {
+                background: #f0f0f0;
+            }
+            
+            .size-option.active {
+                border-color: #a855f7;
+                background: rgba(168, 85, 247, 0.1);
+                color: #a855f7;
+            }
+            
+            .confirm-add-to-cart {
+                width: 100%;
+                padding: 12px;
+                background: linear-gradient(45deg, #a855f7, #3b82f6);
+                border: none;
+                border-radius: 4px;
+                color: white;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 10px;
+            }
+            
+            .confirm-add-to-cart:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+            
+            .confirm-add-to-cart:not(:disabled):hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+            }
+            
+            .required {
+                color: red;
+            }
+            
+            @keyframes modalFadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(styleEl);
+        
+        // Set up event listeners
+        const closeBtn = modalOverlay.querySelector('.close-modal');
+        const colorOptionElements = modalOverlay.querySelectorAll('.color-option');
+        const sizeOptionElements = modalOverlay.querySelectorAll('.size-option');
+        const confirmBtn = modalOverlay.querySelector('.confirm-add-to-cart');
+        const sizeError = modalOverlay.querySelector('.size-error');
+        
+        // Selected options
+        let selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : null;
+        let selectedSize = null;
+        
+        // Preselect first color if available
+        if (selectedColor && colorOptionElements.length > 0) {
+            colorOptionElements[0].classList.add('active');
+        }
+        
+        // Close modal
+        closeBtn.addEventListener('click', () => {
+            modalOverlay.remove();
+            styleEl.remove();
+        });
+        
+        // Close on overlay click
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.remove();
+                styleEl.remove();
+            }
+        });
+        
+        // Color selection
+        colorOptionElements.forEach(option => {
+            option.addEventListener('click', () => {
+                colorOptionElements.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedColor = option.dataset.color;
+            });
+        });
+        
+        // Size selection
+        sizeOptionElements.forEach(option => {
+            option.addEventListener('click', () => {
+                sizeOptionElements.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                selectedSize = option.dataset.size;
+                
+                // Enable add to cart button if size is selected
+                confirmBtn.disabled = !selectedSize;
+                
+                // Hide error message
+                sizeError.style.display = 'none';
+            });
+        });
+        
+        // Add to cart confirmation
+        confirmBtn.addEventListener('click', () => {
+            if (!selectedSize) {
+                sizeError.style.display = 'block';
+                return;
+            }
+            
+            // Prepare product with selected options
+            const cartProduct = {
+                ...product,
+                id: product.id || 'unknown-product',
+                title: product.title || 'Product',
+                price: product.price || 0,
+                mainImage: product.mainImage || '',
+                selectedColor: selectedColor,
+                selectedSize: selectedSize,
+                quantity: 1
+            };
+            
+            // Animation for confirmation
+            confirmBtn.textContent = 'Adding...';
+            confirmBtn.disabled = true;
+            
+            try {
+                // Add to cart with specific color and size
+                if (!window.cartManager) {
+                    console.log('Cart manager not found, initializing...');
+                    if (typeof CartManager !== 'undefined') {
+                        window.cartManager = new CartManager();
+                        setTimeout(() => {
+                            try {
+                                window.cartManager.addItem(cartProduct);
+                                window.cartManager.openCart();
+                                console.log('Item added to cart with new cart manager');
+                                
+                                // Remove modal after adding
+                                modalOverlay.remove();
+                                styleEl.remove();
+                                
+                                // Show success notification
+                                this.showNotification('Product added to cart!', 'success');
+                            } catch (e) {
+                                console.error('Error adding to cart:', e);
+                                this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
+                            }
+                        }, 100);
+                    } else {
+                        this.showNotification('This app requires deployment to Netlify to function properly.', 'error');
+                        console.warn('CartManager class not available');
+                        
+                        // Remove modal after error
+                        setTimeout(() => {
+                            modalOverlay.remove();
+                            styleEl.remove();
+                        }, 1000);
+                    }
+                } else {
+                    // Add to existing cart manager
+                    window.cartManager.addItem(cartProduct);
+                    console.log('Item added to existing cart manager');
+                    
+                    // Show success notification
+                    this.showNotification('Product added to cart!', 'success');
+                    
+                    // Remove modal after adding
+                    setTimeout(() => {
+                        modalOverlay.remove();
+                        styleEl.remove();
+                        
+                        // Force cart to open
                         if (window.cartManager) {
                             window.cartManager.openCart();
-                            
-                            // Fix for grayed out cart - ensure overlay is properly configured
-                            const cartOverlay = document.querySelector('.cart-overlay');
-                            if (cartOverlay) {
-                                cartOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-                                cartOverlay.style.zIndex = '999';
-                            }
-                            
-                            const cartSidebar = document.querySelector('.cart-sidebar');
-                            if (cartSidebar) {
-                                cartSidebar.style.zIndex = '1000';
-                                cartSidebar.style.backgroundColor = '#fff';
-                                cartSidebar.style.transform = 'translateX(0)';
-                                cartSidebar.style.opacity = '1';
-                                cartSidebar.style.visibility = 'visible';
-                            }
                         }
-                    } catch (e) {
-                        console.error('Error opening cart:', e);
-                    }
-                }, 300);
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('Error adding product to cart:', error);
+                this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
+                
+                // Remove modal after error
+                setTimeout(() => {
+                    modalOverlay.remove();
+                    styleEl.remove();
+                }, 1000);
             }
-
-            // Show success notification
-            this.showNotification('Product added to cart!', 'success');
-            
-        } catch (error) {
-            console.error('Error adding product to cart:', error);
-            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
-        }
+        });
     }
 
     toggleWishlist(productId) {

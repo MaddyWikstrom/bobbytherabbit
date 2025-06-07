@@ -89,12 +89,31 @@ class CartManager {
     }
 
     addItem(product, selectedVariant = null) {
+        // Check if product has the required size selection
+        if (!selectedVariant && (!product.selectedSize || product.selectedSize === 'One Size') && product.sizes && product.sizes.length > 0) {
+            console.error('Size selection is required before adding to cart');
+            if (window.productManager) {
+                window.productManager.showNotification('Please select a size before adding to cart', 'error');
+            }
+            return false;
+        }
+        
+        // Use the provided variant or create one from product properties
         const variant = selectedVariant || {
-            color: product.colors?.[0] || 'Default',
-            size: product.sizes?.[0] || 'One Size',
+            color: product.selectedColor || product.colors?.[0] || 'Default',
+            size: product.selectedSize || product.sizes?.[0] || 'One Size',
             price: product.price,
             shopifyVariantId: null
         };
+        
+        // If no size is selected for a product with size options, don't add to cart
+        if (variant.size === 'One Size' && product.sizes && product.sizes.length > 0) {
+            console.error('Size selection is required before adding to cart');
+            if (window.productManager) {
+                window.productManager.showNotification('Please select a size before adding to cart', 'error');
+            }
+            return false;
+        }
 
         const itemId = `${product.id}-${variant.color}-${variant.size}`;
         const existingItem = this.items.find(item => item.id === itemId);
