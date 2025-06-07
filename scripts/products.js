@@ -55,12 +55,15 @@ class ProductManager {
             }
             
             // API calls will only work when deployed, not locally
-            console.log('ℹ️ Note: Shopify API will only work when deployed, not during local development');
-            console.log('⚠️ No products found from API (expected during local development)');
+            console.log('⚠️ IMPORTANT: Shopify API only works when deployed to Netlify, not during local development');
+            console.log('⚠️ Please deploy to Netlify to test with real products - mock data is no longer supported');
             
-            // Set empty products array - don't use mock products
+            // Do not use mock products - clear products instead
             this.products = [];
             this.filteredProducts = [];
+            
+            // Show error notification
+            this.showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
         } catch (error) {
             console.error('❌ Error loading products:', error);
             console.log('❌ No products loaded due to error');
@@ -469,28 +472,13 @@ class ProductManager {
             const productsToShow = this.filteredProducts.slice(startIndex, endIndex);
 
             if (productsToShow.length === 0) {
-                // Check if we're running locally (localhost) or on a file:// protocol
-                const isLocalEnvironment = window.location.hostname === 'localhost' ||
-                                          window.location.hostname === '127.0.0.1' ||
-                                          window.location.protocol === 'file:';
-                
-                if (isLocalEnvironment) {
-                    productsGrid.innerHTML = `
-                        <div class="no-products">
-                            <h3>Products unavailable during local development</h3>
-                            <p>The Shopify API only works when deployed to Netlify.</p>
-                            <p>This is expected behavior during local development.</p>
-                            <p>When deployed, this page will display products from Shopify.</p>
-                        </div>
-                    `;
-                } else {
-                    productsGrid.innerHTML = `
-                        <div class="no-products">
-                            <h3>No products found</h3>
-                            <p>Try adjusting your filters or search terms</p>
-                        </div>
-                    `;
-                }
+                // Show generic no products message regardless of environment
+                productsGrid.innerHTML = `
+                    <div class="no-products">
+                        <h3>No products found</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -941,163 +929,7 @@ class ProductManager {
             setTimeout(() => notification.remove(), 300);
         });
     }
-    // Mock products for local testing
-    getMockProducts() {
-        console.log('🧪 Loading mock product data for offline testing');
-        
-        // Define color-specific images for mock products - with fallbacks to local assets
-        const blackHoodieImages = [
-            'assets/placeholder.png', // Fallback first in case mockups are not available
-            'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-            'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
-        ];
-        
-        const charcoalHoodieImages = [
-            'assets/placeholder.png',
-            'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-            'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'
-        ];
-        
-        const navyHoodieImages = [
-            'assets/placeholder.png',
-            'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'
-        ];
-        
-        const whiteHoodieImages = [
-            'assets/placeholder.png',
-            'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-            'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
-        ];
-        
-        const whiteTshirtImages = [
-            'assets/placeholder.png',
-            'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
-            'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f8c07d91c8.png'
-        ];
-        
-        const blackJoggersImages = [
-            'assets/placeholder.png',
-            'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
-            'mockups/all-over-print-unisex-wide-leg-joggers-white-back-683f8d3f2c76f.png'
-        ];
-        
-        return [
-            {
-                id: 'mock-hoodie-1',
-                shopifyId: 'mock-shop-1',
-                title: 'Bungi x Bobby Rabbit Hardware Hoodie',
-                description: 'Premium quality hoodie featuring the Bobby Rabbit hardware design.',
-                category: 'hoodie',
-                price: 59.99,
-                comparePrice: 79.99,
-                // All images combined for general display
-                images: [
-                    ...blackHoodieImages,
-                    ...charcoalHoodieImages,
-                    ...navyHoodieImages,
-                    ...whiteHoodieImages
-                ],
-                mainImage: blackHoodieImages[0],
-                variants: [
-                    {
-                        id: 'mock-variant-1',
-                        color: 'Black',
-                        size: 'M',
-                        price: 59.99,
-                        comparePrice: 79.99,
-                        availableForSale: true,
-                        image: blackHoodieImages[0]
-                    },
-                    {
-                        id: 'mock-variant-2',
-                        color: 'Charcoal',
-                        size: 'L',
-                        price: 59.99,
-                        comparePrice: 79.99,
-                        availableForSale: true,
-                        image: charcoalHoodieImages[0]
-                    }
-                ],
-                colors: ['Black', 'Charcoal', 'Navy', 'White'],
-                sizes: ['S', 'M', 'L', 'XL'],
-                featured: true,
-                new: true,
-                sale: true,
-                tags: ['featured', 'new'],
-                // Color-specific image mapping for color filtering
-                colorImages: {
-                    'Black': blackHoodieImages,
-                    'Charcoal': charcoalHoodieImages,
-                    'Navy': navyHoodieImages,
-                    'White': whiteHoodieImages
-                }
-            },
-            {
-                id: 'mock-tshirt-1',
-                shopifyId: 'mock-shop-2',
-                title: 'Bungi x Bobby Tech Animal T-Shirt',
-                description: 'Classic t-shirt with the Tech Animal design.',
-                category: 't-shirt',
-                price: 29.99,
-                comparePrice: null,
-                images: whiteTshirtImages,
-                mainImage: whiteTshirtImages[0],
-                variants: [
-                    {
-                        id: 'mock-variant-3',
-                        color: 'White',
-                        size: 'M',
-                        price: 29.99,
-                        comparePrice: null,
-                        availableForSale: true,
-                        image: whiteTshirtImages[0]
-                    }
-                ],
-                colors: ['White', 'Black'],
-                sizes: ['S', 'M', 'L', 'XL'],
-                featured: false,
-                new: true,
-                sale: false,
-                tags: ['new'],
-                colorImages: {
-                    'White': whiteTshirtImages,
-                    'Black': whiteTshirtImages // No actual black images, so use white as fallback
-                }
-            },
-            {
-                id: 'mock-joggers-1',
-                shopifyId: 'mock-shop-3',
-                title: 'Bungi x Bobby Wide Leg Joggers',
-                description: 'Comfortable wide leg joggers with Bobby the Rabbit design.',
-                category: 'joggers',
-                price: 49.99,
-                comparePrice: 69.99,
-                images: blackJoggersImages,
-                mainImage: blackJoggersImages[0],
-                variants: [
-                    {
-                        id: 'mock-variant-4',
-                        color: 'Black',
-                        size: 'M',
-                        price: 49.99,
-                        comparePrice: 69.99,
-                        availableForSale: true,
-                        image: blackJoggersImages[0]
-                    }
-                ],
-                colors: ['Black', 'Navy'],
-                sizes: ['S', 'M', 'L', 'XL'],
-                featured: true,
-                new: false,
-                sale: true,
-                tags: ['featured'],
-                colorImages: {
-                    'Black': blackJoggersImages,
-                    'Navy': blackJoggersImages // No actual navy images, so use black as fallback
-                }
-            }
-        ];
-    }
+    // No mock products - removed as requested
 }
 
 // Initialize product manager when DOM is loaded

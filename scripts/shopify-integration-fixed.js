@@ -222,9 +222,16 @@ async function fetchProducts() {
         }
     }
 
-    // Strategy 3: Use hardcoded fallback data
-    console.log('⚠️ All API methods failed, using hardcoded product mapping');
-    console.log('📋 Using existing PRODUCT_MAPPING:', PRODUCT_MAPPING);
+    // No fallback to hardcoded data - must be deployed
+    console.error('⚠️ IMPORTANT: All API methods failed. Shopify API only works when deployed to Netlify.');
+    console.error('⚠️ Please deploy to Netlify to test with real products - mock data is no longer supported.');
+    
+    // Show error notification if available
+    if (typeof showNotification === 'function') {
+        showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
+    } else if (window.productManager && typeof window.productManager.showNotification === 'function') {
+        window.productManager.showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
+    }
 }
 
 // Process product data from API
