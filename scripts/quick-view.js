@@ -716,13 +716,32 @@ class QuickViewManager {
             
             // Size selection
             if (e.target.matches('.quick-view-size-option')) {
-                if (e.target.classList.contains('unavailable')) return;
+                if (e.target.classList.contains('unavailable')) {
+                    console.log('QuickView: Cannot select unavailable size');
+                    return;
+                }
+                
+                const selectedSize = e.target.getAttribute('data-size');
+                console.log(`QuickView: User selected size: ${selectedSize}`);
+                
+                const debugInfo = document.getElementById('debug-info');
+                debugInfo.textContent = `Selected size: ${selectedSize}`;
+                debugInfo.style.display = 'block';
                 
                 const sizeOptions = document.querySelectorAll('.quick-view-size-option');
                 sizeOptions.forEach(option => option.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                self.selectedVariant.size = e.target.getAttribute('data-size');
+                self.selectedVariant.size = selectedSize;
+                
+                // Force UI update
+                document.getElementById('quick-add-btn').textContent = 'Add to Cart';
+                
+                // Hide debug info after a delay
+                setTimeout(() => {
+                    debugInfo.style.display = 'none';
+                }, 3000);
+                
                 self.updateQuickViewState();
             }
             
@@ -889,20 +908,27 @@ class QuickViewManager {
             
             const data = await response.json();
             
-            if (!Array.isArray(data)) {
-                console.error('QuickView: Received invalid data format:', typeof data);
+            // Handle both API formats (new format with products array inside object, or old format with direct array)
+            let products = [];
+            
+            if (data.products && Array.isArray(data.products)) {
+                // New API format
+                console.log(`QuickView: Received ${data.products.length} products from API (new format)`);
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                // Old API format with direct array
+                console.log(`QuickView: Received ${data.length} products from API (legacy format)`);
+                products = data;
+            } else if (data.error) {
+                console.error('QuickView: Netlify function error:', data.error);
+                return null;
+            } else {
+                console.error('QuickView: Unexpected data format:', typeof data, data);
                 throw new Error('Invalid data format received from API');
             }
             
-            if (data.error) {
-                console.error('QuickView: Netlify function error:', data.error);
-                return null;
-            }
-            
-            console.log(`QuickView: Received ${data.length} products from API`);
-            
             // Find the specific product
-            const product = data.find(p => {
+            const product = products.find(p => {
                 if (!p) return false;
                 const node = p.node || p;
                 const shopifyId = node.id?.replace('gid://shopify/Product/', '');
@@ -924,8 +950,10 @@ class QuickViewManager {
     }
     
     processProductData(shopifyProduct) {
+        console.log('QuickView: Processing product data:', shopifyProduct.title);
+        
         // Extract images
-        const shopifyImages = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
+        const shopifyImages = shopifyProduct.images?.edges?.map(imgEdge => imgEdge.node.url) || [];
         
         // Extract variants
         const variants = [];
@@ -933,26 +961,107 @@ class QuickViewManager {
         const sizes = new Set();
         const inventory = {};
         
-        shopifyProduct.variants.edges.forEach(variantEdge => {
-            const variant = variantEdge.node;
-            
+        // Debug variant data structure
+        console.log('QuickView: Processing variants structure:',
+            shopifyProduct.variants ?
+            (shopifyProduct.variants.edges ? 'Has edges array' : 'No edges property') :
+            'No variants property');
+        
+        // Handle different variant data structures
+        let variantsToProcess = [];
+        
+        if (shopifyProduct.variants && shopifyProduct.variants.edges) {
+            // Standard format with edges
+            variantsToProcess = shopifyProduct.variants.edges.map(edge => edge.node);
+            console.log(`QuickView: Found ${variantsToProcess.length} variants in edges format`);
+        } else if (shopifyProduct.variants && Array.isArray(shopifyProduct.variants)) {
+            // Direct array format
+            variantsToProcess = shopifyProduct.variants;
+            console.log(`QuickView: Found ${variantsToProcess.length} variants in direct array format`);
+        } else {
+            console.log('QuickView: No recognizable variant format found');
+        }
+        
+        console.log(`QuickView: Processing ${variantsToProcess.length} variants`);
+        
+        variantsToProcess.forEach(variant => {
+            console.log('QuickView: Processing variant:', variant.title || variant.id);
             let color = '';
             let size = '';
             
-            variant.selectedOptions.forEach(option => {
-                if (option.name.toLowerCase() === 'color') {
-                    color = option.value;
-                    if (!colorMap[color]) {
+            // Handle different selectedOptions formats
+            if (variant.selectedOptions && Array.isArray(variant.selectedOptions)) {
+                console.log('QuickView: Processing selectedOptions array:', variant.selectedOptions);
+                variant.selectedOptions.forEach(option => {
+                    // Safely check option name, normalize to lowercase
+                    const optionName = option.name?.toLowerCase() || '';
+                    const optionValue = option.value || '';
+                    
+                    console.log(`QuickView: Processing option: ${optionName} = ${optionValue}`);
+                    
+                    if (optionName === 'color') {
+                        color = optionValue;
+                        if (color && !colorMap[color]) {
+                            colorMap[color] = {
+                                name: color,
+                                code: this.getColorCode(color)
+                            };
+                        }
+                    } else if (optionName === 'size') {
+                        size = optionValue;
+                        if (size) {
+                            console.log(`QuickView: Adding size: ${size}`);
+                            sizes.add(size);
+                        }
+                    }
+                });
+            } else if (variant.title) {
+                // Alternative format: parse from title (e.g. "Black / XL")
+                const variantTitle = variant.title.trim();
+                console.log(`QuickView: Parsing variant from title: "${variantTitle}"`);
+                
+                // Try splitting by slash with spaces
+                let parts = variantTitle.split(' / ');
+                
+                // If that didn't work, try other common separators
+                if (parts.length < 2) {
+                    parts = variantTitle.split('/');
+                }
+                
+                // Last resort - try splitting by space, assuming first word is color, last is size
+                if (parts.length < 2 && variantTitle.includes(' ')) {
+                    const words = variantTitle.split(' ');
+                    parts = [words[0], words[words.length - 1]];
+                }
+                
+                if (parts.length >= 2) {
+                    console.log(`QuickView: Split title into parts:`, parts);
+                    // Assume first part is color, second is size (common Shopify pattern)
+                    color = parts[0].trim();
+                    size = parts[1].trim();
+                    
+                    if (color && !colorMap[color]) {
                         colorMap[color] = {
                             name: color,
                             code: this.getColorCode(color)
                         };
                     }
-                } else if (option.name.toLowerCase() === 'size') {
-                    size = option.value;
+                    
+                    if (size) {
+                        console.log(`QuickView: Adding size from title: ${size}`);
+                        sizes.add(size);
+                    }
+                }
+            }
+            
+            // Check for options.size directly (alternative format)
+            if (!size && variant.options) {
+                if (typeof variant.options.size === 'string') {
+                    size = variant.options.size;
+                    console.log(`QuickView: Found size in options object: ${size}`);
                     sizes.add(size);
                 }
-            });
+            }
             
             // Add to inventory tracking
             if (color && size) {
@@ -970,8 +1079,21 @@ class QuickViewManager {
             });
         });
         
+        console.log(`QuickView: Found ${sizes.size} unique sizes:`, Array.from(sizes));
+        
         // Calculate pricing
-        const minPrice = parseFloat(shopifyProduct.priceRange.minVariantPrice.amount);
+        let minPrice = 0;
+        try {
+            minPrice = parseFloat(shopifyProduct.priceRange?.minVariantPrice?.amount || 0);
+            if (isNaN(minPrice) || minPrice === 0) {
+                // Fallback to first variant price if available
+                minPrice = variants.length > 0 ? variants[0].price : 0;
+            }
+        } catch (e) {
+            console.error('QuickView: Error parsing price:', e);
+            minPrice = variants.length > 0 ? variants[0].price : 0;
+        }
+        
         const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
         
         return {
@@ -1092,14 +1214,27 @@ class QuickViewManager {
         // Size options
         const sizeOptionsContainer = document.getElementById('quick-view-size-options');
         const sizeGroup = document.getElementById('quick-view-size-group');
+        const debugInfo = document.getElementById('debug-info');
+        
+        console.log('QuickView: Rendering size options:',
+            this.currentProduct.sizes ? Array.from(this.currentProduct.sizes) : 'None');
+        debugInfo.textContent = `Available sizes: ${this.currentProduct.sizes ? Array.from(this.currentProduct.sizes).join(', ') : 'None'}`;
+        debugInfo.style.display = 'block';
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
+            console.log(`QuickView: Rendering ${this.currentProduct.sizes.length} size options`);
+            
             sizeOptionsContainer.innerHTML = this.currentProduct.sizes.map((size) => {
-                const available = this.selectedVariant.color ? 
-                    (this.currentProduct.inventory[`${this.selectedVariant.color}-${size}`] > 0) : true;
+                const inventoryKey = this.selectedVariant.color ?
+                    `${this.selectedVariant.color}-${size}` : null;
+                const stockLevel = inventoryKey ?
+                    (this.currentProduct.inventory[inventoryKey] || 0) : 10;
+                const available = inventoryKey ? (stockLevel > 0) : true;
+                
+                console.log(`QuickView: Size ${size} - Stock: ${stockLevel}, Available: ${available}`);
                 
                 return `
-                    <div class="quick-view-size-option ${available ? '' : 'unavailable'}" 
+                    <div class="quick-view-size-option ${available ? '' : 'unavailable'}"
                          data-size="${size}">
                         ${size}
                     </div>
@@ -1108,8 +1243,17 @@ class QuickViewManager {
             
             sizeGroup.style.display = 'block';
         } else {
+            console.log('QuickView: No sizes available to render');
             sizeGroup.style.display = 'none';
+            
+            // Add a message to the debug display
+            debugInfo.textContent = 'No size options found for this product';
         }
+        
+        // Hide debug info after a delay
+        setTimeout(() => {
+            debugInfo.style.display = 'none';
+        }, 3000);
         
         // Reset quantity
         document.getElementById('quick-view-quantity-display').textContent = '1';
@@ -1133,21 +1277,60 @@ class QuickViewManager {
             const sizeOptions = document.querySelectorAll('.quick-view-size-option');
             console.log(`QuickView: Updating ${sizeOptions.length} size options based on color: ${this.selectedVariant.color}`);
             
-            sizeOptions.forEach(option => {
-                const size = option.getAttribute('data-size');
-                const inventoryKey = `${this.selectedVariant.color}-${size}`;
-                const stockLevel = this.currentProduct.inventory[inventoryKey];
-                const available = stockLevel > 0;
+            if (sizeOptions.length === 0) {
+                console.warn('QuickView: No size options found in DOM to update');
+                debugInfo.textContent = 'Warning: Size options not found';
                 
-                console.log(`QuickView: Size ${size} availability: ${available} (stock: ${stockLevel})`);
-                option.classList.toggle('unavailable', !available);
-                
-                // If the currently selected size is now unavailable, deselect it
-                if (!available && this.selectedVariant.size === size) {
-                    this.selectedVariant.size = null;
-                    option.classList.remove('active');
+                // Attempt to re-render sizes if they're missing
+                if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
+                    console.log('QuickView: Attempting to re-render size options');
+                    const sizeOptionsContainer = document.getElementById('quick-view-size-options');
+                    const sizeGroup = document.getElementById('quick-view-size-group');
+                    
+                    if (sizeOptionsContainer && sizeGroup) {
+                        sizeOptionsContainer.innerHTML = this.currentProduct.sizes.map((size) => {
+                            const inventoryKey = `${this.selectedVariant.color}-${size}`;
+                            const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
+                            const available = stockLevel > 0;
+                            
+                            return `
+                                <div class="quick-view-size-option ${available ? '' : 'unavailable'}"
+                                    data-size="${size}">
+                                    ${size}
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        sizeGroup.style.display = 'block';
+                        debugInfo.textContent = 'Size options regenerated';
+                    }
                 }
-            });
+            } else {
+                // Normal flow - update existing size options
+                let availableSizes = [];
+                
+                sizeOptions.forEach(option => {
+                    const size = option.getAttribute('data-size');
+                    const inventoryKey = `${this.selectedVariant.color}-${size}`;
+                    const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
+                    const available = stockLevel > 0;
+                    
+                    console.log(`QuickView: Size ${size} availability: ${available} (stock: ${stockLevel})`);
+                    option.classList.toggle('unavailable', !available);
+                    
+                    if (available) {
+                        availableSizes.push(size);
+                    }
+                    
+                    // If the currently selected size is now unavailable, deselect it
+                    if (!available && this.selectedVariant.size === size) {
+                        this.selectedVariant.size = null;
+                        option.classList.remove('active');
+                    }
+                });
+                
+                debugInfo.textContent = `Available sizes for ${this.selectedVariant.color}: ${availableSizes.join(', ')}`;
+            }
         }
         
         // Update add to cart button
