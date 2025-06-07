@@ -54,14 +54,13 @@ class ProductManager {
                 return;
             }
             
-            // No CSV fallback needed anymore
-            // No products found from API or CSV, use mock products for local testing
-            console.log('⚠️ No products found from API or CSV, using mock products for local testing');
-            this.products = this.getMockProducts();
-            this.filteredProducts = [...this.products];
-            console.log(`✅ Loaded ${this.products.length} mock products for testing`);
+            // API calls will only work when deployed, not locally
+            console.log('ℹ️ Note: Shopify API will only work when deployed, not during local development');
+            console.log('⚠️ No products found from API (expected during local development)');
             
-            
+            // Set empty products array - don't use mock products
+            this.products = [];
+            this.filteredProducts = [];
         } catch (error) {
             console.error('❌ Error loading products:', error);
             console.log('❌ No products loaded due to error');
@@ -79,7 +78,9 @@ class ProductManager {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                // Add a timeout to prevent hanging if the server is slow
+                signal: AbortSignal.timeout(10000) // 10 second timeout
             });
 
             if (!response.ok) {
@@ -88,10 +89,16 @@ class ProductManager {
             }
 
             const shopifyProducts = await response.json();
-            console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify via Netlify function`);
             
-            // Convert Shopify products to our format
-            return this.convertShopifyProducts(shopifyProducts);
+            // Check if we received valid data (not error object)
+            if (Array.isArray(shopifyProducts) && shopifyProducts.length > 0) {
+                console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify via Netlify function`);
+                // Convert Shopify products to our format
+                return this.convertShopifyProducts(shopifyProducts);
+            } else {
+                console.error('❌ Received invalid product data from API');
+                throw new Error('Invalid product data received');
+            }
             
         } catch (error) {
             console.error('❌ Error loading Shopify products via Netlify function:', error);
@@ -462,12 +469,28 @@ class ProductManager {
             const productsToShow = this.filteredProducts.slice(startIndex, endIndex);
 
             if (productsToShow.length === 0) {
-                productsGrid.innerHTML = `
-                    <div class="no-products">
-                        <h3>No products found</h3>
-                        <p>Try adjusting your filters or search terms</p>
-                    </div>
-                `;
+                // Check if we're running locally (localhost) or on a file:// protocol
+                const isLocalEnvironment = window.location.hostname === 'localhost' ||
+                                          window.location.hostname === '127.0.0.1' ||
+                                          window.location.protocol === 'file:';
+                
+                if (isLocalEnvironment) {
+                    productsGrid.innerHTML = `
+                        <div class="no-products">
+                            <h3>Products unavailable during local development</h3>
+                            <p>The Shopify API only works when deployed to Netlify.</p>
+                            <p>This is expected behavior during local development.</p>
+                            <p>When deployed, this page will display products from Shopify.</p>
+                        </div>
+                    `;
+                } else {
+                    productsGrid.innerHTML = `
+                        <div class="no-products">
+                            <h3>No products found</h3>
+                            <p>Try adjusting your filters or search terms</p>
+                        </div>
+                    `;
+                }
                 return;
             }
 
@@ -920,32 +943,40 @@ class ProductManager {
     }
     // Mock products for local testing
     getMockProducts() {
-        // Define color-specific images for mock products
+        console.log('🧪 Loading mock product data for offline testing');
+        
+        // Define color-specific images for mock products - with fallbacks to local assets
         const blackHoodieImages = [
+            'assets/placeholder.png', // Fallback first in case mockups are not available
             'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
             'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
         ];
         
         const charcoalHoodieImages = [
+            'assets/placeholder.png',
             'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
             'mockups/unisex-premium-hoodie-charcoal-heather-back-683f9022d94ea.png'
         ];
         
         const navyHoodieImages = [
+            'assets/placeholder.png',
             'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png'
         ];
         
         const whiteHoodieImages = [
+            'assets/placeholder.png',
             'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
             'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
         ];
         
         const whiteTshirtImages = [
+            'assets/placeholder.png',
             'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f8c07d8c5c.png',
             'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f8c07d91c8.png'
         ];
         
         const blackJoggersImages = [
+            'assets/placeholder.png',
             'mockups/all-over-print-unisex-wide-leg-joggers-white-front-683f8d3f2c662.png',
             'mockups/all-over-print-unisex-wide-leg-joggers-white-back-683f8d3f2c76f.png'
         ];
