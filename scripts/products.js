@@ -160,6 +160,15 @@ class ProductManager {
                         console.log(`Found direct size option: ${size}`);
                     }
                 });
+
+                // If no options found but we have a title, use it directly as a fallback
+                if (!foundSize && variant.title && variant.title !== 'Default Title') {
+                    // Just use the variant title directly as a size option
+                    size = variant.title;
+                    console.log(`Using variant title directly as size: ${size}`);
+                    sizes.add(size);
+                    foundSize = true;
+                }
                 
                 // Second pass: Look for size-like values in any option (if size not found)
                 if (!foundSize) {
@@ -184,8 +193,10 @@ class ProductManager {
                     });
                 }
                 
-                // Extract size from variant title if still not found
+                // Extract size from variant title if still not found (legacy approach for backward compatibility)
                 if (!foundSize && variant.title && variant.title !== 'Default Title') {
+                    console.log(`Attempting to extract size from variant title: ${variant.title}`);
+                    
                     // Check for slash format (Color / Size)
                     if (variant.title.includes('/')) {
                         const parts = variant.title.split('/').map(p => p.trim());
@@ -212,10 +223,11 @@ class ProductManager {
                             upperTitle.includes('SMALL') ||
                             upperTitle.includes('MEDIUM') ||
                             upperTitle.includes('LARGE') ||
-                            /^\d+$/.test(upperTitle)) { // Numeric sizes
+                            /^\d+$/.test(upperTitle) || // Numeric sizes
+                            upperTitle) { // Just use the title as is if nothing else works
                             
                             size = variant.title;
-                            console.log(`Detected size "${size}" from title`);
+                            console.log(`Using variant title "${size}" as size`);
                             sizes.add(size);
                             foundSize = true;
                         }

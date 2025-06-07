@@ -226,6 +226,8 @@ class ProductDetailManager {
     }
 
     convertShopifyProductForDetail(shopifyProduct) {
+        console.log("RAW SHOPIFY PRODUCT DATA:", JSON.stringify(shopifyProduct, null, 2));
+        
         // Extract images from Shopify
         const shopifyImages = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
         
@@ -248,6 +250,12 @@ class ProductDetailManager {
         const sizes = new Set();
         const inventory = {};
         const colorToImagesMap = new Map(); // Create map for color-specific images
+        
+        // DIRECT DEBUG: Log all variant data to see what's available
+        console.log("AVAILABLE VARIANTS:", shopifyProduct.variants.edges.length);
+        shopifyProduct.variants.edges.forEach((variantEdge, index) => {
+            console.log(`VARIANT ${index+1}:`, JSON.stringify(variantEdge.node, null, 2));
+        });
         
         shopifyProduct.variants.edges.forEach(variantEdge => {
             const variant = variantEdge.node;
@@ -276,6 +284,15 @@ class ProductDetailManager {
                     console.log(`Product-detail: Found direct size option: ${size}`);
                 }
             });
+            
+            // If no options found but we have a title, use it directly as a fallback
+            if (!foundSize && variant.title && variant.title !== 'Default Title') {
+                // Just use the variant title directly as a size option
+                size = variant.title;
+                console.log(`Product-detail: Using variant title directly as size: ${size}`);
+                sizes.add(size);
+                foundSize = true;
+            }
             
             // Second pass: Look for size-like values in any option (if size not found)
             if (!foundSize) {
@@ -328,10 +345,11 @@ class ProductDetailManager {
                         upperTitle.includes('SMALL') ||
                         upperTitle.includes('MEDIUM') ||
                         upperTitle.includes('LARGE') ||
-                        /^\d+$/.test(upperTitle)) { // Numeric sizes
+                        /^\d+$/.test(upperTitle) || // Numeric sizes
+                        upperTitle) { // Just use the title as is if nothing else works
                         
                         size = variant.title;
-                        console.log(`Product-detail: Detected size "${size}" from title`);
+                        console.log(`Product-detail: Using variant title "${size}" as size`);
                         sizes.add(size);
                         foundSize = true;
                     }
@@ -383,17 +401,87 @@ class ProductDetailManager {
             });
         }
         
-        // Add "One Size" as fallback if no sizes were found at all
-        if (sizes.size === 0) {
-            console.log('No sizes found for product, adding "One Size" as fallback');
-            const oneSize = "One Size";
-            sizes.add(oneSize);
+        // DIRECTLY EXTRACT ALL VARIANTS WITH THEIR ORIGINAL OPTIONS
+        // This will preserve exactly what Shopify returns without trying to interpret it
+        const directVariantOptions = new Map();
+        
+        shopifyProduct.variants.edges.forEach(variantEdge => {
+            const variant = variantEdge.node;
             
-            // Add inventory entries for each color with this size
-            Object.keys(colorMap).forEach(color => {
-                inventory[`${color}-${oneSize}`] = 10; // Default stock of 10
-                console.log(`Added inventory for ${color}-${oneSize}`);
+            // Log each variant's options
+            console.log(`Variant ${variant.title} options:`, JSON.stringify(variant.selectedOptions));
+            
+            // Group by size-like options or position in options
+            let sizeOption = variant.selectedOptions.find(opt =>
+                opt.name.toLowerCase() === 'size' ||
+                ['s', 'm', 'l', 'xl', 'xxl', '2xl', '3xl', 'xxxl', 'small', 'medium', 'large', 'one size']
+                    .includes(opt.value.toLowerCase())
+            );
+            
+            // If no size option found, use the second option (often size) or the title
+            let sizeValue;
+            if (sizeOption) {
+                sizeValue = sizeOption.value;
+            } else if (variant.selectedOptions.length > 1) {
+                sizeValue = variant.selectedOptions[1].value;
+            } else if (variant.title && variant.title !== 'Default Title') {
+                // Extract from title format "Color / Size"
+                const parts = variant.title.split('/');
+                sizeValue = parts.length > 1 ? parts[1].trim() : variant.title;
+            } else {
+                sizeValue = 'One Size';
+            }
+            
+            // Add to sizes set
+            sizes.add(sizeValue);
+            console.log(`Added size option: ${sizeValue}`);
+            
+            // Also track the original variant ID for this size
+            directVariantOptions.set(sizeValue, variant.id);
+        });
+        
+        // Log all found sizes
+        console.log("ALL DETECTED SIZES:", Array.from(sizes));
+        
+        // Add variant titles as sizes if no sizes were found at all
+        if (sizes.size === 0) {
+            console.log('No sizes found for product, adding variant titles as sizes');
+            
+            // Try to extract sizes from variants
+            const variantTitles = new Set();
+            
+            shopifyProduct.variants.edges.forEach(variantEdge => {
+                const variant = variantEdge.node;
+                if (variant.title && variant.title !== 'Default Title') {
+                    console.log(`Product-detail: Adding variant title as size: "${variant.title}"`);
+                    variantTitles.add(variant.title);
+                }
             });
+            
+            if (variantTitles.size > 0) {
+                // Use variant titles as sizes
+                variantTitles.forEach(title => sizes.add(title));
+                console.log(`Product-detail: Added ${variantTitles.size} variant titles as sizes`);
+                
+                // Add inventory entries for each color with these sizes
+                Object.keys(colorMap).forEach(color => {
+                    variantTitles.forEach(size => {
+                        inventory[`${color}-${size}`] = 10; // Default stock of 10
+                        console.log(`Added inventory for ${color}-${size}`);
+                    });
+                });
+            } else {
+                // Fallback to "One Size" if no variant titles
+                console.log('No variant titles found, adding "One Size" as fallback');
+                const oneSize = "One Size";
+                sizes.add(oneSize);
+                
+                // Add inventory entries for each color with this size
+                Object.keys(colorMap).forEach(color => {
+                    inventory[`${color}-${oneSize}`] = 10; // Default stock of 10
+                    console.log(`Added inventory for ${color}-${oneSize}`);
+                });
+            }
         }
         
         // Calculate pricing

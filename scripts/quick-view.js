@@ -961,6 +961,9 @@ class QuickViewManager {
         const sizes = new Set();
         const inventory = {};
         
+        // DIRECT DEBUG: Log all variant data
+        console.log("QuickView: AVAILABLE VARIANTS:", shopifyProduct.variants?.edges?.length || 0);
+        
         // Debug variant data structure
         console.log('QuickView: Processing variants structure:',
             shopifyProduct.variants ?
@@ -974,6 +977,11 @@ class QuickViewManager {
             // Standard format with edges
             variantsToProcess = shopifyProduct.variants.edges.map(edge => edge.node);
             console.log(`QuickView: Found ${variantsToProcess.length} variants in edges format`);
+            
+            // Log each variant for debugging
+            variantsToProcess.forEach((variant, i) => {
+                console.log(`QuickView: VARIANT ${i+1}:`, JSON.stringify(variant, null, 2));
+            });
         } else if (shopifyProduct.variants && Array.isArray(shopifyProduct.variants)) {
             // Direct array format
             variantsToProcess = shopifyProduct.variants;
@@ -984,8 +992,15 @@ class QuickViewManager {
         
         console.log(`QuickView: Processing ${variantsToProcess.length} variants`);
         
+        // DIRECTLY EXTRACT ALL VARIANTS AND SIZES
+        // This will preserve the exact variant structure from Shopify
+        const directSizes = new Set();
+        const directVariantMapping = new Map();
+        
         variantsToProcess.forEach(variant => {
             console.log('QuickView: Processing variant:', variant.title || variant.id);
+            console.log('QuickView: Variant options:', JSON.stringify(variant.selectedOptions));
+            
             let color = '';
             let size = '';
             
@@ -1016,6 +1031,15 @@ class QuickViewManager {
                         sizes.add(size);
                     }
                 });
+                
+                // If no options found but we have a title, use it directly as a fallback
+                if (!foundSize && variant.title && variant.title !== 'Default Title') {
+                    // Just use the variant title directly as a size option
+                    size = variant.title;
+                    console.log(`QuickView: Using variant title directly as size: ${size}`);
+                    sizes.add(size);
+                    foundSize = true;
+                }
                 
                 // Second pass: Look for size-like values in any option (if size not found)
                 if (!foundSize) {
@@ -1092,10 +1116,11 @@ class QuickViewManager {
                             upperTitle.includes('SMALL') ||
                             upperTitle.includes('MEDIUM') ||
                             upperTitle.includes('LARGE') ||
-                            /^\d+$/.test(upperTitle)) { // Numeric sizes
+                            /^\d+$/.test(upperTitle) || // Numeric sizes
+                            upperTitle) { // Just use the title as is if nothing else works
                             
                             size = variantTitle;
-                            console.log(`QuickView: Detected size "${size}" from title`);
+                            console.log(`QuickView: Using variant title "${size}" as size`);
                             sizes.add(size);
                         }
                         // For single variants with no size specified
@@ -1277,17 +1302,50 @@ class QuickViewManager {
         debugInfo.textContent = `Available sizes: ${this.currentProduct.sizes ? Array.from(this.currentProduct.sizes).join(', ') : 'None'}`;
         debugInfo.style.display = 'block';
         
-        // Special handling if no sizes were found - add "One Size" as default
+        // Special handling if no sizes were found - add all variant titles as sizes
         if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
-            console.log(`QuickView: No sizes found, adding "One Size" as default`);
-            this.currentProduct.sizes = ["One Size"];
+            console.log(`QuickView: No sizes found, using variant titles as sizes`);
             
-            // Add inventory entries for One Size
+            // Try to extract sizes from variants first
+            if (variantsToProcess && variantsToProcess.length > 0) {
+                const sizesFromVariants = new Set();
+                
+                variantsToProcess.forEach(variant => {
+                    if (variant.title && variant.title !== 'Default Title') {
+                        console.log(`QuickView: Adding variant title as size: "${variant.title}"`);
+                        sizesFromVariants.add(variant.title);
+                    }
+                });
+                
+                if (sizesFromVariants.size > 0) {
+                    this.currentProduct.sizes = Array.from(sizesFromVariants);
+                    console.log(`QuickView: Found ${this.currentProduct.sizes.length} sizes from variant titles`);
+                } else {
+                    // Fallback to "One Size" if no variant titles available
+                    this.currentProduct.sizes = ["One Size"];
+                    console.log(`QuickView: No variant titles found, using "One Size" as default`);
+                }
+            } else {
+                // No variants information available, use "One Size"
+                this.currentProduct.sizes = ["One Size"];
+                console.log(`QuickView: No variants data, using "One Size" as default`);
+            }
+            
+            // Add inventory entries for sizes
             if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
                 this.currentProduct.colors.forEach(color => {
-                    const inventoryKey = `${color.name}-One Size`;
-                    this.currentProduct.inventory[inventoryKey] = 10; // Default stock of 10
-                    console.log(`QuickView: Added inventory for ${inventoryKey}`);
+                    this.currentProduct.sizes.forEach(size => {
+                        const inventoryKey = `${color.name}-${size}`;
+                        this.currentProduct.inventory[inventoryKey] = 10; // Default stock of 10
+                        console.log(`QuickView: Added inventory for ${inventoryKey}`);
+                    });
+                });
+            } else {
+                // If no colors, add inventory for sizes without color
+                this.currentProduct.sizes.forEach(size => {
+                    const inventoryKey = `-${size}`; // No color
+                    this.currentProduct.inventory[inventoryKey] = 10;
+                    console.log(`QuickView: Added inventory for ${inventoryKey} (no color)`);
                 });
             }
         }
