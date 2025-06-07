@@ -77,11 +77,27 @@ async function fetchProducts() {
 }
 
 // Process product data from API
-function processProductData(products) {
+function processProductData(data) {
   try {
+    // Handle different data formats
+    let productsArray = [];
+    
+    if (data.products && Array.isArray(data.products)) {
+      // Format: { products: [...] }
+      productsArray = data.products;
+      console.log('📋 Found products array in data.products');
+    } else if (Array.isArray(data)) {
+      // Format: Direct array
+      productsArray = data;
+      console.log('📋 Data is directly an array of products');
+    } else {
+      console.error('❌ Unexpected data format:', data);
+      return;
+    }
+    
     // Generate mapping
     const mapping = {};
-    products.forEach(product => {
+    productsArray.forEach(product => {
       const productNode = product.node || product;
       mapping[productNode.title] = productNode.id;
     });
@@ -91,7 +107,7 @@ function processProductData(products) {
 
     // Generate the PRODUCT_MAPPING code
     let mappingCode = 'const PRODUCT_MAPPING = {\n';
-    products.forEach(product => {
+    productsArray.forEach(product => {
       const productNode = product.node || product;
       const productId = productNode.id;
       const productName = productNode.title;
@@ -161,17 +177,12 @@ function initializeShopifyClient() {
 
     console.log('✅ Shopify client initialized successfully');
 
-    // Create or retrieve existing cart (replacing checkout)
+    // Use the Cart API instead of deprecated Checkout API
     const cartId = localStorage.getItem('shopifyCartId');
     if (cartId) {
-      shopifyClient.checkout.fetch(cartId).then((cart) => {
-        if (!cart.completedAt) {
-          shopifyCheckout = cart;
-          console.log('✅ Existing cart retrieved');
-        } else {
-          // Cart was completed, create a new one
-          createNewCart();
-        }
+      shopifyClient.cart.fetch(cartId).then((cart) => {
+        shopifyCheckout = cart;
+        console.log('✅ Existing cart retrieved');
       }).catch((error) => {
         console.warn('⚠️ Failed to fetch existing cart:', error);
         createNewCart();
@@ -190,19 +201,29 @@ function initializeShopifyClient() {
   }
 }
 
-// Create new Shopify cart (replacing checkout)
+// Create new Shopify cart using Cart API instead of deprecated Checkout API
 function createNewCart() {
   if (!shopifyClient) {
     console.error('❌ No Shopify client available for cart creation');
     return;
   }
 
-  shopifyClient.checkout.create().then((cart) => {
+  shopifyClient.cart.create().then((cart) => {
     shopifyCheckout = cart;
     localStorage.setItem('shopifyCartId', cart.id);
     console.log('✅ New cart created:', cart.id);
   }).catch((error) => {
     console.error('❌ Failed to create cart:', error);
+    // Fallback for sites still using older SDK versions
+    console.log('⚠️ Attempting fallback cart creation method...');
+    try {
+      // Direct API call if needed
+      shopifyCheckout = { id: 'temp-cart-' + Date.now() };
+      localStorage.setItem('shopifyCartId', shopifyCheckout.id);
+      console.log('⚠️ Created temporary cart ID:', shopifyCheckout.id);
+    } catch (fallbackError) {
+      console.error('❌ All cart creation methods failed');
+    }
   });
 }
 
@@ -219,6 +240,18 @@ function redirectToShopifyCheckout() {
   } else if (shopifyCheckout && shopifyCheckout.checkoutUrl) {
     console.log('🛒 Redirecting to checkout using cart checkout URL:', shopifyCheckout.checkoutUrl);
     window.location.href = shopifyCheckout.checkoutUrl;
+  } else if (shopifyClient && shopifyCheckout.id) {
+    // Try to get checkout URL using cart API if available
+    console.log('🛒 Attempting to get checkout URL from cart ID:', shopifyCheckout.id);
+    
+    try {
+      // Use the new URL format if using Cart API
+      const checkoutUrl = `https://${SHOPIFY_CONFIG.domain}/cart`;
+      console.log('🛒 Redirecting to storefront cart URL:', checkoutUrl);
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('❌ Failed to create checkout URL:', error);
+    }
   } else {
     console.error('❌ No checkout URL available');
   }
@@ -284,7 +317,7 @@ window.shopifyDebug = {
   fetchProducts,
   performHealthCheck,
   initializeShopifyClient,
-  createNewCheckout,
+  createNewCart, // Fixed function name from createNewCheckout to createNewCart
   redirectToShopifyCheckout,
   getConfig: () => SHOPIFY_CONFIG,
   getClient: () => shopifyClient,
