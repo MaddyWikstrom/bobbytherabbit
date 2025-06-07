@@ -1027,8 +1027,37 @@ class ProductDetailManager {
     }
 
     addToRecentlyViewed(product) {
-        this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== product.id);
-        this.recentlyViewed.unshift(product);
+        if (!product) return;
+        
+        // Create a clean copy of the product with only Shopify API images
+        const cleanProduct = {
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            comparePrice: product.comparePrice,
+            category: product.category,
+            featured: product.featured,
+            new: product.new,
+            sale: product.sale,
+            // Only keep Shopify images or placeholder
+            mainImage: product.mainImage && product.mainImage.startsWith('http') ?
+                product.mainImage : 'assets/placeholder.png',
+            images: product.images ? product.images.filter(img => img.startsWith('http')) : []
+        };
+        
+        // If no valid images, use placeholder
+        if (!cleanProduct.images || cleanProduct.images.length === 0) {
+            cleanProduct.images = ['assets/placeholder.png'];
+        }
+        
+        // If mainImage isn't valid, use first image
+        if (!cleanProduct.mainImage || !cleanProduct.mainImage.startsWith('http')) {
+            cleanProduct.mainImage = cleanProduct.images[0];
+        }
+        
+        // Update recently viewed list
+        this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== cleanProduct.id);
+        this.recentlyViewed.unshift(cleanProduct);
         this.recentlyViewed = this.recentlyViewed.slice(0, 5);
         
         try {
@@ -1044,11 +1073,42 @@ class ProductDetailManager {
         try {
             const saved = localStorage.getItem('bobby-streetwear-recently-viewed');
             if (saved) {
-                this.recentlyViewed = JSON.parse(saved);
+                let savedProducts = JSON.parse(saved);
+                
+                // Filter out any products with local mockup images
+                savedProducts = savedProducts.map(product => {
+                    // Create a clean version of each product
+                    const cleanProduct = {...product};
+                    
+                    // Filter images to only include Shopify URLs or use placeholder
+                    if (cleanProduct.images && Array.isArray(cleanProduct.images)) {
+                        cleanProduct.images = cleanProduct.images.filter(img => img.startsWith('http'));
+                        if (cleanProduct.images.length === 0) {
+                            cleanProduct.images = ['assets/placeholder.png'];
+                        }
+                    } else {
+                        cleanProduct.images = ['assets/placeholder.png'];
+                    }
+                    
+                    // Fix main image if needed
+                    if (!cleanProduct.mainImage || !cleanProduct.mainImage.startsWith('http')) {
+                        cleanProduct.mainImage = cleanProduct.images[0];
+                    }
+                    
+                    return cleanProduct;
+                });
+                
+                this.recentlyViewed = savedProducts;
                 this.renderRecentlyViewed();
+                
+                // Save the cleaned list back to localStorage
+                localStorage.setItem('bobby-streetwear-recently-viewed', JSON.stringify(this.recentlyViewed));
             }
         } catch (error) {
             console.error('Error loading recently viewed:', error);
+            // Clear potentially corrupted data
+            this.recentlyViewed = [];
+            localStorage.removeItem('bobby-streetwear-recently-viewed');
         }
     }
 
