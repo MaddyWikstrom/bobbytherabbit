@@ -478,9 +478,26 @@ class ProductDetailManager {
                 }
             });
             
-            // If STILL no sizes, we'll rely only on what we can extract from the API
+            // If STILL no sizes, add intelligent defaults based on product type
             if (sizes.size === 0) {
-                console.log('CRITICAL: No size data found at all in the API');
+                console.log('CRITICAL: No size data found, using product type defaults');
+                
+                // Check product type/title to provide appropriate defaults
+                const titleLower = shopifyProduct.title.toLowerCase();
+                
+                if (titleLower.includes('t-shirt') || titleLower.includes('tee')) {
+                    // T-shirts typically have standard sizes
+                    console.log('Product is a T-shirt, adding standard T-shirt sizes');
+                    ['S', 'M', 'L', 'XL', '2XL'].forEach(size => sizes.add(size));
+                } else if (titleLower.includes('hoodie') || titleLower.includes('sweatshirt')) {
+                    // Hoodies typically have standard sizes
+                    console.log('Product is a hoodie/sweatshirt, adding standard sizes');
+                    ['S', 'M', 'L', 'XL', '2XL'].forEach(size => sizes.add(size));
+                } else {
+                    // For other products, add "One Size" only as a last resort
+                    console.log('Unknown product type, using "One Size" as last resort');
+                    sizes.add("One Size");
+                }
             }
         }
         
