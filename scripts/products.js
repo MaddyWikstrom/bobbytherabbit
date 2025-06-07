@@ -151,8 +151,33 @@ class ProductManager {
                     } else if (option.name.toLowerCase() === 'size') {
                         size = option.value;
                         sizes.add(size);
+                    } else {
+                        // Check if this might be a size option with a different name
+                        const upperValue = option.value.toUpperCase().trim();
+                        if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperValue) ||
+                            upperValue.includes('SMALL') ||
+                            upperValue.includes('MEDIUM') ||
+                            upperValue.includes('LARGE') ||
+                            upperValue.match(/^\d+$/) || // Numeric sizes
+                            upperValue.match(/^\d+\.\d+$/) // Decimal sizes
+                        ) {
+                            console.log(`Detected size "${option.value}" from option "${option.name}"`);
+                            size = option.value;
+                            sizes.add(size);
+                        }
                     }
                 });
+                
+                // Extract size from variant title if not found in options
+                if (size === '' && variant.title && variant.title !== 'Default Title') {
+                    // Common format: "Color / Size"
+                    const titleParts = variant.title.split('/');
+                    if (titleParts.length > 1) {
+                        size = titleParts[1].trim();
+                        sizes.add(size);
+                        console.log(`Extracted size "${size}" from variant title`);
+                    }
+                }
                 
                 // If variant has an image, associate it with the color
                 if (variant.image && variant.image.url) {

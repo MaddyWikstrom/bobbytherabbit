@@ -65,18 +65,49 @@ function generateProductMapping(products) {
         product.variants.edges.forEach(variantEdge => {
             const variant = variantEdge.node;
             
-            // Extract size from variant options
+            // Extract size from variant options - enhanced with better fallbacks
             let size = 'Default';
-            const sizeOption = variant.selectedOptions.find(opt => 
+            
+            // First try to find a direct size option
+            const sizeOption = variant.selectedOptions.find(opt =>
                 opt.name.toLowerCase() === 'size'
             );
+            
             if (sizeOption) {
                 size = sizeOption.value;
-            } else if (variant.title && variant.title !== 'Default Title') {
-                size = variant.title;
+            }
+            // If no size option found, try to extract from title (common format: "Color / Size")
+            else if (variant.title && variant.title !== 'Default Title') {
+                const titleParts = variant.title.split('/');
+                if (titleParts.length > 1) {
+                    // Usually the size is the second part after color
+                    size = titleParts[1].trim();
+                } else {
+                    size = variant.title.trim();
+                }
             }
             
+            // Additional extraction fallback - try common size formats
+            if (size === 'Default' && variant.selectedOptions && variant.selectedOptions.length > 0) {
+                // Try to find any option that looks like a size (S, M, L, XL, XXL, etc.)
+                const possibleSizeOption = variant.selectedOptions.find(opt => {
+                    const val = opt.value.toUpperCase().trim();
+                    return val === 'S' || val === 'M' || val === 'L' || val === 'XL' ||
+                           val === '2XL' || val === 'XXL' || val === '3XL' || val === 'XXXL' ||
+                           val.match(/^\d+$/) || // Numeric sizes like 30, 32, etc.
+                           val.includes('SMALL') || val.includes('MEDIUM') ||
+                           val.includes('LARGE') || val.includes('EXTRA');
+                });
+                
+                if (possibleSizeOption) {
+                    size = possibleSizeOption.value;
+                    console.log(`Extracted size "${size}" from option "${possibleSizeOption.name}"`);
+                }
+            }
+            
+            // Store all sizes in a complete object to ensure none are missed
             variants[size] = variant.id;
+            console.log(`Mapped variant "${variant.title}" to size "${size}"`);
         });
         
         const mapping = `    '${key}': {

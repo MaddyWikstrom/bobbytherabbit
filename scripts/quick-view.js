@@ -1013,6 +1013,20 @@ class QuickViewManager {
                             console.log(`QuickView: Adding size: ${size}`);
                             sizes.add(size);
                         }
+                    } else {
+                        // Check if this might be a size option with a different name
+                        const upperValue = optionValue.toUpperCase().trim();
+                        if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperValue) ||
+                            upperValue.includes('SMALL') ||
+                            upperValue.includes('MEDIUM') ||
+                            upperValue.includes('LARGE') ||
+                            upperValue.match(/^\d+$/) || // Numeric sizes
+                            upperValue.match(/^\d+\.\d+$/) // Decimal sizes
+                        ) {
+                            console.log(`QuickView: Detected size "${optionValue}" from option "${optionName}"`);
+                            size = optionValue;
+                            sizes.add(size);
+                        }
                     }
                 });
             } else if (variant.title) {
@@ -1049,6 +1063,28 @@ class QuickViewManager {
                     
                     if (size) {
                         console.log(`QuickView: Adding size from title: ${size}`);
+                        sizes.add(size);
+                    }
+                } else {
+                    // Try to identify if the single part might be a size
+                    const upperTitle = variantTitle.toUpperCase();
+                    const sizePatterns = ['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', 'SMALL', 'MEDIUM', 'LARGE'];
+                    
+                    // Check if this title contains a size pattern
+                    for (const pattern of sizePatterns) {
+                        if (upperTitle === pattern || upperTitle.includes(` ${pattern}`) ||
+                            upperTitle.includes(`${pattern} `)) {
+                            size = variantTitle;
+                            console.log(`QuickView: Detected size "${size}" from title`);
+                            sizes.add(size);
+                            break;
+                        }
+                    }
+                    
+                    // Check for numeric sizes (e.g., 30, 32, 34)
+                    if (!size && upperTitle.match(/^\d+$/)) {
+                        size = variantTitle;
+                        console.log(`QuickView: Detected numeric size "${size}" from title`);
                         sizes.add(size);
                     }
                 }
@@ -1220,6 +1256,12 @@ class QuickViewManager {
             this.currentProduct.sizes ? Array.from(this.currentProduct.sizes) : 'None');
         debugInfo.textContent = `Available sizes: ${this.currentProduct.sizes ? Array.from(this.currentProduct.sizes).join(', ') : 'None'}`;
         debugInfo.style.display = 'block';
+        
+        // Special handling if no sizes were found - add "One Size" as default
+        if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
+            console.log(`QuickView: No sizes found, adding "One Size" as default`);
+            this.currentProduct.sizes = ["One Size"];
+        }
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
             console.log(`QuickView: Rendering ${this.currentProduct.sizes.length} size options`);
