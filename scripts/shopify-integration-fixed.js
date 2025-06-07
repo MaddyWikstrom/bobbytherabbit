@@ -9,7 +9,7 @@ let shopifyCheckout = null;
 const SHOPIFY_CONFIG = {
   domain: 'mfdkk3-7g.myshopify.com',
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-  apiVersion: '2024-01'
+  apiVersion: '2024-04' // Updated to latest API version
 };
 
 // Enhanced fetch with retry logic
@@ -161,23 +161,23 @@ function initializeShopifyClient() {
 
     console.log('✅ Shopify client initialized successfully');
 
-    // Create or retrieve existing checkout
-    const checkoutId = localStorage.getItem('shopifyCheckoutId');
-    if (checkoutId) {
-      shopifyClient.checkout.fetch(checkoutId).then((checkout) => {
-        if (!checkout.completedAt) {
-          shopifyCheckout = checkout;
-          console.log('✅ Existing checkout retrieved');
+    // Create or retrieve existing cart (replacing checkout)
+    const cartId = localStorage.getItem('shopifyCartId');
+    if (cartId) {
+      shopifyClient.checkout.fetch(cartId).then((cart) => {
+        if (!cart.completedAt) {
+          shopifyCheckout = cart;
+          console.log('✅ Existing cart retrieved');
         } else {
-          // Checkout was completed, create a new one
-          createNewCheckout();
+          // Cart was completed, create a new one
+          createNewCart();
         }
       }).catch((error) => {
-        console.warn('⚠️ Failed to fetch existing checkout:', error);
-        createNewCheckout();
+        console.warn('⚠️ Failed to fetch existing cart:', error);
+        createNewCart();
       });
     } else {
-      createNewCheckout();
+      createNewCart();
     }
 
   } catch (error) {
@@ -190,32 +190,35 @@ function initializeShopifyClient() {
   }
 }
 
-// Create new Shopify checkout
-function createNewCheckout() {
+// Create new Shopify cart (replacing checkout)
+function createNewCart() {
   if (!shopifyClient) {
-    console.error('❌ No Shopify client available for checkout creation');
+    console.error('❌ No Shopify client available for cart creation');
     return;
   }
 
-  shopifyClient.checkout.create().then((checkout) => {
-    shopifyCheckout = checkout;
-    localStorage.setItem('shopifyCheckoutId', checkout.id);
-    console.log('✅ New checkout created:', checkout.id);
+  shopifyClient.checkout.create().then((cart) => {
+    shopifyCheckout = cart;
+    localStorage.setItem('shopifyCartId', cart.id);
+    console.log('✅ New cart created:', cart.id);
   }).catch((error) => {
-    console.error('❌ Failed to create checkout:', error);
+    console.error('❌ Failed to create cart:', error);
   });
 }
 
-// Redirect to Shopify checkout
+// Redirect to Shopify checkout using cart URL
 function redirectToShopifyCheckout() {
   if (!shopifyCheckout) {
-    console.error('❌ No Shopify checkout available');
+    console.error('❌ No Shopify cart available');
     return;
   }
 
   if (shopifyCheckout && shopifyCheckout.webUrl) {
     console.log('🛒 Redirecting to checkout:', shopifyCheckout.webUrl);
     window.location.href = shopifyCheckout.webUrl;
+  } else if (shopifyCheckout && shopifyCheckout.checkoutUrl) {
+    console.log('🛒 Redirecting to checkout using cart checkout URL:', shopifyCheckout.checkoutUrl);
+    window.location.href = shopifyCheckout.checkoutUrl;
   } else {
     console.error('❌ No checkout URL available');
   }

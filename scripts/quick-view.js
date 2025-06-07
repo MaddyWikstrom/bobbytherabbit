@@ -1270,7 +1270,7 @@ class QuickViewManager {
         // Get current product image
         const image = document.getElementById('quick-view-main-image').src;
         
-        // Create cart item with properly structured variants for BobbyCarts
+        // Create cart item with multiple variant formats to ensure compatibility
         const cartItem = {
             ...this.currentProduct,
             selectedColor: this.selectedVariant.color,
@@ -1279,11 +1279,19 @@ class QuickViewManager {
             shopifyVariantId: variantId,
             mainImage: image,
             image: image,
-            // This is the key fix - the cart system requires variants.size and variants.color
+            // Provide variants in multiple formats for different cart systems
             variants: {
                 size: this.selectedVariant.size,
                 color: this.selectedVariant.color
-            }
+            },
+            // Alternative format needed by cart-checkout-system.js
+            variant: {
+                size: this.selectedVariant.size,
+                color: this.selectedVariant.color
+            },
+            // Direct properties that might be checked
+            size: this.selectedVariant.size,
+            color: this.selectedVariant.color
         };
         
         const variantData = {

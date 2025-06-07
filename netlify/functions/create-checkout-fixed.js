@@ -134,35 +134,41 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Create the GraphQL mutation for checkout creation
+    // Create the GraphQL mutation for cart creation (new API replacing deprecated checkout)
     const mutation = `
-      mutation checkoutCreate($input: CheckoutCreateInput!) {
-        checkoutCreate(input: $input) {
-          checkout {
+      mutation cartCreate($input: CartInput!) {
+        cartCreate(input: $input) {
+          cart {
             id
-            webUrl
-            totalPrice {
-              amount
-              currencyCode
+            checkoutUrl
+            cost {
+              totalAmount {
+                amount
+                currencyCode
+              }
             }
-            lineItems(first: 250) {
+            lines(first: 250) {
               edges {
                 node {
-                  title
-                  quantity
-                  variant {
-                    id
-                    title
-                    price {
-                      amount
-                      currencyCode
+                  merchandise {
+                    ... on ProductVariant {
+                      id
+                      title
+                      price {
+                        amount
+                        currencyCode
+                      }
+                      product {
+                        title
+                      }
                     }
                   }
+                  quantity
                 }
               }
             }
           }
-          checkoutUserErrors {
+          userErrors {
             field
             message
             code
@@ -176,7 +182,7 @@ exports.handler = async (event, context) => {
     // Make the request to Shopify Storefront API
     let response;
     try {
-      response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-07/graphql.json`, {
+      response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-04/graphql.json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,8 +193,10 @@ exports.handler = async (event, context) => {
           query: mutation,
           variables: {
             input: {
-              lineItems,
-              allowPartialAddresses: true
+              lines: lineItems.map(item => ({
+                merchandiseId: item.variantId,
+                quantity: item.quantity
+              }))
             }
           }
         })
@@ -245,44 +253,44 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Check for checkout user errors
-    if (data.data?.checkoutCreate?.checkoutUserErrors?.length > 0) {
-      console.error('Checkout errors from Shopify:', data.data.checkoutCreate.checkoutUserErrors);
+    // Check for cart user errors
+    if (data.data?.cartCreate?.userErrors?.length > 0) {
+      console.error('Cart creation errors from Shopify:', data.data.cartCreate.userErrors);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
-          error: 'Failed to create checkout',
-          details: data.data.checkoutCreate.checkoutUserErrors
+        body: JSON.stringify({
+          error: 'Failed to create cart',
+          details: data.data.cartCreate.userErrors
         })
       };
     }
 
-    // Verify checkout was created
-    if (!data.data?.checkoutCreate?.checkout) {
-      console.error('No checkout created in Shopify response');
+    // Verify cart was created
+    if (!data.data?.cartCreate?.cart) {
+      console.error('No cart created in Shopify response');
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ 
-          error: 'No checkout created',
-          details: 'Shopify response did not include checkout details'
+        body: JSON.stringify({
+          error: 'No cart created',
+          details: 'Shopify response did not include cart details'
         })
       };
     }
 
     // Return the checkout URL and details
-    const checkout = data.data.checkoutCreate.checkout;
-    console.log('Checkout created successfully:', checkout.id);
+    const cart = data.data.cartCreate.cart;
+    console.log('Cart created successfully:', cart.id);
     
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        checkoutUrl: checkout.webUrl,
-        checkoutId: checkout.id,
-        totalPrice: checkout.totalPrice,
-        lineItems: checkout.lineItems.edges
+        checkoutUrl: cart.checkoutUrl,
+        checkoutId: cart.id,
+        totalPrice: cart.cost.totalAmount,
+        lineItems: cart.lines.edges
       })
     };
 
