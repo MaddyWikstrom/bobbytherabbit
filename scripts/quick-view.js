@@ -627,6 +627,7 @@ class QuickViewManager {
             <div class="quick-view-loading" id="quick-view-loading" style="display: none;">
                 <div class="quick-view-spinner"></div>
             </div>
+            <div id="debug-info" style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; padding: 5px; font-size: 10px; display: none;"></div>
         `;
         
         const overlay = document.createElement('div');
@@ -644,9 +645,9 @@ class QuickViewManager {
         
         // Handle product card quick view buttons
         document.addEventListener('click', function(e) {
-            // Quick View button - match both possible class names
-            if (e.target.matches('.product-quick-view-btn, .quick-view-btn') ||
-                e.target.closest('.product-quick-view-btn, .quick-view-btn')) {
+            // Quick View button - match all possible class names
+            if (e.target.matches('.product-action-btn.quick-view-btn, .product-quick-view-btn, .quick-view-btn') ||
+                e.target.closest('.product-action-btn.quick-view-btn, .product-quick-view-btn, .quick-view-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -659,9 +660,9 @@ class QuickViewManager {
                 }
             }
             
-            // Quick Add button - match both possible class names
-            if (e.target.matches('.product-quick-add-btn, .add-to-cart-quick') ||
-                e.target.closest('.product-quick-add-btn, .add-to-cart-quick')) {
+            // Quick Add button - match all possible class names
+            if (e.target.matches('.product-action-btn.add-to-cart-quick, .product-quick-add-btn, .add-to-cart-quick') ||
+                e.target.closest('.product-action-btn.add-to-cart-quick, .product-quick-add-btn, .add-to-cart-quick')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -805,8 +806,13 @@ class QuickViewManager {
     }
     
     async openQuickView(productId) {
+        console.log('QuickView: Opening quick view for product ID:', productId);
         this.showLoading(true);
         this.openModal();
+        
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.style.display = 'block';
+        debugInfo.textContent = `Loading product: ${productId}`;
         
         try {
             // Reset selected variant
@@ -816,19 +822,28 @@ class QuickViewManager {
                 quantity: 1
             };
             
+            debugInfo.textContent = `Fetching product data for: ${productId}`;
             // Fetch product data
             const product = await this.fetchProductData(productId);
             
             if (!product) {
+                debugInfo.textContent = `Error: Product not found for ID: ${productId}`;
                 this.closeQuickView();
                 console.error('Product not found');
                 return;
             }
             
             this.currentProduct = product;
+            debugInfo.textContent = `Rendering product: ${product.title}`;
             this.renderQuickView();
             
+            // Hide debug info after successful rendering
+            setTimeout(() => {
+                debugInfo.style.display = 'none';
+            }, 2000);
+            
         } catch (error) {
+            debugInfo.textContent = `Error: ${error.message}`;
             console.error('Error opening quick view:', error);
         } finally {
             this.showLoading(false);
@@ -856,10 +871,17 @@ class QuickViewManager {
     
     async fetchProductData(productId) {
         try {
-            console.log('Fetching product data for:', productId);
+            console.log('QuickView: Fetching product data for:', productId);
             
             // Use the Netlify function to get product data
-            const response = await fetch('/.netlify/functions/get-products');
+            const response = await fetch('/.netlify/functions/get-products', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // Add a timeout to prevent hanging if the server is slow
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -867,26 +889,36 @@ class QuickViewManager {
             
             const data = await response.json();
             
+            if (!Array.isArray(data)) {
+                console.error('QuickView: Received invalid data format:', typeof data);
+                throw new Error('Invalid data format received from API');
+            }
+            
             if (data.error) {
-                console.error('Netlify function error:', data.error);
+                console.error('QuickView: Netlify function error:', data.error);
                 return null;
             }
             
+            console.log(`QuickView: Received ${data.length} products from API`);
+            
             // Find the specific product
             const product = data.find(p => {
+                if (!p) return false;
                 const node = p.node || p;
                 const shopifyId = node.id?.replace('gid://shopify/Product/', '');
                 return node.handle === productId || shopifyId === productId || node.id === productId;
             });
             
             if (!product) {
+                console.error(`QuickView: Product with ID "${productId}" not found in API response`);
                 return null;
             }
             
+            console.log('QuickView: Found product:', product.node?.title || product.title);
             return this.processProductData(product.node || product);
             
         } catch (error) {
-            console.error('Error fetching product data:', error);
+            console.error('QuickView: Error fetching product data:', error);
             return null;
         }
     }
@@ -1087,33 +1119,57 @@ class QuickViewManager {
     }
     
     updateQuickViewState() {
-        if (!this.currentProduct) return;
+        if (!this.currentProduct) {
+            console.error('QuickView: Cannot update state - no current product');
+            return;
+        }
+        
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.textContent = `Updating state: Color=${this.selectedVariant.color}, Size=${this.selectedVariant.size}`;
+        debugInfo.style.display = 'block';
         
         // Update size availability based on selected color
         if (this.selectedVariant.color) {
             const sizeOptions = document.querySelectorAll('.quick-view-size-option');
+            console.log(`QuickView: Updating ${sizeOptions.length} size options based on color: ${this.selectedVariant.color}`);
             
             sizeOptions.forEach(option => {
                 const size = option.getAttribute('data-size');
-                const available = this.currentProduct.inventory[`${this.selectedVariant.color}-${size}`] > 0;
+                const inventoryKey = `${this.selectedVariant.color}-${size}`;
+                const stockLevel = this.currentProduct.inventory[inventoryKey];
+                const available = stockLevel > 0;
                 
+                console.log(`QuickView: Size ${size} availability: ${available} (stock: ${stockLevel})`);
                 option.classList.toggle('unavailable', !available);
+                
+                // If the currently selected size is now unavailable, deselect it
+                if (!available && this.selectedVariant.size === size) {
+                    this.selectedVariant.size = null;
+                    option.classList.remove('active');
+                }
             });
         }
         
         // Update add to cart button
         const addButton = document.getElementById('quick-add-btn');
+        if (!addButton) {
+            console.error('QuickView: Add to cart button not found');
+            return;
+        }
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
             // Need to select size
             if (!this.selectedVariant.size) {
                 addButton.disabled = true;
                 addButton.textContent = 'Select Size';
+                console.log('QuickView: Size selection required');
             } else if (!this.selectedVariant.color && this.currentProduct.colors.length > 0) {
                 addButton.disabled = true;
                 addButton.textContent = 'Select Color';
+                console.log('QuickView: Color selection required');
             } else {
                 const stock = this.getAvailableStock();
+                console.log(`QuickView: Stock available: ${stock}`);
                 
                 if (stock > 0) {
                     addButton.disabled = false;
@@ -1133,6 +1189,11 @@ class QuickViewManager {
                 addButton.textContent = 'Add to Cart';
             }
         }
+        
+        // Hide debug info after a delay
+        setTimeout(() => {
+            debugInfo.style.display = 'none';
+        }, 3000);
     }
     
     getAvailableStock() {
@@ -1145,16 +1206,51 @@ class QuickViewManager {
     }
     
     addToCart() {
-        if (!this.currentProduct) return;
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.style.display = 'block';
+        
+        if (!this.currentProduct) {
+            console.error('QuickView: Cannot add to cart - no current product');
+            debugInfo.textContent = 'Error: No product selected';
+            return;
+        }
+        
+        debugInfo.textContent = 'Validating product selections...';
         
         // Check if we have all required selections
         if (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) {
-            console.error('Color not selected');
+            console.error('QuickView: Color not selected');
+            debugInfo.textContent = 'Error: Please select a color';
+            
+            // Highlight color options section
+            const colorGroup = document.getElementById('quick-view-color-group');
+            if (colorGroup) {
+                colorGroup.style.border = '2px solid #ef4444';
+                colorGroup.style.padding = '10px';
+                colorGroup.style.borderRadius = '8px';
+                setTimeout(() => {
+                    colorGroup.style.border = 'none';
+                    colorGroup.style.padding = '0';
+                }, 2000);
+            }
             return;
         }
         
         if (this.currentProduct.sizes.length > 0 && !this.selectedVariant.size) {
-            console.error('Size not selected');
+            console.error('QuickView: Size not selected');
+            debugInfo.textContent = 'Error: Please select a size';
+            
+            // Highlight size options section
+            const sizeGroup = document.getElementById('quick-view-size-group');
+            if (sizeGroup) {
+                sizeGroup.style.border = '2px solid #ef4444';
+                sizeGroup.style.padding = '10px';
+                sizeGroup.style.borderRadius = '8px';
+                setTimeout(() => {
+                    sizeGroup.style.border = 'none';
+                    sizeGroup.style.padding = '0';
+                }, 2000);
+            }
             return;
         }
         
@@ -1191,37 +1287,91 @@ class QuickViewManager {
             image: image
         };
         
+        debugInfo.textContent = 'Adding item to cart...';
+        
         // Add to cart
         const addButton = document.getElementById('quick-add-btn');
         
         // Show animation
         addButton.classList.add('adding');
+        addButton.textContent = 'Adding...';
         setTimeout(() => {
             addButton.classList.remove('adding');
         }, 1200);
         
-        // Use consolidated cart system
-        if (window.BobbyCart) {
-            window.BobbyCart.addToCart(cartItem);
+        // Try all available cart systems
+        try {
+            let cartAddSuccess = false;
             
-            // Dispatch custom event for other components
-            document.dispatchEvent(new CustomEvent('quickview:addtocart', {
-                detail: {
-                    product: cartItem,
-                    variant: variantData
-                }
-            }));
-        } else if (window.BobbyCarts) {
-            // Fallback to old system if present
-            window.BobbyCarts.addToCart(cartItem);
-        } else {
-            console.error('Cart system not available');
+            // Use consolidated cart system
+            if (window.BobbyCart) {
+                window.BobbyCart.addToCart(cartItem);
+                console.log('QuickView: Added to cart using BobbyCart');
+                cartAddSuccess = true;
+                
+                // Dispatch custom event for other components
+                document.dispatchEvent(new CustomEvent('quickview:addtocart', {
+                    detail: {
+                        product: cartItem,
+                        variant: variantData
+                    }
+                }));
+                
+                // Try to force cart to open
+                setTimeout(() => {
+                    if (typeof window.BobbyCart.openCart === 'function') {
+                        window.BobbyCart.openCart();
+                    }
+                }, 500);
+            } else if (window.BobbyCarts) {
+                // Fallback to old system if present
+                window.BobbyCarts.addToCart(cartItem);
+                console.log('QuickView: Added to cart using BobbyCarts');
+                cartAddSuccess = true;
+                
+                // Try to force cart to open
+                setTimeout(() => {
+                    if (typeof window.BobbyCarts.openCart === 'function') {
+                        window.BobbyCarts.openCart();
+                    }
+                }, 500);
+            } else if (window.cartManager) {
+                // Try legacy cart system
+                window.cartManager.addItem(cartItem);
+                console.log('QuickView: Added to cart using cartManager');
+                cartAddSuccess = true;
+                
+                // Try to force cart to open
+                setTimeout(() => {
+                    if (typeof window.cartManager.openCart === 'function') {
+                        window.cartManager.openCart();
+                    }
+                }, 500);
+            } else {
+                console.error('QuickView: No cart system available');
+                debugInfo.textContent = 'Error: Cart system not available';
+                addButton.textContent = 'Add to Cart';
+                
+                // Show an alert to the user
+                alert('The cart system is not available. This is likely because the site needs to be deployed to work correctly.');
+                return;
+            }
+            
+            if (cartAddSuccess) {
+                debugInfo.textContent = 'Success! Added to cart';
+                addButton.textContent = 'Added to Cart ✓';
+                
+                // Close modal after a delay
+                setTimeout(() => {
+                    this.closeQuickView();
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('QuickView: Error adding to cart:', error);
+            debugInfo.textContent = `Error adding to cart: ${error.message}`;
+            addButton.textContent = 'Add to Cart';
+            addButton.classList.remove('adding');
         }
-        
-        // Close modal after a delay
-        setTimeout(() => {
-            this.closeQuickView();
-        }, 1500);
     }
     
     openModal() {
