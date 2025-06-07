@@ -478,10 +478,9 @@ class ProductDetailManager {
                 }
             });
             
-            // If STILL no sizes (very unlikely), use "One Size" as absolute last resort
+            // If STILL no sizes, we'll rely only on what we can extract from the API
             if (sizes.size === 0) {
-                console.log('CRITICAL: No size data found at all, using "One Size" as last resort');
-                sizes.add("One Size");
+                console.log('CRITICAL: No size data found at all in the API');
             }
         }
         

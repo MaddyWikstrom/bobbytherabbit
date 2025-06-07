@@ -147,8 +147,7 @@ class ProductManager {
                 // Debug output to help diagnose issues
                 console.log(`Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
                 
-                // CRITICAL DEBUG: Log the exact variant data received from API
-                console.log(`VARIANT RAW DATA: ${JSON.stringify(variant)}`);
+                let foundSize = false;
                 
                 // First: Always capture variant title as a potential size regardless of other options
                 // This ensures we preserve all variant data from the API
@@ -160,7 +159,6 @@ class ProductManager {
                 }
                 
                 // Second: Look for explicit "Size" option to add as additional data
-                let foundSize = false;
                 variant.selectedOptions.forEach(option => {
                     if (option.name.toLowerCase() === 'color') {
                         color = option.value;

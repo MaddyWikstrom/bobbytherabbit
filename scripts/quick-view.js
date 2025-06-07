@@ -1341,10 +1341,9 @@ class QuickViewManager {
                 });
             }
             
-            // If STILL no sizes, use "One Size" as absolute last resort
+            // If still no sizes found, we'll rely on the raw variant data that was already added
             if (!sizes.size) {
-                sizes.add("One Size");
-                console.log(`QuickView: No variants found at all, using "One Size" as last resort`);
+                console.log(`QuickView: No sizes detected - using raw variant data only`);
             }
         }
         
