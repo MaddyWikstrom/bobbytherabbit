@@ -1021,42 +1021,61 @@ class ProductManager {
             
             try {
                 // Add to cart with specific color and size
-                if (!window.cartManager) {
-                    console.log('Cart manager not found, initializing...');
-                    if (typeof CartManager !== 'undefined') {
-                        window.cartManager = new CartManager();
-                        setTimeout(() => {
-                            try {
-                                window.cartManager.addItem(cartProduct);
-                                window.cartManager.openCart();
-                                console.log('Item added to cart with new cart manager');
-                                
-                                // Remove modal after adding
-                                modalOverlay.remove();
-                                styleEl.remove();
-                                
-                                // Show success notification
-                                this.showNotification('Product added to cart!', 'success');
-                            } catch (e) {
-                                console.error('Error adding to cart:', e);
-                                this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
-                            }
-                        }, 100);
-                    } else {
-                        this.showNotification('This app requires deployment to Netlify to function properly.', 'error');
-                        console.warn('CartManager class not available');
-                        
-                        // Remove modal after error
-                        setTimeout(() => {
-                            modalOverlay.remove();
-                            styleEl.remove();
-                        }, 1000);
-                    }
-                } else {
-                    // Add to existing cart manager
-                    window.cartManager.addItem(cartProduct);
-                    console.log('Item added to existing cart manager');
+                // Try to use any available cart system, in order of preference
+                let cartAdded = false;
+                
+                // Try BobbyCart (consolidated cart)
+                if (window.BobbyCart) {
+                    window.BobbyCart.addToCart(cartProduct);
+                    console.log('Item added to cart with BobbyCart');
+                    cartAdded = true;
                     
+                    // Force cart to open
+                    setTimeout(() => {
+                        window.BobbyCart.openCart();
+                    }, 300);
+                }
+                // Try BobbyCarts (older system)
+                else if (window.BobbyCarts) {
+                    window.BobbyCarts.addToCart(cartProduct);
+                    console.log('Item added to cart with BobbyCarts');
+                    cartAdded = true;
+                    
+                    // Force cart to open
+                    setTimeout(() => {
+                        window.BobbyCarts.openCart();
+                    }, 300);
+                }
+                // Try cartManager (legacy system)
+                else if (window.cartManager) {
+                    window.cartManager.addItem(cartProduct);
+                    console.log('Item added to cart with cartManager');
+                    cartAdded = true;
+                    
+                    // Force cart to open
+                    setTimeout(() => {
+                        window.cartManager.openCart();
+                    }, 300);
+                }
+                // Try to initialize CartManager as last resort
+                else if (typeof CartManager !== 'undefined') {
+                    console.log('Cart system not found, initializing CartManager...');
+                    window.cartManager = new CartManager();
+                    
+                    setTimeout(() => {
+                        try {
+                            window.cartManager.addItem(cartProduct);
+                            window.cartManager.openCart();
+                            console.log('Item added to cart with new CartManager');
+                            cartAdded = true;
+                        } catch (e) {
+                            console.error('Error adding to cart with new CartManager:', e);
+                            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
+                        }
+                    }, 100);
+                }
+                
+                if (cartAdded) {
                     // Show success notification
                     this.showNotification('Product added to cart!', 'success');
                     
@@ -1064,12 +1083,17 @@ class ProductManager {
                     setTimeout(() => {
                         modalOverlay.remove();
                         styleEl.remove();
-                        
-                        // Force cart to open
-                        if (window.cartManager) {
-                            window.cartManager.openCart();
-                        }
                     }, 500);
+                } else {
+                    // No cart system available
+                    this.showNotification('Cart system is not available. This app requires deployment to Netlify.', 'error');
+                    console.warn('No cart system available');
+                    
+                    // Remove modal after error
+                    setTimeout(() => {
+                        modalOverlay.remove();
+                        styleEl.remove();
+                    }, 1000);
                 }
             } catch (error) {
                 console.error('Error adding product to cart:', error);

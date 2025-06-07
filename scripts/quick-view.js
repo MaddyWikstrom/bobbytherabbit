@@ -841,6 +841,10 @@ class QuickViewManager {
         setTimeout(() => {
             if (window.productManager && typeof window.productManager.showNotification === 'function') {
                 window.productManager.showNotification('Please select a size before adding to cart', 'info');
+            } else if (window.BobbyCart && typeof window.BobbyCart.showNotification === 'function') {
+                window.BobbyCart.showNotification('Please select a size before adding to cart', 'info');
+            } else if (window.BobbyCarts && typeof window.BobbyCarts.showNotification === 'function') {
+                window.BobbyCarts.showNotification('Please select a size before adding to cart', 'info');
             } else {
                 console.log('INFO: Please select a size before adding to cart');
             }
