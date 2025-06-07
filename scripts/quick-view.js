@@ -1692,9 +1692,26 @@ class QuickViewManager {
         return 'Apparel';
     }
     
-    // Helper method to simplify size strings
+    // Helper method to simplify size strings - ONLY returns S, M, L, etc.
     simplifySize(sizeString) {
         if (!sizeString) return '';
+        
+        // First, aggressively handle any "Color / Size" format by extracting ONLY the size part
+        if (sizeString.includes('/')) {
+            const parts = sizeString.split('/').map(p => p.trim());
+            // Use the last part (typically the size) for further processing
+            sizeString = parts[parts.length - 1];
+        }
+        
+        // Also strip any color name that might be in the size string
+        const colorNames = ['black', 'white', 'navy', 'blue', 'red', 'green', 'yellow', 'purple',
+                          'pink', 'orange', 'brown', 'gray', 'grey', 'maroon', 'forest', 'heather'];
+        
+        colorNames.forEach(color => {
+            // Remove color name if it appears at start of string
+            const regex = new RegExp(`^${color}\\s+`, 'i');
+            sizeString = sizeString.replace(regex, '');
+        });
         
         // Convert to uppercase for comparison
         const upperSize = sizeString.toUpperCase().trim();
@@ -1709,8 +1726,10 @@ class QuickViewManager {
             'EXTRA SMALL': 'XS',
             'EXTRA-SMALL': 'XS',
             '2XL': 'XXL',
+            'XXL': 'XXL',
             '2X': 'XXL',
             '3XL': '3XL',
+            'XXXL': '3XL',
             '3X': '3XL',
             'ONE SIZE': 'OS'
         };
@@ -1720,33 +1739,15 @@ class QuickViewManager {
             return sizeMap[upperSize];
         }
         
-        // Check for partial matches
-        for (const [key, value] of Object.entries(sizeMap)) {
-            if (upperSize.includes(key)) {
-                return value;
-            }
-        }
-        
-        // Check for common size abbreviations
+        // Check for common size abbreviations - direct return for clean formats
         if (['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize)) {
             return upperSize;
         }
         
-        // For sizes like "S / Black", extract just the size part
-        if (upperSize.includes('/')) {
-            const parts = upperSize.split('/').map(p => p.trim());
-            for (const part of parts) {
-                // Try to find a standard size in the parts
-                if (['S', 'M', 'L', 'XL', 'XXL', 'XS'].includes(part)) {
-                    return part;
-                }
-                
-                // Check for mapped sizes in the parts
-                for (const [key, value] of Object.entries(sizeMap)) {
-                    if (part.includes(key)) {
-                        return value;
-                    }
-                }
+        // Check for partial matches
+        for (const [key, value] of Object.entries(sizeMap)) {
+            if (upperSize.includes(key)) {
+                return value;
             }
         }
         
@@ -1755,8 +1756,15 @@ class QuickViewManager {
             return upperSize;
         }
         
-        // If we can't simplify it, return the original string
-        return sizeString;
+        // For anything else, try to extract just letter-based sizes if present
+        const sizeMatch = upperSize.match(/\b(XS|S|M|L|XL|XXL|XXXL)\b/);
+        if (sizeMatch) {
+            return sizeMatch[0];
+        }
+        
+        // Fallback to just returning "OS" (one size) if we can't determine
+        // This ensures we always show a simple size format
+        return 'OS';
     }
     
     getColorCode(colorName) {
@@ -2108,10 +2116,20 @@ class QuickViewManager {
         // Try multiple strategies to find color-specific images
         let colorImages = [];
         
-        // Strategy 1: Check if image URLs contain the color name
+        // Strategy 1: Strongly filter to ONLY show images with the color name
         const colorNameLower = colorName.toLowerCase();
-        colorImages = this.currentProduct.images.filter(imgUrl =>
-            imgUrl.toLowerCase().includes(colorNameLower));
+        colorImages = this.currentProduct.images.filter(imgUrl => {
+            const imgUrlLower = imgUrl.toLowerCase();
+            // Look for the color name in the URL (more strict matching)
+            return imgUrlLower.includes(colorNameLower) ||
+                  // Also check for color-related terms in the filename
+                  imgUrlLower.includes(`color-${colorNameLower}`) ||
+                  imgUrlLower.includes(`-${colorNameLower}.`) ||
+                  imgUrlLower.includes(`_${colorNameLower}.`) ||
+                  // Additional checks for common color-related patterns
+                  imgUrlLower.includes(`${colorNameLower}-`) ||
+                  imgUrlLower.includes(`${colorNameLower}_`);
+        });
         
         console.log(`QuickView: Strategy 1 - Found ${colorImages.length} images by color name match`);
         
@@ -2159,8 +2177,14 @@ class QuickViewManager {
         // If we still don't have any images specific to this color,
         // default to showing just the first image to avoid showing other colors
         if (colorImages.length === 0 && this.currentProduct.images.length > 0) {
-            colorImages = [this.currentProduct.images[0]];
-            console.log(`QuickView: No color-specific images found, showing only first image`);
+            // If no color-specific images found, try to find any default/main image
+            const defaultImage = this.currentProduct.images.find(img =>
+                img.toLowerCase().includes('main') ||
+                img.toLowerCase().includes('default') ||
+                img.toLowerCase().includes('primary'));
+                
+            colorImages = defaultImage ? [defaultImage] : [this.currentProduct.images[0]];
+            console.log(`QuickView: No color-specific images found, showing default/first image`);
         }
         
         // Update main image and thumbnails
@@ -2200,10 +2224,20 @@ class QuickViewManager {
             
             // Try multiple strategies to find color-specific images (similar to filterImagesByColor)
             
-            // Strategy 1: Check if image URLs contain the color name
+            // Strategy 1: STRICTLY filter to ONLY show images with the color name
             const colorNameLower = colorName.toLowerCase();
-            const colorImages = product.images.filter(imgUrl =>
-                imgUrl.toLowerCase().includes(colorNameLower));
+            const colorImages = product.images.filter(imgUrl => {
+                const imgUrlLower = imgUrl.toLowerCase();
+                // Look for the color name in the URL (more strict matching)
+                return imgUrlLower.includes(colorNameLower) ||
+                      // Also check for color-related terms in the filename
+                      imgUrlLower.includes(`color-${colorNameLower}`) ||
+                      imgUrlLower.includes(`-${colorNameLower}.`) ||
+                      imgUrlLower.includes(`_${colorNameLower}.`) ||
+                      // Additional checks for common color-related patterns
+                      imgUrlLower.includes(`${colorNameLower}-`) ||
+                      imgUrlLower.includes(`${colorNameLower}_`);
+            });
             
             if (colorImages.length > 0) {
                 console.log(`QuickView: Found image by color name match`);
