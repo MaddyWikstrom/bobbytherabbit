@@ -1828,9 +1828,26 @@ class QuickViewManager {
             mainImage.src = this.currentProduct.images[0];
             mainImage.alt = this.currentProduct.title;
             
-            thumbnailsContainer.innerHTML = this.currentProduct.images.map((image, index) => `
-                <img src="${image}" alt="${this.currentProduct.title}" class="quick-view-thumbnail ${index === 0 ? 'active' : ''}">
-            `).join('');
+            // Add data-color attributes to images where possible by trying to match color names in URLs
+            thumbnailsContainer.innerHTML = this.currentProduct.images.map((image, index) => {
+                // Try to determine which color this image is for
+                let imageColor = '';
+                if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+                    for (const color of this.currentProduct.colors) {
+                        if (image.toLowerCase().includes(color.name.toLowerCase())) {
+                            imageColor = color.name;
+                            break;
+                        }
+                    }
+                }
+                
+                return `
+                    <img src="${image}"
+                         alt="${this.currentProduct.title}"
+                         class="quick-view-thumbnail ${index === 0 ? 'active' : ''}"
+                         data-color="${imageColor}">
+                `;
+            }).join('');
         }
         
         // Color options
@@ -2096,7 +2113,7 @@ class QuickViewManager {
         return this.currentProduct.inventory[variantKey] || 0;
     }
     
-    // Improved filter images in the quick view to show only those for the selected color
+    // Filter images by color using a more direct approach with data-attributes
     filterImagesByColor(colorName) {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             console.log('QuickView: No images to filter');
@@ -2110,101 +2127,107 @@ class QuickViewManager {
             return;
         }
         
-        // Get all variants for this color
-        const colorVariants = this.currentProduct.variants.filter(v => v.color === colorName);
+        // First approach: Use data-color attributes if present
+        const thumbnails = document.querySelectorAll('.quick-view-thumbnail');
+        let colorImagesFound = false;
+        let firstMatchingImage = null;
         
-        // Try multiple strategies to find color-specific images
-        let colorImages = [];
-        
-        // Strategy 1: Strongly filter to ONLY show images with the color name
-        const colorNameLower = colorName.toLowerCase();
-        colorImages = this.currentProduct.images.filter(imgUrl => {
-            const imgUrlLower = imgUrl.toLowerCase();
-            // Look for the color name in the URL (more strict matching)
-            return imgUrlLower.includes(colorNameLower) ||
-                  // Also check for color-related terms in the filename
-                  imgUrlLower.includes(`color-${colorNameLower}`) ||
-                  imgUrlLower.includes(`-${colorNameLower}.`) ||
-                  imgUrlLower.includes(`_${colorNameLower}.`) ||
-                  // Additional checks for common color-related patterns
-                  imgUrlLower.includes(`${colorNameLower}-`) ||
-                  imgUrlLower.includes(`${colorNameLower}_`);
+        // Show only thumbnails that match the selected color
+        thumbnails.forEach(thumbnail => {
+            const thumbnailColor = thumbnail.getAttribute('data-color');
+            
+            if (thumbnailColor === colorName) {
+                // Show images matching the color
+                thumbnail.style.display = 'block';
+                colorImagesFound = true;
+                if (!firstMatchingImage) {
+                    firstMatchingImage = thumbnail;
+                }
+            } else if (thumbnailColor && thumbnailColor !== '') {
+                // Hide images with a different color
+                thumbnail.style.display = 'none';
+            } else {
+                // For images without color data, try to match by URL
+                const imgUrl = thumbnail.getAttribute('src').toLowerCase();
+                const colorNameLower = colorName.toLowerCase();
+                
+                if (imgUrl.includes(colorNameLower) ||
+                    imgUrl.includes(`color-${colorNameLower}`) ||
+                    imgUrl.includes(`-${colorNameLower}.`) ||
+                    imgUrl.includes(`_${colorNameLower}.`) ||
+                    imgUrl.includes(`${colorNameLower}-`) ||
+                    imgUrl.includes(`${colorNameLower}_`)) {
+                    
+                    thumbnail.style.display = 'block';
+                    colorImagesFound = true;
+                    if (!firstMatchingImage) {
+                        firstMatchingImage = thumbnail;
+                    }
+                    
+                    // Set the data-color for future use
+                    thumbnail.setAttribute('data-color', colorName);
+                } else {
+                    thumbnail.style.display = 'none';
+                }
+            }
         });
         
-        console.log(`QuickView: Strategy 1 - Found ${colorImages.length} images by color name match`);
-        
-        // Strategy 2: If strategy 1 didn't work, use variant index matching
-        if (colorImages.length === 0 && colorVariants.length > 0) {
-            const variantIndices = colorVariants.map(variant =>
-                this.currentProduct.variants.findIndex(v => v.id === variant.id)
-            ).filter(index => index >= 0);
+        // If no matching images found with data-attributes, fall back to URL filtering
+        if (!colorImagesFound) {
+            console.log(`QuickView: No matching images found by data-color, falling back to URL filtering`);
             
-            console.log(`QuickView: Strategy 2 - Found variant indices: ${variantIndices.join(', ')}`);
+            // Strategy 1: Filter by color name in URL
+            const colorImages = this.currentProduct.images.filter(imgUrl => {
+                const imgUrlLower = imgUrl.toLowerCase();
+                const colorNameLower = colorName.toLowerCase();
+                return imgUrlLower.includes(colorNameLower) ||
+                       imgUrlLower.includes(`color-${colorNameLower}`) ||
+                       imgUrlLower.includes(`-${colorNameLower}.`) ||
+                       imgUrlLower.includes(`_${colorNameLower}.`) ||
+                       imgUrlLower.includes(`${colorNameLower}-`) ||
+                       imgUrlLower.includes(`${colorNameLower}_`);
+            });
             
-            if (variantIndices.length > 0) {
-                // Get images at matching indices
-                colorImages = variantIndices
-                    .filter(index => index < this.currentProduct.images.length)
-                    .map(index => this.currentProduct.images[index]);
-                
-                console.log(`QuickView: Strategy 2 - Found ${colorImages.length} images by variant index match`);
-            }
-        }
-        
-        // Strategy 3: If we have at least one variant and a limited number of colors,
-        // try to group images evenly among colors
-        if (colorImages.length === 0 && this.currentProduct.colors.length > 0) {
-            const totalColors = this.currentProduct.colors.length;
-            const imagesPerColor = Math.floor(this.currentProduct.images.length / totalColors);
-            
-            if (imagesPerColor > 0) {
-                // Find the index of the selected color
-                const colorIndex = this.currentProduct.colors.findIndex(c => c.name === colorName);
-                
-                if (colorIndex >= 0) {
-                    // Calculate the start and end indices for this color's images
-                    const startIndex = colorIndex * imagesPerColor;
-                    const endIndex = (colorIndex === totalColors - 1)
-                        ? this.currentProduct.images.length  // Last color gets all remaining images
-                        : (colorIndex + 1) * imagesPerColor;
-                    
-                    colorImages = this.currentProduct.images.slice(startIndex, endIndex);
-                    console.log(`QuickView: Strategy 3 - Allocated ${colorImages.length} images for color ${colorName} (color ${colorIndex+1}/${totalColors})`);
+            // Update thumbnails display if we found matching images
+            if (colorImages.length > 0) {
+                thumbnails.forEach(thumbnail => {
+                    const src = thumbnail.getAttribute('src');
+                    if (colorImages.includes(src)) {
+                        thumbnail.style.display = 'block';
+                        if (!firstMatchingImage) {
+                            firstMatchingImage = thumbnail;
+                        }
+                        // Set data-color for future use
+                        thumbnail.setAttribute('data-color', colorName);
+                    } else {
+                        thumbnail.style.display = 'none';
+                    }
+                });
+            } else {
+                // If still no matches, show all images (fallback)
+                thumbnails.forEach(thumbnail => {
+                    thumbnail.style.display = 'block';
+                });
+                if (thumbnails.length > 0) {
+                    firstMatchingImage = thumbnails[0];
                 }
             }
         }
         
-        // If we still don't have any images specific to this color,
-        // default to showing just the first image to avoid showing other colors
-        if (colorImages.length === 0 && this.currentProduct.images.length > 0) {
-            // If no color-specific images found, try to find any default/main image
-            const defaultImage = this.currentProduct.images.find(img =>
-                img.toLowerCase().includes('main') ||
-                img.toLowerCase().includes('default') ||
-                img.toLowerCase().includes('primary'));
-                
-            colorImages = defaultImage ? [defaultImage] : [this.currentProduct.images[0]];
-            console.log(`QuickView: No color-specific images found, showing default/first image`);
-        }
-        
-        // Update main image and thumbnails
+        // Update main image to the first matching thumbnail
         const mainImage = document.getElementById('quick-view-main-image');
-        const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
-        
-        if (mainImage && thumbnailsContainer && colorImages.length > 0) {
-            // Set main image to first color image
-            mainImage.src = colorImages[0];
+        if (mainImage && firstMatchingImage) {
+            mainImage.src = firstMatchingImage.src;
             
-            // Update thumbnails
-            thumbnailsContainer.innerHTML = colorImages.map((image, index) => `
-                <img src="${image}" alt="${this.currentProduct.title}" class="quick-view-thumbnail ${index === 0 ? 'active' : ''}">
-            `).join('');
+            // Update active thumbnail
+            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            firstMatchingImage.classList.add('active');
             
-            console.log(`QuickView: Updated gallery with ${colorImages.length} images for color ${colorName}`);
+            console.log(`QuickView: Updated main image for color ${colorName}`);
         }
     }
     
-    // Improved update product card image when a color is selected
+    // Update product card image when a color is selected
     updateProductCardImage(colorName, productCard) {
         if (!productCard || !colorName) return;
         
@@ -2214,38 +2237,37 @@ class QuickViewManager {
         
         console.log(`QuickView: Updating product card image for color ${colorName}`);
         
+        // Find the main product image in the card
+        const productImage = productCard.querySelector('img');
+        if (!productImage) return;
+        
+        // First, mark the image with data-color attribute for the currently selected color
+        // This helps track which color's image is currently showing
+        productImage.setAttribute('data-color', colorName);
+        
         // Fetch the product data if we need it
         this.fetchProductData(productId).then(product => {
             if (!product || !product.images || product.images.length === 0) return;
             
-            // Find the main product image in the card
-            const productImage = productCard.querySelector('img');
-            if (!productImage) return;
-            
-            // Try multiple strategies to find color-specific images (similar to filterImagesByColor)
-            
-            // Strategy 1: STRICTLY filter to ONLY show images with the color name
+            // Direct filtering by color name in URL - most reliable method
             const colorNameLower = colorName.toLowerCase();
             const colorImages = product.images.filter(imgUrl => {
                 const imgUrlLower = imgUrl.toLowerCase();
-                // Look for the color name in the URL (more strict matching)
                 return imgUrlLower.includes(colorNameLower) ||
-                      // Also check for color-related terms in the filename
-                      imgUrlLower.includes(`color-${colorNameLower}`) ||
-                      imgUrlLower.includes(`-${colorNameLower}.`) ||
-                      imgUrlLower.includes(`_${colorNameLower}.`) ||
-                      // Additional checks for common color-related patterns
-                      imgUrlLower.includes(`${colorNameLower}-`) ||
-                      imgUrlLower.includes(`${colorNameLower}_`);
+                       imgUrlLower.includes(`color-${colorNameLower}`) ||
+                       imgUrlLower.includes(`-${colorNameLower}.`) ||
+                       imgUrlLower.includes(`_${colorNameLower}.`) ||
+                       imgUrlLower.includes(`${colorNameLower}-`) ||
+                       imgUrlLower.includes(`${colorNameLower}_`);
             });
             
             if (colorImages.length > 0) {
-                console.log(`QuickView: Found image by color name match`);
+                console.log(`QuickView: Found image by color name match for product card`);
                 productImage.src = colorImages[0];
                 return;
             }
             
-            // Strategy 2: Try to use variant index matching
+            // If no direct match, try variant index matching
             const colorVariant = product.variants.find(v => v.color === colorName);
             if (colorVariant) {
                 const variantIndex = product.variants.indexOf(colorVariant);
@@ -2256,29 +2278,20 @@ class QuickViewManager {
                 }
             }
             
-            // Strategy 3: If there are multiple colors, try to allocate images evenly
-            if (product.colors && product.colors.length > 0) {
-                const totalColors = product.colors.length;
-                const imagesPerColor = Math.floor(product.images.length / totalColors);
-                
-                if (imagesPerColor > 0) {
-                    // Find the index of the selected color
-                    const colorIndex = product.colors.findIndex(c => c.name === colorName);
-                    
-                    if (colorIndex >= 0) {
-                        // Calculate the start index for this color's images
-                        const startIndex = colorIndex * imagesPerColor;
-                        if (startIndex < product.images.length) {
-                            console.log(`QuickView: Allocated image for color ${colorName}`);
-                            productImage.src = product.images[startIndex];
-                            return;
-                        }
+            // Last resort: Try to find any image that might be for this color
+            // by looking for color codes in the product data
+            if (product.colors) {
+                const colorObj = product.colors.find(c => c.name === colorName);
+                if (colorObj && colorObj.code) {
+                    // Try to find an image with similar color profile - this is approximate
+                    // In a real implementation, you'd have image metadata
+                    console.log(`QuickView: Attempting to match image based on color code`);
+                    const colorIndex = product.colors.indexOf(colorObj);
+                    if (colorIndex >= 0 && colorIndex < product.images.length) {
+                        productImage.src = product.images[colorIndex];
                     }
                 }
             }
-            
-            // If no color-specific image is found, don't change the image
-            console.log(`QuickView: No specific image found for color ${colorName}`);
         });
     }
     
