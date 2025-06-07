@@ -142,9 +142,13 @@
         <section class="product-detail">
             <div class="container">
                 <div class="product-not-found-container">
-                    <div class="product-not-found-icon">🔍</div>
-                    <h1 class="product-not-found-title">Product Not Found</h1>
-                    <p class="product-not-found-message">Sorry, we couldn't find the product you're looking for.</p>
+                    <div class="product-not-found-icon" id="error-icon">🔍</div>
+                    <h1 class="product-not-found-title" id="error-title">Product Not Found</h1>
+                    <p class="product-not-found-message" id="error-message">Sorry, we couldn't find the product you're looking for.</p>
+                    <p class="product-not-found-message" id="deployment-message" style="display: none; color: #a855f7; font-weight: bold;">
+                        This site requires deployment to Netlify to function correctly.
+                        When running locally, product data cannot be loaded from Shopify.
+                    </p>
                     <a href="products.html" class="back-to-products">Back to Products</a>
                 </div>
             </div>
@@ -238,6 +242,17 @@
                 window.BobbyCarts.init();
                 window.BobbyCarts.updateCartDisplay();
                 window.BobbyCarts.updateCartCount();
+            }
+
+            // Check URL for deployment parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const reason = urlParams.get('reason');
+            
+            if (reason === 'deployment') {
+                document.getElementById('error-icon').textContent = '⚠️';
+                document.getElementById('error-title').textContent = 'Deployment Required';
+                document.getElementById('error-message').textContent = 'Product information could not be loaded.';
+                document.getElementById('deployment-message').style.display = 'block';
             }
         });
     </script>

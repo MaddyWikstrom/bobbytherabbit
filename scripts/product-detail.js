@@ -164,6 +164,8 @@ class ProductDetailManager {
         } catch (error) {
             console.error('❌ Error loading product:', error);
             this.showProductNotFound();
+            // Add clear message about deployment requirement
+            console.error('❌ Product loading failed. This site requires deployment to Netlify to function correctly.');
             return null;
         }
     }
@@ -205,6 +207,7 @@ class ProductDetailManager {
             
         } catch (error) {
             console.error('❌ Error loading product via Netlify function:', error);
+            console.error('❌ Product loading failed. This site requires deployment to Netlify to function correctly.');
             return null;
         }
     }
@@ -213,18 +216,17 @@ class ProductDetailManager {
         // Extract images from Shopify
         const shopifyImages = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
         
-        // Only use Shopify images with placeholder fallback
+        // Only use Shopify images - no fallbacks
         let images = [];
         
-        // Use Shopify images if available
+        // Use Shopify images
         if (shopifyImages && shopifyImages.length > 0) {
             images = [...shopifyImages];
             console.log(`Using ${images.length} Shopify API images for product`);
         }
-        // Generic placeholder if no Shopify images
         else {
-            images = ['assets/placeholder.png'];
-            console.log('No Shopify images found, using placeholder');
+            images = [];
+            console.log('No Shopify images found. Site requires deployment to Netlify to load images correctly.');
         }
         
         // Extract variants and organize by color/size
@@ -382,7 +384,8 @@ class ProductDetailManager {
     showProductNotFound() {
         // Redirect to the product-not-found.html page instead of rendering inline
         console.log('Product not found, redirecting to product-not-found.html');
-        window.location.href = 'product-not-found.html';
+        // Add a query parameter to indicate this is a deployment issue
+        window.location.href = 'product-not-found.html?reason=deployment';
     }
 
     extractCategory(title) {
@@ -1039,19 +1042,19 @@ class ProductDetailManager {
             featured: product.featured,
             new: product.new,
             sale: product.sale,
-            // Only keep Shopify images or placeholder
+            // Only keep Shopify images - no fallbacks
             mainImage: product.mainImage && product.mainImage.startsWith('http') ?
-                product.mainImage : 'assets/placeholder.png',
+                product.mainImage : null,
             images: product.images ? product.images.filter(img => img.startsWith('http')) : []
         };
         
-        // If no valid images, use placeholder
+        // If no valid images, leave as empty array
         if (!cleanProduct.images || cleanProduct.images.length === 0) {
-            cleanProduct.images = ['assets/placeholder.png'];
+            cleanProduct.images = [];
         }
         
-        // If mainImage isn't valid, use first image
-        if (!cleanProduct.mainImage || !cleanProduct.mainImage.startsWith('http')) {
+        // If mainImage isn't valid, use first image or leave as null
+        if (!cleanProduct.mainImage && cleanProduct.images.length > 0) {
             cleanProduct.mainImage = cleanProduct.images[0];
         }
         
@@ -1075,24 +1078,21 @@ class ProductDetailManager {
             if (saved) {
                 let savedProducts = JSON.parse(saved);
                 
-                // Filter out any products with local mockup images
+                // Filter out any products with non-Shopify images
                 savedProducts = savedProducts.map(product => {
                     // Create a clean version of each product
                     const cleanProduct = {...product};
                     
-                    // Filter images to only include Shopify URLs or use placeholder
+                    // Filter images to only include Shopify URLs - no fallbacks
                     if (cleanProduct.images && Array.isArray(cleanProduct.images)) {
                         cleanProduct.images = cleanProduct.images.filter(img => img.startsWith('http'));
-                        if (cleanProduct.images.length === 0) {
-                            cleanProduct.images = ['assets/placeholder.png'];
-                        }
                     } else {
-                        cleanProduct.images = ['assets/placeholder.png'];
+                        cleanProduct.images = [];
                     }
                     
                     // Fix main image if needed
                     if (!cleanProduct.mainImage || !cleanProduct.mainImage.startsWith('http')) {
-                        cleanProduct.mainImage = cleanProduct.images[0];
+                        cleanProduct.mainImage = cleanProduct.images.length > 0 ? cleanProduct.images[0] : null;
                     }
                     
                     return cleanProduct;
@@ -1116,13 +1116,16 @@ class ProductDetailManager {
         const grid = document.getElementById('recently-viewed-grid');
         const section = document.querySelector('.recently-viewed');
         
-        if (this.recentlyViewed.length === 0) {
+        // Filter out products with no images
+        const productsWithImages = this.recentlyViewed.filter(p => p.mainImage && p.images.length > 0);
+        
+        if (productsWithImages.length === 0) {
             section.style.display = 'none';
             return;
         }
         
         section.style.display = 'block';
-        grid.innerHTML = this.recentlyViewed.map(product => this.createProductCard(product)).join('');
+        grid.innerHTML = productsWithImages.map(product => this.createProductCard(product)).join('');
     }
 
     async loadRelatedProducts() {
@@ -1162,8 +1165,8 @@ class ProductDetailManager {
                     const node = p.node || p;
                     // Only use Shopify API images
                     const shopifyImages = node.images.edges.map(imgEdge => imgEdge.node.url);
-                    // Use a placeholder as fallback if no Shopify images
-                    const images = shopifyImages.length > 0 ? shopifyImages : ['assets/placeholder.png'];
+                    // Only use Shopify images - no fallbacks
+                    const images = shopifyImages.length > 0 ? shopifyImages : [];
                     const minPrice = parseFloat(node.priceRange.minVariantPrice.amount);
                     const firstVariant = node.variants.edges[0]?.node;
                     const comparePrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
@@ -1173,7 +1176,7 @@ class ProductDetailManager {
                         title: node.title,
                         price: minPrice,
                         comparePrice: comparePrice,
-                        mainImage: images[0],
+                        mainImage: images.length > 0 ? images[0] : null,
                         images: images,
                         category: this.extractCategory(node.title).toLowerCase(),
                         featured: node.tags.includes('featured'),
@@ -1191,12 +1194,18 @@ class ProductDetailManager {
     }
 
     createProductCard(product) {
+        // Skip products without images
+        if (!product.mainImage) {
+            return '';
+        }
+        
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         return `
             <div class="product-card" onclick="window.location.href='product.html?id=${product.id}'">
                 <div class="product-image-container">
-                    <img src="${product.mainImage}" alt="${product.title}" class="product-image">
+                    <img src="${product.mainImage}" alt="${product.title}" class="product-image"
+                         onerror="this.style.display='none'; this.parentElement.classList.add('no-image')">
                     <div class="product-badges">
                         ${product.new ? '<span class="product-badge new">New</span>' : ''}
                         ${product.sale ? `<span class="product-badge sale">-${discount}%</span>` : ''}

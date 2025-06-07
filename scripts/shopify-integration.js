@@ -1,202 +1,232 @@
-let PRODUCT_MAPPING = {
-  "bungi-x-bobby-rabbit-hardware-unisex-hoodie": {
-    shopifyProductId: "BUNGI X BOBBY RABBIT HARDWARE Unisex Hoodie",
-    variants: [
-      {
-        option1: "Black",
-        sku: "9004018_10779",
-        price: "50.00",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png?v=1748999462",
-      },
-      {
-        option1: "Black",
-        sku: "9004018_10780",
-        price: "50.00",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-back-683f9d11a9742.png?v=1748999463",
-      },
-      {
-        option1: "Black",
-        sku: "9004018_10781",
-        price: "50.00",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-navy-blazer-front-683f9d11ab4fe.png?v=1748999463",
-      },
-    ],
-  },
-  "bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie": {
-    shopifyProductId: "BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Unisex Hoodie",
-    variants: [
-      {
-        option1: "S",
-        sku: "4356716_10774",
-        price: "50.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411",
-      },
-      {
-        option1: "M",
-        sku: "4356716_10775",
-        price: "50.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-back-683f9ce10ab8f.png?v=1748999410",
-      },
-      {
-        option1: "L",
-        sku: "4356716_10776",
-        price: "50.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png?v=1748999411",
-      },
-    ],
-  },
-  "bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt": {
-    shopifyProductId: "BUNGI X BOBBY LIGHTMODE RABBIT HARDWARE Men's t-shirt",
-    variants: [
-      {
-        option1: "XS",
-        sku: "7836547_8850",
-        price: "27.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png?v=1748999335",
-      },
-      {
-        option1: "S",
-        sku: "7836547_8851",
-        price: "27.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png?v=1748999335",
-      },
-      {
-        option1: "M",
-        sku: "7836547_8852",
-        price: "27.50",
-        image: "https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-right-683f9c9fdd489.png?v=1748999335",
-      },
-    ],
-  },
+// Shopify Integration - No Local Fallbacks
+// This file has been updated to remove all local mockup data and fallback logic
+
+// Global variables
+let shopifyClient = null;
+let shopifyCheckout = null;
+
+// Configuration with single domain
+const SHOPIFY_CONFIG = {
+  domain: 'bobbytherabbit.myshopify.com',
+  storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
+  apiVersion: '2024-01'
 };
 
-// Function to fetch products from Netlify function
+// Function to fetch products from Netlify function only
 async function fetchProducts() {
-    try {
-        const response = await fetch('/.netlify/functions/get-products');
-        const data = await response.json();
-
-        if (data.error) {
-            console.error('Error fetching products:', data.error);
-            return;
-        }
-
-        console.log('✅ Products loaded from Netlify function:', data);
-
-        // Generate mapping
-        const mapping = {};
-        data.forEach(product => {
-            mapping[product.node.title] = product.node.id;
-        });
-
-        console.log('📋 Product Mapping:');
-        console.log(mapping);
-
-        // Generate the PRODUCT_MAPPING code
-        let mappingCode = 'const PRODUCT_MAPPING = {\n';
-        data.forEach(product => {
-            const productId = product.node.id;
-            const productName = product.node.title;
-            mappingCode += `    '${productName}': {\n`;
-            mappingCode += `        shopifyProductId: '${productId}',\n`;
-            mappingCode += `        // Add variant information here\n`;
-            mappingCode += `    },\n`;
-        });
-        mappingCode += '};';
-
-        console.log('📝 Generated PRODUCT_MAPPING code:\n');
-        console.log(mappingCode);
-
-        // Store the mapping in localStorage
-        localStorage.setItem('shopifyProductMapping', mappingCode);
-
-        // Load the product mapping
-        const storedMapping = localStorage.getItem('shopifyProductMapping');
-        if (storedMapping) {
-            try {
-                PRODUCT_MAPPING = eval('(' + storedMapping + ')'); // WARNING: Use with caution
-                console.log('✅ Loaded product mapping from local storage');
-            } catch (e) {
-                console.error('❌ Error parsing product mapping from local storage:', e);
-            }
-        }
-    } catch (error) {
-        console.error('Error fetching products:', error);
-    }
-}
-
-// Load Shopify Buy Button SDK
-function loadShopifySDK(callback) {
-    if (window.ShopifyBuy) {
-        callback();
-        return;
-    }
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-    script.onload = callback;
-    document.head.appendChild(script);
-}
-
-// Initialize Shopify client
-function initializeShopifyClient() {
-    console.log('⚠️ Shopify Buy SDK initialization disabled to prevent CORS issues');
-    console.log('💡 All checkout functionality now uses Netlify functions');
+  console.log('🔄 Fetching products from Netlify function...');
+  
+  try {
+    const response = await fetch('/.netlify/functions/get-products');
     
-    // Note: Direct Shopify Buy SDK initialization removed to prevent CORS errors
-    // All product data and checkout functionality should use Netlify functions instead
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+
+    if (data.error) {
+      console.error('❌ Error fetching products:', data.error);
+      throw new Error(data.error);
+    }
+
+    console.log('✅ Products loaded from Netlify function:', data);
+    
+    // Process product data
+    processProductData(data);
+  } catch (error) {
+    console.error('❌ Error fetching products:', error);
+    console.error('⚠️ IMPORTANT: Shopify API only works when deployed to Netlify.');
+    console.error('⚠️ Please deploy to Netlify to test with real products.');
+    
+    if (typeof showNotification === 'function') {
+      showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
+    }
+  }
+}
+
+// Process product data from API
+function processProductData(products) {
+  try {
+    // Log products for debugging
+    console.log('📋 Products received:', products);
+    
+    if (!Array.isArray(products)) {
+      console.warn('⚠️ Expected array of products but received:', typeof products);
+      return;
+    }
+    
+    // Generate simple mapping for reference
+    const mapping = {};
+    products.forEach(product => {
+      const productNode = product.node || product;
+      mapping[productNode.title] = productNode.id;
+    });
+
+    console.log('📋 Product ID Mapping:');
+    console.log(mapping);
+  } catch (error) {
+    console.error('❌ Error processing product data:', error);
+  }
+}
+
+// Load Shopify Buy Button SDK - no fallbacks
+function loadShopifySDK(callback) {
+  if (window.ShopifyBuy) {
+    callback();
     return;
+  }
+
+  console.log('📦 Loading Shopify Buy SDK...');
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+  
+  script.onload = () => {
+    console.log('✅ Shopify Buy SDK loaded successfully');
+    callback();
+  };
+  
+  script.onerror = (error) => {
+    console.error('❌ Failed to load Shopify Buy SDK:', error);
+    console.error('⚠️ SDK loading failed. The app requires deployment to Netlify to function properly.');
+    
+    if (typeof showNotification === 'function') {
+      showNotification('Failed to load Shopify SDK. Please check your connection and try again.', 'error');
+    }
+  };
+  
+  document.head.appendChild(script);
 }
 
-// Create new Shopify checkout
-function createNewCheckout() {
-    shopifyClient.checkout.create().then((checkout) => {
-        shopifyCheckout = checkout;
-        localStorage.setItem('shopifyCheckoutId', checkout.id);
+// Create checkout using Netlify function
+async function createCheckoutWithNetlify(cart) {
+  console.log('🔄 Creating checkout via Netlify function...');
+  
+  try {
+    const response = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cart })
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('❌ Error creating checkout:', data.error);
+      throw new Error(data.error);
+    }
+    
+    console.log('✅ Checkout created:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error creating checkout:', error);
+    console.error('⚠️ Checkout creation failed. The app requires deployment to Netlify to function properly.');
+    
+    if (typeof showNotification === 'function') {
+      showNotification('Failed to create checkout. Please try again later.', 'error');
+    }
+    
+    return null;
+  }
 }
 
-// Redirect to Shopify checkout
-function redirectToShopifyCheckout() {
-    if (!shopifyCheckout) {
-        console.error('No Shopify checkout available');
-        return;
+// Redirect to checkout
+async function redirectToCheckout() {
+  console.log('🔄 Redirecting to checkout...');
+  
+  const cart = window.cartManager ? window.cartManager.getCart() : [];
+  
+  if (!cart || cart.length === 0) {
+    console.warn('⚠️ Cart is empty - nothing to checkout');
+    
+    if (typeof showNotification === 'function') {
+      showNotification('Your cart is empty. Please add items before checkout.', 'warning');
     }
-
-    if (shopifyCheckout && shopifyCheckout.webUrl) {
-        window.location.href = shopifyCheckout.webUrl;
+    
+    return;
+  }
+  
+  const checkout = await createCheckoutWithNetlify(cart);
+  
+  if (checkout && checkout.webUrl) {
+    console.log('🛒 Redirecting to checkout URL:', checkout.webUrl);
+    window.location.href = checkout.webUrl;
+  } else {
+    console.error('❌ No checkout URL available');
+    
+    if (typeof showNotification === 'function') {
+      showNotification('Unable to create checkout. Please try again later.', 'error');
     }
+  }
 }
 
-// Override the checkout button to use Shopify
+// Override the checkout button
 function overrideCheckoutButton() {
-    const checkoutBtn = document.querySelector('.checkout-btn');
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+  const checkoutBtn = document.querySelector('.checkout-btn');
+  if (checkoutBtn) {
+    console.log('🔧 Overriding checkout button');
+    checkoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
 
-            // Show loading state
-            this.innerHTML = '<span>REDIRECTING TO CHECKOUT...</span><div class="btn-glow"></div>';
-            this.disabled = true;
+      // Show loading state
+      this.innerHTML = '<span>REDIRECTING TO CHECKOUT...</span><div class="btn-glow"></div>';
+      this.disabled = true;
 
-            // Redirect to Shopify checkout
-            redirectToShopifyCheckout();
-        });
-    }
+      // Redirect to checkout
+      redirectToCheckout().catch(error => {
+        console.error('❌ Checkout error:', error);
+        // Reset button if checkout fails
+        this.innerHTML = '<span>CHECKOUT</span><div class="btn-glow"></div>';
+        this.disabled = false;
+        
+        if (typeof showNotification === 'function') {
+          showNotification('Checkout failed. Please try again later.', 'error');
+        }
+      });
+    });
+  } else {
+    console.warn('⚠️ Checkout button not found');
+  }
 }
 
-// Initialize Shopify integration when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Load Shopify SDK and initialize
-    loadShopifySDK(() => {
-        initializeShopifyClient();
+  console.log('🚀 Initializing Shopify integration...');
+  
+  // Load Shopify SDK
+  loadShopifySDK(() => {
+    console.log('✅ SDK loaded, setting up checkout button');
+    
+    // Override checkout button after a delay
+    setTimeout(overrideCheckoutButton, 1000);
 
-        // Override checkout button
-        setTimeout(overrideCheckoutButton, 1000);
-
-         // Fetch products
-        fetchProducts();
-    });
+    // Fetch products
+    fetchProducts();
+  });
+  
+  // Display deployment notice
+  console.log('⚠️ NOTICE: This app requires deployment to Netlify to function properly.');
+  console.log('⚠️ Local testing of Shopify API functionality is not supported.');
 });
+
+// Export functions for debugging
+window.shopifyDebug = {
+  fetchProducts,
+  createCheckout: createCheckoutWithNetlify,
+  redirectToCheckout,
+  getConfig: () => SHOPIFY_CONFIG,
+  showDeploymentMessage: () => {
+    console.error('⚠️ This app requires deployment to Netlify to function properly.');
+    if (typeof showNotification === 'function') {
+      showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
+    }
+  }
+};

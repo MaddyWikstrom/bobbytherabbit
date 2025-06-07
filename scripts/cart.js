@@ -1,4 +1,4 @@
-// Enhanced Cart Management System
+// Enhanced Cart Management System - No Fallbacks
 class CartManager {
     constructor() {
         this.items = [];
@@ -114,7 +114,7 @@ class CartManager {
         else if (product.mainImage) {
             productImage = product.mainImage;
         }
-        // Last resort - try the first product image if available
+        // Use the first product image if available
         else if (product.images && product.images.length > 0) {
             productImage = product.images[0];
         }
@@ -401,55 +401,14 @@ class CartManager {
     }
 
     createCartItemHTML(item) {
-        // First try to find a valid image for the product
-        const tryImageSources = [
-            item.image, // Shopify image (primary source)
-            // Try direct Shopify CDN URL if it's partial
-            item.image?.startsWith('/') ? `https://cdn.shopify.com${item.image}` : null,
-            // Generic fallbacks that are likely to exist in the site
-            'assets/placeholder.png',
-            'assets/featured-hoodie.svg',
-            'assets/product-placeholder.png'
-        ];
-        
-        // Filter out any undefined or null paths
-        const validImageSources = tryImageSources.filter(src => src);
-        
-        // Generate multiple fallbacks with onerror handlers
-        const imgWithFallbacks = `
-            <img src="${validImageSources[0]}"
-                 alt="${item.title}"
-                 class="cart-item-image"
-                 style="display: block; width: 70px; height: 70px; object-fit: cover; border-radius: 8px;"
-                 onerror="
-                    if (this.src !== '${validImageSources[1]}' && '${validImageSources[1]}') {
-                        console.log('Trying fallback image 1 for ${item.title}');
-                        this.src = '${validImageSources[1]}';
-                    } else if (this.src !== '${validImageSources[2]}' && '${validImageSources[2]}') {
-                        console.log('Trying fallback image 2 for ${item.title}');
-                        this.src = '${validImageSources[2]}';
-                    } else if (this.src !== '${validImageSources[3]}' && '${validImageSources[3]}') {
-                        console.log('Trying fallback image 3 for ${item.title}');
-                        this.src = '${validImageSources[3]}';
-                    } else if (this.src !== '${validImageSources[4]}' && '${validImageSources[4]}') {
-                        console.log('Trying fallback image 4 for ${item.title}');
-                        this.src = '${validImageSources[4]}';
-                    } else if (this.src !== '${validImageSources[5]}' && '${validImageSources[5]}') {
-                        console.log('Trying fallback image 5 for ${item.title}');
-                        this.src = '${validImageSources[5]}';
-                    } else {
-                        console.log('All fallback images failed for ${item.title}');
-                        this.style.display = 'none';
-                        this.nextElementSibling.style.display = 'flex';
-                    }
-                 "
-            >
-            <div class="cart-item-placeholder" style="display: none; width: 70px; height: 70px; background: rgba(168, 85, 247, 0.2); border-radius: 8px; justify-content: center; align-items: center; font-size: 24px; color: rgba(168, 85, 247, 0.6);">?</div>
-        `;
+        // Simple HTML for cart item with no fallback logic
+        const imgElement = item.image 
+            ? `<img src="${item.image}" alt="${item.title}" class="cart-item-image" style="display: block; width: 70px; height: 70px; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'">`
+            : `<div class="cart-item-no-image" style="display: flex; width: 70px; height: 70px; background: rgba(168, 85, 247, 0.1); border-radius: 8px; justify-content: center; align-items: center; color: rgba(168, 85, 247, 0.6);">${item.title.charAt(0)}</div>`;
         
         return `
             <div class="cart-item" data-item-id="${item.id}">
-                ${imgWithFallbacks}
+                ${imgElement}
                 <div class="cart-item-info">
                     <div class="cart-item-title">${item.title}</div>
                     <div class="cart-item-variant">
@@ -575,7 +534,7 @@ class CartManager {
             checkoutBtn.querySelector('span').textContent = 'Processing...';
             checkoutBtn.disabled = true;
 
-            // Simulate checkout process
+            // Process checkout
             setTimeout(() => {
                 this.initiateShopifyCheckout();
                 checkoutBtn.querySelector('span').textContent = originalText;
@@ -595,6 +554,7 @@ class CartManager {
             
             if (!checkoutItems || checkoutItems.length === 0) {
                 this.showNotification('Unable to process checkout. Please try again.', 'error');
+                this.showNotification('This app requires deployment to Netlify to function properly.', 'error');
                 return;
             }
 
@@ -636,9 +596,8 @@ class CartManager {
             
         } catch (error) {
             console.error('Checkout error:', error);
-            this.showNotification('Failed to create checkout. Please try again.', 'error');
-            // Show the modal as fallback
-            this.showCheckoutModal();
+            this.showNotification('Failed to create checkout. This app requires deployment to Netlify.', 'error');
+            console.error('⚠️ This app requires deployment to Netlify to function properly.');
         }
     }
 
@@ -719,93 +678,28 @@ class CartManager {
             
         } catch (error) {
             console.error('Error preparing checkout items:', error);
+            console.error('⚠️ This app requires deployment to Netlify to function properly.');
             return null;
         }
     }
 
-    showCheckoutModal() {
-        const modal = document.createElement('div');
-        modal.className = 'checkout-modal';
-        modal.innerHTML = `
-            <div class="checkout-modal-overlay"></div>
-            <div class="checkout-modal-content">
-                <div class="checkout-modal-header">
-                    <h3>Checkout Options</h3>
-                    <button class="checkout-modal-close">×</button>
-                </div>
-                <div class="checkout-modal-body">
-                    <div class="checkout-summary">
-                        <h4>Order Summary</h4>
-                        <div class="checkout-items">
-                            ${this.items.map(item => `
-                                <div class="checkout-item">
-                                    <span>${item.title} (${item.quantity}x)</span>
-                                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="checkout-total">
-                            <strong>Total: $${this.total.toFixed(2)}</strong>
-                        </div>
-                    </div>
-                    <div class="checkout-options">
-                        <button class="checkout-option-btn shopify-checkout">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M15.8 2.2c-.5-.1-1.1-.1-1.7-.1-3.4 0-5.8 1.6-5.8 4.3 0 1.9 1.4 3.2 3.7 3.2 2.1 0 3.8-1.6 3.8-3.7 0-.8-.2-1.4-.5-1.9l1.5-1.8zm-3.3 6.3c-1.4 0-2.4-.9-2.4-2.2 0-1.6 1.2-2.8 2.9-2.8.4 0 .8.1 1.1.2-.2.4-.3.9-.3 1.4 0 1.8 1.1 3.4 2.7 3.4h.1c-.4 1.4-1.7 2.4-3.3 2.4-.8 0-1.5-.3-2.1-.8l1.3-1.6z"/>
-                            </svg>
-                            Checkout with Shopify
-                        </button>
-                        <button class="checkout-option-btn paypal-checkout">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 2.79A.859.859 0 0 1 5.79 2h8.263c.734 0 1.434.155 2.029.428 1.295.595 2.047 1.587 2.047 2.934 0 .653-.086 1.24-.28 1.793-.485 1.372-1.483 2.309-2.91 2.659-.243.06-.499.103-.777.127.734.24 1.299.679 1.621 1.269.347.634.422 1.418.422 2.263 0 .87-.1 1.714-.3 2.448-.48 1.759-1.375 2.86-2.596 3.186-.394.105-.84.157-1.32.157H9.402l-.706 3.273z"/>
-                            </svg>
-                            PayPal Express
-                        </button>
-                        <button class="checkout-option-btn apple-pay-checkout">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                            </svg>
-                            Apple Pay
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-
-        // Setup modal events
-        const closeModal = () => {
-            modal.classList.remove('active');
-            setTimeout(() => modal.remove(), 300);
-        };
-
-        modal.querySelector('.checkout-modal-close').onclick = closeModal;
-        modal.querySelector('.checkout-modal-overlay').onclick = closeModal;
-
-        // Setup checkout options
-        modal.querySelector('.shopify-checkout').onclick = async () => {
-            closeModal();
-            await this.initiateShopifyCheckout();
-        };
-
-        modal.querySelector('.paypal-checkout').onclick = () => {
-            this.showNotification('Redirecting to PayPal...', 'info');
-            closeModal();
-            // Implement PayPal checkout
-        };
-
-        modal.querySelector('.apple-pay-checkout').onclick = () => {
-            this.showNotification('Initiating Apple Pay...', 'info');
-            closeModal();
-            // Implement Apple Pay
-        };
+    showNotification(message, type = 'info') {
+        // Use the notification system if available
+        if (window.productManager && typeof window.productManager.showNotification === 'function') {
+            window.productManager.showNotification(message, type);
+        } else {
+            // Show in console if notification system not available
+            console.log(`${type.toUpperCase()}: ${message}`);
+            
+            // Show deployment message if error
+            if (type === 'error') {
+                console.error('⚠️ This app requires deployment to Netlify to function properly.');
+            }
+        }
     }
 
     getShopifyVariantId(item) {
         // This would map to actual Shopify variant IDs
-        // For now, return a placeholder
         return `${item.productId}-${item.color}-${item.size}`.replace(/\s+/g, '-').toLowerCase();
     }
 
@@ -853,16 +747,6 @@ class CartManager {
                 value: variant.price,
                 currency: 'USD'
             });
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Use the same notification system as products.js
-        if (window.productManager && window.productManager.showNotification) {
-            window.productManager.showNotification(message, type);
-        } else {
-            // Fallback notification
-            alert(message);
         }
     }
 
@@ -931,132 +815,16 @@ const cartStyles = `
         margin-bottom: 0.25rem;
     }
 
-    .checkout-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 10000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .checkout-modal.active {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .checkout-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(10px);
-    }
-
-    .checkout-modal-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(26, 26, 46, 0.95);
-        border-radius: 20px;
-        max-width: 500px;
-        width: 90vw;
-        max-height: 80vh;
-        overflow-y: auto;
-        border: 1px solid rgba(168, 85, 247, 0.2);
-        backdrop-filter: blur(20px);
-    }
-
-    .checkout-modal-header {
-        padding: 2rem 2rem 1rem;
-        border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+    .cart-item-no-image {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .checkout-modal-header h3 {
-        color: #ffffff;
-        margin: 0;
-    }
-
-    .checkout-modal-close {
-        background: none;
-        border: none;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 2rem;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-    }
-
-    .checkout-modal-close:hover {
-        color: #ffffff;
-    }
-
-    .checkout-modal-body {
-        padding: 2rem;
-    }
-
-    .checkout-summary {
-        margin-bottom: 2rem;
-    }
-
-    .checkout-summary h4 {
-        color: #ffffff;
-        margin-bottom: 1rem;
-    }
-
-    .checkout-items {
-        margin-bottom: 1rem;
-    }
-
-    .checkout-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 0.5rem 0;
-        color: rgba(255, 255, 255, 0.8);
-        border-bottom: 1px solid rgba(168, 85, 247, 0.1);
-    }
-
-    .checkout-total {
-        padding: 1rem 0;
-        border-top: 2px solid rgba(168, 85, 247, 0.3);
-        color: #ffffff;
-        font-size: 1.2rem;
-    }
-
-    .checkout-options {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .checkout-option-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
+        width: 70px;
+        height: 70px;
         background: rgba(168, 85, 247, 0.1);
-        border: 2px solid rgba(168, 85, 247, 0.3);
-        color: #ffffff;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .checkout-option-btn:hover {
-        background: rgba(168, 85, 247, 0.2);
-        border-color: #a855f7;
-        transform: translateY(-2px);
+        border-radius: 8px;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: rgba(168, 85, 247, 0.6);
     }
 
     @keyframes bounce {

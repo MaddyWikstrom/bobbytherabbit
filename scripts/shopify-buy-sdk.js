@@ -13,6 +13,7 @@ class ShopifyBuySDKManager {
         try {
             console.log('🔄 Initializing CORS-free Shopify integration...');
             console.log('💡 Using Netlify functions instead of direct SDK calls');
+            console.log('⚠️ This app requires deployment to Netlify to function properly');
             
             this.isLoaded = true;
             
@@ -21,12 +22,10 @@ class ShopifyBuySDKManager {
             
         } catch (error) {
             console.error('❌ Failed to initialize Shopify integration:', error);
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
             this.isLoaded = false;
         }
     }
-
-    // Note: loadShopifySDK() removed to prevent CORS issues
-    // All functionality now uses Netlify functions
 
     async loadProducts() {
         try {
@@ -54,80 +53,92 @@ class ShopifyBuySDKManager {
             
         } catch (error) {
             console.error('❌ Error fetching products via Netlify function:', error);
-            console.log('💡 Make sure environment variables are set in Netlify Dashboard');
-            throw error;
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
+            console.error('💡 Make sure environment variables are set in Netlify Dashboard');
+            
+            // Return empty array instead of throwing to prevent UI errors
+            this.products = [];
+            return [];
         }
     }
 
     convertShopifyProducts(shopifyProducts) {
         return shopifyProducts.map(product => {
             // Extract images from Shopify
-            const shopifyImages = product.images.map(img => img.src);
+            const shopifyImages = product.images?.edges?.map(edge => edge.node.url) || [];
             
-            // Use only Shopify images - no local mockups
-            const images = shopifyImages.length > 0 ? [...shopifyImages] : ['assets/placeholder.png'];
+            // Use only Shopify images - no fallbacks
+            const images = shopifyImages.length > 0 ? [...shopifyImages] : [];
             
             // Extract variants and organize by color/size
             const variants = [];
             const colors = new Set();
             const sizes = new Set();
             
-            product.variants.forEach(variant => {
-                let color = '';
-                let size = '';
-                
-                variant.selectedOptions.forEach(option => {
-                    if (option.name.toLowerCase() === 'color') {
-                        color = option.value;
-                        colors.add(color);
-                    } else if (option.name.toLowerCase() === 'size') {
-                        size = option.value;
-                        sizes.add(size);
+            if (product.variants && product.variants.edges) {
+                product.variants.edges.forEach(edge => {
+                    const variant = edge.node;
+                    let color = '';
+                    let size = '';
+                    
+                    if (variant.selectedOptions) {
+                        variant.selectedOptions.forEach(option => {
+                            if (option.name.toLowerCase() === 'color') {
+                                color = option.value;
+                                colors.add(color);
+                            } else if (option.name.toLowerCase() === 'size') {
+                                size = option.value;
+                                sizes.add(size);
+                            }
+                        });
                     }
+                    
+                    variants.push({
+                        id: variant.id,
+                        color: color,
+                        size: size,
+                        price: parseFloat(variant.price?.amount || 0),
+                        comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+                        availableForSale: variant.availableForSale || false,
+                        image: images[0] || ''
+                    });
                 });
-                
-                variants.push({
-                    id: variant.id,
-                    color: color,
-                    size: size,
-                    price: parseFloat(variant.price.amount),
-                    comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
-                    availableForSale: variant.available,
-                    image: images[0] || ''
-                });
-            });
+            }
             
             // Determine category from product type or title
             const category = this.extractCategory(product.title);
             
             // Calculate pricing
-            const minPrice = Math.min(...variants.map(v => v.price));
-            const maxPrice = Math.max(...variants.map(v => v.price));
+            const prices = variants.map(v => v.price).filter(p => p > 0);
+            const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+            const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
             const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
             
             return {
-                id: product.handle,
-                shopifyId: product.id,
-                title: product.title,
-                description: this.cleanDescription(product.description),
+                id: product.node?.handle || product.handle || '',
+                shopifyId: product.node?.id || product.id || '',
+                title: product.node?.title || product.title || 'Untitled Product',
+                description: this.cleanDescription(product.node?.description || product.description || ''),
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
-                images: images.length > 0 ? images : [],
+                images: images,
                 mainImage: images[0] || '',
                 variants: variants,
                 colors: Array.from(colors),
                 sizes: Array.from(sizes),
-                featured: product.tags.includes('featured') || Math.random() > 0.7,
-                new: product.tags.includes('new') || Math.random() > 0.8,
+                featured: (product.tags || []).includes('featured'),
+                new: (product.tags || []).includes('new'),
                 sale: comparePrice > minPrice,
-                tags: product.tags,
-                productType: product.productType
+                tags: product.tags || [],
+                productType: product.productType || ''
             };
         });
     }
 
     extractCategory(title) {
+        if (!title) return 'other';
+        
         const titleLower = title.toLowerCase();
         if (titleLower.includes('hoodie')) return 'hoodie';
         if (titleLower.includes('t-shirt') || titleLower.includes('tee')) return 't-shirt';
@@ -147,38 +158,70 @@ class ShopifyBuySDKManager {
             .substring(0, 200) + '...';
     }
 
-    // Local mockup images have been removed - Shopify API only
-
-    // Create checkout (disabled to prevent CORS)
-    async createCheckout() {
-        console.log('⚠️ Direct checkout creation disabled to prevent CORS issues');
-        console.log('💡 Implement checkout via Netlify functions or redirect to Shopify');
-        throw new Error('Direct checkout disabled - use Netlify functions instead');
-    }
-
-    // Add items to checkout (disabled to prevent CORS)
-    async addToCheckout(checkoutId, lineItemsToAdd) {
-        console.log('⚠️ Direct checkout modification disabled to prevent CORS issues');
-        console.log('💡 Implement checkout via Netlify functions or redirect to Shopify');
-        throw new Error('Direct checkout disabled - use Netlify functions instead');
+    // Create checkout via Netlify function
+    async createCheckout(cart) {
+        try {
+            console.log('🛒 Creating checkout via Netlify function...');
+            
+            const response = await fetch('/.netlify/functions/create-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cart })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            console.log('✅ Checkout created via Netlify function');
+            return data;
+            
+        } catch (error) {
+            console.error('❌ Error creating checkout:', error);
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
+            throw new Error('Failed to create checkout. This app requires deployment to Netlify.');
+        }
     }
 
     // Get product by handle
     async getProductByHandle(handle) {
         try {
+            if (!handle) {
+                console.error('❌ Invalid product handle provided');
+                return null;
+            }
+            
             // Find product in already loaded products
-            const product = this.products.find(p => p.id === handle || p.shopifyId === handle);
+            const product = this.products.find(p => 
+                p.id === handle || 
+                p.shopifyId === handle
+            );
+            
             if (product) {
                 return product;
             }
             
             // If not found, reload all products and try again
+            console.log('🔄 Product not found in cache, reloading products...');
             await this.loadProducts();
-            return this.products.find(p => p.id === handle || p.shopifyId === handle) || null;
+            
+            return this.products.find(p => 
+                p.id === handle || 
+                p.shopifyId === handle
+            ) || null;
             
         } catch (error) {
             console.error('❌ Error fetching product by handle:', error);
-            throw error;
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
+            return null;
         }
     }
 }

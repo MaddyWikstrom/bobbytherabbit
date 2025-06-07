@@ -58,6 +58,7 @@ class HomepageProductLoader {
         } catch (error) {
             console.error('Error loading products:', error);
             this.products = [];
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
             console.log('⚠️ No products loaded due to error');
         }
     }
@@ -75,6 +76,7 @@ class HomepageProductLoader {
             
             if (data.error) {
                 console.error('Shopify API Error:', data.error);
+                console.error('⚠️ This app requires deployment to Netlify to function properly');
                 return [];
             }
 
@@ -82,6 +84,7 @@ class HomepageProductLoader {
             return data.map(product => this.transformShopifyProduct(product.node));
         } catch (error) {
             console.error('Error loading Shopify products:', error);
+            console.error('⚠️ This app requires deployment to Netlify to function properly');
             return [];
         }
     }
@@ -97,11 +100,11 @@ class HomepageProductLoader {
         const productId = product.id.replace('gid://shopify/Product/', '');
         const hoverConfig = this.hoverConfig && this.hoverConfig[productId];
         
-        // Get images from Shopify
+        // Get images from Shopify only - no fallbacks
         const shopifyImages = product.images.edges.map(edge => edge.node.url);
         
-        // No local mockups - use placeholder as fallback if no Shopify images
-        const images = shopifyImages.length > 0 ? shopifyImages : ['assets/placeholder.png'];
+        // No local fallbacks - use empty array if no Shopify images
+        const images = shopifyImages.length > 0 ? shopifyImages : [];
         
         let mainImage = images.length > 0 ? images[0] : '';
         let hoverImage = images.length > 1 ? images[1] : mainImage;
@@ -170,8 +173,6 @@ class HomepageProductLoader {
         if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'beanie';
         return 'other';
     }
-// Method has been removed - local mockups are no longer supported
-
 
     renderProducts() {
         const container = document.getElementById('homepage-products');
@@ -181,6 +182,7 @@ class HomepageProductLoader {
             container.innerHTML = `
                 <div class="loading-products">
                     <p>No products available</p>
+                    <p class="small-text">This app requires deployment to Netlify to load products</p>
                 </div>
             `;
             return;
@@ -194,6 +196,11 @@ class HomepageProductLoader {
     }
 
     createProductCard(product) {
+        // Skip products with no images
+        if (!product.mainImage) {
+            return '';
+        }
+        
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         return `

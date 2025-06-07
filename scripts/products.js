@@ -1,4 +1,4 @@
-// Products Management System - Fixed Version
+// Products Management System - No Fallbacks
 class ProductManager {
     constructor() {
         this.products = [];
@@ -9,20 +9,6 @@ class ProductManager {
         this.currentSort = 'featured';
         this.currentView = 'grid';
         this.searchQuery = '';
-        
-        // Product ID to fallback cover image mapping (only used if Shopify images aren't available)
-        this.productIdToCoverImage = {
-            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': 'assets/placeholder.png',
-            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': 'assets/placeholder.png',
-            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': 'assets/placeholder.png',
-            'bungi-x-bobby-cowboy-unisex-windbreaker': 'assets/placeholder.png',
-            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': 'assets/placeholder.png',
-            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': 'assets/placeholder.png',
-            'bungi-x-bobby-cowboy-mens-t-shirt': 'assets/placeholder.png',
-            'bungi-x-bobby-cuffed-beanie-1': 'assets/placeholder.png',
-            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': 'assets/placeholder.png',
-            'bungi-x-bobby-cowboy-unisex-sweatshirt': 'assets/placeholder.png'
-        };
         
         this.init();
     }
@@ -121,19 +107,14 @@ class ProductManager {
                 return;
             }
             
-            // Extract images from Shopify - this will be our primary image source
+            // Extract images from Shopify - this will be our only image source
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
             
             // Create a map to track which images are associated with which variants
             const variantImageMap = new Map();
             
-            // Use images directly from Shopify API
+            // Use images directly from Shopify API only
             let images = shopifyImages;
-            
-            // If no Shopify images, use fallback
-            if (images.length === 0) {
-                images = ['assets/placeholder.png'];
-            }
             
             // Extract variants and organize by color/size
             const variants = [];
@@ -202,8 +183,8 @@ class ProductManager {
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
-                images: images.length > 0 ? images : ['assets/placeholder.png'], // Fallback to placeholder
-                mainImage: images[0] || 'assets/placeholder.png',
+                images: images,
+                mainImage: images[0] || '',
                 variants: variants,
                 colors: Array.from(colors),
                 sizes: Array.from(sizes),
@@ -221,8 +202,6 @@ class ProductManager {
         
         return Array.from(uniqueProductsMap.values());
     }
-
-    // CSV functions removed - not needed anymore
 
     cleanDescription(description) {
         if (!description) return '';
@@ -242,52 +221,6 @@ class ProductManager {
         if (titleLower.includes('windbreaker') || titleLower.includes('jacket')) return 'windbreaker';
         if (titleLower.includes('beanie') || titleLower.includes('hat')) return 'beanie';
         return 'other';
-    }
-
-    // Helper to provide cover images for products (separate from regular images)
-    getProductCoverImage(productHandle, productTitle) {
-        // First try exact match
-        if (this.productIdToCoverImage[productHandle]) {
-            return this.productIdToCoverImage[productHandle];
-        }
-        
-        // Try to find by title match
-        const titleLower = productTitle ? productTitle.toLowerCase() : '';
-        for (const [handle, image] of Object.entries(this.productIdToCoverImage)) {
-            if (titleLower.includes(handle.replace(/-/g, ' '))) {
-                return image;
-            }
-        }
-        
-        // Default cover image if no match
-        return 'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png';
-    }
-
-    // Get images for a product, prioritizing Shopify API images
-    getProductImages(productHandle, shopifyImages = []) {
-        // Use Shopify images if available
-        if (shopifyImages && shopifyImages.length > 0) {
-            return shopifyImages;
-        }
-        
-        // Fallback to local placeholder
-        return ['assets/placeholder.png'];
-    }
-    
-    // Get the cover image for a product
-    getProductCoverImage(productHandle, shopifyImages = []) {
-        // Use first Shopify image if available
-        if (shopifyImages && shopifyImages.length > 0) {
-            return shopifyImages[0];
-        }
-        
-        // Fallback to product mapping if exists
-        if (this.productIdToCoverImage[productHandle]) {
-            return this.productIdToCoverImage[productHandle];
-        }
-        
-        // Default placeholder
-        return 'assets/placeholder.png';
     }
 
     setupEventListeners() {
@@ -401,7 +334,9 @@ class ProductManager {
 
         searchResults.innerHTML = results.map(product => `
             <div class="search-result-item" onclick="productManager.viewProduct('${product.id}')">
-                <img src="${product.mainImage}" alt="${product.title}" class="search-result-image">
+                ${product.mainImage ? 
+                  `<img src="${product.mainImage}" alt="${product.title}" class="search-result-image" onerror="this.style.display='none';">` : 
+                  `<div class="search-result-no-image">${product.title.charAt(0)}</div>`}
                 <div class="search-result-info">
                     <div class="search-result-title">${product.title}</div>
                     <div class="search-result-price">$${product.price.toFixed(2)}</div>
@@ -477,6 +412,7 @@ class ProductManager {
                     <div class="no-products">
                         <h3>No products found</h3>
                         <p>Try adjusting your filters or search terms</p>
+                        <p class="small-text">This app requires deployment to Netlify to load products.</p>
                     </div>
                 `;
                 return;
@@ -490,10 +426,6 @@ class ProductManager {
 
     createProductCard(product) {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
-        const fallbackImages = [
-            'assets/placeholder.png',
-            'assets/featured-hoodie.svg'
-        ];
         
         // Store color-specific data for JavaScript handling
         const colorImagesJSON = product.colorImages ? JSON.stringify(product.colorImages) : '{}';
@@ -520,17 +452,15 @@ class ProductManager {
         return `
             <div class="product-card" data-product-id="${product.id}" data-color-images='${colorImagesJSON}'>
                 <div class="product-image-container">
-                    <img src="${product.mainImage}" alt="${product.title}" class="product-image"
-                         onerror="this.onerror=null;
-                                  for(let i=0; i<${JSON.stringify(fallbackImages)}.length; i++) {
-                                    try {
-                                      this.src=${JSON.stringify(fallbackImages)}[i];
-                                      break;
-                                    } catch(e) {
-                                      continue;
-                                    }
-                                  }
-                                  console.log('Image fallback used for ${product.id}');">
+                    ${product.mainImage ? 
+                      `<img src="${product.mainImage}" alt="${product.title}" class="product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.product-no-image').style.display='flex';">
+                       <div class="product-no-image" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:rgba(60,60,80,0.1); color:#555;">
+                         <div>${product.title.charAt(0)}</div>
+                       </div>` :
+                      `<div class="product-no-image" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center; background:rgba(60,60,80,0.1); color:#555;">
+                         <div>${product.title.charAt(0)}</div>
+                       </div>`
+                    }
                     <div class="product-overlay">
                         <button class="product-action-btn quick-view-btn" title="Quick View">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -774,7 +704,7 @@ class ProductManager {
             id: product.id || 'unknown-product',
             title: product.title || 'Product',
             price: product.price || 0,
-            mainImage: product.mainImage || 'assets/placeholder.png',
+            mainImage: product.mainImage || '',
             quantity: 1
         };
 
@@ -803,12 +733,13 @@ class ProductManager {
                             console.log('Item added to cart with new cart manager');
                         } catch (e) {
                             console.error('Error adding to cart:', e);
+                            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
                         }
                     }, 100);
                 } else {
-                    // Fallback simple cart if CartManager not available
-                    this.showNotification('Added to cart (demo mode)', 'success');
-                    console.warn('CartManager class not available - using demo mode');
+                    // Simple notification if CartManager not available
+                    this.showNotification('This app requires deployment to Netlify to function properly.', 'error');
+                    console.warn('CartManager class not available');
                 }
             } else {
                 // Add to existing cart manager
@@ -848,7 +779,7 @@ class ProductManager {
             
         } catch (error) {
             console.error('Error adding product to cart:', error);
-            this.showNotification('Error adding to cart. Please try again.', 'error');
+            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
         }
     }
 
@@ -929,7 +860,6 @@ class ProductManager {
             setTimeout(() => notification.remove(), 300);
         });
     }
-    // No mock products - removed as requested
 }
 
 // Initialize product manager when DOM is loaded

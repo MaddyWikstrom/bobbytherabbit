@@ -25,7 +25,6 @@ const BobbyCarts = {
         cartStorageKey: 'bobby-streetwear-cart',
         cartVersion: '2.0',
         assetsBasePath: '/assets/',
-        fallbackImage: '/assets/product-placeholder.png',
         shopifyDomain: 'mfdkk3-7g.myshopify.com',
         checkoutEndpoint: '/.netlify/functions/create-checkout-fixed',
         debug: true
@@ -822,13 +821,13 @@ const BobbyCarts = {
             return this.cleanImageUrl(container.dataset.image);
         }
         
-        // Return fallback image
-        return this.config.fallbackImage;
+        // Return empty string if no image
+        return '';
     },
     
     // Clean image URL to prevent domain duplication issues
     cleanImageUrl: function(url) {
-        if (!url) return this.config.fallbackImage;
+        if (!url) return '';
         
         try {
             // Preserve Shopify CDN URLs - they should work as-is
@@ -868,7 +867,7 @@ const BobbyCarts = {
             return cleanUrl;
         } catch (error) {
             console.error('Error cleaning image URL:', error);
-            return this.config.fallbackImage;
+            return '';
         }
     },
     
@@ -1160,178 +1159,26 @@ const BobbyCarts = {
             });
         });
         
-        // Image retry buttons
-        document.querySelectorAll('.image-retry-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                const container = btn.closest('.cart-item-image-container');
-                const img = container.querySelector('.cart-item-image');
-                const itemId = btn.closest('.cart-item').dataset.itemId;
-                const item = self.state.items.find(item => item.id === itemId);
-                
-                if (item && img) {
-                    // Try alternative paths for the image
-                    self.tryAlternativeImageSources(img, item);
-                }
-            });
-        });
+        // No image retry functionality
     },
     
-    // Try loading alternative image sources
-    tryAlternativeImageSources: function(imgElement, item) {
-        // Hide retry button during attempt
-        const container = imgElement.closest('.cart-item-image-container');
-        const retryBtn = container.querySelector('.image-retry-btn');
-        
-        if (retryBtn) {
-            retryBtn.style.display = 'none';
-        }
-        
-        // Show loading indicator
-        const placeholder = container.querySelector('.cart-item-placeholder');
-        if (!placeholder) {
-            const loadingPlaceholder = document.createElement('div');
-            loadingPlaceholder.className = 'cart-item-placeholder';
-            loadingPlaceholder.innerHTML = '<div class="cart-spinner"></div>';
-            container.appendChild(loadingPlaceholder);
-        }
-        
-        // First try product mapping - this uses our direct product data from product.js
-        if (window.PRODUCT_MAPPING && item.productId) {
-            for (const handle in window.PRODUCT_MAPPING) {
-                const product = window.PRODUCT_MAPPING[handle];
-                if (handle === item.productId || product.shopifyProductId === item.shopifyId) {
-                    if (product.variants && product.variants.length > 0) {
-                        const imageUrl = product.variants[0].image;
-                        if (imageUrl) {
-                            // Found a product mapping image - use it
-                            imgElement.src = imageUrl;
-                            imgElement.style.display = 'block';
-                            item.image = imageUrl; // Update cart item
-                            BobbyCarts.saveCartToStorage();
-                            
-                            // Remove placeholder if exists
-                            if (placeholder) {
-                                placeholder.remove();
-                            }
-                            
-                            console.log('✅ Found image in product mapping:', imageUrl);
-                            return;
-                        }
-                    }
-                }
+    // Simple image error handler - no alternative sources
+    handleImageError: function(imgElement) {
+        // Hide the image
+        if (imgElement) {
+            imgElement.style.display = 'none';
+            
+            // Show a placeholder question mark
+            const container = imgElement.closest('.cart-item-image-container');
+            if (container) {
+                // Create a simple placeholder
+                const placeholder = document.createElement('div');
+                placeholder.className = 'cart-item-placeholder';
+                placeholder.innerHTML = '?';
+                placeholder.style.display = 'flex';
+                container.appendChild(placeholder);
             }
         }
-        
-        // Get filename from current path
-        const currentSrc = imgElement.src;
-        const parts = currentSrc.split('/');
-        const filename = parts[parts.length - 1];
-        
-        // If this is a Shopify CDN URL and it's still failing, try a different variant image
-        if (currentSrc.includes('cdn.shopify.com')) {
-            // Already using Shopify CDN but failed - try homepage product loader
-            if (window.homepageProductLoader && window.homepageProductLoader.products) {
-                const products = window.homepageProductLoader.products;
-                // Find by shopify ID or handle
-                const matchingProduct = products.find(p =>
-                    p.shopifyId === item.shopifyId ||
-                    p.id === item.productId ||
-                    p.handle === item.productId
-                );
-                
-                if (matchingProduct && matchingProduct.images && matchingProduct.images.length > 0) {
-                    // Try each image from the product
-                    for (const imageUrl of matchingProduct.images) {
-                        if (imageUrl && !imageUrl.includes(filename)) {
-                            // Try a different image from this product
-                            console.log('🔄 Trying alternative product image:', imageUrl);
-                            imgElement.src = imageUrl;
-                            imgElement.style.display = 'block';
-                            item.image = imageUrl;
-                            BobbyCarts.saveCartToStorage();
-                            
-                            if (placeholder) {
-                                placeholder.remove();
-                            }
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Build a more comprehensive list of alternative paths
-        const alternativePaths = [
-            // Try direct shop CDN paths with the filename
-            `https://cdn.shopify.com/s/files/1/0701/3947/8183/files/${filename}`,
-            `https://cdn.shopify.com/s/files/1/0701/3947/8183/products/${filename}`,
-            // Try relative paths with the filename
-            `/assets/${filename}`,
-            // Try with current domain
-            `${window.location.origin}/assets/${filename}`,
-            // Try some known product images as fallbacks
-            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png',
-            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-white-front-683f9ce1094eb.png',
-            'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
-            // Try fallback images
-            '/assets/product-placeholder.png',
-            '/assets/featured-hoodie.svg'
-        ];
-        
-        // Create a test image to try all sources
-        const testImage = new Image();
-        let currentIndex = 0;
-        
-        // Function to try next source
-        const tryNextSource = () => {
-            if (currentIndex >= alternativePaths.length) {
-                // All sources failed, show placeholder
-                imgElement.style.display = 'none';
-                
-                // Update placeholder
-                if (placeholder) {
-                    placeholder.innerHTML = '?';
-                }
-                
-                // Show retry button
-                if (retryBtn) {
-                    retryBtn.style.display = 'block';
-                }
-                
-                return;
-            }
-            
-            testImage.src = alternativePaths[currentIndex];
-            currentIndex++;
-        };
-        
-        // Set up test image events
-        testImage.onload = function() {
-            // Found a working image
-            imgElement.src = testImage.src;
-            imgElement.style.display = 'block';
-            
-            // Update item image path for future use
-            item.image = testImage.src;
-            
-            // Save to storage
-            BobbyCarts.saveCartToStorage();
-            
-            // Remove placeholder if it exists
-            if (placeholder) {
-                placeholder.remove();
-            }
-        };
-        
-        testImage.onerror = function() {
-            // Try next source
-            tryNextSource();
-        };
-        
-        // Start trying sources
-        tryNextSource();
     },
     
     // Get HTML for an empty cart
@@ -1365,45 +1212,8 @@ const BobbyCarts = {
                          data-product-id="${item.productId}"
                          data-shopify-id="${item.shopifyId || ''}"
                          data-title="${item.title}"
-                         onerror="
-                            // Try to find a product image from PRODUCT_MAPPING first
-                            if (window.PRODUCT_MAPPING) {
-                                const itemId = this.getAttribute('data-product-id');
-                                const shopifyId = this.getAttribute('data-shopify-id');
-                                const title = this.getAttribute('data-title');
-                                
-                                // Look for matching product
-                                for (const handle in window.PRODUCT_MAPPING) {
-                                    const product = window.PRODUCT_MAPPING[handle];
-                                    if ((itemId && handle === itemId) ||
-                                        (shopifyId && product.shopifyProductId === shopifyId) ||
-                                        (title && product.shopifyProductId.toLowerCase().includes(title.toLowerCase()))) {
-                                        
-                                        // Use first variant image
-                                        if (product.variants && product.variants.length > 0) {
-                                            this.src = product.variants[0].image;
-                                            console.log('Fixed cart image using product mapping:', handle);
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // If that failed, try direct Shopify CDN URL
-                            if (this.getAttribute('data-product-id')) {
-                                const cdnUrl = 'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png';
-                                this.src = cdnUrl;
-                                console.log('Trying fallback Shopify CDN URL');
-                                return;
-                            }
-                            
-                            // If still failed, fall back to standard error handling
-                            this.style.display='none';
-                            this.nextElementSibling.style.display='flex';
-                            this.nextElementSibling.nextElementSibling.style.display='block';
-                         ">
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="cart-item-placeholder" style="display:none;">?</div>
-                    <button class="image-retry-btn" style="display:none;">Retry</button>
                 </div>
                 <div class="cart-item-info">
                     <div class="cart-item-title">${item.title}</div>
@@ -1547,9 +1357,9 @@ const BobbyCarts = {
         
         // Set notification content
         notification.innerHTML = `
-            <img src="${productImage || this.config.fallbackImage}" class="cart-notification-image"
+            <img src="${productImage || ''}" class="cart-notification-image"
                  alt="${productTitle || 'Product'}"
-                 onerror="this.src='${this.config.fallbackImage}';">
+                 onerror="this.style.display='none';">
             <div class="cart-notification-content">
                 <div class="cart-notification-title">${productTitle || 'Item'} added to cart</div>
                 <div class="cart-notification-info">
@@ -1739,7 +1549,7 @@ const BobbyCarts = {
             // Check if item has valid image
             if (!item.image) {
                 console.warn(`Item ${item.title} missing image`);
-                item.image = this.config.fallbackImage;
+                // No fallback image
             }
             
             // Check if Shopify variant ID is present
@@ -1844,9 +1654,6 @@ const BobbyCarts = {
             
             // Show error notification
             this.showNotification('Checkout error: ' + error.message, 'error');
-            
-            // Try fallback checkout
-            this.tryFallbackCheckout();
         });
     },
     
@@ -1972,7 +1779,7 @@ const BobbyCarts = {
                     if (item.productId === handle ||
                         (item.title && product.shopifyProductId.toLowerCase().includes(item.title.toLowerCase()))) {
                         
-                        // Use first variant ID as fallback
+                        // Use first variant ID
                         if (product.variants && product.variants.length > 0) {
                             const variant = product.variants[0];
                             item.shopifyId = `gid://shopify/ProductVariant/${variant.sku.split('_')[1]}`;
@@ -1994,30 +1801,6 @@ const BobbyCarts = {
         }
     },
     
-    // Try fallback checkout method
-    tryFallbackCheckout: function() {
-        // Try direct Shopify URL
-        this.showNotification('Using alternative checkout method...', 'info');
-        
-        const shopifyDomain = this.config.shopifyDomain;
-        
-        // Construct a basic checkout URL with cart items
-        let cartItems = this.state.items.map(item => {
-            const variantId = item.shopifyId ?
-                              item.shopifyId.split('/').pop() :
-                              (item.id.includes('_') ? item.id.split('_').pop() : item.id);
-            return `${variantId}:${item.quantity}`;
-        }).join(',');
-        
-        const checkoutUrl = `https://${shopifyDomain}/cart/${cartItems}`;
-        
-        if (this.config.debug) {
-            console.log('Using fallback checkout URL:', checkoutUrl);
-        }
-        
-        setTimeout(() => {
-            window.location.href = checkoutUrl;
-        }, 1000);
     }
 };
 

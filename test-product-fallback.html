@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products Fallback Test</title>
+    <title>Products API Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,11 +46,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Products Fallback Test</h1>
+        <h1>Products API Test</h1>
         
         <div class="controls">
             <button id="test-api">Test API Connection</button>
-            <button id="load-mock">Load Mock Products</button>
             <button id="load-products">Load All Products</button>
         </div>
         
@@ -121,56 +120,13 @@
             }
         });
 
-        // Get mock products
-        function getMockProducts() {
-            // Same mock products function from your products.js
-            const blackHoodieImages = [
-                'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png'
-            ];
-            
-            const whiteHoodieImages = [
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
-            ];
-            
-            return [
-                {
-                    id: 'mock-hoodie-1',
-                    title: 'Bungi x Bobby Rabbit Hardware Hoodie',
-                    description: 'Premium quality hoodie featuring the Bobby Rabbit hardware design.',
-                    category: 'hoodie',
-                    price: 59.99,
-                    mainImage: blackHoodieImages[0],
-                    images: blackHoodieImages
-                },
-                {
-                    id: 'mock-hoodie-2',
-                    title: 'Bungi x Bobby Lightmode Hoodie',
-                    description: 'Lightweight hoodie with minimalist Bobby design.',
-                    category: 'hoodie',
-                    price: 54.99,
-                    mainImage: whiteHoodieImages[0],
-                    images: whiteHoodieImages
-                }
-            ];
-        }
-
-        // Load mock products
-        document.getElementById('load-mock').addEventListener('click', () => {
-            log('Loading mock products...');
-            const mockProducts = getMockProducts();
-            displayProducts(mockProducts);
-            log(`Loaded ${mockProducts.length} mock products`, 'success');
-        });
-
-        // Load all products with fallback
+        // Load all products from API
         document.getElementById('load-products').addEventListener('click', async () => {
-            log('Loading all products with fallback...');
+            log('Loading all products from API...');
             
             try {
-                // First try API
-                log('Attempting to load from API...');
+                // Load from API
+                log('Fetching products from API...');
                 const response = await fetch('/.netlify/functions/get-products', {
                     method: 'GET',
                     headers: {
@@ -201,10 +157,7 @@
                 displayProducts(products);
                 
             } catch (error) {
-                log(`API load failed: ${error.message}. Using mock products instead.`, 'error');
-                const mockProducts = getMockProducts();
-                displayProducts(mockProducts);
-                log(`Fallback: Loaded ${mockProducts.length} mock products`, 'success');
+                log(`API load failed: ${error.message}`, 'error');
             }
         });
 
