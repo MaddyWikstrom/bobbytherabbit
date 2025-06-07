@@ -58,7 +58,7 @@ class QuickViewManager {
                 width: 90%;
                 max-width: 1000px;
                 max-height: 90vh;
-                background: rgba(15, 15, 30, 0.97);
+                background: #fff;
                 border-radius: 16px;
                 z-index: 10001;
                 overflow: hidden;
@@ -178,7 +178,7 @@ class QuickViewManager {
             .quick-view-title {
                 font-size: 1.8rem;
                 font-weight: 700;
-                color: #ffffff;
+                color: #333;
                 margin-bottom: 1rem;
                 line-height: 1.2;
             }
@@ -193,12 +193,12 @@ class QuickViewManager {
             .quick-view-price-current {
                 font-size: 1.5rem;
                 font-weight: 700;
-                color: #ffffff;
+                color: #a855f7;
             }
             
             .quick-view-price-original {
                 font-size: 1.1rem;
-                color: rgba(255, 255, 255, 0.5);
+                color: #999;
                 text-decoration: line-through;
             }
             
@@ -212,11 +212,11 @@ class QuickViewManager {
             }
             
             .quick-view-description {
-                color: rgba(255, 255, 255, 0.8);
+                color: #666;
                 line-height: 1.6;
                 margin-bottom: 1.5rem;
                 font-size: 0.95rem;
-                max-height: 100px;
+                max-height: 120px;
                 overflow-y: auto;
                 padding-right: 0.5rem;
             }
@@ -231,7 +231,7 @@ class QuickViewManager {
             
             .quick-view-option-label {
                 display: block;
-                color: #ffffff;
+                color: #333;
                 font-weight: 600;
                 margin-bottom: 0.5rem;
                 font-size: 0.95rem;
@@ -304,9 +304,9 @@ class QuickViewManager {
             }
             
             .quick-view-size-option {
-                background: rgba(26, 26, 46, 0.8);
-                border: 1px solid rgba(168, 85, 247, 0.3);
-                color: rgba(255, 255, 255, 0.8);
+                background: #f8f8f8;
+                border: 1px solid #ddd;
+                color: #333;
                 padding: 0.4rem 0.75rem;
                 border-radius: 4px;
                 cursor: pointer;
@@ -319,16 +319,16 @@ class QuickViewManager {
             
             .quick-view-size-option:hover {
                 border-color: #a855f7;
-                color: #ffffff;
+                background: #f0f0f0;
                 transform: translateY(-2px);
             }
             
             .quick-view-size-option.active {
-                background: rgba(168, 85, 247, 0.2);
+                background: rgba(168, 85, 247, 0.1);
                 border-color: #a855f7;
-                color: #ffffff;
+                color: #a855f7;
                 transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3);
+                box-shadow: 0 5px 15px rgba(168, 85, 247, 0.2);
             }
             
             .quick-view-size-option.unavailable {
@@ -356,7 +356,7 @@ class QuickViewManager {
             }
             
             .quick-view-quantity-label {
-                color: #ffffff;
+                color: #333;
                 font-weight: 600;
                 font-size: 0.95rem;
             }
@@ -364,8 +364,8 @@ class QuickViewManager {
             .quick-view-quantity-selector {
                 display: flex;
                 align-items: center;
-                background: rgba(26, 26, 46, 0.8);
-                border: 1px solid rgba(168, 85, 247, 0.3);
+                background: #f8f8f8;
+                border: 1px solid #ddd;
                 border-radius: 4px;
                 overflow: hidden;
             }
@@ -373,7 +373,7 @@ class QuickViewManager {
             .quick-view-quantity-btn {
                 background: none;
                 border: none;
-                color: #ffffff;
+                color: #333;
                 padding: 0.4rem 0.7rem;
                 cursor: pointer;
                 transition: all 0.2s ease;
@@ -383,7 +383,8 @@ class QuickViewManager {
             }
             
             .quick-view-quantity-btn:hover {
-                background: rgba(168, 85, 247, 0.2);
+                background: rgba(168, 85, 247, 0.1);
+                color: #a855f7;
             }
             
             .quick-view-quantity-btn:disabled {
@@ -393,12 +394,12 @@ class QuickViewManager {
             
             .quick-view-quantity-display {
                 padding: 0.4rem 0.7rem;
-                color: #ffffff;
+                color: #333;
                 font-weight: 600;
                 min-width: 40px;
                 text-align: center;
-                border-left: 1px solid rgba(168, 85, 247, 0.3);
-                border-right: 1px solid rgba(168, 85, 247, 0.3);
+                border-left: 1px solid #ddd;
+                border-right: 1px solid #ddd;
             }
             
             .quick-view-actions {
