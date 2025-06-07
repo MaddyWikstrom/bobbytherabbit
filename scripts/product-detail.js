@@ -266,7 +266,17 @@ class ProductDetailManager {
             // Debug output to help diagnose issues
             console.log(`Product-detail: Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
             
-            // First pass: Look for exact "Size" option
+            // CRITICAL DEBUG: Log the entire variant data to see everything from the API
+            console.log(`Product-detail: FULL VARIANT DATA:`, JSON.stringify(variant, null, 2));
+            
+            // IMPORTANT: Always add the variant title as a size option first - no filtering
+            if (variant.title && variant.title !== 'Default Title') {
+                size = variant.title;
+                sizes.add(size);
+                console.log(`Product-detail: Added variant title directly as size: ${size}`);
+            }
+            
+            // Look for color and size options in the variant options
             let foundSize = false;
             variant.selectedOptions.forEach(option => {
                 if (option.name.toLowerCase() === 'color') {
@@ -283,16 +293,13 @@ class ProductDetailManager {
                     foundSize = true;
                     console.log(`Product-detail: Found direct size option: ${size}`);
                 }
+                
+                // IMPORTANT: Add ALL option values as potential sizes
+                if (option.value && option.value !== 'Default Title') {
+                    sizes.add(option.value);
+                    console.log(`Product-detail: Added option value as potential size: ${option.value}`);
+                }
             });
-            
-            // If no options found but we have a title, use it directly as a fallback
-            if (!foundSize && variant.title && variant.title !== 'Default Title') {
-                // Just use the variant title directly as a size option
-                size = variant.title;
-                console.log(`Product-detail: Using variant title directly as size: ${size}`);
-                sizes.add(size);
-                foundSize = true;
-            }
             
             // Second pass: Look for size-like values in any option (if size not found)
             if (!foundSize) {
@@ -443,45 +450,59 @@ class ProductDetailManager {
         // Log all found sizes
         console.log("ALL DETECTED SIZES:", Array.from(sizes));
         
-        // Add variant titles as sizes if no sizes were found at all
+        // Log all sizes discovered before processing
+        console.log(`Product-detail: All discovered sizes (${sizes.size}): ${Array.from(sizes).join(', ')}`);
+        
+        // If still no sizes found, aggressive extraction of any data that could be a size
         if (sizes.size === 0) {
-            console.log('No sizes found for product, adding variant titles as sizes');
+            console.log('EMERGENCY: No sizes found after normal processing, attempting emergency extraction');
             
-            // Try to extract sizes from variants
-            const variantTitles = new Set();
-            
+            // Extract ANY variant titles available
             shopifyProduct.variants.edges.forEach(variantEdge => {
                 const variant = variantEdge.node;
-                if (variant.title && variant.title !== 'Default Title') {
-                    console.log(`Product-detail: Adding variant title as size: "${variant.title}"`);
-                    variantTitles.add(variant.title);
+                
+                // Add raw variant title without any filtering
+                if (variant.title) {
+                    sizes.add(variant.title);
+                    console.log(`Product-detail: Emergency - Added raw variant title: "${variant.title}"`);
+                }
+                
+                // Add ALL raw option values from all options without filtering
+                if (variant.selectedOptions && variant.selectedOptions.length > 0) {
+                    variant.selectedOptions.forEach(opt => {
+                        if (opt.value) {
+                            sizes.add(opt.value);
+                            console.log(`Product-detail: Emergency - Added raw option value: "${opt.value}"`);
+                        }
+                    });
                 }
             });
             
-            if (variantTitles.size > 0) {
-                // Use variant titles as sizes
-                variantTitles.forEach(title => sizes.add(title));
-                console.log(`Product-detail: Added ${variantTitles.size} variant titles as sizes`);
-                
-                // Add inventory entries for each color with these sizes
-                Object.keys(colorMap).forEach(color => {
-                    variantTitles.forEach(size => {
-                        inventory[`${color}-${size}`] = 10; // Default stock of 10
-                        console.log(`Added inventory for ${color}-${size}`);
-                    });
-                });
-            } else {
-                // Fallback to "One Size" if no variant titles
-                console.log('No variant titles found, adding "One Size" as fallback');
-                const oneSize = "One Size";
-                sizes.add(oneSize);
-                
-                // Add inventory entries for each color with this size
-                Object.keys(colorMap).forEach(color => {
-                    inventory[`${color}-${oneSize}`] = 10; // Default stock of 10
-                    console.log(`Added inventory for ${color}-${oneSize}`);
-                });
+            // If STILL no sizes (very unlikely), use "One Size" as absolute last resort
+            if (sizes.size === 0) {
+                console.log('CRITICAL: No size data found at all, using "One Size" as last resort');
+                sizes.add("One Size");
             }
+        }
+        
+        console.log(`Product-detail: Final sizes list (${sizes.size}): ${Array.from(sizes).join(', ')}`);
+        
+        // Add inventory entries for all sizes with all colors
+        if (Object.keys(colorMap).length > 0) {
+            Object.keys(colorMap).forEach(color => {
+                sizes.forEach(size => {
+                    const inventoryKey = `${color}-${size}`;
+                    inventory[inventoryKey] = 10; // Default stock of 10
+                    console.log(`Added inventory for ${inventoryKey}`);
+                });
+            });
+        } else {
+            // If no colors, add inventory for sizes without color
+            sizes.forEach(size => {
+                const inventoryKey = `-${size}`;
+                inventory[inventoryKey] = 10;
+                console.log(`Added inventory for ${inventoryKey} (no color)`);
+            });
         }
         
         // Calculate pricing

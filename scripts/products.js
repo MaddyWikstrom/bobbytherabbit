@@ -147,7 +147,19 @@ class ProductManager {
                 // Debug output to help diagnose issues
                 console.log(`Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
                 
-                // First pass: Look for exact "Size" option
+                // CRITICAL DEBUG: Log the exact variant data received from API
+                console.log(`VARIANT RAW DATA: ${JSON.stringify(variant)}`);
+                
+                // First: Always capture variant title as a potential size regardless of other options
+                // This ensures we preserve all variant data from the API
+                if (variant.title && variant.title !== 'Default Title') {
+                    size = variant.title;
+                    sizes.add(size);
+                    console.log(`Added variant title directly as size: ${size}`);
+                    foundSize = true;
+                }
+                
+                // Second: Look for explicit "Size" option to add as additional data
                 let foundSize = false;
                 variant.selectedOptions.forEach(option => {
                     if (option.name.toLowerCase() === 'color') {
@@ -160,15 +172,6 @@ class ProductManager {
                         console.log(`Found direct size option: ${size}`);
                     }
                 });
-
-                // If no options found but we have a title, use it directly as a fallback
-                if (!foundSize && variant.title && variant.title !== 'Default Title') {
-                    // Just use the variant title directly as a size option
-                    size = variant.title;
-                    console.log(`Using variant title directly as size: ${size}`);
-                    sizes.add(size);
-                    foundSize = true;
-                }
                 
                 // Second pass: Look for size-like values in any option (if size not found)
                 if (!foundSize) {
@@ -193,45 +196,28 @@ class ProductManager {
                     });
                 }
                 
-                // Extract size from variant title if still not found (legacy approach for backward compatibility)
-                if (!foundSize && variant.title && variant.title !== 'Default Title') {
-                    console.log(`Attempting to extract size from variant title: ${variant.title}`);
+                // Extract additional size info from variant title to ensure we catch everything
+                // This is for backward compatibility with our previous approach
+                if (variant.title && variant.title !== 'Default Title') {
+                    console.log(`Capturing all data from variant title: ${variant.title}`);
                     
-                    // Check for slash format (Color / Size)
+                    // For variants with slash format (Color / Size)
                     if (variant.title.includes('/')) {
                         const parts = variant.title.split('/').map(p => p.trim());
                         // Usually size is the second part (after color)
                         if (parts.length > 1) {
-                            size = parts[1];
-                            console.log(`Extracted size "${size}" from title with slash: ${variant.title}`);
-                            sizes.add(size);
-                            foundSize = true;
+                            const extractedSize = parts[1];
+                            console.log(`Found additional size "${extractedSize}" from title with slash`);
+                            sizes.add(extractedSize);
                         }
                     }
-                    // Check for "One Size" variant
-                    else if (variant.title.toLowerCase().includes('one size')) {
-                        size = 'One Size';
-                        console.log(`Found "One Size" variant`);
-                        sizes.add(size);
-                        foundSize = true;
-                    }
-                    // Check for size-only variants
-                    else {
-                        const upperTitle = variant.title.toUpperCase();
-                        // Check if the entire title is a common size
-                        if (['S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL'].includes(upperTitle) ||
-                            upperTitle.includes('SMALL') ||
-                            upperTitle.includes('MEDIUM') ||
-                            upperTitle.includes('LARGE') ||
-                            /^\d+$/.test(upperTitle) || // Numeric sizes
-                            upperTitle) { // Just use the title as is if nothing else works
-                            
-                            size = variant.title;
-                            console.log(`Using variant title "${size}" as size`);
-                            sizes.add(size);
-                            foundSize = true;
-                        }
-                    }
+                }
+                
+                // SPECIAL HANDLING: If we reach here and still have no size, use the original variant title
+                if (!size && variant.title) {
+                    size = variant.title;
+                    sizes.add(size);
+                    console.log(`Using variant title as last resort: ${size}`);
                 }
                 
                 // If variant has an image, associate it with the color
