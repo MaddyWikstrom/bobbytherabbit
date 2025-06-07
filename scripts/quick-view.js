@@ -532,7 +532,15 @@ class QuickViewManager {
             .product-card .add-to-bag-btn,
             .product-card .quick-shop-buttons,
             .product-card .button-container,
-            .product-card .quick-buttons {
+            .product-card .quick-buttons,
+            .product-card [class*="cart"],
+            .product-card [class*="Cart"],
+            .product-card button:not(.quick-add-size-btn):not(.quick-add-color-btn),
+            .product-card .btn,
+            .product-card .button,
+            .product-card .add-to-cart,
+            .product-card .add-to-bag,
+            .product-card .buy-now {
                 display: none !important;
             }
             
