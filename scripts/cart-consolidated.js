@@ -39,7 +39,7 @@ const BobbyCart = {
         fallbackImage: '/assets/product-placeholder.png',
         shopifyDomain: 'mfdkk3-7g.myshopify.com',
         checkoutEndpoint: '/.netlify/functions/create-checkout-fixed',
-        debug: false
+        debug: true // Enable debug mode to help diagnose issues
     },
     
     // Cart state
@@ -1506,26 +1506,74 @@ const BobbyCart = {
     
     // Get HTML for a cart item
     getCartItemHTML: function(item) {
-        const price = item.price * item.quantity;
+        // Ensure item properties are strings to prevent [object Object] display
+        const ensureString = (value) => {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'object') return JSON.stringify(value);
+            return String(value);
+        };
+        
+        // Safely extract data
+        const id = ensureString(item.id);
+        const title = ensureString(item.title);
+        const price = parseFloat(item.price || 0) * parseInt(item.quantity || 1);
+        const image = item.image || this.config.fallbackImage;
+        const productId = ensureString(item.productId);
+        const shopifyId = ensureString(item.shopifyId || '');
+        const quantity = parseInt(item.quantity || 1);
+        
+        // Format variant text more intelligently
+        let variantText = '';
+        if (item.variantText) {
+            if (typeof item.variantText === 'string') {
+                variantText = item.variantText;
+            } else if (typeof item.variantText === 'object') {
+                variantText = JSON.stringify(item.variantText);
+            }
+        } else if (item.variants && typeof item.variants === 'object') {
+            // Create variant text from variants object
+            try {
+                variantText = Object.entries(item.variants)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(', ');
+            } catch (e) {
+                variantText = '';
+            }
+        }
+        
+        // Enable debug output
+        if (this.config.debug) {
+            console.log('Rendering cart item:', {
+                id,
+                title,
+                price,
+                image,
+                productId,
+                shopifyId,
+                variantText,
+                quantity,
+                rawItem: item
+            });
+        }
         
         return `
-            <div class="cart-item" data-item-id="${item.id}" data-product-id="${item.productId}" data-shopify-id="${item.shopifyId || ''}">
+            <div class="cart-item" data-item-id="${id}" data-product-id="${productId}" data-shopify-id="${shopifyId}">
                 <div class="cart-item-image-container">
-                    <img src="${item.image}" alt="${item.title}" class="cart-item-image"
-                         data-product-id="${item.productId}"
-                         data-shopify-id="${item.shopifyId || ''}"
-                         data-title="${item.title}"
+                    <img src="${image}" alt="${title}" class="cart-item-image"
+                         data-product-id="${productId}"
+                         data-shopify-id="${shopifyId}"
+                         data-title="${title}"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'; this.nextElementSibling.nextElementSibling.style.display='block';">
                     <div class="cart-item-placeholder" style="display:none;">?</div>
                     <button class="image-retry-btn" style="display:none;">Retry</button>
                 </div>
                 <div class="cart-item-info">
-                    <div class="cart-item-title">${item.title}</div>
-                    ${item.variantText ? `<div class="cart-item-variant">${item.variantText}</div>` : ''}
+                    <div class="cart-item-title">${title}</div>
+                    ${variantText ? `<div class="cart-item-variant">${variantText}</div>` : ''}
                     <div class="cart-item-price">$${price.toFixed(2)}</div>
                     <div class="cart-item-controls">
                         <button class="quantity-btn decrease">-</button>
-                        <span class="quantity-display">${item.quantity}</span>
+                        <span class="quantity-display">${quantity}</span>
                         <button class="quantity-btn increase">+</button>
                     </div>
                 </div>

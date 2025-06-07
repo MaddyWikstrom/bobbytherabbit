@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bobby Streetwear - Script Integration Template</title>
+    <!-- Include site stylesheets as needed -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/products.css">
+    <link rel="stylesheet" href="styles/quick-view.css">
+    <!-- No need to manually include cart-styles.css as it's dynamically loaded -->
+</head>
+<body>
+    <!-- Your page content here -->
+
+    <!-- SCRIPT LOADING ORDER -->
+    <!-- This is the correct order to load the consolidated scripts -->
+    
+    <!-- 1. Third-party dependencies (if needed) -->
+    <script src="scripts/shopify-buy-sdk.js"></script>
+    
+    <!-- 2. Consolidated Shopify integration (must come before cart) -->
+    <script src="scripts/shopify-integration-consolidated.js"></script>
+    
+    <!-- 3. Consolidated cart system (replaces cart.js, cart-checkout-system.js, etc.) -->
+    <script src="scripts/cart-consolidated.js"></script>
+    
+    <!-- 4. Quick View (updated to work with consolidated cart) -->
+    <script src="scripts/quick-view.js"></script>
+    
+    <!-- 5. Page-specific scripts -->
+    <script src="scripts/products.js"></script>
+    
+    <!-- NOTE: You can remove these scripts as they are now consolidated: -->
+    <!-- ❌ scripts/cart.js -->
+    <!-- ❌ scripts/cart-checkout-system.js -->
+    <!-- ❌ scripts/cart-manager-fix.js -->
+    <!-- ❌ scripts/shopify-integration.js -->
+    <!-- ❌ scripts/shopify-integration-fixed.js -->
+    <!-- ❌ scripts/shopify-integration-debug.js -->
+    <!-- ❌ scripts/storefront-api-products.js -->
+    <!-- ❌ scripts/fetch-storefront-api.js -->
+    
+    <!-- Bridge script may still be needed for backward compatibility -->
+    <script src="scripts/cart-bridge-fix.js"></script>
+    
+    <!-- Utility scripts -->
+    <script src="scripts/animations.js"></script>
+</body>
+</html>
