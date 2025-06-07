@@ -84,8 +84,6 @@ let shopifyCheckout = null;
 const SHOPIFY_CONFIG = {
   domains: [
     'mfdkk3-7g.myshopify.com',  // Primary domain
-    'bobbytherabbit.myshopify.com',  // Fallback domain
-    'bobbytherabbit.com.myshopify.com'  // Second fallback
   ],
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
   apiVersion: '2024-01'

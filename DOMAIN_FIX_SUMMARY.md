@@ -2,9 +2,9 @@
 
 ## The Problem
 You were getting `net::ERR_CERT_COMMON_NAME_INVALID` because of an **invalid domain**:
+❌ **PREVIOUS**: `bobbytherabbit.myshopify.com`
+✅ **UPDATED**: `mfdkk3-7g.myshopify.com`
 
-❌ **WRONG**: `bobbytherabbit.com.myshopify.com`
-✅ **CORRECT**: `bobbytherabbit.myshopify.com`
 
 ## What Was Fixed
 
@@ -16,7 +16,7 @@ domain: 'bobbytherabbit.com.myshopify.com'
 
 **After:**
 ```javascript
-domain: 'bobbytherabbit.myshopify.com',
+domain: 'mfdkk3-7g.myshopify.com',
 storefrontAccessToken: process.env.SHOPIFY_ACCESS_TOKEN || '8c6bd66766da4553701a1f1fe7d94dc4'
 ```
 
@@ -28,7 +28,7 @@ domain: 'bobbytherabbit.com.myshopify.com'
 
 **After:**
 ```javascript
-domain: 'bobbytherabbit.myshopify.com'
+domain: 'mfdkk3-7g.myshopify.com'
 ```
 
 ## Why This Fixes Your Errors

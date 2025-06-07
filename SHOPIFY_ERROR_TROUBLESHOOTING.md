@@ -25,11 +25,11 @@ Based on your error messages, here are the issues and their solutions:
 ### 3. Certificate Error
 **Error:** `ERR_CERT_COMMON_NAME_INVALID`
 
-**Cause:** SSL certificate issues with your Shopify domain `bobbytherabbit.com.myshopify.com`
+**Cause:** SSL certificate issues with Shopify domains
 
 **Solutions:**
-- Try the alternative domain: `bobbytherabbit.myshopify.com` (without .com)
-- The fixed integration includes domain fallback logic
+- Use the domain: `mfdkk3-7g.myshopify.com`
+- The integration has been updated to use the correct domain
 
 ### 4. Shopify Buy SDK Error
 **Error:** `Uncaught (in promise) TypeError: Failed to fetch`
@@ -46,9 +46,8 @@ Based on your error messages, here are the issues and their solutions:
 3. Check the browser console for detailed error messages
 
 ### Step 2: Fix Domain Issues
-The most likely issue is your Shopify domain. Try these domains in order:
-1. `bobbytherabbit.myshopify.com` (recommended)
-2. `bobbytherabbit.com.myshopify.com` (your current)
+The most likely issue is your Shopify domain. Use this domain:
+1. `mfdkk3-7g.myshopify.com` (current domain)
 
 ### Step 3: Deploy Fixed Files
 Replace your current files with the fixed versions:
@@ -80,7 +79,7 @@ Replace your current files with the fixed versions:
 #### Test 1: Direct Shopify API
 ```javascript
 // Test in browser console
-fetch('https://bobbytherabbit.myshopify.com/api/2024-01/graphql.json', {
+fetch('https://mfdkk3-7g.myshopify.com/api/2024-01/graphql.json', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -109,7 +108,7 @@ fetch('/.netlify/functions/get-products')
 ```javascript
 // Test in browser console (after loading SDK)
 const client = ShopifyBuy.buildClient({
-    domain: 'bobbytherabbit.myshopify.com',
+    domain: 'mfdkk3-7g.myshopify.com',
     storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
     apiVersion: '2024-01'
 });

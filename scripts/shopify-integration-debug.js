@@ -5,7 +5,7 @@ console.log('🔍 Shopify Integration Debug Mode Started');
 
 // Configuration - Now uses Netlify functions to avoid CORS issues
 const SHOPIFY_CONFIG = {
-    domain: 'bobbytherabbit.myshopify.com',
+    domain: 'mfdkk3-7g.myshopify.com',
     note: 'Direct API calls disabled - using Netlify functions to prevent CORS errors'
 };
 

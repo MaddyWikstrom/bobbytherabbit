@@ -20,7 +20,7 @@ exports.handler = async function(event, context) {
   try {
     // Use Admin API token from environment variables
     const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
-    const STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'bobbytherabbit.myshopify.com';
+    const STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || 'mfdkk3-7g.myshopify.com';
     const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-01';
 
     // Check if required environment variables are set

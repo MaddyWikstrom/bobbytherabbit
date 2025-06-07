@@ -7,7 +7,7 @@ let shopifyCheckout = null;
 
 // Configuration with single domain
 const SHOPIFY_CONFIG = {
-  domain: 'bobbytherabbit.myshopify.com',
+  domain: 'mfdkk3-7g.myshopify.com',
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
   apiVersion: '2024-01'
 };

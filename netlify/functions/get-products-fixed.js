@@ -20,7 +20,7 @@ exports.handler = async function(event, context) {
   // Configuration with fallback domains
   const SHOPIFY_CONFIGS = [
     {
-      domain: 'bobbytherabbit.myshopify.com',  // Try without .com first
+      domain: 'mfdkk3-7g.myshopify.com',  // Primary domain
       storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
       apiVersion: '2024-01'
     },

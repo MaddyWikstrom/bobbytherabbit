@@ -80,8 +80,8 @@
             resultDiv.innerHTML = '<p>Testing direct API with correct domain...</p>';
             
             try {
-                // Test the corrected domain directly
-                const response = await fetch('https://bobbytherabbit.myshopify.com/api/2024-01/graphql.json', {
+                // Test the updated domain directly
+                const response = await fetch('https://mfdkk3-7g.myshopify.com/api/2024-01/graphql.json', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -149,8 +149,8 @@
         // Show the fix summary
         window.addEventListener('load', function() {
             console.log('🔧 Domain Fix Applied:');
-            console.log('❌ OLD: bobbytherabbit.com.myshopify.com (invalid)');
-            console.log('✅ NEW: bobbytherabbit.myshopify.com (correct)');
+            console.log('❌ OLD: bobbytherabbit.myshopify.com (previous domain)');
+            console.log('✅ NEW: mfdkk3-7g.myshopify.com (updated domain)');
             console.log('');
             console.log('Changes made:');
             console.log('1. Fixed domain in netlify/functions/get-products.js');

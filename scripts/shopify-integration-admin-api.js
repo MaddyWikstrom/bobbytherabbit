@@ -9,7 +9,7 @@ let shopifyCheckout = null;
 // Configuration for Admin API approach
 const SHOPIFY_CONFIG = {
   // Using standard domain (no certificate issues)
-  domain: 'bobbytherabbit.myshopify.com',
+  domain: 'mfdkk3-7g.myshopify.com',
   // Still need Storefront token for Buy SDK (checkout functionality)
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
   apiVersion: '2024-01'
