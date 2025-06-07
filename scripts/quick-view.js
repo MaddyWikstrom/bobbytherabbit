@@ -523,6 +523,19 @@ class QuickViewManager {
                 object-fit: cover;
             }
             
+            /* Hide Add to Cart button and eye/cart buttons */
+            .product-card .add-to-cart-btn,
+            .product-card .quick-shop-btn,
+            .product-card .cart-btn,
+            .product-card .eye-btn,
+            .product-card .quick-view-btn,
+            .product-card .add-to-bag-btn,
+            .product-card .quick-shop-buttons,
+            .product-card .button-container,
+            .product-card .quick-buttons {
+                display: none !important;
+            }
+            
             .product-card-info {
                 flex-grow: 1;
                 display: flex;
