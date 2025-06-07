@@ -406,13 +406,10 @@ class CartManager {
             item.image, // Shopify image (primary source)
             // Try direct Shopify CDN URL if it's partial
             item.image?.startsWith('/') ? `https://cdn.shopify.com${item.image}` : null,
-            // Try mockup folder if normal path fails
-            item.image?.replace(/^(.*\/)?/, 'mockups/'),
-            // Try common paths for the product
-            `mockups/${item.category?.toLowerCase()}-${item.color?.toLowerCase()}.png`,
-            // Generic fallback that's likely to exist in the site
+            // Generic fallbacks that are likely to exist in the site
             'assets/placeholder.png',
-            'assets/featured-hoodie.svg'
+            'assets/featured-hoodie.svg',
+            'assets/product-placeholder.png'
         ];
         
         // Filter out any undefined or null paths

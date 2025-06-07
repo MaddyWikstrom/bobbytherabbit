@@ -94,13 +94,7 @@ function generateFallbackSources(originalSrc, productType) {
         
         // Try common directory paths
         `/assets/${filename}`,
-        `/mockups/${filename}`,
         `assets/${filename}`,
-        `mockups/${filename}`,
-        
-        // Try variant paths for mockups with different naming patterns
-        `/mockups/${productIdentifier}-${filename}`,
-        `mockups/${productIdentifier}-${filename}`,
         
         // Default fallbacks
         `/assets/product-placeholder.png`,

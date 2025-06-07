@@ -24,7 +24,6 @@ const BobbyCarts = {
     config: {
         cartStorageKey: 'bobby-streetwear-cart',
         cartVersion: '2.0',
-        mockupBasePath: '/mockups/',
         assetsBasePath: '/assets/',
         fallbackImage: '/assets/product-placeholder.png',
         shopifyDomain: 'mfdkk3-7g.myshopify.com',
@@ -847,7 +846,7 @@ const BobbyCarts = {
                 url.includes(currentDomain + 'http://')) {
                 
                 // Extract the path part after all domain references
-                const pathMatch = url.match(new RegExp(`${currentDomain}.*?/(assets|mockups)/`));
+                const pathMatch = url.match(new RegExp(`${currentDomain}.*?/(assets)/`));
                 if (pathMatch) {
                     const pathIndex = url.indexOf(pathMatch[1]);
                     cleanUrl = '/' + url.substring(pathIndex);
@@ -856,12 +855,8 @@ const BobbyCarts = {
                     const parts = url.split('/');
                     const filename = parts[parts.length - 1];
                     
-                    // Try to determine folder
-                    if (filename.includes('mockup')) {
-                        cleanUrl = `${this.config.mockupBasePath}${filename}`;
-                    } else {
-                        cleanUrl = `${this.config.assetsBasePath}${filename}`;
-                    }
+                    // Add to assets folder
+                    cleanUrl = `${this.config.assetsBasePath}${filename}`;
                 }
             }
             
@@ -1273,10 +1268,8 @@ const BobbyCarts = {
             `https://cdn.shopify.com/s/files/1/0701/3947/8183/files/${filename}`,
             `https://cdn.shopify.com/s/files/1/0701/3947/8183/products/${filename}`,
             // Try relative paths with the filename
-            `/mockups/${filename}`,
             `/assets/${filename}`,
             // Try with current domain
-            `${window.location.origin}/mockups/${filename}`,
             `${window.location.origin}/assets/${filename}`,
             // Try some known product images as fallbacks
             'https://cdn.shopify.com/s/files/1/0701/3947/8183/files/unisex-premium-hoodie-black-front-683f9d11a7936.png',

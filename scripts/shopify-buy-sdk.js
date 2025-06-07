@@ -64,11 +64,8 @@ class ShopifyBuySDKManager {
             // Extract images from Shopify
             const shopifyImages = product.images.map(img => img.src);
             
-            // Get local mockup images
-            const localImages = this.getLocalMockupImages(product.handle, product.title);
-            
-            // Combine both image sources - local mockups first, then Shopify images
-            const images = [...localImages, ...shopifyImages];
+            // Use only Shopify images - no local mockups
+            const images = shopifyImages.length > 0 ? [...shopifyImages] : ['assets/placeholder.png'];
             
             // Extract variants and organize by color/size
             const variants = [];
@@ -150,81 +147,7 @@ class ShopifyBuySDKManager {
             .substring(0, 200) + '...';
     }
 
-    getLocalMockupImages(productHandle, productTitle) {
-        // Map product handles to their local mockup images
-        const mockupMappings = {
-            'bungi-x-bobby-rabbit-hardware-unisex-hoodie': [
-                // Just include a few key images for each product
-                'mockups/unisex-premium-hoodie-black-front-683f9021c6f6d.png',
-                'mockups/unisex-premium-hoodie-black-left-683f9021d2cb7.png',
-                'mockups/unisex-premium-hoodie-charcoal-heather-front-683f9022aad72.png',
-                'mockups/unisex-premium-hoodie-maroon-front-683f90223b06f.png',
-                'mockups/unisex-premium-hoodie-navy-blazer-front-683f9021dc77b.png',
-                'mockups/unisex-premium-hoodie-vintage-black-front-683f9023cc9cc.png'
-            ],
-            'bungi-x-bobby-lightmode-rabbit-hardware-unisex-hoodie': [
-                'mockups/unisex-premium-hoodie-white-front-683f8fddcb92e.png',
-                'mockups/unisex-premium-hoodie-white-back-683f8fddcabb2.png'
-            ],
-            'bungi-x-bobby-dark-mode-wide-leg-joggers': [
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085cf8.png',
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085cf9.png'
-            ],
-            'wide-leg-joggers': [
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-back-68421e1085d00.png',
-                'mockups/all-over-print-unisex-wide-leg-joggers-white-front-68421e1085d01.png'
-            ],
-            'bungi-x-bobby-lightmode-rabbit-hardware-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c9fdcac3.png',
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-back-683f9c9fdd370.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f9c6a74d70.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-unisex-sweatshirt': [
-                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f9be9c4dea.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-womens-t-shirt': [
-                'mockups/all-over-print-womens-crew-neck-t-shirt-white-front-683f9bbadb79f.png'
-            ],
-            'bungi-x-bobby-rabbit-darkmode-embroidered-unisex-organic-oversized-sweatshirt': [
-                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b628540b.png',
-                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b6285f66.png'
-            ],
-            'bungi-x-bobby-rabbit-hardware-unisex-organic-oversized-sweatshirt': [
-                'mockups/unisex-organic-oversized-sweatshirt-black-back-683f9b0bd823b.png',
-                'mockups/unisex-organic-oversized-sweatshirt-black-front-683f9b0bd9027.png'
-            ],
-            'bungi-x-bobby-cuffed-beanie-1': [
-                'mockups/cuffed-beanie-black-front-683f9a789ba58.png',
-                'mockups/cuffed-beanie-white-front-683f9a789c355.png'
-            ],
-            'bungi-x-bobby-cowboy-unisex-windbreaker': [
-                'mockups/basic-unisex-windbreaker-black-front-683f9890d7838.png'
-            ],
-            'bungi-x-bobby-cowboy-unisex-sweatshirt': [
-                'mockups/all-over-print-recycled-unisex-sweatshirt-white-front-683f985018ab4.png'
-            ],
-            'bungi-x-bobby-cowboy-mens-t-shirt': [
-                'mockups/all-over-print-mens-crew-neck-t-shirt-white-front-683f97ee5c7af.png'
-            ]
-        };
-
-        // Check if we have mockups for this product
-        if (mockupMappings[productHandle]) {
-            return mockupMappings[productHandle];
-        }
-
-        // Try to find mockups based on product title keywords
-        const titleLower = productTitle.toLowerCase();
-        for (const [handle, images] of Object.entries(mockupMappings)) {
-            if (titleLower.includes(handle.replace(/-/g, ' '))) {
-                return images;
-            }
-        }
-
-        return [];
-    }
+    // Local mockup images have been removed - Shopify API only
 
     // Create checkout (disabled to prevent CORS)
     async createCheckout() {
