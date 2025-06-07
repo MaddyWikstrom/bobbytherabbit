@@ -507,9 +507,33 @@ class QuickViewManager {
                 position: relative;
             }
             
+            /* Product Card Standardization */
+            .product-card {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                min-height: 400px; /* Set a minimum height for consistency */
+                width: 100%;
+            }
+            
+            .product-card img {
+                width: 100%;
+                height: 350px; /* Fixed height for product images */
+                object-fit: cover;
+            }
+            
+            .product-card-info {
+                flex-grow: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+            
+            /* Position the overlay to avoid covering color selector */
             .product-quick-add-overlay {
                 position: absolute;
-                bottom: 0;
+                bottom: 40px; /* Leave space at bottom for color selector */
                 left: 0;
                 right: 0;
                 background: rgba(0, 0, 0, 0.85);
@@ -523,6 +547,8 @@ class QuickViewManager {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                max-height: calc(100% - 60px); /* Ensure it doesn't take up too much space */
+                overflow-y: auto; /* Allow scrolling if needed */
             }
             
             .quick-add-colors {
