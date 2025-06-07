@@ -12,7 +12,7 @@ const SHOPIFY_CONFIG = {
   domain: 'mfdkk3-7g.myshopify.com',
   // Still need Storefront token for Buy SDK (checkout functionality)
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-  apiVersion: '2024-01'
+  apiVersion: '2024-04'
 };
 
 // Enhanced fetch with retry logic
@@ -224,8 +224,12 @@ function redirectToShopifyCheckout() {
     return;
   }
 
-  if (shopifyCheckout && shopifyCheckout.webUrl) {
-    console.log('🛒 Redirecting to checkout:', shopifyCheckout.webUrl);
+  if (shopifyCheckout && shopifyCheckout.checkoutUrl) {
+    console.log('🛒 Redirecting to checkout:', shopifyCheckout.checkoutUrl);
+    window.location.href = shopifyCheckout.checkoutUrl;
+  } else if (shopifyCheckout && shopifyCheckout.webUrl) {
+    // Fallback for old API format
+    console.log('🛒 Redirecting to checkout (legacy format):', shopifyCheckout.webUrl);
     window.location.href = shopifyCheckout.webUrl;
   } else {
     console.error('❌ No checkout URL available');

@@ -9,7 +9,7 @@ let shopifyCheckout = null;
 const SHOPIFY_CONFIG = {
   domain: 'mfdkk3-7g.myshopify.com',
   storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-  apiVersion: '2024-01'
+  apiVersion: '2024-04'
 };
 
 // Function to fetch products from Netlify function only
@@ -99,9 +99,9 @@ function loadShopifySDK(callback) {
   document.head.appendChild(script);
 }
 
-// Create checkout using Netlify function
-async function createCheckoutWithNetlify(cart) {
-  console.log('🔄 Creating checkout via Netlify function...');
+// Create cart using Netlify function
+async function createCartWithNetlify(cart) {
+  console.log('🔄 Creating cart via Netlify function...');
   
   try {
     const response = await fetch('/.netlify/functions/create-checkout', {
@@ -109,7 +109,10 @@ async function createCheckoutWithNetlify(cart) {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ cart })
+      body: JSON.stringify({ items: cart.map(item => ({
+        variantId: item.shopifyVariantId,
+        quantity: item.quantity || 1
+      })) })
     });
     
     if (!response.ok) {
@@ -119,18 +122,18 @@ async function createCheckoutWithNetlify(cart) {
     const data = await response.json();
     
     if (data.error) {
-      console.error('❌ Error creating checkout:', data.error);
+      console.error('❌ Error creating cart:', data.error);
       throw new Error(data.error);
     }
     
-    console.log('✅ Checkout created:', data);
+    console.log('✅ Cart created:', data);
     return data;
   } catch (error) {
-    console.error('❌ Error creating checkout:', error);
-    console.error('⚠️ Checkout creation failed. The app requires deployment to Netlify to function properly.');
+    console.error('❌ Error creating cart:', error);
+    console.error('⚠️ Cart creation failed. The app requires deployment to Netlify to function properly.');
     
     if (typeof showNotification === 'function') {
-      showNotification('Failed to create checkout. Please try again later.', 'error');
+      showNotification('Failed to create cart. Please try again later.', 'error');
     }
     
     return null;
@@ -153,11 +156,11 @@ async function redirectToCheckout() {
     return;
   }
   
-  const checkout = await createCheckoutWithNetlify(cart);
+  const cartData = await createCartWithNetlify(cart);
   
-  if (checkout && checkout.webUrl) {
-    console.log('🛒 Redirecting to checkout URL:', checkout.webUrl);
-    window.location.href = checkout.webUrl;
+  if (cartData && cartData.checkoutUrl) {
+    console.log('🛒 Redirecting to checkout URL:', cartData.checkoutUrl);
+    window.location.href = cartData.checkoutUrl;
   } else {
     console.error('❌ No checkout URL available');
     
@@ -220,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export functions for debugging
 window.shopifyDebug = {
   fetchProducts,
-  createCheckout: createCheckoutWithNetlify,
+  createCart: createCartWithNetlify,
   redirectToCheckout,
   getConfig: () => SHOPIFY_CONFIG,
   showDeploymentMessage: () => {
