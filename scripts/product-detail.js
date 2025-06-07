@@ -188,7 +188,20 @@ class ProductDetailManager {
             }
 
             // Find the specific product by handle/id or Shopify ID
-            const product = data.find(p => {
+            // Check if data has a products array (new API format) or is an array directly (old format)
+            let products = [];
+            if (data.products && Array.isArray(data.products)) {
+                console.log('Processing product data from new API format');
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                console.log('Processing product data from legacy API format');
+                products = data;
+            } else {
+                console.error('Unexpected data format from API:', data);
+                return null;
+            }
+            
+            const product = products.find(p => {
                 const node = p.node || p;
                 const shopifyId = node.id?.replace('gid://shopify/Product/', '');
                 return node.handle === productId ||
@@ -1154,7 +1167,20 @@ class ProductDetailManager {
 
             // Filter products by same category, excluding current product
             const currentCategory = this.currentProduct.category.toLowerCase();
-            const relatedProducts = data
+            // Check if data has a products array (new API format) or is an array directly (old format)
+            let products = [];
+            if (data.products && Array.isArray(data.products)) {
+                console.log('Processing related products from new API format');
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                console.log('Processing related products from legacy API format');
+                products = data;
+            } else {
+                console.error('Unexpected data format from API:', data);
+                return [];
+            }
+            
+            const relatedProducts = products
                 .filter(p => {
                     const node = p.node || p;
                     const productCategory = this.extractCategory(node.title).toLowerCase();

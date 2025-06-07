@@ -80,8 +80,17 @@ class HomepageProductLoader {
                 return [];
             }
 
-            // Transform Shopify products to our format
-            return data.map(product => this.transformShopifyProduct(product.node));
+            // Check if data has a products array (new API format) or is an array directly
+            if (data.products && Array.isArray(data.products)) {
+                console.log('Processing products from new API format');
+                return data.products.map(product => this.transformShopifyProduct(product.node || product));
+            } else if (Array.isArray(data)) {
+                console.log('Processing products from legacy API format');
+                return data.map(product => this.transformShopifyProduct(product.node || product));
+            } else {
+                console.error('Unexpected data format from API:', data);
+                return [];
+            }
         } catch (error) {
             console.error('Error loading Shopify products:', error);
             console.error('⚠️ This app requires deployment to Netlify to function properly');

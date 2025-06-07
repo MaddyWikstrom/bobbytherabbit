@@ -77,16 +77,30 @@ class ProductManager {
                 throw new Error(`Netlify function failed with status: ${response.status}`);
             }
 
-            const shopifyProducts = await response.json();
+            const data = await response.json();
             
-            // Check if we received valid data (not error object)
-            if (Array.isArray(shopifyProducts) && shopifyProducts.length > 0) {
-                console.log(`🛍️ Fetched ${shopifyProducts.length} products from Shopify via Netlify function`);
-                // Convert Shopify products to our format
-                return this.convertShopifyProducts(shopifyProducts);
+            // Check if we received valid data in new or old format
+            let products = [];
+            
+            if (data.products && Array.isArray(data.products)) {
+                // New API format with products array inside an object
+                console.log(`🛍️ Fetched ${data.products.length} products from Shopify via Netlify function (new format)`);
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                // Old API format with direct array
+                console.log(`🛍️ Fetched ${data.length} products from Shopify via Netlify function (legacy format)`);
+                products = data;
             } else {
-                console.error('❌ Received invalid product data from API');
-                throw new Error('Invalid product data received');
+                console.error('❌ Received invalid product data from API:', data);
+                throw new Error('Invalid product data format received');
+            }
+            
+            if (products.length > 0) {
+                // Convert Shopify products to our format
+                return this.convertShopifyProducts(products);
+            } else {
+                console.error('❌ No products found in API response');
+                throw new Error('No products found in API response');
             }
             
         } catch (error) {

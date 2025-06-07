@@ -43,8 +43,21 @@ class ShopifyBuySDKManager {
                 throw new Error(data.error);
             }
             
-            const products = data.products || [];
-            console.log(`✅ Loaded ${products.length} products via Netlify function`);
+            // Handle both API formats (new format with products array inside object, or old format with direct array)
+            let products = [];
+            
+            if (data.products && Array.isArray(data.products)) {
+                // New API format
+                console.log(`✅ Loaded ${data.products.length} products via Netlify function (new format)`);
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                // Old API format with direct array
+                console.log(`✅ Loaded ${data.length} products via Netlify function (legacy format)`);
+                products = data;
+            } else {
+                console.error('❌ Unexpected data format from API:', data);
+                products = [];
+            }
             
             // Convert to our format
             this.products = this.convertShopifyProducts(products);
