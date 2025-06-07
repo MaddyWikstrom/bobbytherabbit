@@ -643,8 +643,9 @@ class QuickViewManager {
         
         // Handle product card quick view buttons
         document.addEventListener('click', function(e) {
-            // Quick View button
-            if (e.target.matches('.product-quick-view-btn')) {
+            // Quick View button - match both possible class names
+            if (e.target.matches('.product-quick-view-btn, .quick-view-btn') ||
+                e.target.closest('.product-quick-view-btn, .quick-view-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -657,8 +658,9 @@ class QuickViewManager {
                 }
             }
             
-            // Quick Add button
-            if (e.target.matches('.product-quick-add-btn')) {
+            // Quick Add button - match both possible class names
+            if (e.target.matches('.product-quick-add-btn, .add-to-cart-quick') ||
+                e.target.closest('.product-quick-add-btn, .add-to-cart-quick')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
