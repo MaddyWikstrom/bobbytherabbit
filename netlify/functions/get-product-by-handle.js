@@ -41,12 +41,12 @@ exports.handler = async function(event, context) {
       storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
       apiVersion: '2024-04'
     },
-    // Uncomment and update this fallback if needed
-    // {
-    //   domain: 'your-backup-store.myshopify.com',
-    //   storefrontAccessToken: 'your-backup-token',
-    //   apiVersion: '2024-04'
-    // },
+    // Use alternative domain format as fallback
+    {
+      domain: 'bobbytherabbit.com.myshopify.com',  // Alternative domain format
+      storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
+      apiVersion: '2024-04'
+    }
   ];
   
   // Add debugging for the request
@@ -60,6 +60,7 @@ exports.handler = async function(event, context) {
         title
         handle
         description
+        descriptionHtml
         priceRange {
           minVariantPrice {
             amount
@@ -114,61 +115,92 @@ exports.handler = async function(event, context) {
   async function makeShopifyRequest(config, retries = 3) {
     for (let i = 0; i < retries; i++) {
       try {
-        console.log(`Attempt ${i + 1}: Trying domain ${config.domain} for product ${handle}`);
+        // Try multiple handle formats if original fails
+        let handleFormats = [handle];
         
-        const response = await fetch(`https://${config.domain}/api/${config.apiVersion}/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Storefront-Access-Token': config.storefrontAccessToken,
-            'Accept': 'application/json',
-            'User-Agent': 'Netlify-Function/1.0'
-          },
-          body: JSON.stringify({ 
-            query: productQuery,
-            variables: { handle: handle }
-          })
-        });
+        // Add common variations of the handle to try
+        if (i > 0) {
+          handleFormats = [
+            handle,
+            handle.toLowerCase(),
+            handle.replace(/-/g, '_'),
+            handle.replace(/_/g, '-'),
+            handle.replace(/\s+/g, '-').toLowerCase()
+          ];
+        }
+        
+        let lastError = null;
+        let lastStatus = null;
+        
+        // Try each handle format
+        for (const currentHandle of handleFormats) {
+          try {
+            console.log(`Attempt ${i + 1}: Trying domain ${config.domain} for product handle "${currentHandle}"`);
+            
+            const response = await fetch(`https://${config.domain}/api/${config.apiVersion}/graphql.json`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Storefront-Access-Token': config.storefrontAccessToken,
+                'Accept': 'application/json',
+                'User-Agent': 'Netlify-Function/1.0'
+              },
+              body: JSON.stringify({ 
+                query: productQuery,
+                variables: { handle: currentHandle }
+              })
+            });
 
-        console.log(`Response status: ${response.status} for domain ${config.domain}`);
+            console.log(`Response status: ${response.status} for domain ${config.domain} with handle "${currentHandle}"`);
+            lastStatus = response.status;
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error(`HTTP error ${response.status} for ${config.domain} with handle "${currentHandle}":`, errorText);
+              lastError = new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+              continue; // Try next handle format
+            }
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`HTTP error ${response.status} for ${config.domain}:`, errorText);
-          
-          if (i === retries - 1) {
-            throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+            const data = await response.json();
+
+            if (data.errors) {
+              console.error('GraphQL Errors for', config.domain, 'with handle', currentHandle, ':', data.errors);
+              lastError = new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+              continue; // Try next handle format
+            }
+
+            if (!data.data.product) {
+              console.error(`Product with handle "${currentHandle}" not found on ${config.domain}`);
+              lastError = new Error(`Product with handle "${currentHandle}" not found`);
+              continue; // Try next handle format
+            }
+
+            console.log(`Success with domain ${config.domain}, found product: ${data.data.product.title}`);
+            return {
+              success: true,
+              data: data.data.product,
+              domain: config.domain,
+              handle: currentHandle
+            };
+          } catch (handleError) {
+            console.error(`Error with handle "${currentHandle}":`, handleError.message);
+            lastError = handleError;
+            // Continue to next handle format
           }
+        }
+        
+        // If we've tried all handle formats and none worked, throw the last error
+        if (lastError) {
+          // If it's the last retry, throw the error to be caught by the outer catch
+          if (i === retries - 1) {
+            throw lastError;
+          }
+          
+          // Otherwise, continue to the next retry
+          console.log(`All handle formats failed for attempt ${i + 1}, trying again...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
           continue;
         }
-
-        const data = await response.json();
-
-        if (data.errors) {
-          console.error('GraphQL Errors for', config.domain, ':', data.errors);
-          
-          if (i === retries - 1) {
-            throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
-          }
-          continue;
-        }
-
-        if (!data.data.product) {
-          console.error(`Product with handle "${handle}" not found on ${config.domain}`);
-          
-          if (i === retries - 1) {
-            throw new Error(`Product with handle "${handle}" not found`);
-          }
-          continue;
-        }
-
-        console.log(`Success with domain ${config.domain}, found product: ${data.data.product.title}`);
-        return {
-          success: true,
-          data: data.data.product,
-          domain: config.domain
-        };
-
       } catch (error) {
         console.error(`Attempt ${i + 1} failed for ${config.domain}:`, error.message);
         
@@ -180,8 +212,21 @@ exports.handler = async function(event, context) {
         await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
       }
     }
+    // If we reach here, all retries failed
+    throw new Error(`All retry attempts failed for domain ${config.domain}`);
   }
 
+  // Try variations of the handle if the original doesn't work
+  const handleVariations = [
+    handle,
+    handle.toLowerCase(),
+    handle.replace(/-/g, '_'),
+    handle.replace(/_/g, '-'),
+    handle.replace(/\s+/g, '-').toLowerCase()
+  ];
+  
+  console.log(`Will try these handle variations if needed:`, handleVariations);
+  
   // Try each configuration
   let lastError = null;
   
@@ -189,7 +234,9 @@ exports.handler = async function(event, context) {
     try {
       const result = await makeShopifyRequest(config);
       
-      if (result.success) {
+      if (result && result.success) {
+        console.log(`Successfully found product with handle "${result.handle}" on domain ${result.domain}`);
+        
         return {
           statusCode: 200,
           headers: {
@@ -197,12 +244,16 @@ exports.handler = async function(event, context) {
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Shopify-Storefront-Access-Token',
             'Content-Type': 'application/json',
-            'X-Working-Domain': result.domain
+            'Cache-Control': 'no-store, max-age=0',
+            'X-Working-Domain': result.domain,
+            'X-Working-Handle': result.handle
           },
           body: JSON.stringify({
             product: result.data,
             meta: {
               domain: result.domain,
+              handle: result.handle,
+              originalHandle: handle,
               timestamp: new Date().toISOString()
             }
           })
@@ -219,17 +270,20 @@ exports.handler = async function(event, context) {
   console.error('All Shopify configurations failed. Last error:', lastError?.message);
   
   return {
-    statusCode: 500,
+    statusCode: 404,  // Changed from 500 to 404 as this is more appropriate for product not found
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, X-Shopify-Storefront-Access-Token',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, max-age=0'
     },
     body: JSON.stringify({ 
       error: 'Failed to fetch product from all configured domains',
+      requestedHandle: handle,
       details: lastError?.message || 'Unknown error',
       attemptedDomains: SHOPIFY_CONFIGS.map(c => c.domain),
+      attemptedHandles: handleVariations,
       timestamp: new Date().toISOString()
     })
   };

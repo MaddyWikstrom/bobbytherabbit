@@ -39,84 +39,100 @@
         }
 
         setupEventListeners() {
-                    // Create navigation controls if needed
-                    this.setupNavigationControls();
-                    
-                    // Create quantity controls if needed
-                    this.setupQuantityControls();
-                    
-                    // Create add to cart button if needed
-                    this.setupAddToCartButton();
-                    
-                    // Product image navigation
-                    const prevBtn = document.getElementById('prev-image');
-                    const nextBtn = document.getElementById('next-image');
-                    
-                    if (prevBtn) {
-                        prevBtn.addEventListener('click', () => this.navigateImages(-1));
-                    } else {
-                        console.warn('Previous image button not found');
-                    }
-                    
-                    if (nextBtn) {
-                        nextBtn.addEventListener('click', () => this.navigateImages(1));
-                    } else {
-                        console.warn('Next image button not found');
-                    }
-                    
-                    // Color selection
-                    document.querySelectorAll('.color-option').forEach(colorOption => {
-                        colorOption.addEventListener('click', (e) => {
-                            const color = e.currentTarget.dataset.color;
-                            this.selectColor(color);
-                        });
-                    });
-                    
-                    // Size selection
-                    document.querySelectorAll('.size-option').forEach(sizeOption => {
-                        sizeOption.addEventListener('click', (e) => {
-                            const size = e.currentTarget.dataset.size;
-                            this.selectSize(size);
-                        });
-                    });
-                    
-                    // Quantity controls
-                    const quantityInput = document.getElementById('quantity');
-                    const incrementBtn = document.getElementById('increment');
-                    const decrementBtn = document.getElementById('decrement');
-                    
-                    if (quantityInput && incrementBtn && decrementBtn) {
-                        incrementBtn.addEventListener('click', () => {
-                            const newValue = Math.min(parseInt(quantityInput.value) + 1, 10);
-                            quantityInput.value = newValue;
-                            this.selectedVariant.quantity = newValue;
-                        });
+                    try {
+                        console.log('Setting up event listeners for product detail page');
                         
-                        decrementBtn.addEventListener('click', () => {
-                            const newValue = Math.max(parseInt(quantityInput.value) - 1, 1);
-                            quantityInput.value = newValue;
-                            this.selectedVariant.quantity = newValue;
-                        });
+                        // Create navigation controls if needed
+                        this.setupNavigationControls();
                         
-                        quantityInput.addEventListener('change', () => {
-                            let value = parseInt(quantityInput.value);
-                            if (isNaN(value) || value < 1) value = 1;
-                            if (value > 10) value = 10;
-                            quantityInput.value = value;
-                            this.selectedVariant.quantity = value;
-                        });
-                    } else {
-                        console.warn('Quantity controls not found in DOM');
-                    }
-                    
-                    // Add to cart button
-                    const addToCartBtn = document.getElementById('add-to-cart');
-                    if (addToCartBtn) {
-                        addToCartBtn.addEventListener('click', () => {
-                            this.addToCart();
-                        });
-                    } else {
-                        console.warn('Add to cart button not found in DOM');
+                        // Create quantity controls if needed
+                        this.setupQuantityControls();
+                        
+                        // Create add to cart button if needed
+                        this.setupAddToCartButton();
+                        
+                        // Product image navigation
+                        const prevBtn = document.getElementById('prev-image');
+                        const nextBtn = document.getElementById('next-image');
+                        
+                        if (prevBtn) {
+                            prevBtn.addEventListener('click', () => this.navigateImages(-1));
+                        } else {
+                            console.warn('Previous image button not found');
+                        }
+                        
+                        if (nextBtn) {
+                            nextBtn.addEventListener('click', () => this.navigateImages(1));
+                        } else {
+                            console.warn('Next image button not found');
+                        }
+                        
+                        // Color selection - use try/catch to avoid breaking if elements don't exist
+                        try {
+                            document.querySelectorAll('.color-option').forEach(colorOption => {
+                                colorOption.addEventListener('click', (e) => {
+                                    const color = e.currentTarget.dataset.color;
+                                    this.selectColor(color);
+                                });
+                            });
+                        } catch (error) {
+                            console.warn('Error setting up color option listeners:', error.message);
+                        }
+                        
+                        // Size selection - use try/catch to avoid breaking if elements don't exist
+                        try {
+                            document.querySelectorAll('.size-option').forEach(sizeOption => {
+                                sizeOption.addEventListener('click', (e) => {
+                                    const size = e.currentTarget.dataset.size;
+                                    this.selectSize(size);
+                                });
+                            });
+                        } catch (error) {
+                            console.warn('Error setting up size option listeners:', error.message);
+                        }
+                        
+                        // Quantity controls
+                        const quantityInput = document.getElementById('quantity');
+                        const incrementBtn = document.getElementById('increment');
+                        const decrementBtn = document.getElementById('decrement');
+                        
+                        if (quantityInput && incrementBtn && decrementBtn) {
+                            incrementBtn.addEventListener('click', () => {
+                                const newValue = Math.min(parseInt(quantityInput.value) + 1, 10);
+                                quantityInput.value = newValue;
+                                this.selectedVariant.quantity = newValue;
+                            });
+                            
+                            decrementBtn.addEventListener('click', () => {
+                                const newValue = Math.max(parseInt(quantityInput.value) - 1, 1);
+                                quantityInput.value = newValue;
+                                this.selectedVariant.quantity = newValue;
+                            });
+                            
+                            quantityInput.addEventListener('change', () => {
+                                let value = parseInt(quantityInput.value);
+                                if (isNaN(value) || value < 1) value = 1;
+                                if (value > 10) value = 10;
+                                quantityInput.value = value;
+                                this.selectedVariant.quantity = value;
+                            });
+                        } else {
+                            console.warn('Quantity controls not found in DOM');
+                        }
+                        
+                        // Add to cart button
+                        const addToCartBtn = document.getElementById('add-to-cart');
+                        if (addToCartBtn) {
+                            addToCartBtn.addEventListener('click', () => {
+                                this.addToCart();
+                            });
+                        } else {
+                            console.warn('Add to cart button not found in DOM');
+                        }
+                        
+                        console.log('Event listeners setup complete');
+                    } catch (error) {
+                        console.error('Error in setupEventListeners:', error);
                     }
                 }
                 
@@ -287,16 +303,31 @@
         }
         
         completeLoadingSequence() {
-            // Hide the loading screen
-            const loadingElement = document.querySelector('.product-loading');
-            if (loadingElement) {
-                loadingElement.classList.remove('active');
-            }
-            
-            // Show the product container
-            const productContainer = document.querySelector('.product-container');
-            if (productContainer) {
-                productContainer.classList.add('loaded');
+            try {
+                console.log('Completing loading sequence');
+                
+                // Hide the loading screen
+                const loadingScreen = document.getElementById('loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.style.display = 'none';
+                }
+                
+                // Show the main content
+                const mainContent = document.getElementById('main-content');
+                if (mainContent) {
+                    mainContent.style.display = 'block';
+                }
+                
+                // Show the product container if it exists
+                const productContainer = document.querySelector('.product-container');
+                if (productContainer) {
+                    productContainer.classList.add('loaded');
+                    productContainer.style.display = 'grid';
+                }
+                
+                console.log('Loading sequence completed');
+            } catch (error) {
+                console.error('Error completing loading sequence:', error);
             }
         }
         
@@ -376,35 +407,48 @@
                     throw new Error('Product ID is required');
                 }
                 
+                console.log(`Loading product with ID: ${productId}`);
+                
                 // Add a timestamp to prevent caching issues
                 const timestamp = new Date().getTime();
                 const url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&_=${timestamp}`;
                 
+                // Log the URL we're trying to fetch for debugging
+                console.log(`Fetching from URL: ${url}`);
+                
                 // Set up a controller for the fetch operation that we can abort
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout (increased from 8)
                 
                 try {
                     const response = await fetch(url, {
-                        signal: controller.signal
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
                     });
                     
                     // Clear the timeout since fetch completed
                     clearTimeout(timeoutId);
                     
+                    console.log(`Response status: ${response.status}, type: ${response.headers.get('content-type')}`);
+                    
                     if (!response.ok) {
                         const errorText = await response.text();
-                        console.error(`API Error (${response.status}): ${errorText.substring(0, 100)}`);
-                        throw new Error(`API response error: ${response.status} - ${errorText.substring(0, 100)}`);
+                        console.error(`API Error (${response.status}): ${errorText.substring(0, 200)}`);
+                        throw new Error(`API response error: ${response.status} - ${errorText.substring(0, 200)}`);
                     }
                     
                     const responseText = await response.text();
+                    console.log(`Response received, length: ${responseText.length} characters`);
                     
                     let data;
                     try {
                         data = JSON.parse(responseText);
                     } catch (parseError) {
                         console.error(`JSON Parse Error: ${parseError.message}`);
+                        console.error(`Response text starts with: ${responseText.substring(0, 100)}`);
                         throw new Error(`Failed to parse API response as JSON: ${parseError.message}`);
                     }
                     
@@ -413,28 +457,37 @@
                         return null;
                     }
                     
+                    console.log(`API returned data structure:`, Object.keys(data));
+                    
                     // Determine where the product data is in the response
                     let productData = null;
                     if (data.product) {
+                        console.log(`Found product data in data.product`);
                         productData = data.product;
                     } else if (data.id || data.handle) {
+                        console.log(`Found direct product data with ID or handle`);
                         productData = data;
                     } else if (Array.isArray(data) && data.length > 0) {
+                        console.log(`Found product data in array`);
                         productData = data[0];
                     }
                     
                     if (!productData) {
+                        console.error(`Could not locate product data in API response:`, data);
                         return null;
                     }
                     
+                    console.log(`Product data found with title: ${productData.title || 'Unknown'}`);
                     return this.convertShopifyProduct(productData);
                     
                 } catch (fetchError) {
                     // Handle timeout or network errors
                     clearTimeout(timeoutId);
                     if (fetchError.name === 'AbortError') {
+                        console.error('API request timed out after 10 seconds');
                         throw new Error('API request timed out');
                     }
+                    console.error(`Fetch error: ${fetchError.message}`);
                     throw fetchError;
                 }
             } catch (error) {
@@ -660,18 +713,42 @@
         
         async loadProduct() {
             try {
+                // Hide main content, show loading screen
+                const mainContent = document.getElementById('main-content');
+                const loadingScreen = document.getElementById('loading-screen');
+                
+                if (mainContent && loadingScreen) {
+                    mainContent.style.display = 'none';
+                    loadingScreen.style.display = 'flex';
+                }
+                
                 // Parse URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 const productId = urlParams.get('id');
                 const selectedColor = urlParams.get('color'); // Get color from URL if available
                 
+                console.log(`Loading product with ID: ${productId}, selected color: ${selectedColor || 'none'}`);
+                
+                if (!productId) {
+                    console.error('No product ID found in URL');
+                    this.completeLoadingSequence();
+                    this.showProductNotFound("No product ID specified");
+                    return;
+                }
+                
                 try {
+                    // Update loading message
+                    const loadingMessage = document.getElementById('loading-message');
+                    if (loadingMessage) {
+                        loadingMessage.textContent = `LOADING PRODUCT: ${productId}`;
+                    }
+                    
                     // Load product data from Shopify API with timeout to prevent hanging
                     const productPromise = this.fetchProductData(productId);
                     
-                    // Create a timeout promise that rejects after 10 seconds
+                    // Create a timeout promise that rejects after 15 seconds (increased from 10)
                     const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error('Product fetch timed out')), 10000);
+                        setTimeout(() => reject(new Error('Product fetch timed out')), 15000);
                     });
                     
                     // Race the product fetch against the timeout
@@ -679,12 +756,23 @@
                 } catch (fetchError) {
                     console.error('Error fetching product:', fetchError);
                     this.completeLoadingSequence();
-                    this.showProductNotFound();
+                    this.showProductNotFound(fetchError.message);
                     return; // Exit early
                 }
                 
                 // If we got here, we have a product
                 if (this.currentProduct) {
+                    console.log(`Successfully loaded product: ${this.currentProduct.title}`);
+                    
+                    // Update page title
+                    document.title = `${this.currentProduct.title} - Bobby Streetwear`;
+                    
+                    // Update loading message
+                    const loadingMessage = document.getElementById('loading-message');
+                    if (loadingMessage) {
+                        loadingMessage.textContent = `RENDERING PRODUCT: ${this.currentProduct.title}`;
+                    }
+                    
                     // Render the product to the DOM
                     await this.renderProduct();
                     
@@ -698,15 +786,22 @@
                         );
                         
                         if (colorExists) {
+                            console.log(`Setting selected color: ${selectedColor}`);
                             this.selectColor(selectedColor);
                         }
                     }
                     
                     this.addToRecentlyViewed(this.currentProduct);
                     this.loadRelatedProducts();
+                    
+                    // Show main content, hide loading screen
+                    if (mainContent && loadingScreen) {
+                        mainContent.style.display = 'block';
+                        loadingScreen.style.display = 'none';
+                    }
                 } else {
                     console.error('No product data available to render');
-                    this.showProductNotFound();
+                    this.showProductNotFound("Product data couldn't be loaded");
                 }
                 
                 // Always complete the loading sequence
@@ -714,7 +809,7 @@
             } catch (error) {
                 console.error('Critical error in loadProduct:', error);
                 this.completeLoadingSequence();
-                this.showProductNotFound();
+                this.showProductNotFound(error.message);
             }
         }
 
@@ -1442,47 +1537,128 @@
         }
         
         showProductNotFound(errorDetails = '') {
-            // Check if we're running locally
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // Store error details in sessionStorage for debugging
-            if (errorDetails) {
-                try {
-                    console.error('Product loading error details:', errorDetails);
-                    sessionStorage.setItem('productLoadError', errorDetails);
-                } catch (e) {
-                    console.error('Could not store error details:', e);
+            try {
+                console.error(`Product not found - Error details: ${errorDetails}`);
+                
+                // Check if we're running locally
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                
+                // Store error details in sessionStorage for debugging
+                if (errorDetails) {
+                    try {
+                        console.error('Product loading error details:', errorDetails);
+                        sessionStorage.setItem('productLoadError', errorDetails);
+                    } catch (e) {
+                        console.error('Could not store error details:', e);
+                    }
                 }
+                
+                // Get the product ID from URL for logging purposes
+                const urlParams = new URLSearchParams(window.location.search);
+                const productId = urlParams.get('id') || 'unknown';
+                console.error(`Product not found: ${productId}`);
+                
+                // Create product not found content directly in the page instead of redirecting
+                const productDetailGrid = document.getElementById('product-detail-grid');
+                if (productDetailGrid) {
+                    // Show not found message directly in the product detail area
+                    productDetailGrid.innerHTML = `
+                        <div class="product-not-found">
+                            <h2>Product Not Found</h2>
+                            <p>We couldn't find the product you're looking for.</p>
+                            <p>Product ID: ${productId}</p>
+                            ${errorDetails ? `<p class="error-details">Error: ${errorDetails}</p>` : ''}
+                            <a href="products.html" class="back-to-products">Browse All Products</a>
+                        </div>
+                    `;
+                    
+                    // Add some styling for the not found message
+                    const styleEl = document.createElement('style');
+                    styleEl.textContent = `
+                        .product-not-found {
+                            text-align: center;
+                            padding: 40px;
+                            background: rgba(0,0,0,0.05);
+                            border-radius: 8px;
+                            margin: 20px auto;
+                            max-width: 600px;
+                            grid-column: 1 / -1;
+                        }
+                        .product-not-found h2 {
+                            font-size: 24px;
+                            margin-bottom: 20px;
+                            color: #a855f7;
+                        }
+                        .back-to-products {
+                            display: inline-block;
+                            margin-top: 20px;
+                            padding: 10px 20px;
+                            background: linear-gradient(45deg, #a855f7, #6366f1);
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-weight: bold;
+                            transition: all 0.3s ease;
+                        }
+                        .back-to-products:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+                        }
+                        .error-details {
+                            font-family: monospace;
+                            background: rgba(0,0,0,0.1);
+                            padding: 10px;
+                            border-radius: 4px;
+                            margin: 10px 0;
+                            font-size: 14px;
+                            color: #d32f2f;
+                            text-align: left;
+                            max-width: 100%;
+                            overflow-x: auto;
+                        }
+                    `;
+                    document.head.appendChild(styleEl);
+                    
+                    // Update breadcrumb
+                    const breadcrumbCurrent = document.getElementById('breadcrumb-current');
+                    if (breadcrumbCurrent) {
+                        breadcrumbCurrent.textContent = 'Product Not Found';
+                    }
+                    
+                    // Update page title
+                    document.title = 'Product Not Found - Bobby Streetwear';
+                    
+                    // Complete loading sequence
+                    this.completeLoadingSequence();
+                    return;
+                }
+                
+                // Fall back to redirect if we can't show in-page message
+                let redirectUrl = 'product-not-found.html';
+                const params = new URLSearchParams();
+                
+                // If running locally, add deployment reason
+                if (isLocal) {
+                    console.log('Running locally - redirecting with deployment reason');
+                    params.append('reason', 'deployment');
+                }
+                
+                // Add error info if available
+                if (errorDetails) {
+                    params.append('error', 'api');
+                    params.append('product', productId);
+                }
+                
+                // Add the parameters to the URL if any exist
+                if (params.toString()) {
+                    redirectUrl += '?' + params.toString();
+                }
+                
+                console.log(`Redirecting to product not found page: ${redirectUrl}`);
+                window.location.href = redirectUrl;
+            } catch (error) {
+                console.error('Error in showProductNotFound:', error);
             }
-            
-            // Get the product ID from URL for logging purposes
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id') || 'unknown';
-            console.error(`Product not found: ${productId}`);
-            
-            // Construct the URL with appropriate parameters
-            let redirectUrl = 'product-not-found.html';
-            const params = new URLSearchParams();
-            
-            // If running locally, add deployment reason
-            if (isLocal) {
-                console.log('Running locally - redirecting with deployment reason');
-                params.append('reason', 'deployment');
-            }
-            
-            // Add error info if available
-            if (errorDetails) {
-                params.append('error', 'api');
-                params.append('product', productId);
-            }
-            
-            // Add the parameters to the URL if any exist
-            if (params.toString()) {
-                redirectUrl += '?' + params.toString();
-            }
-            
-            console.log(`Redirecting to product not found page: ${redirectUrl}`);
-            window.location.href = redirectUrl;
         }
         getColorCode(colorInput) {
             // Handle both string and object formats
