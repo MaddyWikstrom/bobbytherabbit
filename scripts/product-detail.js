@@ -187,14 +187,38 @@ class ProductDetailManager {
             if (recentlyViewed) {
                 this.recentlyViewed = JSON.parse(recentlyViewed);
                 
-                // Fix any image URLs that might be missing protocols or are relative
-                this.recentlyViewed = this.recentlyViewed.map(product => {
-                    product.image = this.ensureAbsoluteUrl(product.image);
-                    return product;
-                });
+                // Cleanup and validate the data from localStorage
+                this.recentlyViewed = this.recentlyViewed
+                    .filter(product => {
+                        // Filter out invalid products
+                        return product && product.id && product.title;
+                    })
+                    .map(product => {
+                        // Fix any image URLs that might be missing protocols or are relative
+                        // or might have the product URL instead of image URL
+                        if (product.image && product.image.includes('product.html')) {
+                            console.warn(`Found invalid image URL: ${product.image}`);
+                            product.image = '/assets/product-placeholder.png';
+                        } else if (product.image) {
+                            product.image = this.ensureAbsoluteUrl(product.image);
+                        } else {
+                            product.image = '/assets/product-placeholder.png';
+                        }
+                        
+                        // Make sure price is a number
+                        if (typeof product.price !== 'number') {
+                            product.price = parseFloat(product.price) || 0;
+                        }
+                        
+                        return product;
+                    });
+                
+                console.log('Clean recently viewed products:', JSON.stringify(this.recentlyViewed));
             }
         } catch (error) {
             console.error('Error loading recently viewed products:', error);
+            // Reset to empty array on error
+            this.recentlyViewed = [];
         }
     }
     
@@ -248,41 +272,175 @@ class ProductDetailManager {
         
         console.log(`Loading related products. Found ${this.recentlyViewed.length} recently viewed items.`);
         
+        // Add a style element to ensure related products are properly styled for dark theme
+        const styleEl = document.createElement('style');
+        styleEl.id = 'related-products-dark-theme';
+        styleEl.textContent = `
+            /* Force dark theme styling for related products */
+            .related-products-grid {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+                gap: 20px !important;
+                margin-top: 20px !important;
+                padding: 0 20px !important;
+            }
+            .related-product {
+                border: 1px solid rgba(168, 85, 247, 0.2) !important;
+                border-radius: 8px !important;
+                overflow: hidden !important;
+                transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+                cursor: pointer !important;
+                background-color: #181830 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                height: 100% !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+            }
+            .related-product:hover {
+                transform: translateY(-5px) !important;
+                box-shadow: 0 10px 15px rgba(168, 85, 247, 0.2) !important;
+                border-color: rgba(168, 85, 247, 0.4) !important;
+            }
+            .related-product img {
+                width: 100% !important;
+                aspect-ratio: 1 !important;
+                object-fit: cover !important;
+                display: block !important;
+                min-height: 180px !important;
+                background-color: #0f0f1e !important;
+            }
+            .related-product-info {
+                padding: 12px !important;
+                flex-grow: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                background-color: #181830 !important;
+            }
+            .related-product-info h4 {
+                font-size: 16px !important;
+                margin-top: 0 !important;
+                margin-bottom: 8px !important;
+                font-weight: 500 !important;
+                color: #ffffff !important;
+                display: -webkit-box !important;
+                -webkit-line-clamp: 2 !important;
+                -webkit-box-orient: vertical !important;
+                overflow: hidden !important;
+            }
+            .related-product-info span {
+                font-weight: 600 !important;
+                color: rgba(255, 255, 255, 0.8) !important;
+            }
+            /* Ensure images have appropriate fallback colors */
+            .related-product img[src=""],
+            .related-product img:not([src]) {
+                background-color: #0f0f1e !important;
+                min-height: 180px !important;
+            }
+            /* Ensure recently viewed products section is well-styled */
+            .related-products, .recently-viewed {
+                background-color: #13132b !important;
+                border-radius: 12px !important;
+                padding: 2rem !important;
+                margin-top: 2rem !important;
+            }
+            .section-title {
+                color: #ffffff !important;
+                margin-bottom: 1.5rem !important;
+                text-align: center !important;
+                font-size: 1.8rem !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+        
         if (this.recentlyViewed.length > 0) {
             // Log the recently viewed products for debugging
             console.log('Recently viewed products:', JSON.stringify(this.recentlyViewed));
             
-            // Generate HTML for related products
-            const html = this.recentlyViewed.map(product => {
-                // Final check to ensure image URL is absolute before rendering
-                let imageUrl = '/assets/product-placeholder.png'; // Default fallback image
-                
-                if (product.image) {
-                    imageUrl = this.ensureAbsoluteUrl(product.image);
-                    console.log(`Processing image for ${product.title}: ${imageUrl}`);
-                } else {
-                    console.warn(`No image found for product ${product.title}`);
+            // Clear the container
+            container.innerHTML = '';
+            
+            // Loop through each product and create elements manually instead of using innerHTML
+            this.recentlyViewed.forEach(product => {
+                try {
+                    // Create product container
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'related-product';
+                    productDiv.dataset.productId = product.id;
+                    
+                    // Prepare image URL
+                    let imageUrl = '/assets/product-placeholder.png'; // Default fallback image
+                    
+                    if (product.image) {
+                        imageUrl = this.ensureAbsoluteUrl(product.image);
+                        console.log(`Processing image for ${product.title}: ${imageUrl}`);
+                    } else {
+                        console.warn(`No image found for product ${product.title}`);
+                    }
+                    
+                    // Create and append image
+                    const img = document.createElement('img');
+                    img.alt = product.title;
+                    img.onerror = function() {
+                        console.warn(`Failed to load image for ${product.title}, using placeholder`);
+                        this.src = '/assets/product-placeholder.png';
+                        // Add specific styling to ensure visibility
+                        this.style.backgroundColor = '#0f0f1e';
+                        this.style.minHeight = '180px';
+                    };
+                    img.style.backgroundColor = '#0f0f1e'; // Dark background for image
+                    img.src = imageUrl;
+                    
+                    // Create product info container
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'related-product-info';
+                    
+                    // Add title
+                    const titleEl = document.createElement('h4');
+                    titleEl.textContent = product.title;
+                    
+                    // Add price
+                    const priceEl = document.createElement('span');
+                    priceEl.textContent = `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}`;
+                    
+                    // Assemble the elements
+                    infoDiv.appendChild(titleEl);
+                    infoDiv.appendChild(priceEl);
+                    
+                    productDiv.appendChild(img);
+                    productDiv.appendChild(infoDiv);
+                    
+                    // Add event listener
+                    productDiv.addEventListener('click', () => {
+                        window.location.href = `product.html?id=${product.id}`;
+                    });
+                    
+                    // Append to container
+                    container.appendChild(productDiv);
+                    
+                    // Add border and box shadow to make images pop more on dark background
+                    productDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+                    productDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                    
+                    // Force browser to acknowledge the image
+                    window.setTimeout(() => {
+                        img.style.display = 'none';
+                        img.offsetHeight; // Force reflow
+                        img.style.display = 'block';
+                        
+                        // Additional check to ensure image is loaded
+                        if (!img.complete || img.naturalWidth === 0) {
+                            console.warn(`Image not loaded yet for ${product.title}, retrying...`);
+                            img.src = imageUrl + '?t=' + new Date().getTime(); // Add cache buster
+                        }
+                    }, 10);
+                    
+                } catch (error) {
+                    console.error(`Error creating related product element for ${product.title}:`, error);
                 }
-                
-                return `
-                <div class="related-product" data-product-id="${product.id}">
-                    <img src="${imageUrl}" alt="${product.title}" onerror="this.src='/assets/product-placeholder.png';">
-                    <div class="related-product-info">
-                        <h4>${product.title}</h4>
-                        <span>$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}</span>
-                    </div>
-                </div>
-            `}).join('');
-            
-            container.innerHTML = html;
-            
-            // Add event listeners
-            document.querySelectorAll('.related-product').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    const productId = e.currentTarget.dataset.productId;
-                    window.location.href = `product.html?id=${productId}`;
-                });
             });
+            
         } else {
             container.innerHTML = '<p>No related products found</p>';
         }
@@ -1543,6 +1701,12 @@ class ProductDetailManager {
         if (!url) return '/assets/product-placeholder.png';
         
         try {
+            // Check for common error patterns
+            if (url.includes('product.html?id=')) {
+                console.error(`Invalid image URL detected (contains product.html): ${url}`);
+                return '/assets/product-placeholder.png';
+            }
+            
             // If it's already an absolute URL, return it
             if (url.startsWith('http://') || url.startsWith('https://')) {
                 return url;
