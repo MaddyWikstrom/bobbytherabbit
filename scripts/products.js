@@ -57,33 +57,61 @@ class ProductManager {
 
     async loadShopifyProducts() {
         try {
-            // Fetching products via Netlify function
+            console.log('Fetching products from Netlify function');
             
             // Use Netlify function to bypass CORS restrictions
-            const response = await fetch('/.netlify/functions/get-products', {
+            // Add a timestamp to prevent caching issues
+            const timestamp = new Date().getTime();
+            const url = `/.netlify/functions/get-products?_=${timestamp}`;
+            
+            // Log request for debugging
+            console.log(`Fetching from URL: ${url}`);
+            
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 // Add a timeout to prevent hanging if the server is slow
-                signal: AbortSignal.timeout(10000) // 10 second timeout
+                signal: AbortSignal.timeout(15000) // 15 second timeout (increased from 10)
             });
+
+            console.log(`API response status: ${response.status}, type: ${response.headers.get('content-type')}`);
 
             if (!response.ok) {
                 // Netlify function failed
+                const errorText = await response.text();
+                console.error(`Netlify function failed with status: ${response.status}`, errorText.substring(0, 200));
                 throw new Error(`Netlify function failed with status: ${response.status}`);
             }
 
-            const data = await response.json();
+            // Get the response as text first for debugging
+            const responseText = await response.text();
+            console.log(`Response received, length: ${responseText.length} characters`);
+            
+            // Parse the JSON
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error(`Failed to parse API response: ${parseError.message}`);
+            }
+            
+            console.log('API returned data structure:', Object.keys(data));
             
             // Check if we received valid data in new or old format
             let products = [];
             
             if (data.products && Array.isArray(data.products)) {
                 // New API format with products array inside an object
+                console.log(`Found ${data.products.length} products in data.products`);
                 products = data.products;
             } else if (Array.isArray(data)) {
                 // Old API format with direct array
+                console.log(`Found ${data.length} products in direct array`);
                 products = data;
             } else {
                 console.error('Received invalid product data from API');
@@ -91,6 +119,7 @@ class ProductManager {
             }
             
             if (products.length > 0) {
+                console.log(`Successfully loaded ${products.length} products from API`);
                 // Convert Shopify products to our format
                 return this.convertShopifyProducts(products);
             } else {
@@ -100,6 +129,8 @@ class ProductManager {
             
         } catch (error) {
             console.error('Error loading Shopify products via Netlify function:', error);
+            // Show error notification to user
+            this.showNotification(`Error loading products: ${error.message}`, 'error');
             return null;
         }
     }
@@ -234,31 +265,65 @@ class ProductManager {
             }
             
             // Determine category from product type or title
-            const category = this.extractCategory(product.title);
+            const category = this.extractCategory(product.title || product.productType || '');
             
-            // Calculate pricing
-            const minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
-            const maxPrice = parseFloat(product.priceRange.maxVariantPrice.amount);
-            const comparePrice = variants.find(v => v.comparePrice)?.comparePrice || null;
+            // Calculate pricing - handle potential missing priceRange with fallbacks
+            let minPrice = 0;
+            try {
+                if (product.priceRange?.minVariantPrice?.amount) {
+                    minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+                } else if (variants.length > 0) {
+                    // Get minimum price from variants
+                    minPrice = Math.min(...variants.map(v => v.price || 0));
+                } else if (product.price) {
+                    // Direct price field
+                    minPrice = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
+                }
+            } catch (priceError) {
+                console.error('Error calculating price:', priceError);
+                minPrice = 0; // Default to 0 if calculation fails
+            }
+            
+            // Get compare price from various sources with fallbacks
+            let comparePrice = null;
+            try {
+                if (product.compareAtPriceRange?.maxVariantPrice?.amount) {
+                    comparePrice = parseFloat(product.compareAtPriceRange.maxVariantPrice.amount);
+                } else if (variants.find(v => v.comparePrice)) {
+                    comparePrice = variants.find(v => v.comparePrice)?.comparePrice;
+                } else if (product.compareAtPrice) {
+                    comparePrice = parseFloat(typeof product.compareAtPrice === 'object' ?
+                        product.compareAtPrice.amount : product.compareAtPrice);
+                }
+            } catch (comparePriceError) {
+                console.error('Error calculating compare price:', comparePriceError);
+                comparePrice = null; // Default to null if calculation fails
+            }
+            
+            // Create color objects with name and code
+            const colorObjects = Array.from(colors).map(color => ({
+                name: color,
+                code: this.getColorCode(color)
+            }));
             
             const convertedProduct = {
-                id: product.handle,
+                id: product.handle || (product.id ? String(product.id).split('/').pop() : 'unknown'),
                 shopifyId: product.id,
-                title: product.title,
-                description: this.cleanDescription(product.description),
+                title: product.title || 'Unknown Product',
+                description: this.cleanDescription(product.description || ''),
                 category: category,
                 price: minPrice,
                 comparePrice: comparePrice,
                 images: images,
                 mainImage: images[0] || '',
                 variants: variants,
-                colors: Array.from(colors),
+                colors: colorObjects, // Use objects with name and code for better compatibility
                 sizes: Array.from(sizes),
-                featured: product.tags.includes('featured'),
-                new: product.tags.includes('new'),
+                featured: product.tags?.includes('featured') || false,
+                new: product.tags?.includes('new') || false,
                 sale: comparePrice > minPrice,
-                tags: product.tags,
-                productType: product.productType,
+                tags: product.tags || [],
+                productType: product.productType || '',
                 // Add the color to images mapping for easy filtering
                 colorImages: Object.fromEntries(colorToImagesMap)
             };
@@ -271,11 +336,51 @@ class ProductManager {
 
     cleanDescription(description) {
         if (!description) return '';
-        return description
-            .replace(/<[^>]*>/g, '')
-            .replace(/&[^;]+;/g, ' ')
-            .trim()
-            .substring(0, 200) + '...';
+        try {
+            return description
+                .replace(/<[^>]*>/g, '')  // Remove HTML tags
+                .replace(/&[^;]+;/g, ' ') // Replace HTML entities with space
+                .trim()
+                .substring(0, 200) + '...';
+        } catch (error) {
+            console.error('Error cleaning description:', error);
+            return description.substring(0, 200) + '...';
+        }
+    }
+    
+    // Add color code mapping similar to product-detail.js for consistency
+    getColorCode(colorName) {
+        if (!colorName || typeof colorName !== 'string') {
+            return '#333333'; // Default gray
+        }
+        
+        // If input is already a color code (starts with #), return it
+        if (colorName.startsWith('#')) {
+            return colorName;
+        }
+        
+        // Common color mapping
+        const colorMap = {
+            'black': '#000000',
+            'white': '#FFFFFF',
+            'red': '#FF0000',
+            'green': '#008000',
+            'blue': '#0000FF',
+            'yellow': '#FFFF00',
+            'purple': '#800080',
+            'orange': '#FFA500',
+            'pink': '#FFC0CB',
+            'gray': '#808080',
+            'grey': '#808080',
+            'brown': '#A52A2A',
+            'navy': '#000080',
+            'maroon': '#800000',
+            'charcoal': '#36454F',
+            'default': '#333333'
+        };
+        
+        const lowerColor = colorName.toLowerCase();
+        return colorMap[lowerColor] || '#333333'; // Default gray if not found
     }
 
     extractCategory(title) {
