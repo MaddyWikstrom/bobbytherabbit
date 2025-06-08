@@ -658,6 +658,7 @@ class ProductDetailManager {
         document.title = `${this.currentProduct.title} - Bobby Streetwear`;
         
         // Update page title
+        document.title = `${this.currentProduct.title} - Bobby Streetwear`;
         this.updatePageTitle();
 
         // Initialize filteredImages with all product images
