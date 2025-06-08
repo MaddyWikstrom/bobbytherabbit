@@ -823,9 +823,13 @@ class ProductDetailManager {
                                 const colorName = typeof color === 'object' ? color.name : color;
                                 const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
                                 
+                                // This approach provides dual color support:
+                                // 1. CSS variables for predefined colors via data-color attribute
+                                // 2. Inline background-color for dynamically generated colors
                                 return `
-                                    <div class="color-option" data-color="${colorName}"
-                                        style="color: ${colorCode}"
+                                    <div class="color-option"
+                                        data-color="${colorName}"
+                                        style="background-color: ${colorCode}"
                                         title="${colorName}">
                                         <span class="color-name">${colorName}</span>
                                     </div>
@@ -1287,64 +1291,159 @@ class ProductDetailManager {
             return colorName;
         }
         
-        // Enhanced color mapping that fits Bobby Streetwear theme
+        // Enhanced color mapping that includes all predefined CSS colors
         const colorMap = {
-            // Core colors with theme-matching hues
+            // Core colors
             'black': '#000000',
             'white': '#FFFFFF',
-            'red': '#EF4444',  // Tailwind red-500
-            'green': '#10B981', // Tailwind emerald-500
-            'blue': '#3B82F6',  // Tailwind blue-500
-            'yellow': '#F59E0B', // Tailwind amber-500
-            'purple': '#A855F7', // Site's main accent color
-            'orange': '#F97316', // Tailwind orange-500
-            'pink': '#EC4899',   // Tailwind pink-500
+            'red': '#EF4444',
+            'green': '#008000',
+            'blue': '#0000FF',
+            'yellow': '#FFFF00',
+            'purple': '#800080',
+            'orange': '#FFA500',
+            'brown': '#A52A2A',
+            'pink': '#FFC0CB',
+            'gray': '#808080',
+            'grey': '#808080',
             
-            // Grays and neutrals
-            'gray': '#6B7280',   // Tailwind gray-500
-            'grey': '#6B7280',   // Tailwind gray-500
-            'slate': '#64748B',  // Tailwind slate-500
-            
-            // Dark colors
-            'navy': '#1E3A8A',   // Tailwind blue-900
-            'maroon': '#9F1239', // Tailwind rose-900
-            'brown': '#92400E',  // Tailwind amber-900
-            'charcoal': '#1F2937', // Tailwind gray-800
-            
-            // Fashion colors
-            'lavender': '#C084FC', // Tailwind purple-400
-            'mint': '#34D399',    // Tailwind emerald-400
-            'coral': '#F87171',   // Tailwind red-400
-            'olive': '#84CC16',   // Tailwind lime-500
-            'wine': '#BE185D',    // Tailwind pink-800
-            'indigo': '#6366F1',  // Site's secondary accent color
-            'forest': '#166534',  // Tailwind green-800
-            'cream': '#FEFCE8',   // Tailwind yellow-50
-            'beige': '#FFFBEB',   // Tailwind amber-50
+            // Specific named colors
+            'forest green': '#228B22',
+            'navy blazer': '#001F3F',
+            'navy': '#000080',
+            'navy blue': '#000080',
+            'charcoal gray': '#36454F',
+            'charcoal grey': '#36454F',
+            'charcoal': '#36454F',
+            'burgundy': '#800020',
+            'olive': '#808000',
+            'olive green': '#556B2F',
+            'teal': '#008080',
+            'maroon': '#800000',
+            'royal blue': '#4169E1',
+            'sky blue': '#87CEEB',
+            'turquoise': '#40E0D0',
+            'mint green': '#98FB98',
+            'sage green': '#BCBFA3',
+            'hunter green': '#355E3B',
+            'emerald': '#50C878',
+            'jade': '#00A86B',
+            'khaki': '#C3B091',
+            'beige': '#F5F5DC',
+            'tan': '#D2B48C',
+            'cream': '#FFFDD0',
+            'ivory': '#FFFFF0',
+            'coral': '#FF7F50',
+            'salmon': '#FA8072',
+            'peach': '#FFE5B4',
+            'rust': '#B7410E',
+            'copper': '#B87333',
+            'gold': '#FFD700',
+            'silver': '#C0C0C0',
+            'slate': '#708090',
+            'indigo': '#4B0082',
+            'lavender': '#E6E6FA',
+            'plum': '#8E4585',
+            'magenta': '#FF00FF',
+            'violet': '#8A2BE2',
+            'mustard': '#FFDB58',
+            'taupe': '#483C32',
+            'light gray': '#D3D3D3',
+            'light grey': '#D3D3D3',
+            'dark gray': '#A9A9A9',
+            'dark grey': '#A9A9A9',
+            'vintage black': '#202020',
+            'off white': '#F5F5F5',
+            'deep purple': '#301934',
+            'hot pink': '#FF69B4',
+            'dark brown': '#5C4033',
+            'light brown': '#B5651D',
             
             // Default
-            'default': '#A855F7'  // Use the site's main accent color as default
+            'default': '#A855F7'  // Site's main accent color as default
         };
         
         if (typeof colorName === 'string') {
+            // Try exact match first
             const lowerColor = colorName.toLowerCase();
-            return colorMap[lowerColor] || '#333333'; // Default gray if not found
+            if (colorMap[lowerColor]) {
+                return colorMap[lowerColor];
+            }
+            
+            // If no exact match, try to match just the main color word
+            // For compound colors like "Dark Blue" or "Light Green"
+            const colorWords = lowerColor.split(' ');
+            const lastWord = colorWords[colorWords.length - 1];
+            if (colorMap[lastWord]) {
+                return colorMap[lastWord];
+            }
+            
+            // Check if this is a compound color with words reversed
+            // e.g. "Blue Navy" instead of "Navy Blue"
+            if (colorWords.length >= 2) {
+                const reversedKey = `${colorWords[1]} ${colorWords[0]}`;
+                if (colorMap[reversedKey]) {
+                    return colorMap[reversedKey];
+                }
+            }
+            
+            // If no match was found and our color-name-handler.js is loaded
+            // it will handle this color through CSS variables or dynamic generation
+            return `var(--dynamic-color, #808080)`;
         }
         
-        return '#333333'; // Default fallback
+        return '#808080'; // Default gray fallback
     }
     
     // Helper method to check if a string is a common color name
     isCommonColor(str) {
         if (!str || typeof str !== 'string') return false;
         
+        // Expanded list of common colors to match our CSS variables
         const commonColors = [
+            // Basic colors
             'black', 'white', 'red', 'green', 'blue', 'yellow', 'purple',
-            'orange', 'pink', 'gray', 'grey', 'brown', 'navy', 'maroon',
-            'charcoal', 'beige', 'olive', 'tan', 'silver', 'gold'
+            'orange', 'pink', 'gray', 'grey', 'brown',
+            
+            // Extended colors
+            'navy', 'maroon', 'charcoal', 'beige', 'olive', 'tan', 'silver', 'gold',
+            'teal', 'indigo', 'violet', 'magenta', 'coral', 'turquoise', 'lavender',
+            'mint', 'sage', 'forest', 'hunter', 'emerald', 'jade', 'khaki', 'cream',
+            'ivory', 'salmon', 'peach', 'rust', 'copper', 'slate', 'plum', 'mustard',
+            'taupe', 'burgundy'
         ];
         
-        return commonColors.includes(str.toLowerCase());
+        // Check for direct match first
+        if (commonColors.includes(str.toLowerCase())) {
+            return true;
+        }
+        
+        // Check compound color names
+        const compoundColors = [
+            'forest green', 'navy blue', 'royal blue', 'sky blue',
+            'charcoal gray', 'charcoal grey', 'olive green',
+            'mint green', 'sage green', 'hunter green',
+            'navy blazer', 'light gray', 'light grey',
+            'dark gray', 'dark grey', 'hot pink', 'deep purple',
+            'dark brown', 'light brown', 'off white', 'vintage black'
+        ];
+        
+        if (compoundColors.includes(str.toLowerCase())) {
+            return true;
+        }
+        
+        // Check if string contains any common color as a word
+        const strLower = str.toLowerCase();
+        const words = strLower.split(/\s+/);
+        
+        // Check each word against common colors
+        for (const word of words) {
+            if (commonColors.includes(word)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     // Add updateThumbnailGrid method for compatibility with quick-view.js

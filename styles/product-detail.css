@@ -237,6 +237,62 @@ body {
     margin-bottom: 0.75rem;
 }
 
+/* CSS Custom Properties for color mapping */
+:root {
+    /* Basic Colors */
+    --color-black: #000000;
+    --color-white: #ffffff;
+    --color-red: #ff0000;
+    --color-green: #008000;
+    --color-blue: #0000ff;
+    --color-yellow: #ffff00;
+    --color-purple: #800080;
+    --color-orange: #ffa500;
+    --color-brown: #a52a2a;
+    --color-pink: #ffc0cb;
+    --color-gray: #808080;
+    
+    /* Specific Named Colors */
+    --color-forest-green: #228b22;
+    --color-navy-blazer: #001f3f;
+    --color-navy: #000080;
+    --color-charcoal-gray: #36454f;
+    --color-charcoal: #36454f;
+    --color-burgundy: #800020;
+    --color-olive: #808000;
+    --color-teal: #008080;
+    --color-maroon: #800000;
+    --color-navy-blue: #000080;
+    --color-royal-blue: #4169e1;
+    --color-sky-blue: #87ceeb;
+    --color-turquoise: #40e0d0;
+    --color-mint-green: #98fb98;
+    --color-sage-green: #bcbfa3;
+    --color-hunter-green: #355e3b;
+    --color-emerald: #50c878;
+    --color-jade: #00a86b;
+    --color-khaki: #c3b091;
+    --color-beige: #f5f5dc;
+    --color-tan: #d2b48c;
+    --color-cream: #fffdd0;
+    --color-ivory: #fffff0;
+    --color-coral: #ff7f50;
+    --color-salmon: #fa8072;
+    --color-peach: #ffe5b4;
+    --color-rust: #b7410e;
+    --color-copper: #b87333;
+    --color-gold: #ffd700;
+    --color-silver: #c0c0c0;
+    --color-slate: #708090;
+    --color-indigo: #4b0082;
+    --color-lavender: #e6e6fa;
+    --color-plum: #8e4585;
+    --color-magenta: #ff00ff;
+    --color-violet: #8a2be2;
+    --color-mustard: #ffdb58;
+    --color-taupe: #483c32;
+}
+
 .color-option {
     width: 46px;
     height: 46px;
@@ -246,8 +302,63 @@ body {
     border: 2px solid transparent;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    background-color: currentColor;
+    background-color: var(--color-gray); /* Default fallback */
 }
+
+/* Dynamic color mapping based on data-color attribute */
+.color-option[data-color="Black"] { background-color: var(--color-black); }
+.color-option[data-color="White"] { background-color: var(--color-white); }
+.color-option[data-color="Red"] { background-color: var(--color-red); }
+.color-option[data-color="Green"] { background-color: var(--color-green); }
+.color-option[data-color="Blue"] { background-color: var(--color-blue); }
+.color-option[data-color="Yellow"] { background-color: var(--color-yellow); }
+.color-option[data-color="Purple"] { background-color: var(--color-purple); }
+.color-option[data-color="Orange"] { background-color: var(--color-orange); }
+.color-option[data-color="Brown"] { background-color: var(--color-brown); }
+.color-option[data-color="Pink"] { background-color: var(--color-pink); }
+.color-option[data-color="Gray"],
+.color-option[data-color="Grey"] { background-color: var(--color-gray); }
+
+/* Named Colors */
+.color-option[data-color="Forest Green"] { background-color: var(--color-forest-green); }
+.color-option[data-color="Navy Blazer"] { background-color: var(--color-navy-blazer); }
+.color-option[data-color="Navy"] { background-color: var(--color-navy); }
+.color-option[data-color="Charcoal Gray"],
+.color-option[data-color="Charcoal Grey"] { background-color: var(--color-charcoal-gray); }
+.color-option[data-color="Charcoal"] { background-color: var(--color-charcoal); }
+.color-option[data-color="Burgundy"] { background-color: var(--color-burgundy); }
+.color-option[data-color="Olive"] { background-color: var(--color-olive); }
+.color-option[data-color="Teal"] { background-color: var(--color-teal); }
+.color-option[data-color="Maroon"] { background-color: var(--color-maroon); }
+.color-option[data-color="Navy Blue"] { background-color: var(--color-navy-blue); }
+.color-option[data-color="Royal Blue"] { background-color: var(--color-royal-blue); }
+.color-option[data-color="Sky Blue"] { background-color: var(--color-sky-blue); }
+.color-option[data-color="Turquoise"] { background-color: var(--color-turquoise); }
+.color-option[data-color="Mint Green"] { background-color: var(--color-mint-green); }
+.color-option[data-color="Sage Green"] { background-color: var(--color-sage-green); }
+.color-option[data-color="Hunter Green"] { background-color: var(--color-hunter-green); }
+.color-option[data-color="Emerald"] { background-color: var(--color-emerald); }
+.color-option[data-color="Jade"] { background-color: var(--color-jade); }
+.color-option[data-color="Khaki"] { background-color: var(--color-khaki); }
+.color-option[data-color="Beige"] { background-color: var(--color-beige); }
+.color-option[data-color="Tan"] { background-color: var(--color-tan); }
+.color-option[data-color="Cream"] { background-color: var(--color-cream); }
+.color-option[data-color="Ivory"] { background-color: var(--color-ivory); }
+.color-option[data-color="Coral"] { background-color: var(--color-coral); }
+.color-option[data-color="Salmon"] { background-color: var(--color-salmon); }
+.color-option[data-color="Peach"] { background-color: var(--color-peach); }
+.color-option[data-color="Rust"] { background-color: var(--color-rust); }
+.color-option[data-color="Copper"] { background-color: var(--color-copper); }
+.color-option[data-color="Gold"] { background-color: var(--color-gold); }
+.color-option[data-color="Silver"] { background-color: var(--color-silver); }
+.color-option[data-color="Slate"] { background-color: var(--color-slate); }
+.color-option[data-color="Indigo"] { background-color: var(--color-indigo); }
+.color-option[data-color="Lavender"] { background-color: var(--color-lavender); }
+.color-option[data-color="Plum"] { background-color: var(--color-plum); }
+.color-option[data-color="Magenta"] { background-color: var(--color-magenta); }
+.color-option[data-color="Violet"] { background-color: var(--color-violet); }
+.color-option[data-color="Mustard"] { background-color: var(--color-mustard); }
+.color-option[data-color="Taupe"] { background-color: var(--color-taupe); }
 
 /* Active state is now handled by the rules below */
 
@@ -277,17 +388,31 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* Special handling for white color option */
-.color-option[data-color="White"] {
+/* Special handling for white and light color options */
+.color-option[data-color="White"],
+.color-option[data-color="Cream"],
+.color-option[data-color="Ivory"],
+.color-option[data-color="Beige"] {
     border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
-.color-option[data-color="White"]::before {
+.color-option[data-color="White"]::before,
+.color-option[data-color="Cream"]::before,
+.color-option[data-color="Ivory"]::before,
+.color-option[data-color="Beige"]::before {
     background: #333333;
 }
 
-.color-option[data-color="White"].active {
+.color-option[data-color="White"].active,
+.color-option[data-color="Cream"].active,
+.color-option[data-color="Ivory"].active,
+.color-option[data-color="Beige"].active {
     border-color: #a855f7;
+}
+
+/* Dynamic color generation for unlisted colors */
+.color-option:not([style*="background-color"]):not([class*="background-color"]) {
+    background-color: var(--dynamic-color, #808080);
 }
 
 /* Slightly larger hit area for color options */
