@@ -1314,23 +1314,9 @@ class ProductManager {
         }
         
         // Navigate to individual product page with product ID and selected color
-        // Validate the color parameter to prevent [object Object] in URL
-        if (selectedColor && typeof selectedColor === 'string' &&
-            !selectedColor.includes('Object') && !selectedColor.startsWith('{')) {
-            
-            // Make sure we're passing a valid color string, not an object reference
-            try {
-                // Additional check to ensure it's a simple string
-                const testObj = JSON.parse(JSON.stringify({color: selectedColor}));
-                if (typeof testObj.color === 'string') {
-                    window.location.href = `product.html?id=${productId}&color=${encodeURIComponent(selectedColor)}`;
-                } else {
-                    window.location.href = `product.html?id=${productId}`;
-                }
-            } catch (e) {
-                // If there's any issue parsing, just navigate without the color
-                window.location.href = `product.html?id=${productId}`;
-            }
+        // Simple approach to prevent [object Object] in URL
+        if (selectedColor && typeof selectedColor === 'string' && selectedColor !== '[object Object]') {
+            window.location.href = `product.html?id=${productId}&color=${encodeURIComponent(selectedColor)}`;
         } else {
             window.location.href = `product.html?id=${productId}`;
         }

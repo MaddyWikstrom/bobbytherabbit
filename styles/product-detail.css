@@ -147,6 +147,34 @@
 }
 
 /* Product Options */
+/* Sizes header with size guide toggle */
+.sizes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.sizes-header h3 {
+    margin: 0;
+    margin-right: 10px;
+}
+
+.size-guide-toggle {
+    font-size: 13px;
+    color: #6366f1;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.size-guide-toggle:hover {
+    color: #a855f7;
+}
+
 .options-container {
     display: flex;
     flex-wrap: wrap;
