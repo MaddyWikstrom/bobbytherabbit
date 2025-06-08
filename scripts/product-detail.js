@@ -1239,11 +1239,22 @@ class ProductDetailManager {
         const thumbnailGrid = document.querySelector('.thumbnail-grid');
         if (!thumbnailGrid) return;
         
-        thumbnailGrid.innerHTML = this.filteredImages.map((image, index) => `
-            <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="productDetailManager.changeImage(${index})">
-                <img src="${image}" alt="${this.currentProduct.title}">
-            </div>
-        `).join('');
+        // First, ensure we have the complete list of all product images
+        const allImages = this.currentProduct.images;
+        
+        // Create thumbnails for all images but mark them as hidden if they're not in the filtered images
+        thumbnailGrid.innerHTML = allImages.map((image, index) => {
+            const isVisible = this.filteredImages.includes(image);
+            return `
+                <div class="thumbnail ${index === 0 ? 'active' : ''} ${isVisible ? '' : 'hidden'}"
+                     onclick="productDetailManager.changeImage(${this.filteredImages.indexOf(image)})"
+                     data-color-match="${isVisible}">
+                    <img src="${image}" alt="${this.currentProduct.title}">
+                </div>
+            `;
+        }).join('');
+        
+        console.log(`Updated thumbnail grid: ${this.filteredImages.length} visible thumbnails out of ${allImages.length} total images`);
     }
 
     selectSize(size) {
