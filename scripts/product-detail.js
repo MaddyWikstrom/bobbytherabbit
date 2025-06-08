@@ -223,6 +223,11 @@ class ProductDetailManager {
             console.log('No Shopify images found. Site requires deployment to Netlify to load images correctly.');
         }
         
+        // Debug the images we found
+        images.forEach((img, idx) => {
+            console.log(`Image ${idx}: ${img}`);
+        });
+        
         // Extract variants and organize by color/size
         const variants = [];
         const colorMap = {};
@@ -234,6 +239,16 @@ class ProductDetailManager {
         console.log("AVAILABLE VARIANTS:", shopifyProduct.variants.edges.length);
         shopifyProduct.variants.edges.forEach((variantEdge, index) => {
             console.log(`VARIANT ${index+1}:`, JSON.stringify(variantEdge.node, null, 2));
+            
+            // Log variant image if available
+            if (variantEdge.node.image && variantEdge.node.image.url) {
+                console.log(`  ▶ Variant ${index+1} has image: ${variantEdge.node.image.url}`);
+            }
+            
+            // Log selected options
+            variantEdge.node.selectedOptions.forEach(opt => {
+                console.log(`  ▶ Option: ${opt.name} = ${opt.value}`);
+            });
         });
         
         shopifyProduct.variants.edges.forEach(variantEdge => {
@@ -356,6 +371,7 @@ class ProductDetailManager {
                 // Only add if not already in the array
                 if (!colorToImagesMap.get(color).includes(variant.image.url)) {
                     colorToImagesMap.get(color).push(variant.image.url);
+                    console.log(`  ➕ Added image for color "${color}": ${variant.image.url}`);
                 }
             }
             
@@ -370,12 +386,22 @@ class ProductDetailManager {
             });
         });
         
+        // Summarize what we found for each color
+        Object.keys(colorMap).forEach(color => {
+            if (colorToImagesMap.has(color)) {
+                console.log(`📊 Found ${colorToImagesMap.get(color).length} images for color "${color}"`);
+            } else {
+                console.log(`📊 No specific images found for color "${color}"`);
+            }
+        });
+        
         // If we have color-specific images but not for all colors,
         // assign general images to colors without specific images
         if (colorToImagesMap.size > 0 && colorToImagesMap.size < Object.keys(colorMap).length) {
             Object.keys(colorMap).forEach(color => {
                 if (!colorToImagesMap.has(color)) {
                     colorToImagesMap.set(color, [...images]);
+                    console.log(`  ➕ Assigned all ${images.length} general images to color "${color}"`);
                 }
             });
         }
@@ -384,6 +410,7 @@ class ProductDetailManager {
             // Just assign all images to all colors
             Object.keys(colorMap).forEach(color => {
                 colorToImagesMap.set(color, [...images]);
+                console.log(`  ➕ Assigned all ${images.length} general images to color "${color}" (no color-specific images found)`);
             });
         }
         
@@ -1120,18 +1147,29 @@ class ProductDetailManager {
             return;
         }
         
-        console.log(`Filtering images for color: ${colorName}`);
+        console.log(`🎨 Filtering images for color: ${colorName}`);
         
-        // Check if we have explicit color-specific images from Shopify
+        // PRIORITIZE: Check if we have explicit color-specific images from Shopify colorImages mapping
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
-            // Use the color-specific images from our mapping
-            this.filteredImages = [...this.currentProduct.colorImages[colorName]];
-            console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
+            const colorImages = this.currentProduct.colorImages[colorName];
             
-            // Update the DOM directly
-            this.updateDOMWithFilteredImages(colorName, this.filteredImages);
-            return;
+            // Only use if we actually have images
+            if (colorImages && colorImages.length > 0) {
+                this.filteredImages = [...colorImages];
+                console.log(`✅ Using ${this.filteredImages.length} explicit color-specific images for "${colorName}"`);
+                
+                // Debug the actual images we're using
+                this.filteredImages.forEach((img, idx) => {
+                    console.log(`  Image ${idx}: ${img}`);
+                });
+                
+                // Update the DOM directly
+                this.updateDOMWithFilteredImages(colorName, this.filteredImages);
+                return;
+            }
         }
+        
+        console.log(`⚠️ No explicit colorImages mapping found for "${colorName}", trying URL pattern matching`);
         
         // If no explicit color mapping, filter images based on URL patterns
         // Convert color name to lowercase for case-insensitive comparison
@@ -1147,7 +1185,8 @@ class ProductDetailManager {
             const imageName = imagePath.toLowerCase();
             
             // More extensive pattern matching to catch more color variants
-            return imageName.includes(`/${color}/`) ||
+            const matches =
+                   imageName.includes(`/${color}/`) ||
                    imageName.includes(`/${color}_`) ||
                    imageName.includes(`/${color}-`) ||
                    imageName.includes(`_${color}_`) ||
@@ -1160,36 +1199,37 @@ class ProductDetailManager {
                    imageName.includes(`${color.replace(' ', '')}-`) ||
                    // Check for color name as a distinct word
                    new RegExp(`\\b${color}\\b`).test(imageName);
+                   
+            if (matches) {
+                console.log(`  ✓ URL match: "${imagePath}" contains "${color}"`);
+            }
+            
+            return matches;
         });
         
-        console.log(`Found ${this.filteredImages.length} images matching color: ${colorName}`);
+        console.log(`🔍 Found ${this.filteredImages.length} images matching color "${colorName}" via URL patterns`);
         
         // If no images match the color, use a more aggressive approach
         if (this.filteredImages.length === 0) {
-            console.log(`No specific images found for color: ${colorName}, trying secondary matching`);
+            console.log(`⚠️ No specific images found for color: "${colorName}", trying secondary matching`);
             
             // Try a more relaxed match - any occurrence of the color name in the URL
             this.filteredImages = this.currentProduct.images.filter(imagePath => {
                 if (!imagePath || typeof imagePath !== 'string') return false;
-                return imagePath.toLowerCase().includes(color);
+                const matches = imagePath.toLowerCase().includes(color);
+                if (matches) {
+                    console.log(`  ✓ Secondary match: "${imagePath}" contains "${color}" anywhere`);
+                }
+                return matches;
             });
             
-            // If still no matches, use index-based mapping as a last resort
-            if (this.filteredImages.length === 0 && this.currentProduct.colors) {
-                console.log(`Still no matches, attempting index-based color mapping`);
-                const colorIndex = this.currentProduct.colors.findIndex(c => c.name === colorName);
+            // Use fallback approach
+            if (this.filteredImages.length === 0) {
+                console.log(`⚠️ Still no URL matches found for "${colorName}", using all images as fallback`);
+                this.filteredImages = [...this.currentProduct.images];
                 
-                if (colorIndex >= 0 && this.currentProduct.images.length > colorIndex) {
-                    // Use image at same index as color, plus a few surrounding images if available
-                    const startIndex = Math.max(0, colorIndex - 1);
-                    const endIndex = Math.min(this.currentProduct.images.length, colorIndex + 3);
-                    this.filteredImages = this.currentProduct.images.slice(startIndex, endIndex);
-                    console.log(`Using index-based matching, selected images ${startIndex}-${endIndex-1}`);
-                } else {
-                    // Last resort: use all images
-                    console.log(`No matches found for color: ${colorName}, using all images as fallback`);
-                    this.filteredImages = [...this.currentProduct.images];
-                }
+                // Debug which images we're using
+                console.log(`  Using ${this.filteredImages.length} fallback images for color "${colorName}"`);
             }
         }
         
@@ -1207,47 +1247,35 @@ class ProductDetailManager {
     
     // Update DOM with filtered images for a specific color
     updateDOMWithFilteredImages(colorName, filteredImages) {
-        if (!filteredImages || filteredImages.length === 0) return;
+        if (!filteredImages || filteredImages.length === 0) {
+            console.log(`⚠️ No filtered images to update DOM with for color "${colorName}"`);
+            return;
+        }
         
-        // Find all thumbnails
-        const thumbnails = document.querySelectorAll('.thumbnail');
-        if (thumbnails.length === 0) return;
+        console.log(`🔄 Updating DOM with ${filteredImages.length} filtered images for color "${colorName}"`);
         
-        // Hide all thumbnails first
-        thumbnails.forEach(thumbnail => {
-            thumbnail.style.display = 'none';
-            
-            // Try to add data-color attribute for future use
-            const thumbImg = thumbnail.querySelector('img');
-            if (thumbImg && !thumbImg.hasAttribute('data-color')) {
-                const imgSrc = thumbImg.getAttribute('src');
-                if (imgSrc && imgSrc.toLowerCase().includes(colorName.toLowerCase())) {
-                    thumbImg.setAttribute('data-color', colorName);
-                }
-            }
-        });
+        // IMPORTANT: Skip DOM manipulation if we're just initializing and no thumbnails exist yet
+        // This prevents race conditions during page load
+        const thumbnailGrid = document.querySelector('.thumbnail-grid');
+        if (!thumbnailGrid) {
+            console.log('⚠️ No thumbnail grid found in DOM, cannot update images');
+            return;
+        }
         
-        // Now show only thumbnails with filtered images
-        let firstVisibleThumbnail = null;
-        thumbnails.forEach(thumbnail => {
-            const thumbImg = thumbnail.querySelector('img');
-            if (thumbImg) {
-                const imgSrc = thumbImg.getAttribute('src');
-                if (filteredImages.includes(imgSrc)) {
-                    thumbnail.style.display = 'block';
-                    
-                    // Remember the first visible thumbnail
-                    if (!firstVisibleThumbnail) {
-                        firstVisibleThumbnail = thumbnail;
-                    }
-                }
-            }
-        });
+        // Clear and regenerate the thumbnail grid with filtered images
+        thumbnailGrid.innerHTML = filteredImages.map((image, index) => `
+            <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="productDetailManager.changeImage(${index})">
+                <img src="${image}" alt="${this.currentProduct.title}" data-color="${colorName}">
+            </div>
+        `).join('');
         
-        // If we found at least one visible thumbnail, make it active
-        if (firstVisibleThumbnail) {
-            thumbnails.forEach(t => t.classList.remove('active'));
-            firstVisibleThumbnail.classList.add('active');
+        console.log(`✅ Regenerated ${filteredImages.length} thumbnails in grid`);
+        
+        // Update main image to first filtered image
+        const mainImage = document.getElementById('main-image');
+        if (mainImage && filteredImages.length > 0) {
+            mainImage.src = filteredImages[0];
+            console.log(`✅ Updated main image to ${filteredImages[0]}`);
         }
     }
     
