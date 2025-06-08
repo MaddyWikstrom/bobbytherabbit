@@ -211,8 +211,18 @@ body {
 .options-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 1.5rem;
+}
+
+/* Color options specific styling */
+#color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 2rem;
+    position: relative;
+    padding-bottom: 20px; /* Space for color name tooltips */
 }
 
 .options-section {
@@ -233,18 +243,17 @@ body {
     border-radius: 50%;
     cursor: pointer;
     position: relative;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid transparent;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background-color: currentColor;
 }
 
+/* Active state is now handled by the rules below */
+
 .color-option:hover {
     transform: scale(1.15);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(168, 85, 247, 0.4);
     border-color: rgba(255, 255, 255, 0.7);
 }
 
@@ -257,6 +266,9 @@ body {
 .color-option.active::before {
     content: '';
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 14px;
     height: 14px;
     border-radius: 50%;
@@ -278,6 +290,12 @@ body {
     border-color: #a855f7;
 }
 
+/* Slightly larger hit area for color options */
+#color-options {
+    padding: 5px 0;
+    margin-bottom: 1.5rem;
+}
+
 .color-option .color-name {
     position: absolute;
     bottom: -30px;
@@ -290,15 +308,31 @@ body {
     font-size: 12px;
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: all 0.3s ease;
     pointer-events: none;
     font-weight: 500;
     z-index: 10;
     border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.color-option:hover .color-name {
+.color-option:hover .color-name,
+.color-option.active .color-name {
     opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.color-option .color-name::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: #181830;
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+    border-left: 1px solid rgba(168, 85, 247, 0.3);
 }
 
 .size-option {
