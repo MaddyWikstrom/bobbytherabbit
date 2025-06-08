@@ -267,6 +267,12 @@ class ProductDetailManager {
         const styleEl = document.createElement('style');
         styleEl.id = 'product-cards-styles';
         styleEl.textContent = `
+            /* Reset any potential conflicting styles */
+            .related-products, .recently-viewed {
+                position: relative !important;
+                overflow: hidden !important;
+                z-index: 1 !important;
+            }
             /* SVG for the wave pattern background */
             .wave-pattern-bg {
                 position: absolute;
@@ -294,6 +300,27 @@ class ProductDetailManager {
                 padding: 0 20px !important;
                 justify-content: center !important;
                 max-width: 1200px !important;
+                position: relative !important;
+                z-index: 2 !important;
+            }
+            
+            /* Animation for the wave background */
+            @keyframes waveDrift {
+                0% { background-position: 0% 0%; }
+                100% { background-position: 100% 0%; }
+            }
+            
+            /* Wave pattern styling */
+            .wave-pattern-bg {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                opacity: 0.07 !important;
+                z-index: 1 !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cpath id='wave' fill='none' stroke='%23FFFFFF' stroke-width='1.5' d='M0,100 C150,200 350,0 500,100 C650,200 850,0 1000,100 C1150,200 1350,0 1500,100 C1650,200 1850,0 2000,100 L2000,0 L0,0 Z' /%3E%3C/defs%3E%3Cg%3E%3Cuse href='%23wave' y='15' /%3E%3Cuse href='%23wave' y='45' /%3E%3Cuse href='%23wave' y='75' /%3E%3Cuse href='%23wave' y='105' /%3E%3Cuse href='%23wave' y='135' /%3E%3Cuse href='%23wave' y='165' /%3E%3Cuse href='%23wave' y='195' /%3E%3Cuse href='%23wave' y='225' /%3E%3Cuse href='%23wave' y='255' /%3E%3Cuse href='%23wave' y='285' /%3E%3Cuse href='%23wave' y='315' /%3E%3Cuse href='%23wave' y='345' /%3E%3Cuse href='%23wave' y='375' /%3E%3Cuse href='%23wave' y='405' /%3E%3Cuse href='%23wave' y='435' /%3E%3Cuse href='%23wave' y='465' /%3E%3Cuse href='%23wave' y='495' /%3E%3Cuse href='%23wave' y='525' /%3E%3Cuse href='%23wave' y='555' /%3E%3Cuse href='%23wave' y='585' /%3E%3Cuse href='%23wave' y='615' /%3E%3Cuse href='%23wave' y='645' /%3E%3Cuse href='%23wave' y='675' /%3E%3Cuse href='%23wave' y='705' /%3E%3C/g%3E%3C/svg%3E") !important;
+                animation: waveDrift 60s linear infinite !important;
             }
             
             .related-product {
@@ -378,11 +405,15 @@ class ProductDetailManager {
                 text-align: center !important;
                 font-size: 1.8rem !important;
                 position: relative !important;
-                z-index: 1 !important;
+                z-index: 3 !important;
                 font-weight: 700 !important;
                 letter-spacing: 1px !important;
                 text-transform: uppercase !important;
                 text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+                display: inline-block !important;
+                width: 100% !important;
+                padding: 10px 0 !important;
+                background: linear-gradient(90deg, rgba(168, 85, 247, 0), rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0)) !important;
             }
             
             /* Fix for main product image */
@@ -412,6 +443,24 @@ class ProductDetailManager {
         `;
         document.head.appendChild(styleEl);
         
+        // Add wave pattern backgrounds to the sections
+        const relatedSection = document.querySelector('.related-products');
+        const recentlyViewedSection = document.querySelector('.recently-viewed');
+        
+        if (relatedSection) {
+            // Create and add wave pattern background to "You Might Also Like" section
+            const relatedWavePattern = document.createElement('div');
+            relatedWavePattern.className = 'wave-pattern-bg';
+            relatedSection.prepend(relatedWavePattern);
+        }
+        
+        if (recentlyViewedSection) {
+            // Create and add wave pattern background to "Recently Viewed" section
+            const recentWavePattern = document.createElement('div');
+            recentWavePattern.className = 'wave-pattern-bg';
+            recentlyViewedSection.prepend(recentWavePattern);
+        }
+        
         this.renderProductCards();
     }
     
@@ -437,11 +486,15 @@ class ProductDetailManager {
     
     renderProductsToContainer(container) {
         if (this.recentlyViewed.length > 0) {
-            // Log the recently viewed products for debugging
-            // Render products to specified container
-            
             // Clear the container
             container.innerHTML = '';
+            
+            // Add a wave pattern background to ensure consistency
+            if (!container.parentElement.querySelector('.wave-pattern-bg')) {
+                const wavePattern = document.createElement('div');
+                wavePattern.className = 'wave-pattern-bg';
+                container.parentElement.prepend(wavePattern);
+            }
             
             // Loop through each product and create elements manually instead of using innerHTML
             this.recentlyViewed.forEach(product => {
@@ -456,22 +509,26 @@ class ProductDetailManager {
                     
                     if (product.image) {
                         imageUrl = this.ensureAbsoluteUrl(product.image);
-                        // Process image URL
                     } else {
-                        console.warn(`No image found for product ${product.title}`);
+                        // Silently fall back to placeholder instead of logging
+                        imageUrl = '/assets/product-placeholder.png';
                     }
                     
                     // Create and append image
                     const img = document.createElement('img');
                     img.alt = product.title;
+                    img.style.backgroundColor = '#ffffff'; // WHITE background for all product images
+                    img.style.minHeight = '180px';
+                    img.style.objectFit = 'contain';
+                    img.style.padding = '5px'; // Add slight padding for better presentation
+                    
+                    // Improved error handling
                     img.onerror = function() {
-                        console.warn(`Failed to load image for ${product.title}, using placeholder`);
                         this.src = '/assets/product-placeholder.png';
-                        // Add specific styling to ensure visibility
-                        this.style.backgroundColor = '#ffffff'; // WHITE background for images
-                        this.style.minHeight = '180px';
+                        this.style.backgroundColor = '#ffffff';
                     };
-                    img.style.backgroundColor = '#ffffff'; // WHITE background for images
+                    
+                    // Set src after defining onerror to ensure handler catches loading issues
                     img.src = imageUrl;
                     
                     // Create product info container
@@ -524,7 +581,19 @@ class ProductDetailManager {
             });
             
         } else {
-            container.innerHTML = '<p class="no-products" style="color: white; text-align: center; padding: 20px;">No products found</p>';
+            // Add a styled "No products found" message with better visibility
+            container.innerHTML = `
+                <div class="no-products" style="color: white; text-align: center; padding: 30px;
+                     background-color: rgba(24, 24, 48, 0.5); border-radius: 8px;
+                     margin: 20px auto; max-width: 600px; grid-column: 1 / -1;
+                     position: relative; z-index: 2; border: 1px solid rgba(168, 85, 247, 0.2);">
+                    <p>No products viewed yet. Start browsing our collection!</p>
+                    <a href="products.html" style="display: inline-block; margin-top: 15px; padding: 8px 16px;
+                       background: linear-gradient(45deg, #a855f7, #6366f1); color: white; text-decoration: none;
+                       border-radius: 4px; font-weight: bold; transition: all 0.3s ease;">
+                       Browse Products
+                    </a>
+                </div>`;
         }
     }
     
@@ -1323,11 +1392,13 @@ class ProductDetailManager {
         
         const image = this.filteredImages[this.currentImageIndex];
         if (!image) {
-            console.error('Image not found at index:', this.currentImageIndex);
+            // Silently use fallback instead of console error
+            const fallbackImage = '/assets/product-placeholder.png';
+            mainImageContainer.innerHTML = `<img src="${fallbackImage}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">`;
             return;
         }
         
-        mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff;">`;
+        mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">`;
     }
     
     addToCart() {
