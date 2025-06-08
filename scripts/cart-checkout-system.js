@@ -1127,7 +1127,11 @@ const BobbyCarts = {
         this.updateTotalDisplay();
         
         // Set up item event handlers
-        this.setupCartItemEvents();
+        // Set up item event handlers
+        // Defer this to ensure elements are in DOM
+        setTimeout(() => {
+            this.setupCartItemEvents();
+        }, 0);
     },
     
     // Set up event handlers for cart items
@@ -1136,37 +1140,53 @@ const BobbyCarts = {
         
         // Quantity buttons
         document.querySelectorAll('.quantity-btn.decrease').forEach(btn => {
-            const itemId = btn.closest('.cart-item').dataset.itemId;
+            const cartItemEl = btn.closest('.cart-item');
+            if (!cartItemEl) {
+                console.warn('Cart item element not found for decrease button');
+                return;
+            }
+            const itemId = cartItemEl.dataset.itemId;
             const item = self.state.items.find(item => item.id === itemId);
             
             if (item) {
-                btn.addEventListener('click', function() {
-                    self.updateQuantity(itemId, item.quantity - 1);
-                });
+                // Remove existing listener to prevent duplicates
+                btn.removeEventListener('click', self._decreaseQuantityHandler);
+                self._decreaseQuantityHandler = () => self.updateQuantity(itemId, item.quantity - 1);
+                btn.addEventListener('click', self._decreaseQuantityHandler);
             }
         });
         
         document.querySelectorAll('.quantity-btn.increase').forEach(btn => {
-            const itemId = btn.closest('.cart-item').dataset.itemId;
+            const cartItemEl = btn.closest('.cart-item');
+            if (!cartItemEl) {
+                console.warn('Cart item element not found for increase button');
+                return;
+            }
+            const itemId = cartItemEl.dataset.itemId;
             const item = self.state.items.find(item => item.id === itemId);
             
             if (item) {
-                btn.addEventListener('click', function() {
-                    self.updateQuantity(itemId, item.quantity + 1);
-                });
+                // Remove existing listener to prevent duplicates
+                btn.removeEventListener('click', self._increaseQuantityHandler);
+                self._increaseQuantityHandler = () => self.updateQuantity(itemId, item.quantity + 1);
+                btn.addEventListener('click', self._increaseQuantityHandler);
             }
         });
         
         // Remove buttons
         document.querySelectorAll('.remove-item-btn').forEach(btn => {
-            const itemId = btn.closest('.cart-item').dataset.itemId;
+            const cartItemEl = btn.closest('.cart-item');
+            if (!cartItemEl) {
+                console.warn('Cart item element not found for remove button');
+                return;
+            }
+            const itemId = cartItemEl.dataset.itemId;
             
-            btn.addEventListener('click', function() {
-                self.removeItem(itemId);
-            });
+            // Remove existing listener to prevent duplicates
+            btn.removeEventListener('click', self._removeItemHandler);
+            self._removeItemHandler = () => self.removeItem(itemId);
+            btn.addEventListener('click', self._removeItemHandler);
         });
-        
-        // No image retry functionality
     },
     
     // Simple image error handler - no alternative sources
