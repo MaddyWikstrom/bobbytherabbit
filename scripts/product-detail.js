@@ -36,40 +36,48 @@
 
         // Other methods...
 
-        updateThumbnailGrid() {
-            const thumbnailGrid = document.querySelector('.thumbnail-grid');
-            if (!thumbnailGrid) {
-                console.error('❌ thumbnail-grid not found in DOM');
-                return;
+        async loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
+            const selectedColor = urlParams.get('color'); // Get color from URL if available
+
+            // Load product data (this would typically come from an API)
+            this.currentProduct = await this.fetchProductData(productId);
+            
+            // No fallback to sample data - if product not found, it stays null
+            // and will be handled by renderProduct()
+
+            this.renderProduct();
+            
+            // Set the selected color if it was passed in the URL
+            if (selectedColor && this.currentProduct &&
+                this.currentProduct.colors.some(c => c.name === selectedColor)) {
+                this.selectColor(selectedColor);
             }
+            
+            this.addToRecentlyViewed(this.currentProduct);
+            this.loadRelatedProducts();
+        }
 
-            if (!Array.isArray(this.filteredImages)) {
-                console.error('❌ filteredImages is not an array:', this.filteredImages);
-                return;
+        async fetchProductData(productId) {
+            try {
+                // Only load from Shopify API - no fallbacks to sample data
+                const shopifyProduct = await this.loadShopifyProduct(productId);
+                
+                if (shopifyProduct) {
+                    return shopifyProduct;
+                }
+                
+                // Show error page instead of sample data
+                this.showProductNotFound();
+                return null;
+                
+            } catch (error) {
+                this.showProductNotFound();
+                // Add clear message about deployment requirement
+                console.error('❌ Product loading failed. This site requires deployment to Netlify to function correctly.');
+                return null;
             }
-
-            thumbnailGrid.innerHTML = '';
-
-            this.filteredImages.forEach((image, index) => {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
-                thumbnail.setAttribute('onclick', `productDetailManager.changeImage(${index})`);
-
-                const imgElement = document.createElement('img');
-                imgElement.src = image;
-                imgElement.alt = this.currentProduct?.title || 'Product Image';
-
-                thumbnail.appendChild(imgElement);
-                thumbnailGrid.appendChild(thumbnail);
-            });
-
-            // Safely update main image
-            const mainImage = document.getElementById('main-image');
-            if (mainImage && this.filteredImages.length > 0) {
-                mainImage.src = this.filteredImages[0];
-            }
-
-            console.log(`✅ Updated thumbnail grid with ${this.filteredImages.length} images`);
         }
 
         // Other methods...
