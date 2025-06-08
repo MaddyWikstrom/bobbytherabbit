@@ -454,19 +454,15 @@ class ProductDetailManager {
             .related-products, .recently-viewed {
                 background-color: #13132b !important;
                 background-image: linear-gradient(to bottom right, rgba(99, 102, 241, 0.05), rgba(168, 85, 247, 0.05)) !important;
-                border-radius: 12px !important;
-                padding: 3rem 2rem !important;
-                margin: 2rem auto !important;
+                padding: 3rem 0 !important;
+                margin-top: 2rem !important;
                 position: relative !important;
                 overflow: hidden !important;
                 box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
-                border: 1px solid rgba(168, 85, 247, 0.2) !important;
-                backdrop-filter: blur(5px) !important;
+                border-top: 1px solid rgba(168, 85, 247, 0.2) !important;
+                border-bottom: 1px solid rgba(168, 85, 247, 0.2) !important;
                 transition: all 0.5s ease !important;
-                transform-style: preserve-3d !important;
-                perspective: 1000px !important;
                 width: 100% !important;
-                max-width: 1400px !important;
                 box-sizing: border-box !important;
             }
             
@@ -514,9 +510,11 @@ class ProductDetailManager {
             /* Container for better centering */
             .related-products .container, .recently-viewed .container {
                 position: relative !important;
-                z-index: 1 !important;
+                z-index: 2 !important;
                 max-width: 1200px !important;
                 margin: 0 auto !important;
+                padding: 0 20px !important;
+                width: 100% !important;
             }
             
             /* No products message styling */
@@ -537,7 +535,7 @@ class ProductDetailManager {
         const relatedSection = document.querySelector('.related-products');
         const recentlyViewedSection = document.querySelector('.recently-viewed');
         
-        // Function to ensure responsive pattern background covers entire section
+        // Function to add a full-width wave pattern background
         const addResponsivePattern = (section, animationDelay = '0s') => {
             if (!section) return;
             
@@ -550,29 +548,25 @@ class ProductDetailManager {
             // Ensure section has proper positioning
             section.style.position = 'relative';
             section.style.overflow = 'hidden';
+            section.style.width = '100%';
             
             // Create and add pattern background
             const patternElement = document.createElement('div');
             patternElement.className = 'wave-pattern-bg';
             
-            // Apply enhanced styles for full coverage
-            patternElement.style.transformOrigin = 'center center';
-            patternElement.style.filter = 'blur(1px)';
-            patternElement.style.mixBlendMode = 'overlay';
+            // Apply styles for full-width coverage
             patternElement.style.position = 'absolute';
-            patternElement.style.top = '-10px'; // Extend slightly beyond borders
-            patternElement.style.left = '-10px';
-            patternElement.style.right = '-10px';
-            patternElement.style.bottom = '-10px';
-            patternElement.style.width = 'calc(100% + 20px)'; // Ensure full coverage
-            patternElement.style.height = 'calc(100% + 20px)';
+            patternElement.style.top = '0';
+            patternElement.style.left = '0';
+            patternElement.style.width = '100%';
+            patternElement.style.height = '100%';
             patternElement.style.backgroundSize = 'cover';
             patternElement.style.backgroundPosition = 'center center';
             patternElement.style.backgroundRepeat = 'no-repeat';
             patternElement.style.animationDelay = animationDelay;
             patternElement.style.zIndex = '1';
             
-            // Add pattern element as first child for proper layering
+            // Add pattern element as first child
             section.prepend(patternElement);
             
             // Ensure all direct children except the pattern have higher z-index
@@ -616,21 +610,14 @@ class ProductDetailManager {
             // Clear the container
             container.innerHTML = '';
             
-            // Clear any existing pattern in the container itself (we will rely on section-level pattern)
-            const existingPattern = container.querySelector('.wave-pattern-bg');
-            if (existingPattern) {
-                existingPattern.remove();
-            }
+            // No need to check for existing patterns at container level since we're applying at section level
             
-            // Make sure the container is centered
+            // Apply grid styling directly
             container.style.display = 'grid';
             container.style.justifyItems = 'center';
             container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
-            container.style.gap = '20px';
-            container.style.width = '100%';
-            container.style.maxWidth = '1200px';
+            container.style.gap = '30px';
             container.style.margin = '0 auto';
-            container.style.padding = '0 20px';
             container.style.position = 'relative';
             container.style.zIndex = '2';
             
