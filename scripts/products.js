@@ -1302,23 +1302,49 @@ class ProductManager {
     }
 
     viewProduct(productId) {
-        // Get the selected color from the product card if available
-        let selectedColor = '';
-        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-        
-        if (productCard) {
-            const activeColorOption = productCard.querySelector('.variant-option.active');
-            if (activeColorOption) {
-                selectedColor = activeColorOption.dataset.color;
-            }
+        // Basic error check
+        if (!productId) {
+            console.error('Cannot view product: Product ID is missing');
+            return;
         }
         
-        // Navigate to individual product page with product ID and selected color
-        // Simple approach to prevent [object Object] in URL
-        if (selectedColor && typeof selectedColor === 'string' && selectedColor !== '[object Object]') {
-            window.location.href = `product.html?id=${productId}&color=${encodeURIComponent(selectedColor)}`;
-        } else {
-            window.location.href = `product.html?id=${productId}`;
+        try {
+            // Find the product in our data for basic verification
+            const product = this.products.find(p => p.id === productId);
+            if (!product) {
+                console.warn(`Product with ID ${productId} not found in local data`);
+                // Continue anyway as the product might exist on the server
+            }
+            
+            // Build the URL with just the product ID - more reliable
+            let url = `product.html?id=${encodeURIComponent(productId)}`;
+            
+            // Try to get a color only if it's a basic string
+            let selectedColor = '';
+            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            
+            if (productCard) {
+                const activeColorOption = productCard.querySelector('.variant-option.active');
+                if (activeColorOption && activeColorOption.dataset && activeColorOption.dataset.color) {
+                    selectedColor = activeColorOption.dataset.color;
+                }
+            }
+            
+            // Only add color if it's a simple string and not [object Object]
+            if (selectedColor && typeof selectedColor === 'string' &&
+                selectedColor !== '[object Object]' &&
+                !selectedColor.includes('object')) {
+                url += `&color=${encodeURIComponent(selectedColor)}`;
+            }
+            
+            // Navigate to the product page
+            console.log(`Navigating to product: ${url}`);
+            window.location.href = url;
+            
+        } catch (error) {
+            // Fail safe - just go to the product page with ID only
+            console.error('Error in viewProduct:', error);
+            window.location.href = `product.html?id=${encodeURIComponent(productId)}`;
         }
     }
 

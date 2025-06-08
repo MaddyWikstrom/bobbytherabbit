@@ -564,12 +564,9 @@ class ProductDetailManager {
             // Parse URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            let selectedColor = urlParams.get('color'); // Get color from URL if available
             
-            // Simple fix for [object Object] in URL
-            if (selectedColor === '[object Object]') {
-                selectedColor = null;
-            }
+            // Get color safely from URL - just use the raw value, any validation happens later
+            const selectedColor = urlParams.get('color');
             
             console.log(`Loading product with ID: ${productId}, selected color: ${selectedColor || 'none'}`);
             
@@ -641,31 +638,38 @@ class ProductDetailManager {
                 // Render the product to the DOM
                 await this.renderProduct();
                 
-                // Set the selected color if it was passed in the URL
-                if (selectedColor && this.currentProduct.colors) {
-                    // Check if the color exists in our colors array (handling both formats)
-                    const colorExists = this.currentProduct.colors.some(color =>
-                        typeof color === 'object'
-                            ? color.name.toLowerCase() === selectedColor.toLowerCase()
-                            : color.toLowerCase() === selectedColor.toLowerCase()
-                    );
-                    
-                    if (colorExists) {
-                        console.log(`Setting selected color: ${selectedColor}`);
-                        this.selectColor(selectedColor);
-                    } else if (this.currentProduct.colors.length > 0) {
-                        // Default to first color if specified color doesn't exist
-                        const firstColor = this.currentProduct.colors[0];
-                        const colorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
-                        console.log(`Selected color not found, defaulting to: ${colorName}`);
-                        this.selectColor(colorName);
-                    }
-                } else if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
-                    // No color in URL, select first available color
+                // Always select the first color by default
+                if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
                     const firstColor = this.currentProduct.colors[0];
-                    const colorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
-                    console.log(`No color selected, defaulting to: ${colorName}`);
-                    this.selectColor(colorName);
+                    const defaultColorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
+                    
+                    // Try to use the selected color from URL if it exists in product colors
+                    if (selectedColor) {
+                        let foundMatchingColor = false;
+                        
+                        // Simple loop to find matching color (more robust than some())
+                        for (const color of this.currentProduct.colors) {
+                            const colorName = typeof color === 'object' ? color.name : color;
+                            
+                            // Case insensitive comparison
+                            if (colorName.toLowerCase() === selectedColor.toLowerCase()) {
+                                console.log(`Setting selected color from URL: ${colorName}`);
+                                this.selectColor(colorName);
+                                foundMatchingColor = true;
+                                break;
+                            }
+                        }
+                        
+                        // If no match found, use the default first color
+                        if (!foundMatchingColor) {
+                            console.log(`Color from URL not found, defaulting to: ${defaultColorName}`);
+                            this.selectColor(defaultColorName);
+                        }
+                    } else {
+                        // No color in URL, use first color
+                        console.log(`No color selected, defaulting to: ${defaultColorName}`);
+                        this.selectColor(defaultColorName);
+                    }
                 }
                 
                 this.addToRecentlyViewed(this.currentProduct);
@@ -882,26 +886,66 @@ class ProductDetailManager {
     }
     
     selectColor(color) {
-        // Store the color name in selectedVariant
-        this.selectedVariant.color = color;
-        
-        // Update active class
-        document.querySelectorAll('.color-option').forEach(option => {
-            if (option.dataset.color === color) {
-                option.classList.add('active');
-            } else {
-                option.classList.remove('active');
+        try {
+            if (!color) {
+                console.warn('No color provided to selectColor');
+                return;
             }
-        });
-        
-        // Filter images for this color if available
-        if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
-            this.filteredImages = this.currentProduct.colorImages[color];
-            this.currentImageIndex = 0;
-            this.updateMainImage();
-        } else {
-            // If no color-specific images, use all images
-            if (this.currentProduct.images && this.currentProduct.images.length > 0) {
+            
+            // Store the color name in selectedVariant
+            this.selectedVariant.color = color;
+            
+            // Find matching color-option element and update active class
+            let found = false;
+            document.querySelectorAll('.color-option').forEach(option => {
+                if (option.dataset.color &&
+                    option.dataset.color.toLowerCase() === color.toLowerCase()) {
+                    option.classList.add('active');
+                    found = true;
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+            
+            if (!found) {
+                console.log(`No matching color option found in DOM for: ${color}`);
+            }
+            
+            // Try to find color images
+            let colorImagesFound = false;
+            
+            // First check direct match
+            if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
+                this.filteredImages = this.currentProduct.colorImages[color];
+                this.currentImageIndex = 0;
+                this.updateMainImage();
+                colorImagesFound = true;
+            }
+            // Then try case-insensitive match
+            else if (this.currentProduct.colorImages) {
+                // Look for case-insensitive match
+                for (const [key, images] of Object.entries(this.currentProduct.colorImages)) {
+                    if (key.toLowerCase() === color.toLowerCase()) {
+                        this.filteredImages = images;
+                        this.currentImageIndex = 0;
+                        this.updateMainImage();
+                        colorImagesFound = true;
+                        break;
+                    }
+                }
+            }
+            
+            // If no color-specific images found, use all images
+            if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
+                console.log('No color-specific images found, using all images');
+                this.filteredImages = this.currentProduct.images;
+                this.currentImageIndex = 0;
+                this.updateMainImage();
+            }
+        } catch (error) {
+            console.error('Error in selectColor:', error);
+            // Fallback to using all images
+            if (this.currentProduct && this.currentProduct.images) {
                 this.filteredImages = this.currentProduct.images;
                 this.currentImageIndex = 0;
                 this.updateMainImage();
