@@ -554,18 +554,61 @@
             const galleryContainer = document.getElementById('product-gallery');
             const mainImageContainer = document.getElementById('main-product-image');
             
-            if (!galleryContainer || !mainImageContainer) return;
+            // If containers don't exist, create them
+            if (!mainImageContainer) {
+                console.log('Creating main image container as it was not found');
+                const imageSection = document.querySelector('.product-image-section');
+                if (imageSection) {
+                    const newMainContainer = document.createElement('div');
+                    newMainContainer.id = 'main-product-image';
+                    newMainContainer.className = 'main-image';
+                    newMainContainer.style.marginBottom = '15px';
+                    imageSection.prepend(newMainContainer);
+                    mainImageContainer = newMainContainer;
+                }
+            }
             
-            // Set main image
-            mainImageContainer.innerHTML = `<img src="${this.currentProduct.mainImage}" alt="${this.currentProduct.title}">`;
+            if (!galleryContainer) {
+                console.log('Creating gallery container as it was not found');
+                const imageSection = document.querySelector('.product-image-section');
+                if (imageSection) {
+                    const newGalleryContainer = document.createElement('div');
+                    newGalleryContainer.id = 'product-gallery';
+                    newGalleryContainer.className = 'gallery';
+                    newGalleryContainer.style.display = 'flex';
+                    newGalleryContainer.style.gap = '10px';
+                    newGalleryContainer.style.flexWrap = 'wrap';
+                    imageSection.appendChild(newGalleryContainer);
+                    galleryContainer = newGalleryContainer;
+                }
+            }
+            
+            // If containers still don't exist after attempted creation, return
+            if (!galleryContainer || !mainImageContainer) {
+                console.error('Could not create or find image containers');
+                return;
+            }
+            
+            // Set main image with a large size display
+            if (this.currentProduct.mainImage) {
+                mainImageContainer.innerHTML = `
+                    <img src="${this.currentProduct.mainImage}"
+                         alt="${this.currentProduct.title}"
+                         style="width:100%; max-height:500px; object-fit:contain;">`;
+            }
             
             // Set gallery images
             if (this.currentProduct.images && this.currentProduct.images.length > 0) {
-                this.filteredImages = this.currentProduct.images;
+                // Use filtered images if available, otherwise use all images
+                this.filteredImages = this.filteredImages?.length > 0
+                    ? this.filteredImages
+                    : this.currentProduct.images;
                 
                 galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
-                    <div class="gallery-item ${index === 0 ? 'active' : ''}">
-                        <img src="${image}" alt="${this.currentProduct.title} ${index + 1}">
+                    <div class="gallery-item ${index === 0 ? 'active' : ''}" style="cursor:pointer; border:2px solid ${index === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
+                        <img src="${image}"
+                             alt="${this.currentProduct.title} ${index + 1}"
+                             style="width:60px; height:60px; object-fit:cover;">
                     </div>
                 `).join('');
                 
@@ -576,11 +619,17 @@
                         this.updateMainImage();
                         
                         // Update active class
-                        document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('active'));
+                        document.querySelectorAll('.gallery-item').forEach(i => {
+                            i.classList.remove('active');
+                            i.style.border = '2px solid transparent';
+                        });
                         item.classList.add('active');
+                        item.style.border = '2px solid #4CAF50';
                     });
                 });
             }
+            
+            console.log(`Rendered ${this.filteredImages?.length || 0} product images`);
         }
         
         // Add the missing updateThumbnailGrid method referenced in quick-view.js
@@ -595,24 +644,69 @@
             }
             
             // Find the gallery container
-            const galleryContainer = document.getElementById('product-gallery');
+            let galleryContainer = document.getElementById('product-gallery');
+            
+            // If gallery container doesn't exist, create it
             if (!galleryContainer) {
-                console.log('Gallery container not found');
-                return;
+                console.log('Gallery container not found, creating it');
+                const imageSection = document.querySelector('.product-image-section');
+                
+                if (!imageSection) {
+                    // If image section doesn't exist, create the whole product structure
+                    console.log('Image section not found, creating entire product structure');
+                    this.renderProduct();
+                    galleryContainer = document.getElementById('product-gallery');
+                    
+                    if (!galleryContainer) {
+                        console.error('Failed to create gallery container');
+                        return;
+                    }
+                } else {
+                    // Create just the gallery container
+                    const newGalleryContainer = document.createElement('div');
+                    newGalleryContainer.id = 'product-gallery';
+                    newGalleryContainer.className = 'gallery';
+                    newGalleryContainer.style.display = 'flex';
+                    newGalleryContainer.style.gap = '10px';
+                    newGalleryContainer.style.flexWrap = 'wrap';
+                    imageSection.appendChild(newGalleryContainer);
+                    galleryContainer = newGalleryContainer;
+                }
             }
             
-            // Generate HTML for filtered images
+            // Generate HTML for filtered images with improved styling
             galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
-                <div class="gallery-item ${index === 0 ? 'active' : ''}">
-                    <img src="${image}" alt="${this.currentProduct?.title || 'Product'} ${index + 1}">
+                <div class="gallery-item ${index === 0 ? 'active' : ''}" style="cursor:pointer; border:2px solid ${index === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
+                    <img src="${image}"
+                         alt="${this.currentProduct?.title || 'Product'} ${index + 1}"
+                         style="width:60px; height:60px; object-fit:cover;">
                 </div>
             `).join('');
             
             // Update main image to the first filtered image
             if (this.filteredImages.length > 0) {
-                const mainImageContainer = document.getElementById('main-product-image');
+                let mainImageContainer = document.getElementById('main-product-image');
+                
+                // Create main image container if it doesn't exist
+                if (!mainImageContainer) {
+                    console.log('Main image container not found, creating it');
+                    const imageSection = document.querySelector('.product-image-section');
+                    
+                    if (imageSection) {
+                        const newMainContainer = document.createElement('div');
+                        newMainContainer.id = 'main-product-image';
+                        newMainContainer.className = 'main-image';
+                        newMainContainer.style.marginBottom = '15px';
+                        imageSection.prepend(newMainContainer);
+                        mainImageContainer = newMainContainer;
+                    }
+                }
+                
                 if (mainImageContainer) {
-                    mainImageContainer.innerHTML = `<img src="${this.filteredImages[0]}" alt="${this.currentProduct?.title || 'Product'}">`;
+                    mainImageContainer.innerHTML = `
+                        <img src="${this.filteredImages[0]}"
+                             alt="${this.currentProduct?.title || 'Product'}"
+                             style="width:100%; max-height:500px; object-fit:contain;">`;
                     this.currentImageIndex = 0;
                 }
             }
@@ -623,11 +717,17 @@
                     this.currentImageIndex = index;
                     this.updateMainImage();
                     
-                    // Update active class
-                    document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('active'));
+                    // Update active class with visual feedback
+                    document.querySelectorAll('.gallery-item').forEach(i => {
+                        i.classList.remove('active');
+                        i.style.border = '2px solid transparent';
+                    });
                     item.classList.add('active');
+                    item.style.border = '2px solid #4CAF50';
                 });
             });
+            
+            console.log(`Thumbnail grid updated with ${this.filteredImages.length} images`);
         }
         
         renderColorOptions() {
