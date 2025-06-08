@@ -642,11 +642,17 @@ class ProductDetailManager {
         // Initialize filteredImages with all product images
         this.filteredImages = [...this.currentProduct.images];
         
-        // Initialize with default color if available
+        // Initialize with default color if available and update size options
         if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
             // Set the initial color
             this.selectedVariant.color = this.currentProduct.colors[0].name;
             console.log(`Setting initial color to ${this.selectedVariant.color}`);
+            
+            // Make sure to update size options based on this color after a small delay
+            // to ensure the DOM is fully rendered
+            setTimeout(() => {
+                this.updateSizeOptionsForColor(this.selectedVariant.color);
+            }, 100);
         }
 
         const discount = this.currentProduct.comparePrice ?
@@ -806,6 +812,8 @@ class ProductDetailManager {
             this.selectedVariant.color = this.currentProduct.colors[0].name;
             // Filter images based on the initial color selection
             this.filterImagesByColor(this.selectedVariant.color);
+            // Update size options based on this color
+            this.updateSizeOptionsForColor(this.selectedVariant.color);
         }
         
         this.updateInventoryDisplay();
@@ -936,20 +944,34 @@ class ProductDetailManager {
         const availableSizes = this.getAvailableSizesForColor(colorName);
         console.log(`Updating size options for ${colorName}, found ${availableSizes.length} sizes`);
         
-        // Regenerate the size buttons
-        sizeOptionsContainer.innerHTML = availableSizes.map(size => `
-            <button class="size-option"
-                    onclick="productDetailManager.selectSize('${size}')"
-                    data-size="${size}"
-                    data-original-size="${size}">
-                ${this.simplifySize(size)}
-            </button>
-        `).join('');
+        // Clear the container first
+        sizeOptionsContainer.innerHTML = '';
+        
+        // Only generate buttons if we have sizes for this color
+        if (availableSizes.length > 0) {
+            // Regenerate the size buttons with simplified display
+            sizeOptionsContainer.innerHTML = availableSizes.map(size => `
+                <button class="size-option"
+                        onclick="productDetailManager.selectSize('${size}')"
+                        data-size="${size}"
+                        data-original-size="${size}">
+                    ${this.simplifySize(size)}
+                </button>
+            `).join('');
+        } else {
+            // Show a message if no sizes are available for this color
+            sizeOptionsContainer.innerHTML = '<div class="no-sizes-message">No sizes available for this color</div>';
+        }
         
         // Reset selected size if it's no longer available
         if (this.selectedVariant.size && !availableSizes.includes(this.selectedVariant.size)) {
             this.selectedVariant.size = null;
+            
+            // Also update the add to cart button state
+            this.updateInventoryDisplay();
         }
+        
+        console.log(`Updated size options for ${colorName}: ${availableSizes.join(', ')}`);
     }
     
     // Get available sizes for a specific color
@@ -958,20 +980,62 @@ class ProductDetailManager {
             return [];
         }
         
-        // If no color is selected yet, return all sizes
-        if (!colorName && this.currentProduct.sizes) {
-            return this.currentProduct.sizes;
+        // If no color is selected yet, return no sizes
+        if (!colorName) {
+            return [];
         }
         
-        // Filter sizes based on inventory for this color
-        const availableSizes = this.currentProduct.sizes.filter(size => {
-            const inventoryKey = `${colorName}-${size}`;
-            const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
-            return stockLevel > 0;
+        console.log(`Finding sizes for color: ${colorName}`);
+        
+        // Get all variants for the selected color - exact match only
+        const colorVariants = this.currentProduct.variants.filter(v =>
+            v.color === colorName
+        );
+        
+        console.log(`Found ${colorVariants.length} variants for color ${colorName}`);
+        
+        // Extract sizes from these color-specific variants
+        const colorSizes = new Set();
+        
+        // First pass: Get sizes directly from variants
+        colorVariants.forEach(variant => {
+            if (variant.size) {
+                // Use simplified size for consistent matching
+                const simplifiedSize = this.simplifySize(variant.size);
+                colorSizes.add(simplifiedSize);
+            }
         });
         
-        console.log(`Available sizes for ${colorName}: ${availableSizes.join(', ')}`);
-        return availableSizes;
+        // If we didn't find any sizes from variants, try extracting from inventory
+        if (colorSizes.size === 0) {
+            // Look through inventory to find sizes for this color
+            Object.keys(this.currentProduct.inventory).forEach(key => {
+                if (key.startsWith(`${colorName}-`) && this.currentProduct.inventory[key] > 0) {
+                    const size = key.substring(colorName.length + 1); // +1 for the dash
+                    if (size) {
+                        const simplifiedSize = this.simplifySize(size);
+                        colorSizes.add(simplifiedSize);
+                    }
+                }
+            });
+        }
+        
+        // REMOVED: Standard size fallback to ensure we only show sizes that are
+        // specifically available for this color
+        
+        // Convert to array and sort by size order
+        const sizeOrder = { 'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4, '2XL': 5, 'XXL': 5, '3XL': 6, 'OS': 7 };
+        const sortedSizes = Array.from(colorSizes).sort((a, b) => {
+            // For numeric sizes, sort numerically
+            if (!isNaN(a) && !isNaN(b)) {
+                return parseInt(a) - parseInt(b);
+            }
+            // For letter sizes, use our predefined order
+            return (sizeOrder[a] || 999) - (sizeOrder[b] || 999);
+        });
+        
+        console.log(`Final sizes for ${colorName}: ${sortedSizes.join(', ')}`);
+        return sortedSizes;
     }
     
     // Helper method to simplify size strings - ONLY returns S, M, L, etc.
@@ -1222,6 +1286,7 @@ class ProductDetailManager {
             option.classList.toggle('active', option.dataset.size === size);
         });
         
+        console.log(`Selected size: ${size} for color: ${this.selectedVariant.color}`);
         this.updateInventoryDisplay();
     }
 
