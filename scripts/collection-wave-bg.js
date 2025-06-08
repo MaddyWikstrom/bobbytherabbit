@@ -95,16 +95,55 @@ document.addEventListener('DOMContentLoaded', function() {
         viewAllContainer.style.marginTop = '30px';
     }
     
-    // Fix arrow container positioning
+    // Reposition arrows to the edges of the screen inline with products
     const arrowContainer = collectionSection.querySelector('.arrow-container');
     if (arrowContainer) {
-        arrowContainer.style.position = 'relative';
+        arrowContainer.style.position = 'absolute';
         arrowContainer.style.width = '100%';
-        arrowContainer.style.maxWidth = '1400px';
-        arrowContainer.style.margin = '0 auto';
-        arrowContainer.style.padding = '0 20px';
+        arrowContainer.style.top = '50%';
+        arrowContainer.style.left = '0';
+        arrowContainer.style.transform = 'translateY(-50%)';
+        arrowContainer.style.display = 'flex';
+        arrowContainer.style.justifyContent = 'space-between';
+        arrowContainer.style.padding = '0';
+        arrowContainer.style.margin = '0';
         arrowContainer.style.boxSizing = 'border-box';
-        arrowContainer.style.zIndex = '3';
+        arrowContainer.style.pointerEvents = 'none'; // So it doesn't block content
+        arrowContainer.style.zIndex = '10';
+        
+        // Style the left arrow to be at the left edge
+        const leftArrow = collectionSection.querySelector('.left-arrow');
+        if (leftArrow) {
+            leftArrow.style.position = 'relative';
+            leftArrow.style.left = '20px';
+            leftArrow.style.width = '40px';
+            leftArrow.style.height = '40px';
+            leftArrow.style.borderRadius = '50%';
+            leftArrow.style.backgroundColor = '#a855f7';
+            leftArrow.style.color = '#ffffff';
+            leftArrow.style.display = 'flex';
+            leftArrow.style.alignItems = 'center';
+            leftArrow.style.justifyContent = 'center';
+            leftArrow.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5)';
+            leftArrow.style.pointerEvents = 'auto'; // Restore pointer events
+        }
+        
+        // Style the right arrow to be at the right edge
+        const rightArrow = collectionSection.querySelector('.right-arrow');
+        if (rightArrow) {
+            rightArrow.style.position = 'relative';
+            rightArrow.style.right = '20px';
+            rightArrow.style.width = '40px';
+            rightArrow.style.height = '40px';
+            rightArrow.style.borderRadius = '50%';
+            rightArrow.style.backgroundColor = '#a855f7';
+            rightArrow.style.color = '#ffffff';
+            rightArrow.style.display = 'flex';
+            rightArrow.style.alignItems = 'center';
+            rightArrow.style.justifyContent = 'center';
+            rightArrow.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5)';
+            rightArrow.style.pointerEvents = 'auto'; // Restore pointer events
+        }
     }
     
     // Add animation keyframes and additional styles if they don't exist yet
