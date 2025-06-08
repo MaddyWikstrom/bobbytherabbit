@@ -42,21 +42,31 @@ class ProductDetailManager {
         try {
             console.log('Setting up event listeners for product detail page');
             
-            // Product image navigation
-            const prevBtn = document.getElementById('prev-image');
-            const nextBtn = document.getElementById('next-image');
-            
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => this.navigateImages(-1));
-            } else {
-                console.warn('Previous image button not found');
+            // Make main image clickable for navigation
+            const mainImage = document.querySelector('.main-image');
+            if (mainImage) {
+                mainImage.addEventListener('click', () => this.navigateImages(1));
             }
             
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => this.navigateImages(1));
-            } else {
-                console.warn('Next image button not found');
-            }
+            // Make thumbnails clickable
+            const galleryItems = document.querySelectorAll('.gallery-item');
+            galleryItems.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    this.currentImageIndex = index;
+                    this.updateMainImage();
+                    
+                    // Update active state on thumbnails
+                    galleryItems.forEach((thumbnail, idx) => {
+                        if (idx === index) {
+                            thumbnail.classList.add('active');
+                            thumbnail.style.border = '2px solid #a855f7';
+                        } else {
+                            thumbnail.classList.remove('active');
+                            thumbnail.style.border = '2px solid transparent';
+                        }
+                    });
+                });
+            });
             
             // Color selection - use try/catch to avoid breaking if elements don't exist
             try {
@@ -581,7 +591,7 @@ class ProductDetailManager {
                 // Update loading message
                 const loadingMessage = document.getElementById('loading-message');
                 if (loadingMessage) {
-                    loadingMessage.textContent = `LOADING PRODUCT: ${productId}`;
+                    loadingMessage.textContent = 'LOADING PRODUCT';
                 }
                 
                 // Simulate loading progress
@@ -771,27 +781,27 @@ class ProductDetailManager {
             const productHTML = `
                 <div class="product-image-section">
                     <div id="main-product-image" class="main-image">
-                        <img src="${this.currentProduct.mainImage || '/assets/product-placeholder.png'}" 
-                             alt="${this.currentProduct.title}"
-                             style="width:100%; max-height:500px; object-fit:contain;">
+                        <img src="${this.currentProduct.mainImage || '/assets/product-placeholder.png'}"
+                             alt="${this.currentProduct.title}">
                     </div>
-                    <div id="product-gallery" class="gallery" style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <div id="product-gallery" class="gallery">
                         ${this.currentProduct.images?.map((img, idx) => `
-                            <div class="gallery-item ${idx === 0 ? 'active' : ''}" 
-                                 style="cursor:pointer; border:2px solid ${idx === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
-                                <img src="${img}" alt="${this.currentProduct.title} ${idx + 1}" 
-                                     style="width:60px; height:60px; object-fit:cover;">
+                            <div class="gallery-item ${idx === 0 ? 'active' : ''}"
+                                 data-index="${idx}">
+                                <img src="${img}" alt="${this.currentProduct.title} ${idx + 1}">
                             </div>
                         `).join('') || ''}
-                    </div>
-                    <div class="image-navigation" style="display:flex; justify-content:space-between; margin-top:15px;">
-                        <button id="prev-image" class="nav-button">Previous</button>
-                        <button id="next-image" class="nav-button">Next</button>
                     </div>
                 </div>
                 
                 <div class="product-info-section">
+                    <div class="category-tag">WINDBREAKERS</div>
                     <h1 id="product-title">${this.currentProduct.title}</h1>
+                    
+                    <div class="ratings-container">
+                        <div class="stars">★★★★☆</div>
+                        <span class="rating-count">4.6 (180 reviews)</span>
+                    </div>
                     
                     <div class="price-container">
                         <span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
