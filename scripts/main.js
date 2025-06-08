@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSmoothScrolling();
     initializeAnimations();
     
-    console.log('Bobby Streetwear - Cyberpunk mode activated 🐰⚡');
+    // Cyberpunk mode activated
 });
 
 // Navigation functionality

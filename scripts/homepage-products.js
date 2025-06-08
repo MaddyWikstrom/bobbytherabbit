@@ -48,24 +48,22 @@ class HomepageProductLoader {
                     return targetProductIds.includes(productId);
                 }).slice(0, 6); // Limit to 6 specific products
                 
-                console.log('✅ Loaded filtered products from Shopify:', this.products.length);
-                console.log('Product IDs:', this.products.map(p => p.shopifyId));
+                // Successfully loaded filtered products from Shopify
             } else {
                 // No products found
                 this.products = [];
-                console.log('⚠️ No products found in Shopify');
+                // No products found in Shopify
             }
         } catch (error) {
             console.error('Error loading products:', error);
             this.products = [];
-            console.error('⚠️ This app requires deployment to Netlify to function properly');
-            console.log('⚠️ No products loaded due to error');
+            // This app requires deployment to Netlify to function properly
         }
     }
 
     async loadShopifyProducts() {
         try {
-            console.log('🔄 Fetching products from Shopify...');
+            // Fetching products from Shopify
             const response = await fetch('/.netlify/functions/get-products');
             
             if (!response.ok) {
@@ -76,24 +74,24 @@ class HomepageProductLoader {
             
             if (data.error) {
                 console.error('Shopify API Error:', data.error);
-                console.error('⚠️ This app requires deployment to Netlify to function properly');
+                // This app requires deployment to Netlify to function properly
                 return [];
             }
 
             // Check if data has a products array (new API format) or is an array directly
             if (data.products && Array.isArray(data.products)) {
-                console.log('Processing products from new API format');
+                // Processing products from new API format
                 return data.products.map(product => this.transformShopifyProduct(product.node || product));
             } else if (Array.isArray(data)) {
-                console.log('Processing products from legacy API format');
+                // Processing products from legacy API format
                 return data.map(product => this.transformShopifyProduct(product.node || product));
             } else {
-                console.error('Unexpected data format from API:', data);
+                console.error('Unexpected data format from API');
                 return [];
             }
         } catch (error) {
             console.error('Error loading Shopify products:', error);
-            console.error('⚠️ This app requires deployment to Netlify to function properly');
+            // This app requires deployment to Netlify to function properly
             return [];
         }
     }
@@ -293,18 +291,10 @@ class HomepageProductLoader {
         const leftArrow = document.getElementById('scroll-left');
         const rightArrow = document.getElementById('scroll-right');
 
-        console.log('Setting up scrolling:', {
-            scrollContainer: !!scrollContainer,
-            leftArrow: !!leftArrow,
-            rightArrow: !!rightArrow
-        });
+        // Setting up scrolling with available elements
 
         if (!scrollContainer || !leftArrow || !rightArrow) {
-            console.error('Missing scroll elements:', {
-                scrollContainer: !!scrollContainer,
-                leftArrow: !!leftArrow,
-                rightArrow: !!rightArrow
-            });
+            console.error('Missing scroll elements');
             return;
         }
 
@@ -313,7 +303,7 @@ class HomepageProductLoader {
         // Calculate actual card dimensions
         const firstCard = scrollContainer.querySelector('.product-card');
         if (!firstCard) {
-            console.error('No product cards found for scroll calculation');
+            console.error('No product cards found');
             return;
         }
         
@@ -348,24 +338,7 @@ class HomepageProductLoader {
         const maxScroll = Math.max(0, totalWidth - containerWidth);
         const maxIndex = Math.max(0, Math.ceil(maxScroll / scrollAmount));
         
-        console.log('Card width calculation:', {
-            cardWidth,
-            scrollAmount,
-            containerWidth,
-            visibleCards,
-            totalProducts: this.products.length,
-            maxIndex,
-            maxScroll
-        });
-
-        console.log('Scroll setup:', {
-            totalProducts: this.products.length,
-            cardWidth,
-            scrollAmount,
-            containerWidth,
-            visibleCards,
-            maxIndex
-        });
+        // Card width and scroll parameters calculated
 
         const updateTransform = () => {
             const translateX = Math.min(0, Math.max(-maxScroll, -currentIndex * scrollAmount));
@@ -385,40 +358,24 @@ class HomepageProductLoader {
         leftArrow.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Left arrow clicked! Current index:', currentIndex, 'Max index:', maxIndex);
             if (currentIndex > 0) {
                 currentIndex--;
                 updateTransform();
                 updateArrows();
-                console.log('Scrolled left to index:', currentIndex);
-            } else {
-                console.log('Cannot scroll left - already at beginning');
             }
         });
 
         rightArrow.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Right arrow clicked! Current index:', currentIndex, 'Max index:', maxIndex);
             if (currentIndex < maxIndex) {
                 currentIndex++;
                 updateTransform();
                 updateArrows();
-                console.log('Scrolled right to index:', currentIndex);
-            } else {
-                console.log('Cannot scroll right - already at end');
             }
         });
 
-        // Add debugging for arrow visibility and styling
-        console.log('Arrow setup complete:', {
-            leftArrowVisible: window.getComputedStyle(leftArrow).display !== 'none',
-            rightArrowVisible: window.getComputedStyle(rightArrow).display !== 'none',
-            leftArrowOpacity: window.getComputedStyle(leftArrow).opacity,
-            rightArrowOpacity: window.getComputedStyle(rightArrow).opacity,
-            leftArrowPointerEvents: window.getComputedStyle(leftArrow).pointerEvents,
-            rightArrowPointerEvents: window.getComputedStyle(rightArrow).pointerEvents
-        });
+        // Arrow navigation setup complete
 
         // Touch/swipe support for mobile
         let startX = 0;
@@ -547,9 +504,9 @@ class HomepageProductLoader {
         if (window.productManager && typeof window.productManager.showQuickView === 'function') {
             // Pass the product ID to the main product manager
             window.productManager.showQuickView(product.id || productId);
-            console.log('Opening quick view for product:', product.title);
+            // Opening quick view for product
         } else {
-            console.warn('Product manager not available for quick view, navigating to product page instead');
+            // Product manager not available, navigating to product page instead
             this.viewProduct(productId);
         }
     }
