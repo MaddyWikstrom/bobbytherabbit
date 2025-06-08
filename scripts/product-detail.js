@@ -469,40 +469,85 @@
                 return;
             }
             
-            // Set page title
-            document.title = this.currentProduct.title;
+            console.log('Rendering product:', this.currentProduct.title);
             
-            // Update product info
-            document.getElementById('product-title').textContent = this.currentProduct.title;
-            document.getElementById('product-price').textContent = `$${this.currentProduct.price.toFixed(2)}`;
-            
-            if (this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price) {
-                document.getElementById('product-compare-price').textContent = `$${this.currentProduct.comparePrice.toFixed(2)}`;
-                document.getElementById('product-compare-price').style.display = 'inline-block';
+            try {
+                // Set page title
+                document.title = this.currentProduct.title || 'Product Details';
                 
-                // Calculate discount percentage
-                const discount = Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100);
-                document.getElementById('product-discount').textContent = `-${discount}%`;
-                document.getElementById('product-discount').style.display = 'inline-block';
-            } else {
-                document.getElementById('product-compare-price').style.display = 'none';
-                document.getElementById('product-discount').style.display = 'none';
+                // Update product info - with null checks
+                const titleElement = document.getElementById('product-title');
+                if (titleElement) {
+                    titleElement.textContent = this.currentProduct.title;
+                } else {
+                    console.error('product-title element not found in the DOM');
+                }
+                
+                const priceElement = document.getElementById('product-price');
+                if (priceElement) {
+                    priceElement.textContent = `$${this.currentProduct.price.toFixed(2)}`;
+                } else {
+                    console.error('product-price element not found in the DOM');
+                }
+                
+                const comparePriceElement = document.getElementById('product-compare-price');
+                const discountElement = document.getElementById('product-discount');
+                
+                if (this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price) {
+                    if (comparePriceElement) {
+                        comparePriceElement.textContent = `$${this.currentProduct.comparePrice.toFixed(2)}`;
+                        comparePriceElement.style.display = 'inline-block';
+                    }
+                    
+                    // Calculate discount percentage
+                    const discount = Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100);
+                    
+                    if (discountElement) {
+                        discountElement.textContent = `-${discount}%`;
+                        discountElement.style.display = 'inline-block';
+                    }
+                } else {
+                    if (comparePriceElement) {
+                        comparePriceElement.style.display = 'none';
+                    }
+                    if (discountElement) {
+                        discountElement.style.display = 'none';
+                    }
+                }
+                
+                // Set description
+                const descriptionElement = document.getElementById('product-description');
+                if (descriptionElement) {
+                    descriptionElement.innerHTML = this.currentProduct.description || '';
+                } else {
+                    console.error('product-description element not found in the DOM');
+                }
+                
+                // Render product images
+                this.renderProductImages();
+                
+                // Render color options
+                this.renderColorOptions();
+                
+                // Render size options
+                this.renderSizeOptions();
+                
+                // Show product container
+                const productContainer = document.querySelector('.product-container');
+                if (productContainer) {
+                    productContainer.style.display = 'block';
+                } else {
+                    console.error('.product-container element not found in the DOM');
+                }
+            } catch (error) {
+                console.error('Error rendering product:', error);
+                // Don't redirect to not-found in case of render errors, as the product data might be valid
+                // Instead, show an error message if possible
+                const errorContainer = document.createElement('div');
+                errorContainer.className = 'error-message';
+                errorContainer.textContent = 'Error displaying product. Please try refreshing the page.';
+                document.body.appendChild(errorContainer);
             }
-            
-            // Set description
-            document.getElementById('product-description').innerHTML = this.currentProduct.description;
-            
-            // Render product images
-            this.renderProductImages();
-            
-            // Render color options
-            this.renderColorOptions();
-            
-            // Render size options
-            this.renderSizeOptions();
-            
-            // Show product container
-            document.querySelector('.product-container').style.display = 'block';
         }
         
         renderProductImages() {
@@ -536,6 +581,53 @@
                     });
                 });
             }
+        }
+        
+        // Add the missing updateThumbnailGrid method referenced in quick-view.js
+        updateThumbnailGrid() {
+            console.log('Updating thumbnail grid with filtered images');
+            
+            // This method should update the product thumbnails display
+            // when filtering by color
+            if (!this.filteredImages || this.filteredImages.length === 0) {
+                console.log('No filtered images to display');
+                return;
+            }
+            
+            // Find the gallery container
+            const galleryContainer = document.getElementById('product-gallery');
+            if (!galleryContainer) {
+                console.log('Gallery container not found');
+                return;
+            }
+            
+            // Generate HTML for filtered images
+            galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
+                <div class="gallery-item ${index === 0 ? 'active' : ''}">
+                    <img src="${image}" alt="${this.currentProduct?.title || 'Product'} ${index + 1}">
+                </div>
+            `).join('');
+            
+            // Update main image to the first filtered image
+            if (this.filteredImages.length > 0) {
+                const mainImageContainer = document.getElementById('main-product-image');
+                if (mainImageContainer) {
+                    mainImageContainer.innerHTML = `<img src="${this.filteredImages[0]}" alt="${this.currentProduct?.title || 'Product'}">`;
+                    this.currentImageIndex = 0;
+                }
+            }
+            
+            // Add click event listeners to gallery items
+            document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    this.currentImageIndex = index;
+                    this.updateMainImage();
+                    
+                    // Update active class
+                    document.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
         }
         
         renderColorOptions() {
