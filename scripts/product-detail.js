@@ -205,8 +205,17 @@ class ProductDetailManager {
         this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== product.id);
         
         // Add to front of array
-        // Make sure we store absolute URLs for images
-        let imageUrl = this.ensureAbsoluteUrl(product.mainImage);
+        // Make sure we store absolute URLs for images - use mainImage or first image from images array
+        let imageUrl = '';
+        if (product.mainImage) {
+            imageUrl = this.ensureAbsoluteUrl(product.mainImage);
+        } else if (product.images && product.images.length > 0) {
+            imageUrl = this.ensureAbsoluteUrl(product.images[0]);
+        } else {
+            imageUrl = '/assets/product-placeholder.png';
+        }
+        
+        console.log(`Adding product to recently viewed with image: ${imageUrl}`);
         
         const productToAdd = {
             id: product.id,
@@ -223,6 +232,7 @@ class ProductDetailManager {
         // Save to localStorage
         try {
             localStorage.setItem('recentlyViewed', JSON.stringify(this.recentlyViewed));
+            console.log(`Saved ${this.recentlyViewed.length} recently viewed products to localStorage`);
         } catch (error) {
             console.error('Error saving recently viewed products:', error);
         }
@@ -236,18 +246,30 @@ class ProductDetailManager {
             return;
         }
         
+        console.log(`Loading related products. Found ${this.recentlyViewed.length} recently viewed items.`);
+        
         if (this.recentlyViewed.length > 0) {
+            // Log the recently viewed products for debugging
+            console.log('Recently viewed products:', JSON.stringify(this.recentlyViewed));
+            
             // Generate HTML for related products
             const html = this.recentlyViewed.map(product => {
                 // Final check to ensure image URL is absolute before rendering
-                const imageUrl = this.ensureAbsoluteUrl(product.image);
+                let imageUrl = '/assets/product-placeholder.png'; // Default fallback image
+                
+                if (product.image) {
+                    imageUrl = this.ensureAbsoluteUrl(product.image);
+                    console.log(`Processing image for ${product.title}: ${imageUrl}`);
+                } else {
+                    console.warn(`No image found for product ${product.title}`);
+                }
                 
                 return `
                 <div class="related-product" data-product-id="${product.id}">
-                    <img src="${imageUrl}" alt="${product.title}">
+                    <img src="${imageUrl}" alt="${product.title}" onerror="this.src='/assets/product-placeholder.png';">
                     <div class="related-product-info">
                         <h4>${product.title}</h4>
-                        <span>$${product.price.toFixed(2)}</span>
+                        <span>$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}</span>
                     </div>
                 </div>
             `}).join('');
@@ -1518,25 +1540,30 @@ class ProductDetailManager {
     }
     // Helper method to ensure URLs are absolute
     ensureAbsoluteUrl(url) {
-        if (!url) return '';
+        if (!url) return '/assets/product-placeholder.png';
         
-        // If it's already an absolute URL, return it
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            return url;
+        try {
+            // If it's already an absolute URL, return it
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            
+            // If it's a protocol-relative URL (starts with //), add https:
+            if (url.startsWith('//')) {
+                return 'https:' + url;
+            }
+            
+            // If it's a root-relative URL (starts with /), add the origin
+            if (url.startsWith('/')) {
+                return window.location.origin + url;
+            }
+            
+            // If it's a relative URL without leading slash, assume it's relative to origin
+            return window.location.origin + '/' + url;
+        } catch (error) {
+            console.error(`Error processing URL: ${url}`, error);
+            return '/assets/product-placeholder.png';
         }
-        
-        // If it's a protocol-relative URL (starts with //), add https:
-        if (url.startsWith('//')) {
-            return 'https:' + url;
-        }
-        
-        // If it's a root-relative URL (starts with /), add the origin
-        if (url.startsWith('/')) {
-            return window.location.origin + url;
-        }
-        
-        // If it's a relative URL without leading slash, assume it's relative to origin
-        return window.location.origin + '/' + url;
     }
 }
 
