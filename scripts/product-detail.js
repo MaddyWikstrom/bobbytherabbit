@@ -303,14 +303,198 @@
                 }
         
         startLoadingSequence() {
-            // Show loading animation
-            document.querySelector('.product-loading')?.classList.add('active');
+            console.log('Starting loading sequence');
             
-            // Hide the loading screen after product is loaded
-            setTimeout(() => {
-                document.querySelector('.product-loading')?.classList.remove('active');
-                document.querySelector('.product-container')?.classList.add('loaded');
-            }, 800);
+            // Show loading animation
+            const loadingElement = document.querySelector('.product-loading');
+            if (loadingElement) {
+                loadingElement.classList.add('active');
+                
+                // Add loading percentage text if it doesn't exist
+                if (!loadingElement.querySelector('.loading-percentage')) {
+                    const percentageEl = document.createElement('div');
+                    percentageEl.className = 'loading-percentage';
+                    percentageEl.textContent = '0%';
+                    percentageEl.style.position = 'absolute';
+                    percentageEl.style.top = '60%';
+                    percentageEl.style.left = '50%';
+                    percentageEl.style.transform = 'translate(-50%, -50%)';
+                    percentageEl.style.color = 'white';
+                    percentageEl.style.fontSize = '18px';
+                    percentageEl.style.fontWeight = 'bold';
+                    loadingElement.appendChild(percentageEl);
+                }
+                
+                // Add a loading message if it doesn't exist
+                if (!loadingElement.querySelector('.loading-message')) {
+                    const messageEl = document.createElement('div');
+                    messageEl.className = 'loading-message';
+                    messageEl.textContent = 'Loading product details...';
+                    messageEl.style.position = 'absolute';
+                    messageEl.style.top = '45%';
+                    messageEl.style.left = '50%';
+                    messageEl.style.transform = 'translate(-50%, -50%)';
+                    messageEl.style.color = 'white';
+                    messageEl.style.fontSize = '16px';
+                    loadingElement.appendChild(messageEl);
+                }
+                
+                // Set initial percentage to 0%
+                const percentageEl = loadingElement.querySelector('.loading-percentage');
+                if (percentageEl) {
+                    percentageEl.textContent = '0%';
+                }
+                
+                // Hide the product container until loading is complete
+                const productContainer = document.querySelector('.product-container');
+                if (productContainer) {
+                    productContainer.classList.remove('loaded');
+                    productContainer.style.opacity = '0';
+                }
+                
+                // No automatic percentage updates - we'll update manually in loadProduct
+            } else {
+                console.warn('Product loading element not found');
+                // Create loading element if it doesn't exist
+                this.createLoadingElement();
+            }
+        }
+        
+        // Helper method to create loading element if it doesn't exist
+        createLoadingElement() {
+            console.log('Creating loading element');
+            
+            if (!document.querySelector('.product-loading')) {
+                const loadingEl = document.createElement('div');
+                loadingEl.className = 'product-loading';
+                loadingEl.style.position = 'fixed';
+                loadingEl.style.top = '0';
+                loadingEl.style.left = '0';
+                loadingEl.style.width = '100%';
+                loadingEl.style.height = '100%';
+                loadingEl.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                loadingEl.style.display = 'flex';
+                loadingEl.style.justifyContent = 'center';
+                loadingEl.style.alignItems = 'center';
+                loadingEl.style.zIndex = '9999';
+                loadingEl.style.opacity = '0';
+                loadingEl.style.transition = 'opacity 0.3s ease';
+                
+                // Create spinner
+                const spinner = document.createElement('div');
+                spinner.className = 'loading-spinner';
+                spinner.style.border = '5px solid #f3f3f3';
+                spinner.style.borderTop = '5px solid #3498db';
+                spinner.style.borderRadius = '50%';
+                spinner.style.width = '50px';
+                spinner.style.height = '50px';
+                spinner.style.animation = 'spin 1s linear infinite';
+                
+                // Add CSS animation
+                const styleEl = document.createElement('style');
+                styleEl.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+                document.head.appendChild(styleEl);
+                
+                loadingEl.appendChild(spinner);
+                document.body.appendChild(loadingEl);
+                
+                // Add percentage text
+                const percentageEl = document.createElement('div');
+                percentageEl.className = 'loading-percentage';
+                percentageEl.textContent = '0%';
+                percentageEl.style.position = 'absolute';
+                percentageEl.style.top = '60%';
+                percentageEl.style.left = '50%';
+                percentageEl.style.transform = 'translate(-50%, -50%)';
+                percentageEl.style.color = 'white';
+                percentageEl.style.fontSize = '18px';
+                percentageEl.style.fontWeight = 'bold';
+                loadingEl.appendChild(percentageEl);
+                
+                // Add loading message
+                const messageEl = document.createElement('div');
+                messageEl.className = 'loading-message';
+                messageEl.textContent = 'Loading product details...';
+                messageEl.style.position = 'absolute';
+                messageEl.style.top = '45%';
+                messageEl.style.left = '50%';
+                messageEl.style.transform = 'translate(-50%, -50%)';
+                messageEl.style.color = 'white';
+                messageEl.style.fontSize = '16px';
+                loadingEl.appendChild(messageEl);
+                
+                // Make it visible
+                setTimeout(() => {
+                    loadingEl.classList.add('active');
+                    loadingEl.style.opacity = '1';
+                }, 10);
+            }
+        }
+        
+        completeLoadingSequence() {
+            console.log('Completing loading sequence');
+            
+            // Clear the loading interval if it exists
+            if (this.loadingInterval) {
+                clearInterval(this.loadingInterval);
+                this.loadingInterval = null;
+            }
+            
+            // Update loading to 100%
+            const loadingElement = document.querySelector('.product-loading');
+            if (loadingElement) {
+                // Update percentage to 100%
+                const percentageEl = loadingElement.querySelector('.loading-percentage');
+                if (percentageEl) {
+                    percentageEl.textContent = '100%';
+                }
+                
+                // Update loading message
+                const messageEl = loadingElement.querySelector('.loading-message');
+                if (messageEl) {
+                    messageEl.textContent = 'Product loaded successfully!';
+                }
+                
+                // Hide the loading screen after a short delay with smooth transition
+                setTimeout(() => {
+                    // Fade out loading element
+                    loadingElement.style.opacity = '0';
+                    
+                    // Show the product container with transition
+                    const productContainer = document.querySelector('.product-container');
+                    if (productContainer) {
+                        productContainer.classList.add('loaded');
+                        productContainer.style.opacity = '1';
+                        productContainer.style.transition = 'opacity 0.5s ease';
+                    }
+                    
+                    // Remove active class after fade completes
+                    setTimeout(() => {
+                        loadingElement.classList.remove('active');
+                        loadingElement.style.display = 'none';
+                    }, 500);
+                }, 800);
+            } else {
+                console.warn('Loading element not found during completion');
+                
+                // Still make product visible even if loading element is missing
+                const productContainer = document.querySelector('.product-container');
+                if (productContainer) {
+                    productContainer.classList.add('loaded');
+                    productContainer.style.opacity = '1';
+                }
+            }
+        }
+        
+        updateLoadingPercentage(percentage) {
+            // Update loading percentage element if it exists
+            const loadingElement = document.querySelector('.product-loading');
+            if (loadingElement) {
+                const percentageEl = loadingElement.querySelector('.loading-percentage');
+                if (percentageEl) {
+                    percentageEl.textContent = `${percentage}%`;
+                }
+            }
         }
         
         loadRecentlyViewed() {
@@ -646,54 +830,87 @@
         }
         
         async loadProduct() {
-                    try {
-                        console.log('Starting product load process');
-                        const urlParams = new URLSearchParams(window.location.search);
-                        const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
-                        const selectedColor = urlParams.get('color'); // Get color from URL if available
-        
-                        console.log(`Loading product with ID: ${productId}`);
-                        
-                        // Load product data from Shopify API - no fallbacks
-                        this.currentProduct = await this.fetchProductData(productId);
-                        
-                        // Detailed logging for debugging
-                        if (this.currentProduct) {
-                            console.log('Product data loaded successfully:', {
-                                id: this.currentProduct.id,
-                                title: this.currentProduct.title,
-                                colors: this.currentProduct.colors?.length || 0,
-                                sizes: this.currentProduct.sizes?.length || 0,
-                                images: this.currentProduct.images?.length || 0
-                            });
-                        } else {
-                            console.error('Failed to load product data');
-                        }
-                        
-                        if (this.currentProduct) {
-                            // Render the product to the DOM
-                            await this.renderProduct();
-                            
-                            // Set the selected color if it was passed in the URL
-                            if (selectedColor && this.currentProduct.colors &&
-                                this.currentProduct.colors.includes(selectedColor)) {
-                                console.log(`Setting selected color to: ${selectedColor}`);
-                                this.selectColor(selectedColor);
-                            }
-                            
-                            this.addToRecentlyViewed(this.currentProduct);
-                            this.loadRelatedProducts();
-                            
-                            console.log('Product loading process completed successfully');
-                        } else {
-                            console.error('No product data available to render');
-                            this.showProductNotFound();
-                        }
-                    } catch (error) {
-                        console.error('Critical error in loadProduct:', error);
-                        this.showProductNotFound();
-                    }
+            try {
+                console.log('Starting product load process');
+                
+                // Clear any existing loading interval just in case
+                if (this.loadingInterval) {
+                    clearInterval(this.loadingInterval);
                 }
+                
+                // Update loading progress to 10%
+                this.updateLoadingPercentage(10);
+                
+                // Parse URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
+                const selectedColor = urlParams.get('color'); // Get color from URL if available
+                
+                console.log(`Loading product with ID: ${productId}`);
+                
+                // Update loading progress to 20%
+                this.updateLoadingPercentage(20);
+                
+                // Load product data from Shopify API - no fallbacks
+                this.currentProduct = await this.fetchProductData(productId);
+                
+                // Update loading progress to 50%
+                this.updateLoadingPercentage(50);
+                
+                // Detailed logging for debugging
+                if (this.currentProduct) {
+                    console.log('Product data loaded successfully:', {
+                        id: this.currentProduct.id,
+                        title: this.currentProduct.title,
+                        colors: this.currentProduct.colors?.length || 0,
+                        sizes: this.currentProduct.sizes?.length || 0,
+                        images: this.currentProduct.images?.length || 0
+                    });
+                    
+                    // Update loading progress to 70%
+                    this.updateLoadingPercentage(70);
+                    
+                    // Render the product to the DOM
+                    await this.renderProduct();
+                    
+                    // Update loading progress to 90%
+                    this.updateLoadingPercentage(90);
+                    
+                    // Set the selected color if it was passed in the URL
+                    if (selectedColor && this.currentProduct.colors) {
+                        // Check if the color exists in our colors array (accounting for both string and object formats)
+                        const colorExists = this.currentProduct.colors.some(color =>
+                            typeof color === 'object'
+                                ? color.name.toLowerCase() === selectedColor.toLowerCase()
+                                : color.toLowerCase() === selectedColor.toLowerCase()
+                        );
+                        
+                        if (colorExists) {
+                            console.log(`Setting selected color to: ${selectedColor}`);
+                            this.selectColor(selectedColor);
+                        }
+                    }
+                    
+                    this.addToRecentlyViewed(this.currentProduct);
+                    this.loadRelatedProducts();
+                    
+                    console.log('Product loading process completed successfully');
+                } else {
+                    console.error('No product data available to render');
+                    this.showProductNotFound();
+                }
+                
+                // Complete the loading sequence regardless of outcome
+                this.completeLoadingSequence();
+                
+            } catch (error) {
+                console.error('Critical error in loadProduct:', error);
+                // Update loading to error state but still complete the sequence
+                this.updateLoadingPercentage(100);
+                this.completeLoadingSequence();
+                this.showProductNotFound();
+            }
+        }
 
         async fetchProductData(productId) {
                     try {
