@@ -717,10 +717,11 @@ class ProductDetailManager {
                             </label>
                             <div class="size-options">
                                 ${this.currentProduct.sizes.map(size => `
-                                    <button class="size-option" 
+                                    <button class="size-option"
                                             onclick="productDetailManager.selectSize('${size}')"
-                                            data-size="${size}">
-                                        ${size}
+                                            data-size="${size}"
+                                            data-original-size="${size}">
+                                        ${this.simplifySize(size)}
                                     </button>
                                 `).join('')}
                             </div>
@@ -916,55 +917,233 @@ class ProductDetailManager {
         this.updateInventoryDisplay();
     }
     
+    // Helper method to simplify size strings - ONLY returns S, M, L, etc.
+    simplifySize(sizeString) {
+        if (!sizeString) return '';
+        
+        // First, aggressively handle any "Color / Size" format by extracting ONLY the size part
+        if (sizeString.includes('/')) {
+            const parts = sizeString.split('/').map(p => p.trim());
+            // Use the last part (typically the size) for further processing
+            sizeString = parts[parts.length - 1];
+        }
+        
+        // Expanded list of color names to strip from size strings
+        const colorNames = [
+            'black', 'white', 'navy', 'blue', 'red', 'green', 'yellow', 'purple',
+            'pink', 'orange', 'brown', 'gray', 'grey', 'maroon', 'forest', 'heather',
+            'charcoal', 'vintage', 'french', 'navy blazer', 'azure', 'crimson',
+            'teal', 'olive', 'burgundy', 'lavender', 'mustard', 'indigo', 'mauve',
+            'hunter', 'cream', 'ivory', 'beige', 'khaki', 'tan', 'sage', 'slate'
+        ];
+        
+        // More aggressive color stripping
+        colorNames.forEach(color => {
+            // Remove color name if it appears anywhere in the string (word boundaries)
+            const regexWord = new RegExp(`\\b${color}\\b`, 'i');
+            sizeString = sizeString.replace(regexWord, '');
+            
+            // Remove color with space after
+            const regexAfter = new RegExp(`${color}\\s+`, 'i');
+            sizeString = sizeString.replace(regexAfter, '');
+            
+            // Remove color with space before
+            const regexBefore = new RegExp(`\\s+${color}`, 'i');
+            sizeString = sizeString.replace(regexBefore, '');
+        });
+        
+        // Remove any remaining slashes and trim whitespace
+        sizeString = sizeString.replace('/', '').trim();
+        
+        // Convert to uppercase for comparison
+        const upperSize = sizeString.toUpperCase().trim();
+        
+        // Expanded size mappings
+        const sizeMap = {
+            'SMALL': 'S',
+            'MEDIUM': 'M',
+            'LARGE': 'L',
+            'EXTRA LARGE': 'XL',
+            'EXTRA-LARGE': 'XL',
+            'EXTRA SMALL': 'XS',
+            'EXTRA-SMALL': 'XS',
+            '2XL': 'XXL',
+            'XXL': 'XXL',
+            '2X': 'XXL',
+            '3XL': '3XL',
+            'XXXL': '3XL',
+            '3X': '3XL',
+            'ONE SIZE': 'OS',
+            'ONESIZE': 'OS',
+            'ONE-SIZE': 'OS'
+        };
+        
+        // Check for exact matches in our mapping
+        if (sizeMap[upperSize]) {
+            return sizeMap[upperSize];
+        }
+        
+        // Check for common size abbreviations - direct return for clean formats
+        if (['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize)) {
+            return upperSize;
+        }
+        
+        // Check for partial matches
+        for (const [key, value] of Object.entries(sizeMap)) {
+            if (upperSize.includes(key)) {
+                return value;
+            }
+        }
+        
+        // If it's a numeric size (like 32, 34, etc.), keep it as is
+        if (/^\d+$/.test(upperSize)) {
+            return upperSize;
+        }
+        
+        // For anything else, try to extract just letter-based sizes if present
+        const sizeMatch = upperSize.match(/\b(XS|S|M|L|XL|XXL|XXXL)\b/);
+        if (sizeMatch) {
+            return sizeMatch[0];
+        }
+        
+        // Fallback to just returning "OS" (one size) if we can't determine
+        // This ensures we always show a simple size format
+        return 'OS';
+    }
+
     filterImagesByColor(colorName) {
         if (!this.currentProduct || !this.currentProduct.images || !colorName) {
             return;
         }
         
+        console.log(`Filtering images for color: ${colorName}`);
+        
         // Check if we have explicit color-specific images from Shopify
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
             // Use the color-specific images from our mapping
-            this.filteredImages = this.currentProduct.colorImages[colorName];
+            this.filteredImages = [...this.currentProduct.colorImages[colorName]];
             console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
-        } else {
-            // Fallback to filename-based filtering if no explicit color mapping
             
-            // Convert color name to lowercase for case-insensitive comparison
-            const color = colorName.toLowerCase();
+            // Update the DOM directly
+            this.updateDOMWithFilteredImages(colorName, this.filteredImages);
+            return;
+        }
+        
+        // If no explicit color mapping, filter images based on URL patterns
+        // Convert color name to lowercase for case-insensitive comparison
+        const color = colorName.toLowerCase();
+        
+        // More comprehensive pattern matching for color-specific images
+        this.filteredImages = this.currentProduct.images.filter(imagePath => {
+            // First check if the image path exists
+            if (!imagePath || typeof imagePath !== 'string') {
+                return false;
+            }
             
-            // Filter images that match the selected color
+            const imageName = imagePath.toLowerCase();
+            
+            // More extensive pattern matching to catch more color variants
+            return imageName.includes(`/${color}/`) ||
+                   imageName.includes(`/${color}_`) ||
+                   imageName.includes(`/${color}-`) ||
+                   imageName.includes(`_${color}_`) ||
+                   imageName.includes(`-${color}-`) ||
+                   imageName.includes(`_${color}.`) ||
+                   imageName.includes(`-${color}.`) ||
+                   imageName.includes(`variant=${color}`) ||
+                   imageName.includes(`color=${color}`) ||
+                   imageName.includes(`${color.replace(' ', '')}_`) ||
+                   imageName.includes(`${color.replace(' ', '')}-`) ||
+                   // Check for color name as a distinct word
+                   new RegExp(`\\b${color}\\b`).test(imageName);
+        });
+        
+        console.log(`Found ${this.filteredImages.length} images matching color: ${colorName}`);
+        
+        // If no images match the color, use a more aggressive approach
+        if (this.filteredImages.length === 0) {
+            console.log(`No specific images found for color: ${colorName}, trying secondary matching`);
+            
+            // Try a more relaxed match - any occurrence of the color name in the URL
             this.filteredImages = this.currentProduct.images.filter(imagePath => {
-                // First check if the image path exists (not a reference to a non-existent file)
-                if (!imagePath || typeof imagePath !== 'string') {
-                    return false;
-                }
-                
-                const imageName = imagePath.toLowerCase();
-                // Check if image filename contains the color name
-                // Common patterns: color-position (e.g., black-front, white-back)
-                return imageName.includes(`-${color}-`) ||
-                       imageName.includes(`/${color}-`) ||
-                       imageName.includes(`-${color.replace(' ', '-')}-`) ||
-                       imageName.includes(`/${color.replace(' ', '-')}-`) ||
-                       // Also try matching "color position" without hyphen
-                       imageName.includes(`${color} `);
+                if (!imagePath || typeof imagePath !== 'string') return false;
+                return imagePath.toLowerCase().includes(color);
             });
             
-            // If no images match the color, use all images as fallback
-            if (this.filteredImages.length === 0) {
-                console.log(`No specific images found for color: ${colorName}, using all images`);
-                this.filteredImages = [...this.currentProduct.images];
+            // If still no matches, use index-based mapping as a last resort
+            if (this.filteredImages.length === 0 && this.currentProduct.colors) {
+                console.log(`Still no matches, attempting index-based color mapping`);
+                const colorIndex = this.currentProduct.colors.findIndex(c => c.name === colorName);
+                
+                if (colorIndex >= 0 && this.currentProduct.images.length > colorIndex) {
+                    // Use image at same index as color, plus a few surrounding images if available
+                    const startIndex = Math.max(0, colorIndex - 1);
+                    const endIndex = Math.min(this.currentProduct.images.length, colorIndex + 3);
+                    this.filteredImages = this.currentProduct.images.slice(startIndex, endIndex);
+                    console.log(`Using index-based matching, selected images ${startIndex}-${endIndex-1}`);
+                } else {
+                    // Last resort: use all images
+                    console.log(`No matches found for color: ${colorName}, using all images as fallback`);
+                    this.filteredImages = [...this.currentProduct.images];
+                }
             }
         }
         
-        // Update the thumbnail grid with filtered images
+        // Update thumbnail grid and main image
         this.updateThumbnailGrid();
+        this.updateDOMWithFilteredImages(colorName, this.filteredImages);
         
         // Reset current image index and update main image
         this.currentImageIndex = 0;
         const mainImage = document.getElementById('main-image');
         if (mainImage && this.filteredImages.length > 0) {
             mainImage.src = this.filteredImages[0];
+        }
+    }
+    
+    // Update DOM with filtered images for a specific color
+    updateDOMWithFilteredImages(colorName, filteredImages) {
+        if (!filteredImages || filteredImages.length === 0) return;
+        
+        // Find all thumbnails
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        if (thumbnails.length === 0) return;
+        
+        // Hide all thumbnails first
+        thumbnails.forEach(thumbnail => {
+            thumbnail.style.display = 'none';
+            
+            // Try to add data-color attribute for future use
+            const thumbImg = thumbnail.querySelector('img');
+            if (thumbImg && !thumbImg.hasAttribute('data-color')) {
+                const imgSrc = thumbImg.getAttribute('src');
+                if (imgSrc && imgSrc.toLowerCase().includes(colorName.toLowerCase())) {
+                    thumbImg.setAttribute('data-color', colorName);
+                }
+            }
+        });
+        
+        // Now show only thumbnails with filtered images
+        let firstVisibleThumbnail = null;
+        thumbnails.forEach(thumbnail => {
+            const thumbImg = thumbnail.querySelector('img');
+            if (thumbImg) {
+                const imgSrc = thumbImg.getAttribute('src');
+                if (filteredImages.includes(imgSrc)) {
+                    thumbnail.style.display = 'block';
+                    
+                    // Remember the first visible thumbnail
+                    if (!firstVisibleThumbnail) {
+                        firstVisibleThumbnail = thumbnail;
+                    }
+                }
+            }
+        });
+        
+        // If we found at least one visible thumbnail, make it active
+        if (firstVisibleThumbnail) {
+            thumbnails.forEach(t => t.classList.remove('active'));
+            firstVisibleThumbnail.classList.add('active');
         }
     }
     
@@ -1065,26 +1244,59 @@ class ProductDetailManager {
             return false;
         }
         
+        console.log(`Adding to cart: Color=${this.selectedVariant.color}, Size=${this.selectedVariant.size}, Quantity=${this.selectedVariant.quantity}`);
+        
         // Find the Shopify variant ID for the selected options
         let shopifyVariantId = null;
         let variantImage = null;
+        let foundExactMatch = false;
         
         if (this.currentProduct.variants) {
+            // First, try to find an exact match by color and size
             const matchingVariant = this.currentProduct.variants.find(v =>
                 v.color === this.selectedVariant.color &&
                 v.size === this.selectedVariant.size
             );
+            
             if (matchingVariant) {
                 shopifyVariantId = matchingVariant.id;
                 variantImage = matchingVariant.image;
+                foundExactMatch = true;
+                console.log(`Found exact variant match with ID: ${shopifyVariantId}`);
+            }
+            // If no exact match, try to find a match by size only (if color is less important)
+            else if (this.selectedVariant.size) {
+                const sizeMatchVariant = this.currentProduct.variants.find(v =>
+                    v.size === this.selectedVariant.size
+                );
+                
+                if (sizeMatchVariant) {
+                    shopifyVariantId = sizeMatchVariant.id;
+                    variantImage = sizeMatchVariant.image;
+                    console.log(`Found size-only match with ID: ${shopifyVariantId}`);
+                }
+            }
+            // If still no match, use the first variant as a fallback
+            if (!shopifyVariantId && this.currentProduct.variants.length > 0) {
+                shopifyVariantId = this.currentProduct.variants[0].id;
+                variantImage = this.currentProduct.variants[0].image;
+                console.log(`No exact match found, using first variant ID: ${shopifyVariantId}`);
             }
         }
+        
+        console.log(`Selected variant ID: ${shopifyVariantId}`);
         
         // Get color-specific image - important for cart display
         let productImage = null;
         
+        // Use the currently displayed main image as the first priority
+        const currentMainImage = document.getElementById('main-image');
+        if (currentMainImage && currentMainImage.src) {
+            productImage = currentMainImage.src;
+            console.log(`Using current main image for cart: ${productImage}`);
+        }
         // If we have color-specific images for this product, use the first one for this color
-        if (this.currentProduct.colorImages &&
+        else if (this.currentProduct.colorImages &&
             this.currentProduct.colorImages[this.selectedVariant.color] &&
             this.currentProduct.colorImages[this.selectedVariant.color].length > 0) {
             
