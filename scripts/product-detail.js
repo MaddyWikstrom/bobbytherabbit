@@ -1260,6 +1260,21 @@ class ProductDetailManager {
         }
     }
 
+    validateProductSelection() {
+        // Check if color and size are selected
+        if (!this.selectedVariant.color) {
+            this.showNotification('Please select a color', 'error');
+            return false;
+        }
+        
+        if (!this.selectedVariant.size) {
+            this.showNotification('Please select a size', 'error');
+            return false;
+        }
+        
+        return true;
+    }
+
     addToCart() {
         // Validate product selection
         if (!this.validateProductSelection()) {
@@ -1443,4 +1458,149 @@ class ProductDetailManager {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>S</td><td>20</td>
+                    <tr><td>S</td><td>20</td><td>28</td></tr>
+                    <tr><td>M</td><td>22</td><td>29</td></tr>
+                    <tr><td>L</td><td>24</td><td>30</td></tr>
+                    <tr><td>XL</td><td>26</td><td>31</td></tr>
+                    <tr><td>2XL</td><td>28</td><td>32</td></tr>
+                </tbody>
+            </table>
+        `;
+        
+        modal.classList.add('active');
+    }
+
+    closeSizeGuide() {
+        const modal = document.getElementById('size-guide-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    openImageZoom() {
+        const modal = document.getElementById('image-zoom-modal');
+        const content = document.getElementById('image-zoom-content');
+        const mainImage = document.getElementById('main-image');
+        
+        if (modal && content && mainImage) {
+            content.innerHTML = `<img src="${mainImage.src}" alt="${this.currentProduct.title}">`;
+            modal.classList.add('active');
+        }
+    }
+
+    closeImageZoom() {
+        const modal = document.getElementById('image-zoom-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    loadRecentlyViewed() {
+        try {
+            const recentlyViewed = localStorage.getItem('recentlyViewed');
+            if (recentlyViewed) {
+                this.recentlyViewed = JSON.parse(recentlyViewed);
+            }
+        } catch (error) {
+            console.error('Error loading recently viewed products:', error);
+        }
+    }
+
+    addToRecentlyViewed(product) {
+        if (!product) return;
+        
+        try {
+            // Remove existing entry with same ID if present
+            this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== product.id);
+            
+            // Add to beginning of array
+            this.recentlyViewed.unshift({
+                id: product.id,
+                title: product.title,
+                image: product.images[0],
+                price: product.price,
+                category: product.category
+            });
+            
+            // Limit to 8 items
+            if (this.recentlyViewed.length > 8) {
+                this.recentlyViewed = this.recentlyViewed.slice(0, 8);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('recentlyViewed', JSON.stringify(this.recentlyViewed));
+        } catch (error) {
+            console.error('Error adding to recently viewed:', error);
+        }
+    }
+
+    loadRelatedProducts() {
+        // This would typically fetch related products from the API
+        console.log('Loading related products...');
+    }
+
+    showNotification(message, type = 'success') {
+        // Create or get notification container
+        let notificationContainer = document.getElementById('notification-container');
+        if (!notificationContainer) {
+            notificationContainer = document.createElement('div');
+            notificationContainer.id = 'notification-container';
+            document.body.appendChild(notificationContainer);
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+            </div>
+        `;
+        
+        // Add to container
+        notificationContainer.appendChild(notification);
+        
+        // Show with animation
+        setTimeout(() => {
+            notification.classList.add('active');
+        }, 10);
+        
+        // Remove after delay
+        setTimeout(() => {
+            notification.classList.remove('active');
+            setTimeout(() => {
+                notificationContainer.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    showAddedFeedback() {
+        const addButton = document.querySelector('.add-to-cart-btn');
+        if (addButton) {
+            addButton.classList.add('added');
+            addButton.textContent = 'Added to Cart';
+            
+            setTimeout(() => {
+                addButton.classList.remove('added');
+                addButton.textContent = 'Add to Cart';
+            }, 2000);
+        }
+        
+        this.showNotification('Added to cart successfully!');
+    }
+
+    animateCartIcon() {
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            cartIcon.classList.add('bounce');
+            setTimeout(() => {
+                cartIcon.classList.remove('bounce');
+            }, 1000);
+        }
+    }
+}
+
+// Initialize product detail manager when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.productDetailManager = new ProductDetailManager();
+});
