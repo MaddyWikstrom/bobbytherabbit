@@ -2085,7 +2085,9 @@ class QuickViewManager {
             
             // // Also update the DOM directly
             // this.updateDOMWithFilteredImages(colorName, colorSpecificImages);
-            this.updateThumbnailGrid();
+            if (typeof this.updateThumbnailGrid === 'function') {
+                this.updateThumbnailGrid();
+            }
             return;
         }
         
@@ -2328,7 +2330,9 @@ class QuickViewManager {
         // If no matching thumbnails were found but we have filtered images,
         // we need to update the thumbnails grid
         else if (document.querySelector('.thumbnail-grid')) {
-            this.updateThumbnailGrid();
+            if (typeof this.updateThumbnailGrid === 'function') {
+                this.updateThumbnailGrid();
+            }
         }
     }
     
@@ -2656,7 +2660,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     // Also update the thumbnail grid if it exists
-                    if (typeof window.productDetailManager.updateThumbnailGrid === 'function') {
+                    if (window.productDetailManager && typeof window.productDetailManager.updateThumbnailGrid === 'function') {
                         window.productDetailManager.updateThumbnailGrid();
                     }
                 }

@@ -1317,6 +1317,52 @@ class ProductDetailManager {
         
         return commonColors.includes(str.toLowerCase());
     }
+    
+    // Add updateThumbnailGrid method for compatibility with quick-view.js
+    updateThumbnailGrid() {
+        // This is a compatibility method to match quick-view.js functionality
+        try {
+            // Find the thumbnail container
+            const galleryContainer = document.getElementById('product-gallery');
+            if (!galleryContainer) return;
+            
+            // Update thumbnails based on filtered images
+            if (this.filteredImages && this.filteredImages.length > 0) {
+                galleryContainer.innerHTML = this.filteredImages.map((img, idx) => `
+                    <div class="gallery-item ${idx === 0 ? 'active' : ''}"
+                         style="cursor:pointer; border:2px solid ${idx === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
+                        <img src="${img}" alt="${this.currentProduct.title} ${idx + 1}"
+                             style="width:60px; height:60px; object-fit:cover;">
+                    </div>
+                `).join('');
+                
+                // Update main image to the first filtered image
+                this.currentImageIndex = 0;
+                this.updateMainImage();
+                
+                // Add click event listeners to the new thumbnails
+                document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                    item.addEventListener('click', () => {
+                        this.currentImageIndex = index;
+                        this.updateMainImage();
+                        
+                        // Update active state of thumbnails
+                        document.querySelectorAll('.gallery-item').forEach((i, idx) => {
+                            if (idx === index) {
+                                i.classList.add('active');
+                                i.style.border = '2px solid #4CAF50';
+                            } else {
+                                i.classList.remove('active');
+                                i.style.border = '2px solid transparent';
+                            }
+                        });
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error in updateThumbnailGrid:', error);
+        }
+    }
 }
 
 // Initialize product detail manager when DOM is loaded
