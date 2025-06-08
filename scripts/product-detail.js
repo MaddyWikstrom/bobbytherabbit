@@ -641,6 +641,13 @@ class ProductDetailManager {
 
         // Initialize filteredImages with all product images
         this.filteredImages = [...this.currentProduct.images];
+        
+        // Initialize with default color if available
+        if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+            // Set the initial color
+            this.selectedVariant.color = this.currentProduct.colors[0].name;
+            console.log(`Setting initial color to ${this.selectedVariant.color}`);
+        }
 
         const discount = this.currentProduct.comparePrice ?
             Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
@@ -716,7 +723,7 @@ class ProductDetailManager {
                                 <a href="#" class="size-guide-link" onclick="productDetailManager.openSizeGuide()">Size Guide</a>
                             </label>
                             <div class="size-options">
-                                ${this.currentProduct.sizes.map(size => `
+                                ${this.getAvailableSizesForColor(this.selectedVariant.color).map(size => `
                                     <button class="size-option"
                                             onclick="productDetailManager.selectSize('${size}')"
                                             data-size="${size}"
@@ -913,8 +920,58 @@ class ProductDetailManager {
         // Filter images based on selected color
         this.filterImagesByColor(colorName);
         
+        // Update size options based on this color
+        this.updateSizeOptionsForColor(colorName);
+        
         // Update inventory display
         this.updateInventoryDisplay();
+    }
+    
+    // Update size options when color changes
+    updateSizeOptionsForColor(colorName) {
+        const sizeOptionsContainer = document.querySelector('.size-options');
+        if (!sizeOptionsContainer) return;
+        
+        // Get sizes available for this color
+        const availableSizes = this.getAvailableSizesForColor(colorName);
+        console.log(`Updating size options for ${colorName}, found ${availableSizes.length} sizes`);
+        
+        // Regenerate the size buttons
+        sizeOptionsContainer.innerHTML = availableSizes.map(size => `
+            <button class="size-option"
+                    onclick="productDetailManager.selectSize('${size}')"
+                    data-size="${size}"
+                    data-original-size="${size}">
+                ${this.simplifySize(size)}
+            </button>
+        `).join('');
+        
+        // Reset selected size if it's no longer available
+        if (this.selectedVariant.size && !availableSizes.includes(this.selectedVariant.size)) {
+            this.selectedVariant.size = null;
+        }
+    }
+    
+    // Get available sizes for a specific color
+    getAvailableSizesForColor(colorName) {
+        if (!this.currentProduct || !this.currentProduct.sizes) {
+            return [];
+        }
+        
+        // If no color is selected yet, return all sizes
+        if (!colorName && this.currentProduct.sizes) {
+            return this.currentProduct.sizes;
+        }
+        
+        // Filter sizes based on inventory for this color
+        const availableSizes = this.currentProduct.sizes.filter(size => {
+            const inventoryKey = `${colorName}-${size}`;
+            const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
+            return stockLevel > 0;
+        });
+        
+        console.log(`Available sizes for ${colorName}: ${availableSizes.join(', ')}`);
+        return availableSizes;
     }
     
     // Helper method to simplify size strings - ONLY returns S, M, L, etc.
