@@ -52,16 +52,27 @@ document.addEventListener('DOMContentLoaded', function() {
         container.style.boxSizing = 'border-box';
     }
     
-    // Fix product grid to extend full width
+    // Fix product grid to extend full width and center all items
     const productGrid = collectionSection.querySelector('.product-grid-scroll');
     if (productGrid) {
         productGrid.style.display = 'flex';
         productGrid.style.justifyContent = 'center';
+        productGrid.style.alignItems = 'center';
         productGrid.style.width = '100%';
         productGrid.style.overflowX = 'auto';
         productGrid.style.margin = '0 auto';
-        productGrid.style.padding = '0 20px';
+        productGrid.style.padding = '0';
         productGrid.style.boxSizing = 'border-box';
+        
+        // Center each product in the scroll
+        const productItems = productGrid.querySelectorAll('.product-card');
+        productItems.forEach(item => {
+            item.style.margin = '0 1rem';
+            item.style.display = 'flex';
+            item.style.flexDirection = 'column';
+            item.style.alignItems = 'center';
+            item.style.justifyContent = 'center';
+        });
     }
     
     // Make scroll container full width
@@ -122,31 +133,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            /* Additional styles for full-width collection section */
+            /* Additional styles for full-width collection section with no gaps */
             .collection {
                 width: 100vw !important;
                 max-width: 100% !important;
-                margin-left: calc(-50vw + 50%) !important;
-                margin-right: calc(-50vw + 50%) !important;
+                margin: 0 !important;
                 position: relative !important;
                 overflow-x: hidden !important;
                 box-sizing: border-box !important;
-                padding-left: 0 !important;
-                padding-right: 0 !important;
+                padding: 0 !important;
+                left: 50% !important;
+                right: 50% !important;
+                margin-left: -50vw !important;
+                margin-right: -50vw !important;
+                background-color: var(--secondary-bg) !important;
+            }
+            
+            .product-scroll-container {
+                width: 100% !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                overflow: hidden !important;
+                position: relative !important;
             }
             
             .product-grid-scroll {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 overflow-x: auto !important;
-                padding: 1rem !important;
+                padding: 1rem 0 !important;
                 -ms-overflow-style: none !important;  /* IE and Edge */
                 scrollbar-width: none !important;  /* Firefox */
-                justify-content: flex-start !important;
+                justify-content: center !important;
+                align-items: center !important;
                 width: 100% !important;
-                max-width: 100vw !important;
+                max-width: 100% !important;
                 margin: 0 auto !important;
                 scroll-behavior: smooth !important;
+                gap: 2rem !important;
             }
             
             .product-grid-scroll::-webkit-scrollbar {
