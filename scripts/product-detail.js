@@ -172,9 +172,9 @@ class ProductDetailManager {
 
     async loadShopifyProduct(productId) {
         try {
-            // Use Netlify function to avoid CORS issues
-            console.log('🛍️ Loading product via Netlify function...');
-            const response = await fetch('/.netlify/functions/get-products');
+            // Use our new single-product Netlify function to avoid CORS issues
+            console.log('🛍️ Loading single product via Netlify function...');
+            const response = await fetch(`/.netlify/functions/get-product-by-handle?handle=${productId}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -187,36 +187,15 @@ class ProductDetailManager {
                 return null;
             }
 
-            // Find the specific product by handle/id or Shopify ID
-            // Check if data has a products array (new API format) or is an array directly (old format)
-            let products = [];
-            if (data.products && Array.isArray(data.products)) {
-                console.log('Processing product data from new API format');
-                products = data.products;
-            } else if (Array.isArray(data)) {
-                console.log('Processing product data from legacy API format');
-                products = data;
-            } else {
-                console.error('Unexpected data format from API:', data);
+            // Direct access to the product
+            if (!data.product) {
+                console.error('Unexpected API response format - no product found:', data);
                 return null;
             }
             
-            const product = products.find(p => {
-                const node = p.node || p;
-                const shopifyId = node.id?.replace('gid://shopify/Product/', '');
-                return node.handle === productId ||
-                       shopifyId === productId ||
-                       node.id === productId;
-            });
-            
-            if (!product) {
-                console.log('❌ Product not found in Shopify data');
-                return null;
-            }
-
-            const productNode = product.node || product;
-            console.log(`🛍️ Found product via Netlify function: ${productNode.title}`);
-            return this.convertShopifyProductForDetail(productNode);
+            // Log successful product fetch
+            console.log(`🛍️ Found product via Netlify function: ${data.product.title}`);
+            return this.convertShopifyProductForDetail(data.product);
             
         } catch (error) {
             console.error('❌ Error loading product via Netlify function:', error);
@@ -987,10 +966,14 @@ class ProductDetailManager {
         
         console.log(`Finding sizes for color: ${colorName}`);
         
-        // Get all variants for the selected color - exact match only
+        console.log(`Finding variants for color: ${colorName}`);
+        
+        // Get all variants with exact color match
         const colorVariants = this.currentProduct.variants.filter(v =>
             v.color === colorName
         );
+        
+        console.log(`Found ${colorVariants.length} exact color match variants`);
         
         console.log(`Found ${colorVariants.length} variants for color ${colorName}`);
         
