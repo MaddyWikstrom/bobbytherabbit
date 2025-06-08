@@ -1151,128 +1151,89 @@ class ProductDetailManager {
     }
 
     filterImagesByColor(colorName) {
-        if (!this.currentProduct || !this.currentProduct.images || !colorName) {
+        if (!this.currentProduct || !this.currentProduct.images) {
+            console.error('No product data or images available for filtering');
+            this.filteredImages = [];
+            return;
+        }
+        
+        if (!colorName) {
+            // If no color is selected, show all images
+            console.log('No color selected, showing all images');
+            this.filteredImages = [...this.currentProduct.images];
+            this.updateThumbnailGrid();
             return;
         }
         
         console.log(`Filtering images for color: ${colorName}`);
         
-        // Check if we have explicit color-specific images from Shopify
+        // If we have explicit color-specific images from Shopify, use them
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
-            // Use the color-specific images from our mapping
             this.filteredImages = this.currentProduct.colorImages[colorName];
-            console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
-        } else {
-            // STRICT COLOR FILTERING - match the color name in the URL and exclude other color names
-            const color = colorName.toLowerCase();
+            console.log(`Using ${this.filteredImages.length} color-specific images from mapping for ${colorName}`);
+            this.updateThumbnailGrid();
+            return;
+        }
+        
+        // Get all available colors for this product to filter against
+        const availableColors = this.currentProduct.colors.map(c => c.name.toLowerCase());
+        console.log(`Available colors for this product: ${availableColors.join(', ')}`);
+        
+        // Make sure colorName is lowercase for comparison
+        const selectedColor = colorName.toLowerCase();
+        
+        // Create a pattern for detecting this color in filenames - look for word boundaries
+        const colorPattern = new RegExp(`(^|[^a-z])${selectedColor}([^a-z]|$)`, 'i');
+        
+        // APPROACH 1: Check color-specific images first based on filename pattern matching
+        let colorImages = this.currentProduct.images.filter(imagePath => {
+            if (!imagePath || typeof imagePath !== 'string') return false;
             
-            // Define ALL color terms to check for exclusion
-            const allColorTerms = [
-                'black', 'white', 'navy', 'blue', 'red', 'green', 'yellow', 'purple',
-                'pink', 'orange', 'brown', 'gray', 'grey', 'maroon', 'forest', 'charcoal',
-                'vintage', 'heather', 'azure', 'teal', 'olive', 'burgundy', 'lavender',
-                'mustard', 'indigo', 'crimson', 'coral', 'peach', 'tan', 'khaki', 'beige'
-            ];
+            const filename = imagePath.split('/').pop().toLowerCase(); // Get just the filename
             
-            // Get terms related to the selected color
-            const relatedColorTerms = [];
+            // If filename contains the color name with word boundaries, it's likely for this color
+            return colorPattern.test(filename);
+        });
+        
+        // If we found images with approach 1, use those
+        if (colorImages.length > 0) {
+            this.filteredImages = colorImages;
+            console.log(`Found ${colorImages.length} images containing ${selectedColor} in filename`);
+            this.updateThumbnailGrid();
+            return;
+        }
+        
+        // APPROACH 2: If no specific color matches, try to exclude images that clearly belong to other colors
+        const otherColors = availableColors.filter(c => c !== selectedColor);
+        colorImages = this.currentProduct.images.filter(imagePath => {
+            if (!imagePath || typeof imagePath !== 'string') return false;
             
-            switch (color) {
-                case 'black':
-                    relatedColorTerms.push('black', 'noir', 'nero', 'schwarz', 'dark');
-                    break;
-                case 'green':
-                    relatedColorTerms.push('green', 'vert', 'verde', 'olive', 'emerald', 'forest');
-                    break;
-                case 'blue':
-                    relatedColorTerms.push('blue', 'navy', 'bleu', 'azure', 'cobalt', 'royal', 'indigo');
-                    break;
-                case 'navy':
-                    relatedColorTerms.push('navy', 'blue', 'dark-blue', 'navy-blue', 'indigo');
-                    break;
-                // Add other colors as needed
-                default:
-                    // Just use the color name itself if no specific aliases
-                    relatedColorTerms.push(color);
-            }
+            const filename = imagePath.split('/').pop().toLowerCase();
             
-            console.log(`Looking for these color terms: ${relatedColorTerms.join(', ')}`);
-            
-            // Get other color terms (not related to the selected color)
-            const otherColorTerms = allColorTerms.filter(term => !relatedColorTerms.includes(term));
-            console.log(`Excluding these color terms: ${otherColorTerms.join(', ')}`);
-            
-            // Filter images that match the color terms AND don't match other color terms
-            this.filteredImages = this.currentProduct.images.filter(imagePath => {
-                // Skip invalid paths
-                if (!imagePath || typeof imagePath !== 'string') {
+            // Check if this image belongs to any other color
+            for (const otherColor of otherColors) {
+                // If filename clearly indicates another color, exclude it
+                if (new RegExp(`(^|[^a-z])${otherColor}([^a-z]|$)`, 'i').test(filename)) {
                     return false;
                 }
-                
-                const lowerPath = imagePath.toLowerCase();
-                
-                // First check if the image contains any term related to the selected color
-                const hasTargetColor = relatedColorTerms.some(term => {
-                    return lowerPath.includes(term) ||
-                           lowerPath.includes(`_${term}`) ||
-                           lowerPath.includes(`-${term}`) ||
-                           lowerPath.includes(`${term}_`) ||
-                           lowerPath.includes(`${term}-`);
-                });
-                
-                // If the image doesn't have the target color, exclude it
-                if (!hasTargetColor) return false;
-                
-                // Then check if the image contains any term related to OTHER colors
-                // This is important to exclude images like "black-and-green" when only "black" is selected
-                const hasOtherColor = otherColorTerms.some(term => {
-                    // If the term is part of another word (like 'greens' in 'greenscreen'), don't count it
-                    // We need to check for word boundaries or common separators
-                    return lowerPath.includes(`_${term}`) ||
-                           lowerPath.includes(`-${term}`) ||
-                           lowerPath.includes(`${term}_`) ||
-                           lowerPath.includes(`${term}-`) ||
-                           // Also check for the exact term with common filename patterns
-                           lowerPath.includes(`/${term}.`) ||
-                           lowerPath.includes(`_${term}.`) ||
-                           lowerPath.includes(`-${term}.`);
-                });
-                
-                // Only include the image if it has the target color AND doesn't have other colors
-                return hasTargetColor && !hasOtherColor;
-            });
-            
-            // If no images match the strict criteria, try a more relaxed approach
-            if (this.filteredImages.length === 0) {
-                console.log(`No specific images found with strict filtering, trying relaxed filtering`);
-                
-                // Just match the selected color without excluding other colors
-                this.filteredImages = this.currentProduct.images.filter(imagePath => {
-                    if (!imagePath || typeof imagePath !== 'string') return false;
-                    
-                    const lowerPath = imagePath.toLowerCase();
-                    return relatedColorTerms.some(term => lowerPath.includes(term));
-                });
-                
-                // If still no matches, use images without any color in the name
-                if (this.filteredImages.length === 0) {
-                    console.log(`No specific images found for color: ${colorName}, using generic images`);
-                    this.filteredImages = this.currentProduct.images.filter(imagePath => {
-                        if (!imagePath || typeof imagePath !== 'string') return false;
-                        
-                        const lowerPath = imagePath.toLowerCase();
-                        return !allColorTerms.some(term => lowerPath.includes(term));
-                    });
-                    
-                    // If absolutely nothing works, just use the first image as a last resort
-                    if (this.filteredImages.length === 0 && this.currentProduct.images.length > 0) {
-                        this.filteredImages = [this.currentProduct.images[0]];
-                    }
-                }
             }
             
-            console.log(`Found ${this.filteredImages.length} images for color: ${colorName}`);
+            // If not excluded by other colors, include it
+            return true;
+        });
+        
+        // If we found images with approach 2, use those
+        if (colorImages.length > 0) {
+            this.filteredImages = colorImages;
+            console.log(`Using ${colorImages.length} images that don't belong to other colors`);
+            this.updateThumbnailGrid();
+            return;
         }
+        
+        // APPROACH 3: If still no luck, use all images (fallback)
+        console.log('No color-specific images found, using all images');
+        this.filteredImages = [...this.currentProduct.images];
+        this.updateThumbnailGrid();
         
         // Update the thumbnail grid with filtered images
         this.updateThumbnailGrid();
@@ -1289,22 +1250,29 @@ class ProductDetailManager {
         const thumbnailGrid = document.querySelector('.thumbnail-grid');
         if (!thumbnailGrid) return;
         
-        // First, ensure we have the complete list of all product images
-        const allImages = this.currentProduct.images;
+        // Clear the grid first
+        thumbnailGrid.innerHTML = '';
         
-        // Create thumbnails for all images but mark them as hidden if they're not in the filtered images
-        thumbnailGrid.innerHTML = allImages.map((image, index) => {
-            const isVisible = this.filteredImages.includes(image);
-            return `
-                <div class="thumbnail ${index === 0 ? 'active' : ''} ${isVisible ? '' : 'hidden'}"
-                     onclick="productDetailManager.changeImage(${this.filteredImages.indexOf(image)})"
-                     data-color-match="${isVisible}">
-                    <img src="${image}" alt="${this.currentProduct.title}">
-                </div>
-            `;
-        }).join('');
+        // Only add the filtered images to the grid - don't even create the other thumbnails
+        // This ensures they can't be seen at all
+        this.filteredImages.forEach((image, index) => {
+            const thumbnailElement = document.createElement('div');
+            thumbnailElement.className = `thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnailElement.setAttribute('onclick', `productDetailManager.changeImage(${index})`);
+            thumbnailElement.innerHTML = `<img src="${image}" alt="${this.currentProduct.title}">`;
+            thumbnailGrid.appendChild(thumbnailElement);
+        });
         
-        console.log(`Updated thumbnail grid: ${this.filteredImages.length} visible thumbnails out of ${allImages.length} total images`);
+        console.log(`Updated thumbnail grid with ${this.filteredImages.length} visible thumbnails`);
+        
+        // If there's at least one image, make sure it's shown in the main display
+        if (this.filteredImages.length > 0) {
+            const mainImage = document.getElementById('main-image');
+            if (mainImage) {
+                mainImage.src = this.filteredImages[0];
+                this.currentImageIndex = 0;
+            }
+        }
     }
 
     selectSize(size) {
