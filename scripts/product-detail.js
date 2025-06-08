@@ -1113,34 +1113,42 @@ filterImagesByColor(colorName) {
 }
 
     
-    updateThumbnailGrid() {
-        const thumbnailGrid = document.querySelector('.thumbnail-grid');
-        if (!thumbnailGrid) return;
-        
-        // Clear the grid first
-        thumbnailGrid.innerHTML = '';
-        
-        // Only add the filtered images to the grid - don't even create the other thumbnails
-        // This ensures they can't be seen at all
-        this.filteredImages.forEach((image, index) => {
-            const thumbnailElement = document.createElement('div');
-            thumbnailElement.className = `thumbnail ${index === 0 ? 'active' : ''}`;
-            thumbnailElement.setAttribute('onclick', `productDetailManager.changeImage(${index})`);
-            thumbnailElement.innerHTML = `<img src="${image}" alt="${this.currentProduct.title}">`;
-            thumbnailGrid.appendChild(thumbnailElement);
-        });
-        
-        console.log(`Updated thumbnail grid with ${this.filteredImages.length} visible thumbnails`);
-        
-        // If there's at least one image, make sure it's shown in the main display
-        if (this.filteredImages.length > 0) {
-            const mainImage = document.getElementById('main-image');
-            if (mainImage) {
-                mainImage.src = this.filteredImages[0];
-                this.currentImageIndex = 0;
-            }
-        }
+updateThumbnailGrid() {
+    const thumbnailGrid = document.querySelector('.thumbnail-grid');
+    if (!thumbnailGrid) {
+        console.error('❌ thumbnail-grid not found in DOM');
+        return;
     }
+
+    if (!Array.isArray(this.filteredImages)) {
+        console.error('❌ filteredImages is not an array:', this.filteredImages);
+        return;
+    }
+
+    thumbnailGrid.innerHTML = '';
+
+    this.filteredImages.forEach((image, index) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
+        thumbnail.setAttribute('onclick', `productDetailManager.changeImage(${index})`);
+
+        const imgElement = document.createElement('img');
+        imgElement.src = image;
+        imgElement.alt = this.currentProduct?.title || 'Product Image';
+
+        thumbnail.appendChild(imgElement);
+        thumbnailGrid.appendChild(thumbnail);
+    });
+
+    // Safely update main image
+    const mainImage = document.getElementById('main-image');
+    if (mainImage && this.filteredImages.length > 0) {
+        mainImage.src = this.filteredImages[0];
+    }
+
+    console.log(`✅ Updated thumbnail grid with ${this.filteredImages.length} images`);
+}
+
 
     selectSize(size) {
         this.selectedVariant.size = size;
