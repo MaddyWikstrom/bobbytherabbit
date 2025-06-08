@@ -1277,24 +1277,43 @@ class ProductDetailManager {
             return colorName;
         }
         
-        // Common color mapping
+        // Enhanced color mapping that fits Bobby Streetwear theme
         const colorMap = {
+            // Core colors with theme-matching hues
             'black': '#000000',
             'white': '#FFFFFF',
-            'red': '#FF0000',
-            'green': '#008000',
-            'blue': '#0000FF',
-            'yellow': '#FFFF00',
-            'purple': '#800080',
-            'orange': '#FFA500',
-            'pink': '#FFC0CB',
-            'gray': '#808080',
-            'grey': '#808080',
-            'brown': '#A52A2A',
-            'navy': '#000080',
-            'maroon': '#800000',
-            'charcoal': '#36454F',
-            'default': '#333333'
+            'red': '#EF4444',  // Tailwind red-500
+            'green': '#10B981', // Tailwind emerald-500
+            'blue': '#3B82F6',  // Tailwind blue-500
+            'yellow': '#F59E0B', // Tailwind amber-500
+            'purple': '#A855F7', // Site's main accent color
+            'orange': '#F97316', // Tailwind orange-500
+            'pink': '#EC4899',   // Tailwind pink-500
+            
+            // Grays and neutrals
+            'gray': '#6B7280',   // Tailwind gray-500
+            'grey': '#6B7280',   // Tailwind gray-500
+            'slate': '#64748B',  // Tailwind slate-500
+            
+            // Dark colors
+            'navy': '#1E3A8A',   // Tailwind blue-900
+            'maroon': '#9F1239', // Tailwind rose-900
+            'brown': '#92400E',  // Tailwind amber-900
+            'charcoal': '#1F2937', // Tailwind gray-800
+            
+            // Fashion colors
+            'lavender': '#C084FC', // Tailwind purple-400
+            'mint': '#34D399',    // Tailwind emerald-400
+            'coral': '#F87171',   // Tailwind red-400
+            'olive': '#84CC16',   // Tailwind lime-500
+            'wine': '#BE185D',    // Tailwind pink-800
+            'indigo': '#6366F1',  // Site's secondary accent color
+            'forest': '#166534',  // Tailwind green-800
+            'cream': '#FEFCE8',   // Tailwind yellow-50
+            'beige': '#FFFBEB',   // Tailwind amber-50
+            
+            // Default
+            'default': '#A855F7'  // Use the site's main accent color as default
         };
         
         if (typeof colorName === 'string') {

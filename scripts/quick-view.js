@@ -1723,30 +1723,51 @@ class QuickViewManager {
     }
     
     getColorCode(colorName) {
+        // Enhanced color mapping that fits Bobby Streetwear theme
         const colorMap = {
+            // Core colors with theme-matching hues
             'Black': '#000000',
             'White': '#FFFFFF',
-            'Navy': '#001f3f',
-            'Navy Blazer': '#001f3f',
-            'Maroon': '#800000',
-            'Charcoal Heather': '#36454F',
-            'Vintage Black': '#2C2C2C',
-            'Heather Grey': '#D3D3D3',
-            'French Navy': '#002868',
-            'Forest Green': '#228B22',
-            'Red': '#FF0000',
-            'Blue': '#0000FF',
-            'Green': '#00FF00',
-            'Yellow': '#FFFF00',
-            'Purple': '#800080',
-            'Pink': '#FFC0CB',
-            'Orange': '#FFA500',
-            'Brown': '#A52A2A',
-            'Gray': '#808080',
-            'Grey': '#808080'
+            'Red': '#EF4444',  // Tailwind red-500
+            'Green': '#10B981', // Tailwind emerald-500
+            'Blue': '#3B82F6',  // Tailwind blue-500
+            'Yellow': '#F59E0B', // Tailwind amber-500
+            'Purple': '#A855F7', // Site's main accent color
+            'Orange': '#F97316', // Tailwind orange-500
+            'Pink': '#EC4899',   // Tailwind pink-500
+            
+            // Grays and neutrals
+            'Gray': '#6B7280',   // Tailwind gray-500
+            'Grey': '#6B7280',   // Tailwind gray-500
+            'Slate': '#64748B',  // Tailwind slate-500
+            
+            // Dark colors
+            'Navy': '#1E3A8A',   // Tailwind blue-900
+            'Navy Blazer': '#1E3A8A', // Tailwind blue-900
+            'Maroon': '#9F1239', // Tailwind rose-900
+            'Brown': '#92400E',  // Tailwind amber-900
+            'Charcoal': '#1F2937', // Tailwind gray-800
+            'Charcoal Heather': '#1F2937', // Tailwind gray-800
+            'Vintage Black': '#171717', // Tailwind neutral-900
+            
+            // Light colors
+            'Heather Grey': '#E5E7EB', // Tailwind gray-200
+            
+            // Fashion colors
+            'French Navy': '#1E40AF', // Tailwind blue-800
+            'Forest Green': '#166534', // Tailwind green-800
+            'Lavender': '#C084FC', // Tailwind purple-400
+            'Mint': '#34D399',    // Tailwind emerald-400
+            'Coral': '#F87171',   // Tailwind red-400
+            'Olive': '#84CC16',   // Tailwind lime-500
+            'Wine': '#BE185D',    // Tailwind pink-800
+            'Indigo': '#6366F1',  // Site's secondary accent color
+            'Cream': '#FEFCE8',   // Tailwind yellow-50
+            'Beige': '#FFFBEB'    // Tailwind amber-50
         };
         
-        return colorMap[colorName] || '#a855f7';
+        // Return the color code or the site's main accent color as default
+        return colorMap[colorName] || '#A855F7';
     }
     
     renderQuickView() {
