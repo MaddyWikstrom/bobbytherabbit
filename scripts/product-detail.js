@@ -1057,115 +1057,54 @@ class ProductDetailManager {
     }
     
     // Helper method to simplify size strings - ONLY returns S, M, L, etc.
+    // This implementation will be enhanced by quick-view.js at runtime
     simplifySize(sizeString) {
         if (!sizeString) return '';
         
-        // First, aggressively handle any "Color / Size" format by extracting ONLY the size part
+        // Basic implementation that will be overridden by quick-view.js
+        // Extract size from "Color / Size" format
         if (sizeString.includes('/')) {
             const parts = sizeString.split('/').map(p => p.trim());
-            // Use the last part (typically the size) for further processing
-            sizeString = parts[parts.length - 1];
+            sizeString = parts[parts.length - 1]; // Use the last part (size)
         }
         
-        // Expanded list of color names to strip from size strings
-        const colorNames = [
-            'black', 'white', 'navy', 'blue', 'red', 'green', 'yellow', 'purple',
-            'pink', 'orange', 'brown', 'gray', 'grey', 'maroon', 'forest', 'heather',
-            'charcoal', 'vintage', 'french', 'navy blazer', 'azure', 'crimson',
-            'teal', 'olive', 'burgundy', 'lavender', 'mustard', 'indigo', 'mauve',
-            'hunter', 'cream', 'ivory', 'beige', 'khaki', 'tan', 'sage', 'slate'
-        ];
-        
-        // More aggressive color stripping
-        colorNames.forEach(color => {
-            // Remove color name if it appears anywhere in the string (word boundaries)
-            const regexWord = new RegExp(`\\b${color}\\b`, 'i');
-            sizeString = sizeString.replace(regexWord, '');
-            
-            // Remove color with space after
-            const regexAfter = new RegExp(`${color}\\s+`, 'i');
-            sizeString = sizeString.replace(regexAfter, '');
-            
-            // Remove color with space before
-            const regexBefore = new RegExp(`\\s+${color}`, 'i');
-            sizeString = sizeString.replace(regexBefore, '');
-        });
-        
-        // Remove any remaining slashes and trim whitespace
-        sizeString = sizeString.replace('/', '').trim();
-        
-        // Convert to uppercase for comparison
+        // Convert common size names to abbreviations
         const upperSize = sizeString.toUpperCase().trim();
         
-        // Expanded size mappings
+        // Simple size mappings (more comprehensive version in quick-view.js)
         const sizeMap = {
             'SMALL': 'S',
             'MEDIUM': 'M',
             'LARGE': 'L',
             'EXTRA LARGE': 'XL',
-            'EXTRA-LARGE': 'XL',
             'EXTRA SMALL': 'XS',
-            'EXTRA-SMALL': 'XS',
-            '2XL': 'XXL',
-            'XXL': 'XXL',
-            '2X': 'XXL',
-            '3XL': '3XL',
-            'XXXL': '3XL',
-            '3X': '3XL',
-            'ONE SIZE': 'OS',
-            'ONESIZE': 'OS',
-            'ONE-SIZE': 'OS'
+            'ONE SIZE': 'OS'
         };
         
-        // Check for exact matches in our mapping
-        if (sizeMap[upperSize]) {
-            return sizeMap[upperSize];
-        }
-        
-        // Check for common size abbreviations - direct return for clean formats
-        if (['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize)) {
-            return upperSize;
-        }
-        
-        // Check for partial matches
-        for (const [key, value] of Object.entries(sizeMap)) {
-            if (upperSize.includes(key)) {
-                return value;
-            }
-        }
-        
-        // If it's a numeric size (like 32, 34, etc.), keep it as is
-        if (/^\d+$/.test(upperSize)) {
-            return upperSize;
-        }
-        
-        // For anything else, try to extract just letter-based sizes if present
-        const sizeMatch = upperSize.match(/\b(XS|S|M|L|XL|XXL|XXXL)\b/);
-        if (sizeMatch) {
-            return sizeMatch[0];
-        }
-        
-        // Fallback to just returning "OS" (one size) if we can't determine
-        // This ensures we always show a simple size format
-        return 'OS';
+        // Return mapped size or original if no mapping exists
+        return sizeMap[upperSize] ||
+               ['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize) ? upperSize :
+               sizeString;
     }
 
     filterImagesByColor(colorName) {
-        if (!this.currentProduct || !this.currentProduct.images || !colorName) {
-            if (!this.currentProduct || !this.currentProduct.images) {
-                console.error('No product data or images available for filtering');
-            }
-            if (!colorName) {
-                console.log('No color selected, showing all images');
-            }
-            this.filteredImages = this.currentProduct ? [...this.currentProduct.images] : [];
+        console.log(`Filtering images for color: ${colorName}`);
+        
+        // Basic implementation that will be enhanced by quick-view.js
+        if (!this.currentProduct || !this.currentProduct.images) {
+            console.error('No product data or images available for filtering');
+            this.filteredImages = [];
+            return;
+        }
+
+        if (!colorName) {
+            // If no color is selected, show all images
+            this.filteredImages = [...this.currentProduct.images];
             this.updateThumbnailGrid();
             return;
         }
         
-        console.log(`Filtering images for color: ${colorName}`);
-        
-        // If we have explicit color-specific images from Shopify, use them
+        // First priority: Use explicit color-specific images if available
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
             this.filteredImages = this.currentProduct.colorImages[colorName];
             console.log(`Using ${this.filteredImages.length} color-specific images from mapping for ${colorName}`);
@@ -1173,65 +1112,22 @@ class ProductDetailManager {
             return;
         }
         
-        // Get all available colors for this product to filter against
-        const availableColors = this.currentProduct.colors.map(c => c.name.toLowerCase());
-        console.log(`Available colors for this product: ${availableColors.join(', ')}`);
-        
-        // Make sure colorName is lowercase for comparison
+        // Second priority: Look for color name in image filenames
         const selectedColor = colorName.toLowerCase();
-        
-        // Create a pattern for detecting this color in filenames - look for word boundaries
-        const colorPattern = new RegExp(`(^|[^a-z])${selectedColor}([^a-z]|$)`, 'i');
-        
-        // APPROACH 1: Check color-specific images first based on filename pattern matching
         let colorImages = this.currentProduct.images.filter(imagePath => {
             if (!imagePath || typeof imagePath !== 'string') return false;
-            
-            const filename = imagePath.split('/').pop().toLowerCase(); // Get just the filename
-            
-            // If filename contains the color name with word boundaries, it's likely for this color
-            return colorPattern.test(filename);
+            const filename = imagePath.toLowerCase();
+            return filename.includes(selectedColor);
         });
         
-        // If we found images with approach 1, use those
         if (colorImages.length > 0) {
             this.filteredImages = colorImages;
-            console.log(`Found ${colorImages.length} images containing ${selectedColor} in filename`);
-            this.updateThumbnailGrid();
-            return;
+            console.log(`Found ${colorImages.length} images containing ${selectedColor}`);
+        } else {
+            // Fallback: use all images
+            console.log('No color-specific images found, using all images');
+            this.filteredImages = [...this.currentProduct.images];
         }
-        
-        // APPROACH 2: If no specific color matches, try to exclude images that clearly belong to other colors
-        const otherColors = availableColors.filter(c => c !== selectedColor);
-        colorImages = this.currentProduct.images.filter(imagePath => {
-            if (!imagePath || typeof imagePath !== 'string') return false;
-            
-            const filename = imagePath.split('/').pop().toLowerCase();
-            
-            // Check if this image belongs to any other color
-            for (const otherColor of otherColors) {
-                // If filename clearly indicates another color, exclude it
-                if (new RegExp(`(^|[^a-z])${otherColor}([^a-z]|$)`, 'i').test(filename)) {
-                    return false;
-                }
-            }
-            
-            // If not excluded by other colors, include it
-            return true;
-        });
-        
-        // If we found images with approach 2, use those
-        if (colorImages.length > 0) {
-            this.filteredImages = colorImages;
-            console.log(`Using ${colorImages.length} images that don't belong to other colors`);
-            this.updateThumbnailGrid();
-            return;
-        }
-        
-        // APPROACH 3: If still no luck, use all images (fallback)
-        console.log('No color-specific images found, using all images');
-        this.filteredImages = [...this.currentProduct.images];
-        this.updateThumbnailGrid();
         
         // Update the thumbnail grid with filtered images
         this.updateThumbnailGrid();
@@ -1684,26 +1580,6 @@ class ProductDetailManager {
             setTimeout(() => {
                 cartIcon.classList.remove('bounce');
             }, 1000);
-        }
-    }
-    
-    // Add compatibility method for quick-view.js integration
-    updateDOMWithFilteredImages(colorName, filteredImages) {
-        if (!filteredImages || filteredImages.length === 0) return;
-        
-        console.log(`Updating DOM with ${filteredImages.length} filtered images for ${colorName}`);
-        
-        // Update filteredImages array
-        this.filteredImages = filteredImages;
-        
-        // Update the thumbnail grid to show only these images
-        this.updateThumbnailGrid();
-        
-        // Reset current image index and update main image
-        this.currentImageIndex = 0;
-        const mainImage = document.getElementById('main-image');
-        if (mainImage && this.filteredImages.length > 0) {
-            mainImage.src = this.filteredImages[0];
         }
     }
 }
