@@ -22,6 +22,7 @@ class QuickViewManager {
         this.createQuickViewModal();
         this.addQuickViewStyles();
         this.setupEventListeners();
+        // QuickView system initialized
     }
     
     addQuickViewStyles() {
@@ -792,7 +793,7 @@ class QuickViewManager {
             <div class="quick-view-loading" id="quick-view-loading" style="display: none;">
                 <div class="quick-view-spinner"></div>
             </div>
-            <div id="debug-info" style="position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; padding: 5px; font-size: 10px; display: none;"></div>
+            <!-- Debug info element removed for production -->
         `;
         
         const overlay = document.createElement('div');
@@ -879,20 +880,11 @@ class QuickViewManager {
                 const selectedSize = e.target.getAttribute('data-size');
                 // Size selected
                 
-                const debugInfo = document.getElementById('debug-info');
-                debugInfo.textContent = `Selected size: ${selectedSize}`;
-                debugInfo.style.display = 'block';
-                
                 const sizeOptions = document.querySelectorAll('.quick-view-size-option');
                 sizeOptions.forEach(option => option.classList.remove('active'));
                 e.target.classList.add('active');
                 
                 self.selectedVariant.size = selectedSize;
-                
-                // Hide debug info after a delay
-                setTimeout(() => {
-                    debugInfo.style.display = 'none';
-                }, 3000);
                 
                 self.updateQuickViewState();
             }
@@ -1115,10 +1107,6 @@ class QuickViewManager {
         this.showLoading(true);
         this.openModal();
         
-        const debugInfo = document.getElementById('debug-info');
-        debugInfo.style.display = 'block';
-        debugInfo.textContent = `Loading product: ${productId}`;
-        
         try {
             // Reset selected variant
             this.selectedVariant = {
@@ -1127,29 +1115,20 @@ class QuickViewManager {
                 quantity: 1
             };
             
-            debugInfo.textContent = `Fetching product data for: ${productId}`;
             // Fetch product data
             const product = await this.fetchProductData(productId);
             
             if (!product) {
-                debugInfo.textContent = `Error: Product not found for ID: ${productId}`;
                 this.closeQuickView();
-                console.error('Product not found');
+                // Product not found
                 return;
             }
             
             this.currentProduct = product;
-            debugInfo.textContent = `Rendering product: ${product.title}`;
             this.renderQuickView();
             
-            // Hide debug info after successful rendering
-            setTimeout(() => {
-                debugInfo.style.display = 'none';
-            }, 2000);
-            
         } catch (error) {
-            debugInfo.textContent = `Error: ${error.message}`;
-            console.error('Error opening quick view:', error);
+            // Error opening quick view - silently handle
         } finally {
             this.showLoading(false);
         }
@@ -1349,8 +1328,6 @@ class QuickViewManager {
     
     async fetchProductData(productId) {
         try {
-            // Fetching product data
-            
             // Use the Netlify function to get product data
             const response = await fetch('/.netlify/functions/get-products', {
                 method: 'GET',
@@ -1372,11 +1349,9 @@ class QuickViewManager {
             
             if (data.products && Array.isArray(data.products)) {
                 // New API format
-                // Products received from API
                 products = data.products;
             } else if (Array.isArray(data)) {
                 // Old API format with direct array
-                // Legacy format products received
                 products = data;
             } else if (data.error) {
                 // Netlify function error
@@ -1399,7 +1374,6 @@ class QuickViewManager {
                 return null;
             }
             
-            // Product found
             return this.processProductData(product.node || product);
             
         } catch (error) {
@@ -1409,7 +1383,6 @@ class QuickViewManager {
     }
     
     processProductData(shopifyProduct) {
-        // Processing product data
         
         // Extract images
         const shopifyImages = shopifyProduct.images?.edges?.map(imgEdge => imgEdge.node.url) || [];
@@ -1420,27 +1393,17 @@ class QuickViewManager {
         const sizes = new Set();
         const inventory = {};
         
-        // DIRECT DEBUG: Log all variant data
-        // Processing variants
-        
         // Process variant structure
-        
         // Handle different variant data structures
         let variantsToProcess = [];
         
         if (shopifyProduct.variants && shopifyProduct.variants.edges) {
-            // Standard format with edges
             variantsToProcess = shopifyProduct.variants.edges.map(edge => edge.node);
-            // Found variants in edges format
         } else if (shopifyProduct.variants && Array.isArray(shopifyProduct.variants)) {
-            // Direct array format
             variantsToProcess = shopifyProduct.variants;
-            // Found variants in array format
         } else {
-            // No known variant format
+            // No recognized variant format
         }
-        
-        // Process variants
         
         // DIRECTLY EXTRACT ALL VARIANTS AND SIZES
         // This will preserve the exact variant structure from Shopify
@@ -1449,8 +1412,6 @@ class QuickViewManager {
         
         variantsToProcess.forEach(variant => {
             // Process variant
-            
-            // Skip full variant logging
             
             let color = '';
             let size = '';
@@ -1472,13 +1433,10 @@ class QuickViewManager {
                 
                 size = simplifiedSize;
                 sizes.add(size);
-                // Size simplification added
             }
             
             // Handle different selectedOptions formats
             if (variant.selectedOptions && Array.isArray(variant.selectedOptions)) {
-                // Process selected options
-                
                 // Look for color and size options
                 let foundSize = false;
                 variant.selectedOptions.forEach(option => {
@@ -1498,7 +1456,6 @@ class QuickViewManager {
                         // Simplify the size value
                         size = this.simplifySize(optionValue);
                         foundSize = true;
-                        // Size option found
                         sizes.add(size);
                     }
                     
@@ -1508,7 +1465,6 @@ class QuickViewManager {
                         // Simplify the size value before adding
                         const simplifiedSize = this.simplifySize(optionValue);
                         sizes.add(simplifiedSize);
-                        // Size added
                     }
                 });
                 
@@ -1530,7 +1486,6 @@ class QuickViewManager {
                             /^\d+$/.test(upperValue) || // Numeric sizes
                             /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
                             
-                            // Detected size from option
                             // Simplify the size value
                             size = this.simplifySize(optionValue);
                             sizes.add(size);
@@ -1541,7 +1496,6 @@ class QuickViewManager {
             } else if (variant.title) {
                 // Alternative format: parse from title (e.g. "Black / XL")
                 const variantTitle = variant.title.trim();
-                // Parsing variant from title
                 
                 // Skip if we already found a size
                 if (!size) {
@@ -1556,7 +1510,6 @@ class QuickViewManager {
                         }
                         
                         if (parts.length >= 2) {
-                            // Split title into parts
                             // Assume first part is color, second is size (common Shopify pattern)
                             color = parts[0].trim();
                             // Simplify the size value
@@ -1570,7 +1523,6 @@ class QuickViewManager {
                             }
                             
                             if (size) {
-                                // Adding simplified size from title
                                 sizes.add(size);
                             }
                         }
@@ -1578,7 +1530,6 @@ class QuickViewManager {
                     // Check for "One Size" variants
                     else if (variantTitle.toLowerCase().includes('one size')) {
                         size = 'One Size';
-                        // Found "One Size" variant
                         sizes.add(size);
                     }
                     // Check for size-only variants
@@ -1594,7 +1545,6 @@ class QuickViewManager {
                             
                             // Simplify the size value
                             size = this.simplifySize(variantTitle);
-                            // Using simplified size from title
                             sizes.add(size);
                         }
                         // For single variants with no size specified
@@ -1602,7 +1552,6 @@ class QuickViewManager {
                             // For a product with only one variant, it might not have size
                             // Use title as is or default to "One Size"
                             size = 'One Size';
-                            // Single variant, using "One Size"
                             sizes.add(size);
                         }
                     }
@@ -1613,7 +1562,6 @@ class QuickViewManager {
             if (!size && variant.options) {
                 if (typeof variant.options.size === 'string') {
                     size = variant.options.size;
-                    // Found size in options object
                     sizes.add(size);
                 }
             }
@@ -1903,11 +1851,6 @@ class QuickViewManager {
         // Size options
         const sizeOptionsContainer = document.getElementById('quick-view-size-options');
         const sizeGroup = document.getElementById('quick-view-size-group');
-        const debugInfo = document.getElementById('debug-info');
-        
-        debugInfo.textContent = `Available sizes: ${this.currentProduct.sizes ? Array.from(this.currentProduct.sizes).join(', ') : 'None'}`;
-        debugInfo.style.display = 'block';
-        
         // Create a local sizes Set using the product's sizes or an empty set
         const sizes = new Set(this.currentProduct.sizes || []);
         
@@ -1951,7 +1894,6 @@ class QuickViewManager {
         
         // Convert the sizes Set to an array and assign to the product
         this.currentProduct.sizes = Array.from(sizes);
-        // Sizes list finalized
         
         // Add inventory entries for all sizes
         if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
@@ -1959,7 +1901,6 @@ class QuickViewManager {
                 this.currentProduct.sizes.forEach(size => {
                     const inventoryKey = `${color.name}-${size}`;
                     this.currentProduct.inventory[inventoryKey] = 10; // Default stock of 10
-                    // Inventory added
                 });
             });
         } else {
@@ -1967,12 +1908,10 @@ class QuickViewManager {
             this.currentProduct.sizes.forEach(size => {
                 const inventoryKey = `-${size}`; // No color
                 this.currentProduct.inventory[inventoryKey] = 10;
-                // Inventory added (no color)
             });
         }
         
         if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
-            // Rendering size options
             
             sizeOptionsContainer.innerHTML = this.currentProduct.sizes.map((size) => {
                 const inventoryKey = this.selectedVariant.color ?
@@ -1981,7 +1920,6 @@ class QuickViewManager {
                     (this.currentProduct.inventory[inventoryKey] || 0) : 10;
                 const available = inventoryKey ? (stockLevel > 0) : true;
                 
-                // Process size availability
                 
                 // Use simplified size for display
                 const displaySize = this.simplifySize(size);
@@ -2000,14 +1938,8 @@ class QuickViewManager {
             // No sizes available
             sizeGroup.style.display = 'none';
             
-            // Add a message to the debug display
-            debugInfo.textContent = 'No size options found for this product';
+            // No sizes available for this product
         }
-        
-        // Hide debug info after a delay
-        setTimeout(() => {
-            debugInfo.style.display = 'none';
-        }, 3000);
         
         // Reset quantity
         document.getElementById('quick-view-quantity-display').textContent = '1';
@@ -2022,10 +1954,6 @@ class QuickViewManager {
             return;
         }
         
-        const debugInfo = document.getElementById('debug-info');
-        debugInfo.textContent = `Updating state: Color=${this.selectedVariant.color}, Size=${this.selectedVariant.size}`;
-        debugInfo.style.display = 'block';
-        
         // Check if we're in the quick view modal (product details) or quick add overlay
         const isInQuickViewModal = document.getElementById('quick-view-modal').classList.contains('active');
         
@@ -2035,10 +1963,7 @@ class QuickViewManager {
             // Showing all sizes regardless of color
             
             if (sizeOptions.length === 0) {
-                // No size options found in DOM
-                debugInfo.textContent = 'Warning: Size options not found';
-                
-                // Attempt to re-render all sizes if they're missing
+                // No size options found in DOM - attempt to re-render all sizes if they're missing
                 if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
                     // Attempting to re-render size options
                     const sizeOptionsContainer = document.getElementById('quick-view-size-options');
@@ -2058,7 +1983,6 @@ class QuickViewManager {
                         }).join('');
                         
                         sizeGroup.style.display = 'block';
-                        debugInfo.textContent = 'All sizes shown in product details view';
                     }
                 }
             } else {
@@ -2067,7 +1991,6 @@ class QuickViewManager {
                     option.classList.remove('unavailable');
                 });
                 
-                debugInfo.textContent = `All sizes available in product details view`;
             }
         }
         // In quick add overlay, filter sizes by color availability
@@ -2093,7 +2016,6 @@ class QuickViewManager {
                     }
                 });
                 
-                debugInfo.textContent = `Available sizes for ${this.selectedVariant.color}: ${availableSizes.join(', ')}`;
             }
         }
         
@@ -2125,10 +2047,6 @@ class QuickViewManager {
         // Store the state for potential future use
         this.canAddToCart = canAddToCart;
         
-        // Hide debug info after a delay
-        setTimeout(() => {
-            debugInfo.style.display = 'none';
-        }, 3000);
     }
     
     getAvailableStock() {
@@ -2148,7 +2066,6 @@ class QuickViewManager {
             return;
         }
         
-        // Filtering images for color
         
         // If no colorName is provided, don't filter
         if (!colorName) {
@@ -2157,7 +2074,6 @@ class QuickViewManager {
         
         // First try to find images in the colorImages mapping if available
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
-            // Found explicit color images
             
             // Use these specific images for this color
             const colorSpecificImages = this.currentProduct.colorImages[colorName];
@@ -2165,7 +2081,6 @@ class QuickViewManager {
             // Set these as the filtered images if we're in product-detail.js context
             if (this.filteredImages) {
                 this.filteredImages = colorSpecificImages;
-                // Set filteredImages array
             }
             
             // // Also update the DOM directly
@@ -2191,7 +2106,6 @@ class QuickViewManager {
             return;
         }
         
-        // Found thumbnails to filter
         
         // First: Set data-color attributes for any thumbnails that don't have them
         // This ensures all images have proper color information
@@ -2214,7 +2128,6 @@ class QuickViewManager {
                     imgUrl.includes(colorNameLower)) {
                     
                     thumbnail.setAttribute('data-color', colorName);
-                    // Set data-color attribute
                 }
             }
         });
@@ -2275,11 +2188,9 @@ class QuickViewManager {
             // Set filteredImages array with filtered images
         }
         
-        // Found matching images
         
         // If no matching images were found, show all images
         if (matchingImages.length === 0) {
-            // No matches found, showing all images
             thumbnails.forEach(thumbnail => {
                 const thumbnailParent = thumbnail.closest('.thumbnail') || thumbnail.parentElement;
                 if (thumbnailParent) {
@@ -2313,7 +2224,6 @@ class QuickViewManager {
         if (window.productDetailManager && typeof window.productDetailManager.filterImagesByColor === 'function') {
             // Overwrite the product detail manager's filterImagesByColor function
             window.productDetailManager.filterImagesByColor = this.filterImagesByColor.bind(this);
-            // Replaced image filtering function
         }
     }
     
@@ -2504,21 +2414,16 @@ class QuickViewManager {
     }
     
     addToCart() {
-        const debugInfo = document.getElementById('debug-info');
-        debugInfo.style.display = 'block';
-        
         if (!this.currentProduct) {
             // Cannot add to cart - no current product
-            debugInfo.textContent = 'Error: No product selected';
+            alert('Error: No product selected');
             return;
         }
-        
-        debugInfo.textContent = 'Validating product selections...';
         
         // Check if we have all required selections
         if (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) {
             // Color not selected
-            debugInfo.textContent = 'Error: Please select a color';
+            alert('Please select a color');
             
             // Highlight color options section
             const colorGroup = document.getElementById('quick-view-color-group');
@@ -2536,7 +2441,7 @@ class QuickViewManager {
         
         if (this.currentProduct.sizes.length > 0 && !this.selectedVariant.size) {
             // Size not selected
-            debugInfo.textContent = 'Error: Please select a size';
+            alert('Please select a size');
             
             // Highlight size options section
             const sizeGroup = document.getElementById('quick-view-size-group');
@@ -2555,8 +2460,8 @@ class QuickViewManager {
         // Find the variant ID
         let variantId = null;
         if (this.currentProduct.variants) {
-            const matchingVariant = this.currentProduct.variants.find(v => 
-                v.color === this.selectedVariant.color && 
+            const matchingVariant = this.currentProduct.variants.find(v =>
+                v.color === this.selectedVariant.color &&
                 v.size === this.selectedVariant.size
             );
             
@@ -2597,12 +2502,6 @@ class QuickViewManager {
             shopifyVariantId: variantId,
             image: image
         };
-        
-        debugInfo.textContent = `Adding to cart: ${this.currentProduct.title}, Size: ${this.selectedVariant.size}, Color: ${this.selectedVariant.color}`;
-        
-        debugInfo.textContent = 'Adding item to cart...';
-        
-        // Add to cart - no UI animation needed since button was removed
         
         // Try all available cart systems
         try {
@@ -2654,16 +2553,11 @@ class QuickViewManager {
                 }, 500);
             } else {
                 // No cart system available
-                debugInfo.textContent = 'Error: Cart system not available';
-                
-                // Show an alert to the user
                 alert('The cart system is not available. This is likely because the site needs to be deployed to work correctly.');
                 return;
             }
             
             if (cartAddSuccess) {
-                debugInfo.textContent = 'Success! Added to cart';
-                
                 // Close modal after a delay
                 setTimeout(() => {
                     this.closeQuickView();
@@ -2671,7 +2565,7 @@ class QuickViewManager {
             }
         } catch (error) {
             // Error adding to cart
-            debugInfo.textContent = `Error adding to cart: ${error.message}`;
+            alert('Error adding to cart: ' + error.message);
         }
     }
     
@@ -2717,13 +2611,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorParam = urlParams.get('color');
     
     if (colorParam) {
-        // Found color parameter in URL
-        
         // Apply color filtering with multiple attempts to ensure it works
         const applyColorFromURL = () => {
             if (window.productDetailManager && window.productDetailManager.currentProduct) {
-                // Applying URL-specified color filter
-                
                 // If the productDetailManager has already selected a color, update it
                 if (window.productDetailManager.selectedVariant) {
                     window.productDetailManager.selectedVariant.color = colorParam;
@@ -2750,7 +2640,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Use these explicit color images
                         window.productDetailManager.filteredImages =
                             [...window.productDetailManager.currentProduct.colorImages[colorParam]];
-                        // Set filteredImages to color-specific images
                     } else {
                         // Filter based on URL patterns
                         const colorImages = window.productDetailManager.currentProduct.images.filter(img => {
@@ -2763,7 +2652,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (colorImages.length > 0) {
                             window.productDetailManager.filteredImages = colorImages;
-                            // Set filteredImages to filtered images
                         }
                     }
                     
@@ -2787,16 +2675,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Patch the product detail manager to use our simplified size display
     if (window.productDetailManager) {
-        // Patching productDetailManager
-        
         // Copy our simplifySize method to the product detail manager
         window.productDetailManager.simplifySize = window.quickViewManager.simplifySize;
         
         // Enhance product detail selectColor method to use our better filtering
         const originalSelectColor = window.productDetailManager.selectColor;
         window.productDetailManager.selectColor = function(colorName) {
-            // Enhanced color selection applied
-            
             // Call original method first
             if (originalSelectColor) {
                 originalSelectColor.call(window.productDetailManager, colorName);
@@ -2816,7 +2700,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const updateSizeDisplay = () => {
             const productSizeOptions = document.querySelectorAll('.size-option');
             if (productSizeOptions.length > 0) {
-                // Updating size display
                 productSizeOptions.forEach(sizeOption => {
                     const originalSize = sizeOption.textContent.trim();
                     const simplifiedSize = window.quickViewManager.simplifySize(originalSize);
