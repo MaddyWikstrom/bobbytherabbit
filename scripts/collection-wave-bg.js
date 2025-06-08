@@ -46,24 +46,33 @@ document.addEventListener('DOMContentLoaded', function() {
         container.style.alignItems = 'center';
         container.style.justifyContent = 'center';
         container.style.textAlign = 'center';
-        container.style.maxWidth = '1200px';
+        container.style.width = '100%';
+        container.style.padding = '0';
         container.style.margin = '0 auto';
+        container.style.boxSizing = 'border-box';
     }
     
-    // Center the product grid
+    // Fix product grid to extend full width
     const productGrid = collectionSection.querySelector('.product-grid-scroll');
     if (productGrid) {
         productGrid.style.display = 'flex';
         productGrid.style.justifyContent = 'center';
+        productGrid.style.width = '100%';
+        productGrid.style.overflowX = 'auto';
         productGrid.style.margin = '0 auto';
+        productGrid.style.padding = '0 20px';
+        productGrid.style.boxSizing = 'border-box';
     }
     
-    // Center the product-scroll-container
+    // Make scroll container full width
     const scrollContainer = collectionSection.querySelector('.product-scroll-container');
     if (scrollContainer) {
         scrollContainer.style.display = 'flex';
         scrollContainer.style.justifyContent = 'center';
         scrollContainer.style.width = '100%';
+        scrollContainer.style.overflowX = 'auto';
+        scrollContainer.style.boxSizing = 'border-box';
+        scrollContainer.style.padding = '0';
     }
     
     // Center the view-all-container
@@ -71,10 +80,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (viewAllContainer) {
         viewAllContainer.style.display = 'flex';
         viewAllContainer.style.justifyContent = 'center';
+        viewAllContainer.style.width = '100%';
         viewAllContainer.style.marginTop = '30px';
     }
     
-    // Add animation keyframes if they don't exist yet
+    // Fix arrow container positioning
+    const arrowContainer = collectionSection.querySelector('.arrow-container');
+    if (arrowContainer) {
+        arrowContainer.style.position = 'relative';
+        arrowContainer.style.width = '100%';
+        arrowContainer.style.maxWidth = '1400px';
+        arrowContainer.style.margin = '0 auto';
+        arrowContainer.style.padding = '0 20px';
+        arrowContainer.style.boxSizing = 'border-box';
+        arrowContainer.style.zIndex = '3';
+    }
+    
+    // Add animation keyframes and additional styles if they don't exist yet
     if (!document.getElementById('wave-pattern-keyframes')) {
         const styleElement = document.createElement('style');
         styleElement.id = 'wave-pattern-keyframes';
@@ -100,6 +122,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            /* Additional styles for full-width collection section */
+            .collection {
+                width: 100vw !important;
+                max-width: 100% !important;
+                margin-left: calc(-50vw + 50%) !important;
+                margin-right: calc(-50vw + 50%) !important;
+                position: relative !important;
+                overflow-x: hidden !important;
+                box-sizing: border-box !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+            
+            .product-grid-scroll {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                padding: 1rem !important;
+                -ms-overflow-style: none !important;  /* IE and Edge */
+                scrollbar-width: none !important;  /* Firefox */
+                justify-content: flex-start !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                margin: 0 auto !important;
+                scroll-behavior: smooth !important;
+            }
+            
+            .product-grid-scroll::-webkit-scrollbar {
+                display: none !important;
+            }
+            
+            .product-grid-scroll > * {
+                flex: 0 0 auto !important;
+            }
+            
             @media screen and (max-width: 768px) {
                 @keyframes breathePattern {
                     0% {
@@ -120,6 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         filter: hue-rotate(0deg);
                         opacity: 0.06;
                     }
+                }
+                
+                .collection {
+                    padding: 2rem 0 !important;
+                }
+                
+                .product-grid-scroll {
+                    padding: 0.5rem !important;
                 }
             }
         `;
