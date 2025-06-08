@@ -564,7 +564,17 @@ class ProductDetailManager {
             // Parse URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-            const selectedColor = urlParams.get('color'); // Get color from URL if available
+            let selectedColor = urlParams.get('color'); // Get color from URL if available
+            
+            // Fix for cases where the color is [object Object] in the URL
+            if (selectedColor === '[object Object]' || selectedColor?.startsWith('{') || selectedColor?.includes('Object')) {
+                selectedColor = null; // Reset to null if it's an invalid format
+                
+                // Clean up the URL to remove the invalid color parameter
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('color');
+                window.history.replaceState({}, document.title, newUrl.toString());
+            }
             
             console.log(`Loading product with ID: ${productId}, selected color: ${selectedColor || 'none'}`);
             
@@ -638,17 +648,41 @@ class ProductDetailManager {
                 
                 // Set the selected color if it was passed in the URL
                 if (selectedColor && this.currentProduct.colors) {
-                    // Check if the color exists in our colors array (handling both formats)
-                    const colorExists = this.currentProduct.colors.some(color =>
-                        typeof color === 'object'
-                            ? color.name.toLowerCase() === selectedColor.toLowerCase()
-                            : color.toLowerCase() === selectedColor.toLowerCase()
-                    );
-                    
-                    if (colorExists) {
-                        console.log(`Setting selected color: ${selectedColor}`);
-                        this.selectColor(selectedColor);
+                    try {
+                        // Check if the color exists in our colors array (handling both formats)
+                        const colorExists = this.currentProduct.colors.some(color => {
+                            if (typeof color === 'object') {
+                                return color.name.toLowerCase() === selectedColor.toLowerCase();
+                            } else {
+                                return color.toLowerCase() === selectedColor.toLowerCase();
+                            }
+                        });
+                        
+                        if (colorExists) {
+                            console.log(`Setting selected color: ${selectedColor}`);
+                            this.selectColor(selectedColor);
+                        } else {
+                            // Default to first color if specified color doesn't exist
+                            const firstColor = this.currentProduct.colors[0];
+                            const colorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
+                            console.log(`Selected color not found, defaulting to: ${colorName}`);
+                            this.selectColor(colorName);
+                        }
+                    } catch (error) {
+                        console.error(`Error setting color from URL parameter:`, error);
+                        // Default to first color on error
+                        if (this.currentProduct.colors.length > 0) {
+                            const firstColor = this.currentProduct.colors[0];
+                            const colorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
+                            this.selectColor(colorName);
+                        }
                     }
+                } else if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+                    // No color in URL, select first available color
+                    const firstColor = this.currentProduct.colors[0];
+                    const colorName = typeof firstColor === 'object' ? firstColor.name : firstColor;
+                    console.log(`No color selected, defaulting to: ${colorName}`);
+                    this.selectColor(colorName);
                 }
                 
                 this.addToRecentlyViewed(this.currentProduct);
