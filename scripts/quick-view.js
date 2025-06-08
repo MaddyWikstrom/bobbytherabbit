@@ -2184,8 +2184,9 @@ class QuickViewManager {
                 console.log(`Set filteredImages array to color-specific images for ${colorName}`);
             }
             
-            // Also update the DOM directly
-            this.updateDOMWithFilteredImages(colorName, colorSpecificImages);
+            // // Also update the DOM directly
+            // this.updateDOMWithFilteredImages(colorName, colorSpecificImages);
+            this.updateThumbnailGrid();
             return;
         }
         
