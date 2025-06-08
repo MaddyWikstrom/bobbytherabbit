@@ -263,21 +263,12 @@ class ProductDetailManager {
     }
     
     loadRelatedProducts() {
-        // Render recently viewed products
-        const container = document.getElementById('related-products-grid');
-        if (!container) {
-            console.warn('Related products container not found');
-            return;
-        }
-        
-        console.log(`Loading related products. Found ${this.recentlyViewed.length} recently viewed items.`);
-        
-        // Add a style element to ensure related products are properly styled for dark theme
+        // Add a style element to ensure product cards are properly styled
         const styleEl = document.createElement('style');
-        styleEl.id = 'related-products-dark-theme';
+        styleEl.id = 'product-cards-styles';
         styleEl.textContent = `
-            /* Force dark theme styling for related products */
-            .related-products-grid {
+            /* Common styling for product cards in both related and recently viewed sections */
+            .related-products-grid, .recently-viewed-grid {
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
                 gap: 20px !important;
@@ -307,7 +298,7 @@ class ProductDetailManager {
                 object-fit: cover !important;
                 display: block !important;
                 min-height: 180px !important;
-                background-color: #0f0f1e !important;
+                background-color: #ffffff !important; /* WHITE background for images as requested */
             }
             .related-product-info {
                 padding: 12px !important;
@@ -335,10 +326,10 @@ class ProductDetailManager {
             /* Ensure images have appropriate fallback colors */
             .related-product img[src=""],
             .related-product img:not([src]) {
-                background-color: #0f0f1e !important;
+                background-color: #ffffff !important;
                 min-height: 180px !important;
             }
-            /* Ensure recently viewed products section is well-styled */
+            /* Ensure section styling */
             .related-products, .recently-viewed {
                 background-color: #13132b !important;
                 border-radius: 12px !important;
@@ -351,12 +342,40 @@ class ProductDetailManager {
                 text-align: center !important;
                 font-size: 1.8rem !important;
             }
+            /* Fix for main product image */
+            .main-image img {
+                background-color: #ffffff !important;
+            }
         `;
         document.head.appendChild(styleEl);
         
+        this.renderProductCards();
+    }
+    
+    renderProductCards() {
+        console.log(`Rendering product cards. Found ${this.recentlyViewed.length} recently viewed items.`);
+        
+        // First render the "You Might Also Like" section
+        const relatedContainer = document.getElementById('related-products-grid');
+        if (relatedContainer) {
+            this.renderProductsToContainer(relatedContainer);
+        } else {
+            console.warn('Related products container not found');
+        }
+        
+        // Then render the "Recently Viewed" section
+        const recentlyViewedContainer = document.getElementById('recently-viewed-grid');
+        if (recentlyViewedContainer) {
+            this.renderProductsToContainer(recentlyViewedContainer);
+        } else {
+            console.warn('Recently viewed container not found');
+        }
+    }
+    
+    renderProductsToContainer(container) {
         if (this.recentlyViewed.length > 0) {
             // Log the recently viewed products for debugging
-            console.log('Recently viewed products:', JSON.stringify(this.recentlyViewed));
+            console.log('Rendering products to container:', container.id);
             
             // Clear the container
             container.innerHTML = '';
@@ -386,10 +405,10 @@ class ProductDetailManager {
                         console.warn(`Failed to load image for ${product.title}, using placeholder`);
                         this.src = '/assets/product-placeholder.png';
                         // Add specific styling to ensure visibility
-                        this.style.backgroundColor = '#0f0f1e';
+                        this.style.backgroundColor = '#ffffff'; // WHITE background for images
                         this.style.minHeight = '180px';
                     };
-                    img.style.backgroundColor = '#0f0f1e'; // Dark background for image
+                    img.style.backgroundColor = '#ffffff'; // WHITE background for images
                     img.src = imageUrl;
                     
                     // Create product info container
@@ -442,7 +461,7 @@ class ProductDetailManager {
             });
             
         } else {
-            container.innerHTML = '<p>No related products found</p>';
+            container.innerHTML = '<p class="no-products" style="color: white; text-align: center; padding: 20px;">No products found</p>';
         }
     }
     
@@ -1245,7 +1264,7 @@ class ProductDetailManager {
             return;
         }
         
-        mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain;">`;
+        mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff;">`;
     }
     
     addToCart() {
