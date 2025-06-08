@@ -36,11 +36,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add pattern element as first child
     collectionSection.prepend(patternElement);
     
-    // Ensure container and content are properly positioned over the pattern
+    // Ensure container and content are properly positioned over the pattern and centered
     const container = collectionSection.querySelector('.container');
     if (container) {
         container.style.position = 'relative';
         container.style.zIndex = '2';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.alignItems = 'center';
+        container.style.justifyContent = 'center';
+        container.style.textAlign = 'center';
+        container.style.maxWidth = '1200px';
+        container.style.margin = '0 auto';
+    }
+    
+    // Center the product grid
+    const productGrid = collectionSection.querySelector('.product-grid-scroll');
+    if (productGrid) {
+        productGrid.style.display = 'flex';
+        productGrid.style.justifyContent = 'center';
+        productGrid.style.margin = '0 auto';
+    }
+    
+    // Center the product-scroll-container
+    const scrollContainer = collectionSection.querySelector('.product-scroll-container');
+    if (scrollContainer) {
+        scrollContainer.style.display = 'flex';
+        scrollContainer.style.justifyContent = 'center';
+        scrollContainer.style.width = '100%';
+    }
+    
+    // Center the view-all-container
+    const viewAllContainer = collectionSection.querySelector('.view-all-container');
+    if (viewAllContainer) {
+        viewAllContainer.style.display = 'flex';
+        viewAllContainer.style.justifyContent = 'center';
+        viewAllContainer.style.marginTop = '30px';
     }
     
     // Add animation keyframes if they don't exist yet

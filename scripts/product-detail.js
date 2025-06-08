@@ -663,7 +663,7 @@ class ProductDetailManager {
             
             // No need to check for existing patterns at container level since we're applying at section level
             
-            // Apply grid styling directly
+            // Apply grid styling directly with improved centering
             container.style.display = 'grid';
             container.style.justifyItems = 'center';
             container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
@@ -671,6 +671,11 @@ class ProductDetailManager {
             container.style.margin = '0 auto';
             container.style.position = 'relative';
             container.style.zIndex = '2';
+            container.style.placeContent = 'center';
+            container.style.justifyContent = 'center';
+            container.style.alignItems = 'start';
+            container.style.maxWidth = '1200px';
+            container.style.padding = '0 20px';
             
             // Loop through each product and create elements manually instead of using innerHTML
             this.recentlyViewed.forEach(product => {
