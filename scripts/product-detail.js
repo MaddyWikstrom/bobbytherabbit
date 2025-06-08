@@ -404,29 +404,48 @@
                     throw new Error('Product ID is required');
                 }
                 
+                console.log(`🔍 Loading product from Shopify: ${productId}`);
+                
                 // Add a timestamp to prevent caching issues
                 const timestamp = new Date().getTime();
                 const url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&_=${timestamp}`;
+                console.log(`📡 API URL: ${url}`);
                 
                 // Set up a controller for the fetch operation that we can abort
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased to 8-second timeout
                 
                 try {
-                    const response = await fetch(url, { 
-                        signal: controller.signal 
+                    console.log(`⏳ Starting API request...`);
+                    const response = await fetch(url, {
+                        signal: controller.signal
                     });
                     
                     // Clear the timeout since fetch completed
                     clearTimeout(timeoutId);
                     
+                    console.log(`✅ Response received, status: ${response.status}`);
+                    
                     if (!response.ok) {
-                        throw new Error(`API response error: ${response.status}`);
+                        const errorText = await response.text();
+                        console.error(`❌ API Error (${response.status}): ${errorText.substring(0, 200)}...`);
+                        throw new Error(`API response error: ${response.status} - ${errorText.substring(0, 100)}`);
                     }
                     
-                    const data = await response.json();
+                    const responseText = await response.text();
+                    console.log(`📦 Response body (first 100 chars): ${responseText.substring(0, 100)}...`);
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error(`❌ JSON Parse Error: ${parseError.message}`);
+                        console.error(`❌ Response is not valid JSON. First 200 chars: ${responseText.substring(0, 200)}`);
+                        throw new Error(`Failed to parse API response as JSON: ${parseError.message}`);
+                    }
                     
                     if (!data) {
+                        console.error(`❌ No data returned from API`);
                         return null;
                     }
                     
@@ -711,6 +730,13 @@
                     
                     // Race the product fetch against the timeout
                     this.currentProduct = await Promise.race([productPromise, timeoutPromise]);
+                    
+                    // If we get here successfully, log information about the product
+                    if (this.currentProduct) {
+                        console.log(`Successfully loaded product: ${this.currentProduct.title}`);
+                        console.log(`Product ID: ${this.currentProduct.id}`);
+                        console.log(`Images available: ${this.currentProduct.images?.length || 0}`);
+                    }
                 } catch (fetchError) {
                     console.error('Error fetching product:', fetchError);
                     this.completeLoadingSequence();
@@ -760,23 +786,64 @@
 
         async fetchProductData(productId) {
             try {
-                console.log(`Fetching product data for: ${productId}`);
+                console.log(`📦 Fetching product data for: ${productId}`);
                 
                 if (!productId) {
                     throw new Error('Invalid product ID');
                 }
                 
-                // Only load from Shopify API with timeout
-                const shopifyProduct = await this.loadShopifyProduct(productId);
+                // Try to load from Shopify API with timeout
+                console.log(`🔍 Attempting to load product from Shopify API`);
+                let shopifyProduct = null;
+                
+                try {
+                    shopifyProduct = await this.loadShopifyProduct(productId);
+                } catch (shopifyError) {
+                    console.error(`❌ Error loading from Shopify API:`, shopifyError.message);
+                    console.log(`⚠️ Will continue with fallback options`);
+                }
                 
                 if (shopifyProduct) {
-                    console.log(`Successfully loaded product from Shopify: ${shopifyProduct.title}`);
+                    console.log(`✅ Successfully loaded product from Shopify API: ${shopifyProduct.title}`);
                     return shopifyProduct;
-                } else {
-                    throw new Error('Product not found in Shopify API');
                 }
+                
+                // If we get here, Shopify API failed, try alternate IDs
+                console.log(`⚠️ Product not found with ID "${productId}", trying alternate variations...`);
+                
+                // Try some common ID variations
+                const alternateIds = [
+                    productId.replace(/-/g, '_'),                     // Replace hyphens with underscores
+                    productId.replace(/_/g, '-'),                     // Replace underscores with hyphens
+                    `bungi-${productId}`,                             // Try with bungi- prefix
+                    `bobby-${productId}`,                             // Try with bobby- prefix
+                    productId.toLowerCase(),                          // All lowercase
+                    productId.toLowerCase().replace(/\s+/g, '-')      // Lowercase with spaces to hyphens
+                ];
+                
+                console.log(`🔄 Trying ${alternateIds.length} alternate product IDs...`);
+                
+                for (const altId of alternateIds) {
+                    if (altId === productId) continue; // Skip if same as original
+                    
+                    try {
+                        console.log(`🔍 Trying alternate ID: ${altId}`);
+                        const altProduct = await this.loadShopifyProduct(altId);
+                        
+                        if (altProduct) {
+                            console.log(`✅ Successfully loaded product with alternate ID: ${altId}`);
+                            return altProduct;
+                        }
+                    } catch (altError) {
+                        console.log(`❌ Alternate ID ${altId} failed:`, altError.message);
+                        // Continue to next ID
+                    }
+                }
+                
+                console.error(`❌ All product loading attempts failed for ${productId}`);
+                throw new Error(`Product not found: ${productId}`);
             } catch (error) {
-                console.error(`Error fetching product data for ${productId}:`, error);
+                console.error(`❌ Error fetching product data for ${productId}:`, error.message);
                 // Complete loading and don't hang
                 this.completeLoadingSequence();
                 throw error; // Re-throw to be handled by loadProduct
@@ -1551,18 +1618,48 @@
             });
         }
         
-        showProductNotFound() {
+        showProductNotFound(errorDetails = '') {
             // Check if we're running locally
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             
-            // If running locally, pass a 'deployment' reason to show the deployment message
-            if (isLocal) {
-                console.log('Running locally - redirecting to product not found page with deployment reason');
-                window.location.href = 'product-not-found.html?reason=deployment';
-            } else {
-                console.log('Redirecting to product not found page');
-                window.location.href = 'product-not-found.html';
+            // Store error details in sessionStorage for debugging
+            if (errorDetails) {
+                try {
+                    console.error('Product loading error details:', errorDetails);
+                    sessionStorage.setItem('productLoadError', errorDetails);
+                } catch (e) {
+                    console.error('Could not store error details:', e);
+                }
             }
+            
+            // Get the product ID from URL for logging purposes
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id') || 'unknown';
+            console.error(`Product not found: ${productId}`);
+            
+            // Construct the URL with appropriate parameters
+            let redirectUrl = 'product-not-found.html';
+            const params = new URLSearchParams();
+            
+            // If running locally, add deployment reason
+            if (isLocal) {
+                console.log('Running locally - redirecting with deployment reason');
+                params.append('reason', 'deployment');
+            }
+            
+            // Add error info if available
+            if (errorDetails) {
+                params.append('error', 'api');
+                params.append('product', productId);
+            }
+            
+            // Add the parameters to the URL if any exist
+            if (params.toString()) {
+                redirectUrl += '?' + params.toString();
+            }
+            
+            console.log(`Redirecting to product not found page: ${redirectUrl}`);
+            window.location.href = redirectUrl;
         }
         getColorCode(colorInput) {
             // Handle both string and object formats

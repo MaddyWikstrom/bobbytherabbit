@@ -149,6 +149,12 @@
                         This site requires deployment to Netlify to function correctly.
                         When running locally, product data cannot be loaded from Shopify.
                     </p>
+                    <div id="debug-info" style="display: none; margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: left; font-family: monospace; font-size: 12px;">
+                        <h3 style="color: #a855f7; margin-top: 0;">Debugging Information</h3>
+                        <p id="product-id-display">Product ID: N/A</p>
+                        <p id="error-type-display">Error Type: N/A</p>
+                        <p id="error-details" style="white-space: pre-wrap; word-break: break-all;"></p>
+                    </div>
                     <a href="products.html" class="back-to-products">Back to Products</a>
                 </div>
             </div>
@@ -244,15 +250,71 @@
                 window.BobbyCarts.updateCartCount();
             }
 
-            // Check URL for deployment parameter
+            // Check URL for parameters
             const urlParams = new URLSearchParams(window.location.search);
             const reason = urlParams.get('reason');
+            const errorType = urlParams.get('error');
+            const productId = urlParams.get('product');
             
+            // Get stored error details if any
+            let errorDetails = '';
+            try {
+                errorDetails = sessionStorage.getItem('productLoadError') || '';
+                // Clear after reading to avoid showing old errors
+                sessionStorage.removeItem('productLoadError');
+            } catch (e) {
+                console.error('Error accessing sessionStorage:', e);
+            }
+            
+            // Show appropriate message based on URL parameters
             if (reason === 'deployment') {
                 document.getElementById('error-icon').textContent = '⚠️';
                 document.getElementById('error-title').textContent = 'Deployment Required';
                 document.getElementById('error-message').textContent = 'Product information could not be loaded.';
                 document.getElementById('deployment-message').style.display = 'block';
+            }
+            
+            // Show debug info if available
+            if (productId || errorType || errorDetails) {
+                const debugInfoElement = document.getElementById('debug-info');
+                if (debugInfoElement) {
+                    debugInfoElement.style.display = 'block';
+                    
+                    if (productId) {
+                        document.getElementById('product-id-display').textContent = `Product ID: ${productId}`;
+                    }
+                    
+                    if (errorType) {
+                        document.getElementById('error-type-display').textContent = `Error Type: ${errorType}`;
+                    }
+                    
+                    if (errorDetails) {
+                        document.getElementById('error-details').textContent = `Error Details: ${errorDetails}`;
+                    }
+                    
+                    // Add a button to copy debug info to clipboard
+                    const copyButton = document.createElement('button');
+                    copyButton.textContent = 'Copy Debug Info';
+                    copyButton.style.marginTop = '10px';
+                    copyButton.style.padding = '5px 10px';
+                    copyButton.style.background = '#a855f7';
+                    copyButton.style.border = 'none';
+                    copyButton.style.borderRadius = '4px';
+                    copyButton.style.color = 'white';
+                    copyButton.style.cursor = 'pointer';
+                    
+                    copyButton.addEventListener('click', () => {
+                        const debugText = `Product ID: ${productId || 'N/A'}\nError Type: ${errorType || 'N/A'}\nError Details: ${errorDetails || 'N/A'}`;
+                        navigator.clipboard.writeText(debugText).then(() => {
+                            copyButton.textContent = 'Copied!';
+                            setTimeout(() => {
+                                copyButton.textContent = 'Copy Debug Info';
+                            }, 2000);
+                        });
+                    });
+                    
+                    debugInfoElement.appendChild(copyButton);
+                }
             }
         });
     </script>

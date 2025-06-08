@@ -41,7 +41,16 @@ exports.handler = async function(event, context) {
       storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
       apiVersion: '2024-04'
     },
+    // Uncomment and update this fallback if needed
+    // {
+    //   domain: 'your-backup-store.myshopify.com',
+    //   storefrontAccessToken: 'your-backup-token',
+    //   apiVersion: '2024-04'
+    // },
   ];
+  
+  // Add debugging for the request
+  console.log(`Attempting to fetch product with handle: ${handle} from ${SHOPIFY_CONFIGS.length} configured domains`);
 
   // GraphQL query for a single product by handle
   const productQuery = `
