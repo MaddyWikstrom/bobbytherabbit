@@ -413,8 +413,8 @@
                 const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
                 
                 try {
-                    const response = await fetch(url, {
-                        signal: controller.signal
+                    const response = await fetch(url, { 
+                        signal: controller.signal 
                     });
                     
                     // Clear the timeout since fetch completed
@@ -612,7 +612,49 @@
                 
                 // Convert colors from strings to objects with name and code properties
                 // This ensures compatibility with quick-view.js which expects this format
-                const colorObjects = Array.from(colors).map(colorName => {
+                let colorObjects = [];
+                
+                // If no colors were detected from variants, try to extract them from tags
+                if (colors.size === 0 && product.tags && Array.isArray(product.tags)) {
+                    // Look for color tags (common format is "color:Black" or just color names)
+                    product.tags.forEach(tag => {
+                        if (tag.toLowerCase().startsWith('color:')) {
+                            // Extract color name from tag
+                            const colorName = tag.substring(6).trim();
+                            colors.add(colorName);
+                        } else if (this.isCommonColor(tag)) {
+                            // If tag itself is a color name
+                            colors.add(tag);
+                        }
+                    });
+                    
+                    console.log(`Extracted ${colors.size} colors from product tags`);
+                }
+                
+                // If still no colors, add a default one based on the product title
+                if (colors.size === 0 && product.title) {
+                    // Extract color from title if present
+                    const colorWords = ['black', 'white', 'blue', 'red', 'green', 'yellow', 'purple', 
+                                       'orange', 'pink', 'gray', 'grey', 'navy', 'maroon', 'brown'];
+                    
+                    const title = product.title.toLowerCase();
+                    for (const color of colorWords) {
+                        if (title.includes(color)) {
+                            colors.add(color.charAt(0).toUpperCase() + color.slice(1));
+                            break;
+                        }
+                    }
+                    
+                    // If no color found in title, add a default
+                    if (colors.size === 0) {
+                        colors.add('Default');
+                    }
+                    
+                    console.log(`Added default color based on product title: ${Array.from(colors)[0]}`);
+                }
+                
+                // Map colors to objects with name and code properties
+                colorObjects = Array.from(colors).map(colorName => {
                     return {
                         name: colorName,
                         code: this.getColorCode(colorName)
@@ -1099,81 +1141,91 @@
                 }
         
         renderColorOptions() {
-                    console.log('Rendering color options');
-                    
-                    // First, ensure product info section exists
-                    let productInfoSection = document.querySelector('.product-info-section');
-                    if (!productInfoSection) {
-                        console.log('Creating product info section for color options');
-                        productInfoSection = document.createElement('div');
-                        productInfoSection.className = 'product-info-section';
-                        
-                        const productContainer = document.querySelector('.product-container');
-                        if (productContainer) {
-                            productContainer.appendChild(productInfoSection);
-                        } else {
-                            document.body.appendChild(productInfoSection);
-                            console.warn('Product container not found, appending info section to body');
-                        }
-                    }
-                    
-                    // Create color options container if it doesn't exist
-                    let colorOptionsContainer = document.getElementById('color-options');
-                    if (!colorOptionsContainer) {
-                        console.log('Creating color options container');
-                        colorOptionsContainer = document.createElement('div');
-                        colorOptionsContainer.id = 'color-options';
-                        colorOptionsContainer.className = 'options-container';
-                        
-                        // Create a label for the color options
-                        const colorLabel = document.createElement('h3');
-                        colorLabel.textContent = 'Colors:';
-                        productInfoSection.appendChild(colorLabel);
-                        productInfoSection.appendChild(colorOptionsContainer);
-                    }
-                    
-                    if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
-                        console.log(`Rendering ${this.currentProduct.colors.length} color options with format:`,
-                            typeof this.currentProduct.colors[0] === 'object' ? 'color objects' : 'color strings');
-                        
-                        colorOptionsContainer.innerHTML = this.currentProduct.colors.map(color => {
-                            // Handle both formats: string or {name, code} object
-                            const colorName = typeof color === 'object' ? color.name : color;
-                            const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
-                            
-                            return `
-                                <div class="color-option" data-color="${colorName}"
-                                     style="background-color: ${colorCode}"
-                                     title="${colorName}">
-                                    <span class="color-name">${colorName}</span>
-                                </div>
-                            `;
-                        }).join('');
-                        
-                        // Add event listeners to color options
-                        document.querySelectorAll('.color-option').forEach(colorOption => {
-                            colorOption.addEventListener('click', (e) => {
-                                const color = e.currentTarget.dataset.color;
-                                this.selectColor(color);
-                            });
-                        });
-                        
-                        // Select first color by default
-                        if (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) {
-                            // Get the name property if it's an object, otherwise use the color string directly
-                            const firstColor = typeof this.currentProduct.colors[0] === 'object'
-                                ? this.currentProduct.colors[0].name
-                                : this.currentProduct.colors[0];
-                                
-                            console.log(`Selecting first color by default: ${firstColor}`);
-                            this.selectColor(firstColor);
-                        }
-                    } else {
-                        colorOptionsContainer.innerHTML = '<p>No color options available</p>';
-                    }
-                    
-                    console.log(`Rendered ${this.currentProduct.colors?.length || 0} color options`);
+            console.log('Rendering color options');
+            
+            // First, ensure product info section exists
+            let productInfoSection = document.querySelector('.product-info-section');
+            if (!productInfoSection) {
+                console.log('Creating product info section for color options');
+                productInfoSection = document.createElement('div');
+                productInfoSection.className = 'product-info-section';
+                
+                const productContainer = document.querySelector('.product-container');
+                if (productContainer) {
+                    productContainer.appendChild(productInfoSection);
+                } else {
+                    document.body.appendChild(productInfoSection);
+                    console.warn('Product container not found, appending info section to body');
                 }
+            }
+            
+            // Create color options container if it doesn't exist
+            let colorOptionsContainer = document.getElementById('color-options');
+            if (!colorOptionsContainer) {
+                console.log('Creating color options container');
+                colorOptionsContainer = document.createElement('div');
+                colorOptionsContainer.id = 'color-options';
+                colorOptionsContainer.className = 'options-container';
+                
+                // Create a label for the color options
+                const colorLabel = document.createElement('h3');
+                colorLabel.textContent = 'Colors:';
+                productInfoSection.appendChild(colorLabel);
+                productInfoSection.appendChild(colorOptionsContainer);
+            }
+            
+            // Debug log - check product colors
+            console.log('Current product colors:', JSON.stringify(this.currentProduct.colors));
+            
+            // If we don't have colors, create a default one
+            if (!this.currentProduct.colors || this.currentProduct.colors.length === 0) {
+                console.log('No colors found, creating a default color');
+                this.currentProduct.colors = [{
+                    name: 'Default',
+                    code: '#333333'
+                }];
+            }
+            
+            console.log(`Rendering ${this.currentProduct.colors.length} color options with format:`,
+                typeof this.currentProduct.colors[0] === 'object' ? 'color objects' : 'color strings');
+            
+            colorOptionsContainer.innerHTML = this.currentProduct.colors.map(color => {
+                // Handle both formats: string or {name, code} object
+                const colorName = typeof color === 'object' ? color.name : color;
+                const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
+                
+                console.log(`Rendering color: ${colorName} with code: ${colorCode}`);
+                
+                return `
+                    <div class="color-option" data-color="${colorName}"
+                         style="background-color: ${colorCode}"
+                         title="${colorName}">
+                        <span class="color-name">${colorName}</span>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add event listeners to color options
+            document.querySelectorAll('.color-option').forEach(colorOption => {
+                colorOption.addEventListener('click', (e) => {
+                    const color = e.currentTarget.dataset.color;
+                    this.selectColor(color);
+                });
+            });
+            
+            // Select first color by default
+            if (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) {
+                // Get the name property if it's an object, otherwise use the color string directly
+                const firstColor = typeof this.currentProduct.colors[0] === 'object'
+                    ? this.currentProduct.colors[0].name
+                    : this.currentProduct.colors[0];
+                    
+                console.log(`Selecting first color by default: ${firstColor}`);
+                this.selectColor(firstColor);
+            }
+            
+            console.log(`Rendered ${this.currentProduct.colors?.length || 0} color options`);
+        }
         
         renderSizeOptions() {
                     console.log('Rendering size options');
@@ -1512,7 +1564,6 @@
                 window.location.href = 'product-not-found.html';
             }
         }
-        
         getColorCode(colorInput) {
             // Handle both string and object formats
             const colorName = typeof colorInput === 'object' ? colorInput.name : colorInput;
@@ -1522,53 +1573,49 @@
                 return colorName;
             }
             
+            // Common color mapping
             const colorMap = {
-                'Black': '#000000',
-                'White': '#FFFFFF',
-                'Navy': '#001f3f',
-                'Navy Blazer': '#001f3f',
-                'Maroon': '#800000',
-                'Charcoal Heather': '#36454F',
-                'Vintage Black': '#2C2C2C',
-                'Heather Grey': '#D3D3D3',
-                'French Navy': '#002868',
-                'Forest Green': '#228B22',
-                'Red': '#FF0000',
-                'Blue': '#0000FF',
-                'Green': '#00FF00',
-                'Yellow': '#FFFF00',
-                'Purple': '#800080',
-                'Pink': '#FFC0CB',
-                'Orange': '#FFA500',
-                'Brown': '#A52A2A',
-                'Gray': '#808080',
-                'Grey': '#808080'
+                'black': '#000000',
+                'white': '#FFFFFF',
+                'red': '#FF0000',
+                'green': '#008000',
+                'blue': '#0000FF',
+                'yellow': '#FFFF00',
+                'purple': '#800080',
+                'orange': '#FFA500',
+                'pink': '#FFC0CB',
+                'gray': '#808080',
+                'grey': '#808080',
+                'brown': '#A52A2A',
+                'navy': '#000080',
+                'maroon': '#800000',
+                'charcoal': '#36454F',
+                'default': '#333333'
             };
             
-            // Case-insensitive lookup
             if (typeof colorName === 'string') {
-                const normalizedName = colorName.trim();
-                
-                // Check exact match first
-                if (colorMap[normalizedName]) {
-                    return colorMap[normalizedName];
-                }
-                
-                // Check case-insensitive match
-                const lowerName = normalizedName.toLowerCase();
-                for (const [key, value] of Object.entries(colorMap)) {
-                    if (key.toLowerCase() === lowerName) {
-                        return value;
-                    }
-                }
+                const lowerColor = colorName.toLowerCase();
+                return colorMap[lowerColor] || '#333333'; // Default gray if not found
             }
             
-            // Default purple color if no match found
-            return '#a855f7';
+            return '#333333'; // Default fallback
+        }
+        
+        // Helper method to check if a string is a common color name
+        isCommonColor(str) {
+            if (!str || typeof str !== 'string') return false;
+            
+            const commonColors = [
+                'black', 'white', 'red', 'green', 'blue', 'yellow', 'purple',
+                'orange', 'pink', 'gray', 'grey', 'brown', 'navy', 'maroon',
+                'charcoal', 'beige', 'olive', 'tan', 'silver', 'gold'
+            ];
+            
+            return commonColors.includes(str.toLowerCase());
         }
     }
-
-    // Initialize product detail manager when document is ready
+    
+    // Initialize product detail manager when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
         window.productDetailManager = new ProductDetailManager();
     });
