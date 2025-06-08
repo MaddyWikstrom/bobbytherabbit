@@ -1151,16 +1151,14 @@ class ProductDetailManager {
     }
 
     filterImagesByColor(colorName) {
-        if (!this.currentProduct || !this.currentProduct.images) {
-            console.error('No product data or images available for filtering');
-            this.filteredImages = [];
-            return;
-        }
-        
-        if (!colorName) {
-            // If no color is selected, show all images
-            console.log('No color selected, showing all images');
-            this.filteredImages = [...this.currentProduct.images];
+        if (!this.currentProduct || !this.currentProduct.images || !colorName) {
+            if (!this.currentProduct || !this.currentProduct.images) {
+                console.error('No product data or images available for filtering');
+            }
+            if (!colorName) {
+                console.log('No color selected, showing all images');
+            }
+            this.filteredImages = this.currentProduct ? [...this.currentProduct.images] : [];
             this.updateThumbnailGrid();
             return;
         }
