@@ -304,22 +304,54 @@ class ProductDetailManager {
                 z-index: 2 !important;
             }
             
-            /* Animation for the breathing warped pattern */
+            /* Animation for the breathing warped pattern - optimized for responsive layout */
             @keyframes breathePattern {
                 0% {
                     background-size: 100% 100%;
+                    transform: scale(1);
                     filter: hue-rotate(0deg);
                     opacity: 0.06;
                 }
                 50% {
                     background-size: 105% 105%;
+                    transform: scale(1.02);
                     filter: hue-rotate(10deg);
                     opacity: 0.08;
                 }
                 100% {
                     background-size: 100% 100%;
+                    transform: scale(1);
                     filter: hue-rotate(0deg);
                     opacity: 0.06;
+                }
+            }
+            
+            /* Ensure the pattern fills the container on any screen size */
+            @media screen and (max-width: 768px) {
+                .wave-pattern-bg {
+                    background-size: cover !important;
+                    transform-origin: center center !important;
+                }
+                
+                @keyframes breathePattern {
+                    0% {
+                        background-position: center center;
+                        transform: scale(1);
+                        filter: hue-rotate(0deg);
+                        opacity: 0.06;
+                    }
+                    50% {
+                        background-position: center center;
+                        transform: scale(1.03);
+                        filter: hue-rotate(10deg);
+                        opacity: 0.08;
+                    }
+                    100% {
+                        background-position: center center;
+                        transform: scale(1);
+                        filter: hue-rotate(0deg);
+                        opacity: 0.06;
+                    }
                 }
             }
             
@@ -332,7 +364,10 @@ class ProductDetailManager {
                 height: 100% !important;
                 opacity: 0.08 !important;
                 z-index: 1 !important;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='distortion' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.02' numOctaves='2' result='noise' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='30' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cmask id='contourMask'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cg filter='url(%23distortion)'%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,400 C100,250 300,550 500,400 C700,250 900,550 1100,400 C1300,250 1500,550 1700,400' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,350 C100,200 300,500 500,350 C700,200 900,500 1100,350 C1300,200 1500,500 1700,350' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,300 C100,150 300,450 500,300 C700,150 900,450 1100,300 C1300,150 1500,450 1700,300' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,250 C100,100 300,400 500,250 C700,100 900,400 1100,250 C1300,100 1500,400 1700,250' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,200 C100,50 300,350 500,200 C700,50 900,350 1100,200 C1300,50 1500,350 1700,200' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,150 C100,0 300,300 500,150 C700,0 900,300 1100,150 C1300,0 1500,300 1700,150' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,100 C100,-50 300,250 500,100 C700,-50 900,250 1100,100 C1300,-50 1500,250 1700,100' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,50 C100,-100 300,200 500,50 C700,-100 900,200 1100,50 C1300,-100 1500,200 1700,50' /%3E%3C/g%3E%3C/mask%3E%3ClinearGradient id='purpleGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a855f7' /%3E%3Cstop offset='50%25' stop-color='%236366f1' /%3E%3Cstop offset='100%25' stop-color='%234b0082' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23purpleGrad)' mask='url(%23contourMask)' /%3E%3C/svg%3E") !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' preserveAspectRatio='none' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='distortion' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.02' numOctaves='2' result='noise' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='30' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cmask id='contourMask'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cg filter='url(%23distortion)'%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,400 C100,250 300,550 500,400 C700,250 900,550 1100,400 C1300,250 1500,550 1700,400' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,350 C100,200 300,500 500,350 C700,200 900,500 1100,350 C1300,200 1500,500 1700,350' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,300 C100,150 300,450 500,300 C700,150 900,450 1100,300 C1300,150 1500,450 1700,300' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,250 C100,100 300,400 500,250 C700,100 900,400 1100,250 C1300,100 1500,400 1700,250' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,200 C100,50 300,350 500,200 C700,50 900,350 1100,200 C1300,50 1500,350 1700,200' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,150 C100,0 300,300 500,150 C700,0 900,300 1100,150 C1300,0 1500,300 1700,150' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,100 C100,-50 300,250 500,100 C700,-50 900,250 1100,100 C1300,-50 1500,250 1700,100' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,50 C100,-100 300,200 500,50 C700,-100 900,200 1100,50 C1300,-100 1500,200 1700,50' /%3E%3C/g%3E%3C/mask%3E%3ClinearGradient id='purpleGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a855f7' /%3E%3Cstop offset='50%25' stop-color='%236366f1' /%3E%3Cstop offset='100%25' stop-color='%234b0082' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23purpleGrad)' mask='url(%23contourMask)' /%3E%3C/svg%3E") !important;
+                background-size: cover !important;
+                background-position: center center !important;
+                background-repeat: no-repeat !important;
                 animation: breathePattern 15s ease-in-out infinite alternate !important;
             }
             
@@ -480,31 +515,53 @@ class ProductDetailManager {
         `;
         document.head.appendChild(styleEl);
         
-        // Add warped breathing pattern backgrounds to the sections
+        // Add responsive warped breathing pattern backgrounds to the sections
         const relatedSection = document.querySelector('.related-products');
         const recentlyViewedSection = document.querySelector('.recently-viewed');
         
-        if (relatedSection) {
-            // Create and add pattern background to "You Might Also Like" section
-            const relatedWavePattern = document.createElement('div');
-            relatedWavePattern.className = 'wave-pattern-bg';
-            relatedWavePattern.style.transformOrigin = 'center center';
-            relatedWavePattern.style.filter = 'blur(1px)';
-            relatedWavePattern.style.mixBlendMode = 'overlay';
-            relatedSection.prepend(relatedWavePattern);
-        }
+        // Function to ensure responsive pattern background
+        const addResponsivePattern = (section, animationDelay = '0s') => {
+            if (!section) return;
+            
+            // Ensure section has relative positioning for absolute positioning of pattern
+            section.style.position = 'relative';
+            
+            // Create and add pattern background
+            const patternElement = document.createElement('div');
+            patternElement.className = 'wave-pattern-bg';
+            
+            // Apply styles for stretching across entire section
+            patternElement.style.transformOrigin = 'center center';
+            patternElement.style.filter = 'blur(1px)';
+            patternElement.style.mixBlendMode = 'overlay';
+            patternElement.style.position = 'absolute';
+            patternElement.style.top = '0';
+            patternElement.style.left = '0';
+            patternElement.style.width = '100%';
+            patternElement.style.height = '100%';
+            patternElement.style.backgroundSize = 'cover';
+            patternElement.style.backgroundPosition = 'center center';
+            patternElement.style.backgroundRepeat = 'no-repeat';
+            patternElement.style.animationDelay = animationDelay;
+            
+            // Ensure the pattern is behind other content
+            patternElement.style.zIndex = '1';
+            
+            // Add pattern element as first child
+            section.prepend(patternElement);
+            
+            // Ensure all direct children except the pattern have higher z-index
+            Array.from(section.children).forEach(child => {
+                if (child !== patternElement) {
+                    child.style.position = 'relative';
+                    child.style.zIndex = '2';
+                }
+            });
+        };
         
-        if (recentlyViewedSection) {
-            // Create and add pattern background to "Recently Viewed" section
-            // Using a slightly different animation delay for visual variety
-            const recentWavePattern = document.createElement('div');
-            recentWavePattern.className = 'wave-pattern-bg';
-            recentWavePattern.style.transformOrigin = 'center center';
-            recentWavePattern.style.filter = 'blur(1px)';
-            recentWavePattern.style.mixBlendMode = 'overlay';
-            recentWavePattern.style.animationDelay = '-5s'; // Offset animation for visual variety
-            recentlyViewedSection.prepend(recentWavePattern);
-        }
+        // Add patterns to both sections
+        addResponsivePattern(relatedSection);
+        addResponsivePattern(recentlyViewedSection, '-5s'); // Different animation delay for variety
         
         this.renderProductCards();
     }
