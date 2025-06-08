@@ -481,24 +481,101 @@ class ProductDetailManager {
                 font-weight: 700 !important;
                 letter-spacing: 2px !important;
                 text-transform: uppercase !important;
-                text-shadow: 0 2px 10px rgba(168, 85, 247, 0.4), 0 0 30px rgba(99, 102, 241, 0.2) !important;
                 display: inline-block !important;
                 width: 100% !important;
                 padding: 15px 0 !important;
-                background: linear-gradient(90deg, rgba(168, 85, 247, 0), rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0)) !important;
-                animation: titlePulse 4s ease-in-out infinite alternate !important;
+                animation: titleGlitch 4s infinite !important;
+                position: relative !important;
+                overflow: visible !important;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important; /* Base shadow for depth */
             }
             
-            @keyframes titlePulse {
-                0% {
-                    letter-spacing: 2px !important;
-                    text-shadow: 0 2px 10px rgba(168, 85, 247, 0.4), 0 0 30px rgba(99, 102, 241, 0.2) !important;
-                    transform: scale(1) !important;
+            /* Add pseudo-element for additional glitch effect */
+            .section-title:before, .section-title:after {
+                content: attr(data-text) !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                opacity: 0.3 !important;
+                z-index: -1 !important;
+            }
+            
+            .section-title:before {
+                color: #ff00ff !important; /* Magenta color for one glitch layer */
+                animation: glitch-1 3s infinite linear alternate-reverse !important;
+            }
+            
+            .section-title:after {
+                color: #00ffff !important; /* Cyan color for other glitch layer */
+                animation: glitch-2 2.7s infinite linear alternate-reverse !important;
+            }
+            
+            @keyframes glitch-1 {
+                0%, 100% { transform: translate(0, 0) skew(0deg); }
+                20% { transform: translate(-2px, 1px) skew(1deg); }
+                40% { transform: translate(2px, 0) skew(0deg); }
+                60% { transform: translate(0, -1px) skew(-1deg); }
+                80% { transform: translate(1px, 1px) skew(0.5deg); }
+            }
+            
+            @keyframes glitch-2 {
+                0%, 100% { transform: translate(0, 0) skew(0deg); }
+                25% { transform: translate(2px, 0) skew(-0.5deg); }
+                50% { transform: translate(-1px, 1px) skew(0.5deg); }
+                75% { transform: translate(1px, -1px) skew(-0.5deg); }
+            }
+            
+            /* Refined glitch animation for section titles to work with pseudo-elements */
+            @keyframes titleGlitch {
+                0%, 100% {
+                    transform: translate(0, 0);
+                    opacity: 1;
                 }
-                100% {
-                    letter-spacing: 3px !important;
-                    text-shadow: 0 2px 15px rgba(168, 85, 247, 0.6), 0 0 40px rgba(99, 102, 241, 0.3) !important;
-                    transform: scale(1.02) !important;
+                7% {
+                    transform: translate(-1px, 0px);
+                    opacity: 0.9;
+                }
+                10% {
+                    transform: translate(0px, -1px);
+                }
+                20% {
+                    transform: translate(0, 0);
+                    opacity: 1;
+                }
+                27% {
+                    transform: translate(1px, 1px);
+                    opacity: 0.95;
+                }
+                35% {
+                    transform: translate(-1px, 0);
+                }
+                40% {
+                    transform: translate(0, 0);
+                    opacity: 1;
+                }
+                48% {
+                    transform: translate(0px, 1px);
+                    opacity: 0.9;
+                }
+                55% {
+                    transform: translate(-1px, 0);
+                }
+                60% {
+                    transform: translate(0, 0);
+                    opacity: 1;
+                }
+                68% {
+                    transform: translate(1px, -1px);
+                    opacity: 0.95;
+                }
+                75% {
+                    transform: translate(0px, 1px);
+                }
+                80%, 95% {
+                    transform: translate(0, 0);
+                    opacity: 1;
                 }
             }
             
@@ -603,6 +680,12 @@ class ProductDetailManager {
         } else {
             console.warn('Recently viewed container not found');
         }
+        
+        // Add data-text attribute to section titles for glitch effect
+        const sectionTitles = document.querySelectorAll('.section-title');
+        sectionTitles.forEach(title => {
+            title.setAttribute('data-text', title.textContent);
+        });
     }
     
     renderProductsToContainer(container) {
