@@ -295,7 +295,7 @@ class ProductDetailManager {
             .related-products-grid, .recently-viewed-grid {
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
-                gap: 20px !important;
+                gap: 30px !important;
                 margin: 20px auto !important;
                 padding: 0 20px !important;
                 justify-content: center !important;
@@ -305,6 +305,7 @@ class ProductDetailManager {
                 z-index: 2 !important;
                 width: 100% !important;
                 justify-items: center !important;
+                place-content: center !important;
             }
             
             /* Ensure all section containers are properly sized and positioned */
@@ -376,7 +377,7 @@ class ProductDetailManager {
                 height: 100% !important;
                 opacity: 0.08 !important;
                 z-index: 1 !important;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' preserveAspectRatio='none' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='distortion' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.02' numOctaves='2' result='noise' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='30' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cmask id='contourMask'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cg filter='url(%23distortion)'%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,400 C100,250 300,550 500,400 C700,250 900,550 1100,400 C1300,250 1500,550 1700,400' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,350 C100,200 300,500 500,350 C700,200 900,500 1100,350 C1300,200 1500,500 1700,350' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,300 C100,150 300,450 500,300 C700,150 900,450 1100,300 C1300,150 1500,450 1700,300' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,250 C100,100 300,400 500,250 C700,100 900,400 1100,250 C1300,100 1500,400 1700,250' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,200 C100,50 300,350 500,200 C700,50 900,350 1100,200 C1300,50 1500,350 1700,200' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,150 C100,0 300,300 500,150 C700,0 900,300 1100,150 C1300,0 1500,300 1700,150' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,100 C100,-50 300,250 500,100 C700,-50 900,250 1100,100 C1300,-50 1500,250 1700,100' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,50 C100,-100 300,200 500,50 C700,-100 900,200 1100,50 C1300,-100 1500,200 1700,50' /%3E%3C/g%3E%3C/mask%3E%3ClinearGradient id='purpleGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a855f7' /%3E%3Cstop offset='50%25' stop-color='%236366f1' /%3E%3Cstop offset='100%25' stop-color='%234b0082' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23purpleGrad)' mask='url(%23contourMask)' /%3E%3C/svg%3E") !important;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' preserveAspectRatio='none' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cfilter id='distortion' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.01 0.02' numOctaves='2' result='noise' seed='5'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='30' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cmask id='contourMask'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Cg filter='url(%23distortion)'%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,400 C100,250 300,550 500,400 C700,250 900,550 1100,400 C1300,250 1500,550 1700,400' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,350 C100,200 300,500 500,350 C700,200 900,500 1100,350 C1300,200 1500,500 1700,350' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,300 C100,150 300,450 500,300 C700,150 900,450 1100,300 C1300,150 1500,450 1700,300' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,250 C100,100 300,400 500,250 C700,100 900,400 1100,250 C1300,100 1500,400 1700,250' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,200 C100,50 300,350 500,200 C700,50 900,350 1100,200 C1300,50 1500,350 1700,200' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,150 C100,0 300,300 500,150 C700,0 900,300 1100,150 C1300,0 1500,300 1700,150' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,100 C100,-50 300,250 500,100 C700,-50 900,250 1100,100 C1300,-50 1500,250 1700,100' /%3E%3Cpath fill='none' stroke='black' stroke-width='10' d='M-100,50 C100,-100 300,200 500,50 C700,-100 900,200 1100,50 C1300,-100 1500,200 1700,50' /%3E%3C/g%3E%3C/mask%3E%3ClinearGradient id='grayGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23aaaaaa' /%3E%3Cstop offset='50%25' stop-color='%23888888' /%3E%3Cstop offset='100%25' stop-color='%23555555' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grayGrad)' mask='url(%23contourMask)' /%3E%3C/svg%3E") !important;
                 background-size: cover !important;
                 background-position: center center !important;
                 background-repeat: no-repeat !important;
@@ -464,6 +465,10 @@ class ProductDetailManager {
                 transition: all 0.5s ease !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
+                text-align: center !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
             }
             
             .related-products:hover, .recently-viewed:hover {
@@ -481,118 +486,60 @@ class ProductDetailManager {
                 font-weight: 700 !important;
                 letter-spacing: 2px !important;
                 text-transform: uppercase !important;
-                display: inline-block !important;
+                display: flex !important;
                 width: 100% !important;
                 padding: 15px 0 !important;
-                position: relative !important;
-                overflow: visible !important;
-                mix-blend-mode: normal !important;
+                justify-content: center !important;
             }
             
-            /* True glitch effect with clipping and distortion */
-            .section-title:before, .section-title:after {
+            /* Using the same glitch effect as the main page */
+            .glitch-text {
+                position: relative !important;
+                display: inline-block !important;
+                color: #ffffff !important;
+                font-weight: 900 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 2px !important;
+            }
+            
+            .glitch-text::before,
+            .glitch-text::after {
                 content: attr(data-text) !important;
                 position: absolute !important;
                 top: 0 !important;
                 left: 0 !important;
                 width: 100% !important;
                 height: 100% !important;
+            }
+            
+            .glitch-text::before {
+                animation: glitch-1 0.5s infinite !important;
+                color: #a855f7 !important; /* Purple color */
                 z-index: -1 !important;
-                background: transparent !important;
             }
             
-            .section-title:before {
-                color: #ff00ff !important; /* Magenta color for one glitch layer */
-                animation: glitch-anim-1 2.5s infinite !important;
-                clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%) !important;
-                transform: translate(-0.025em, -0.0125em) !important;
-                opacity: 0.8 !important;
+            .glitch-text::after {
+                animation: glitch-2 0.5s infinite !important;
+                color: #6366f1 !important; /* Indigo color */
+                z-index: -2 !important;
             }
             
-            .section-title:after {
-                color: #00ffff !important; /* Cyan color for other glitch layer */
-                animation: glitch-anim-2 2s infinite !important;
-                clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%) !important;
-                transform: translate(0.025em, 0.0125em) !important;
-                opacity: 0.8 !important;
-            }
-            
-            /* More aggressive glitch animations for the split text effect */
-            @keyframes glitch-anim-1 {
-                0%, 100% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+            /* Main page glitch animations */
+            @keyframes glitch-1 {
+                0%, 14%, 15%, 49%, 50%, 99%, 100% {
+                    transform: translate(0) !important;
                 }
-                10% {
-                    transform: translate(-4px, 0) skew(-0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 35%, 0 50%);
-                }
-                20% {
-                    transform: translate(4px, 0) skew(0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 35%);
-                }
-                30% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-                }
-                40% {
-                    transform: translate(2px, -2px) skew(0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 40%, 0 45%);
-                }
-                50% {
-                    transform: translate(-3px, 1px) skew(-0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 60%, 0 35%);
-                }
-                60% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
-                }
-                70% {
-                    transform: translate(3px, -1px) skew(0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 30%, 0 55%);
-                }
-                80% {
-                    transform: translate(-2px, 2px) skew(-0.5deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 55%, 0 30%);
-                }
-                90% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+                15%, 49% {
+                    transform: translate(-2px, -1px) !important;
                 }
             }
             
-            @keyframes glitch-anim-2 {
-                0%, 100% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+            @keyframes glitch-2 {
+                0%, 20%, 21%, 62%, 63%, 99%, 100% {
+                    transform: translate(0) !important;
                 }
-                15% {
-                    transform: translate(4px, 1px) skew(0.5deg);
-                    clip-path: polygon(0 70%, 100% 65%, 100% 100%, 0 100%);
-                }
-                35% {
-                    transform: translate(-2px, -2px) skew(-0.5deg);
-                    clip-path: polygon(0 65%, 100% 75%, 100% 100%, 0 100%);
-                }
-                45% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
-                }
-                55% {
-                    transform: translate(3px, 2px) skew(0.5deg);
-                    clip-path: polygon(0 55%, 100% 65%, 100% 100%, 0 100%);
-                }
-                75% {
-                    transform: translate(-3px, -1px) skew(-0.5deg);
-                    clip-path: polygon(0 70%, 100% 55%, 100% 100%, 0 100%);
-                }
-                85% {
-                    transform: translate(0, 0) skew(0deg);
-                    clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
-                }
-                95% {
-                    transform: translate(2px, 1px) skew(0.25deg);
-                    clip-path: polygon(0 65%, 100% 60%, 100% 100%, 0 100%);
+                21%, 62% {
+                    transform: translate(2px, 1px) !important;
                 }
             }
             
@@ -698,10 +645,14 @@ class ProductDetailManager {
             console.warn('Recently viewed container not found');
         }
         
-        // Add data-text attribute to section titles for glitch effect
+        // Update section titles to use the glitch-text structure
         const sectionTitles = document.querySelectorAll('.section-title');
         sectionTitles.forEach(title => {
-            title.setAttribute('data-text', title.textContent);
+            // Get the current title text
+            const titleText = title.textContent.trim();
+            
+            // Create the new structure with glitch effect
+            title.innerHTML = `<span class="glitch-text" data-text="${titleText}">${titleText}</span>`;
         });
     }
     
