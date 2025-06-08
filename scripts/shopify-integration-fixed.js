@@ -16,7 +16,7 @@ const SHOPIFY_CONFIG = {
 async function fetchWithRetry(url, options, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      console.log(`Attempt ${i + 1}: Fetching ${url}`);
+      // Fetching with retry
       const response = await fetch(url, options);
       
       if (response.ok) {
@@ -40,11 +40,11 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
 
 // Function to fetch products with no fallback strategies
 async function fetchProducts() {
-  console.log('🔄 Starting product fetch...');
+  // Starting product fetch
   
   // Try Netlify function only - no fallbacks
   try {
-    console.log('📡 Fetching products from Netlify function...');
+    // Fetching products from Netlify function
     const response = await fetchWithRetry('/.netlify/functions/get-products', {
       method: 'GET',
       headers: {
@@ -56,16 +56,15 @@ async function fetchProducts() {
     const data = await response.json();
 
     if (data.error) {
-      console.error('❌ Netlify function returned error:', data.error);
+      console.error('Netlify function error:', data.error);
       throw new Error(data.error);
     }
 
-    console.log('✅ Products loaded from Netlify function:', data);
+    // Products loaded successfully
     processProductData(data);
   } catch (error) {
-    console.error('❌ Product fetch failed:', error.message);
-    console.error('⚠️ IMPORTANT: Shopify API only works when deployed to Netlify.');
-    console.error('⚠️ Please deploy to Netlify to test with real products.');
+    console.error('Product fetch failed:', error.message);
+    console.error('Shopify API only works when deployed to Netlify');
     
     // Show error notification if available
     if (typeof showNotification === 'function') {
@@ -85,13 +84,13 @@ function processProductData(data) {
     if (data.products && Array.isArray(data.products)) {
       // Format: { products: [...] }
       productsArray = data.products;
-      console.log('📋 Found products array in data.products');
+      // Using products array from data.products
     } else if (Array.isArray(data)) {
       // Format: Direct array
       productsArray = data;
-      console.log('📋 Data is directly an array of products');
+      // Using direct products array
     } else {
-      console.error('❌ Unexpected data format:', data);
+      console.error('Unexpected data format');
       return;
     }
     
@@ -102,8 +101,7 @@ function processProductData(data) {
       mapping[productNode.title] = productNode.id;
     });
 
-    console.log('📋 Generated Product Mapping:');
-    console.log(mapping);
+    // Product mapping generated
 
     // Generate the PRODUCT_MAPPING code
     let mappingCode = 'const PRODUCT_MAPPING = {\n';
@@ -118,15 +116,14 @@ function processProductData(data) {
     });
     mappingCode += '};';
 
-    console.log('📝 Generated PRODUCT_MAPPING code:\n');
-    console.log(mappingCode);
+    // Generated PRODUCT_MAPPING code
 
     // Store the mapping in localStorage
     localStorage.setItem('shopifyProductMapping', mappingCode);
     localStorage.setItem('shopifyProductMappingTimestamp', Date.now().toString());
 
   } catch (error) {
-    console.error('❌ Error processing product data:', error);
+    console.error('Error processing product data:', error);
   }
 }
 
@@ -137,19 +134,18 @@ function loadShopifySDK(callback) {
     return;
   }
 
-  console.log('📦 Loading Shopify Buy SDK...');
+  // Loading Shopify Buy SDK
   const script = document.createElement('script');
   script.async = true;
   script.src = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
   
   script.onload = () => {
-    console.log('✅ Shopify Buy SDK loaded successfully');
+    // SDK loaded successfully
     callback();
   };
   
   script.onerror = (error) => {
-    console.error('❌ Failed to load Shopify Buy SDK:', error);
-    console.error('⚠️ SDK loading failed. The app requires deployment to Netlify to function properly.');
+    console.error('Failed to load Shopify Buy SDK:', error);
     
     if (typeof showNotification === 'function') {
       showNotification('Failed to load Shopify SDK. Please check your connection and try again.', 'error');
@@ -167,7 +163,7 @@ function initializeShopifyClient() {
   }
   
   try {
-    console.log(`🔧 Initializing Shopify client with domain: ${SHOPIFY_CONFIG.domain}`);
+    // Initializing Shopify client
     
     shopifyClient = window.ShopifyBuy.buildClient({
       domain: SHOPIFY_CONFIG.domain,
@@ -175,16 +171,16 @@ function initializeShopifyClient() {
       apiVersion: SHOPIFY_CONFIG.apiVersion
     });
 
-    console.log('✅ Shopify client initialized successfully');
+    // Client initialized successfully
 
     // Use the Cart API instead of deprecated Checkout API
     const cartId = localStorage.getItem('shopifyCartId');
     if (cartId) {
       shopifyClient.cart.fetch(cartId).then((cart) => {
         shopifyCheckout = cart;
-        console.log('✅ Existing cart retrieved');
+        // Existing cart retrieved
       }).catch((error) => {
-        console.warn('⚠️ Failed to fetch existing cart:', error);
+        console.warn('Failed to fetch existing cart');
         createNewCart();
       });
     } else {
@@ -192,8 +188,7 @@ function initializeShopifyClient() {
     }
 
   } catch (error) {
-    console.error('❌ Failed to initialize Shopify client:', error);
-    console.error('⚠️ This app requires deployment to Netlify to function properly.');
+    console.error('Failed to initialize Shopify client:', error);
     
     if (typeof showNotification === 'function') {
       showNotification('Failed to initialize Shopify client. Please check your connection and try again.', 'error');
@@ -204,25 +199,24 @@ function initializeShopifyClient() {
 // Create new Shopify cart using Cart API instead of deprecated Checkout API
 function createNewCart() {
   if (!shopifyClient) {
-    console.error('❌ No Shopify client available for cart creation');
+    console.error('No Shopify client available for cart creation');
     return;
   }
 
   shopifyClient.cart.create().then((cart) => {
     shopifyCheckout = cart;
     localStorage.setItem('shopifyCartId', cart.id);
-    console.log('✅ New cart created:', cart.id);
+    // New cart created
   }).catch((error) => {
-    console.error('❌ Failed to create cart:', error);
-    // Fallback for sites still using older SDK versions
-    console.log('⚠️ Attempting fallback cart creation method...');
+    console.error('Failed to create cart:', error);
+    // Attempting fallback cart creation
     try {
       // Direct API call if needed
       shopifyCheckout = { id: 'temp-cart-' + Date.now() };
       localStorage.setItem('shopifyCartId', shopifyCheckout.id);
-      console.log('⚠️ Created temporary cart ID:', shopifyCheckout.id);
+      // Created temporary cart ID
     } catch (fallbackError) {
-      console.error('❌ All cart creation methods failed');
+      console.error('All cart creation methods failed');
     }
   });
 }
@@ -230,30 +224,28 @@ function createNewCart() {
 // Redirect to Shopify checkout using cart URL
 function redirectToShopifyCheckout() {
   if (!shopifyCheckout) {
-    console.error('❌ No Shopify cart available');
+    console.error('No Shopify cart available');
     return;
   }
 
   if (shopifyCheckout && shopifyCheckout.webUrl) {
-    console.log('🛒 Redirecting to checkout:', shopifyCheckout.webUrl);
+    // Redirecting to checkout
     window.location.href = shopifyCheckout.webUrl;
   } else if (shopifyCheckout && shopifyCheckout.checkoutUrl) {
-    console.log('🛒 Redirecting to checkout using cart checkout URL:', shopifyCheckout.checkoutUrl);
+    // Redirecting to checkout using cart checkout URL
     window.location.href = shopifyCheckout.checkoutUrl;
   } else if (shopifyClient && shopifyCheckout.id) {
     // Try to get checkout URL using cart API if available
-    console.log('🛒 Attempting to get checkout URL from cart ID:', shopifyCheckout.id);
     
     try {
       // Use the new URL format if using Cart API
       const checkoutUrl = `https://${SHOPIFY_CONFIG.domain}/cart`;
-      console.log('🛒 Redirecting to storefront cart URL:', checkoutUrl);
       window.location.href = checkoutUrl;
     } catch (error) {
-      console.error('❌ Failed to create checkout URL:', error);
+      console.error('Failed to create checkout URL:', error);
     }
   } else {
-    console.error('❌ No checkout URL available');
+    console.error('No checkout URL available');
   }
 }
 
@@ -261,7 +253,7 @@ function redirectToShopifyCheckout() {
 function overrideCheckoutButton() {
   const checkoutBtn = document.querySelector('.checkout-btn');
   if (checkoutBtn) {
-    console.log('🔧 Overriding checkout button');
+    // Overriding checkout button
     checkoutBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -274,13 +266,13 @@ function overrideCheckoutButton() {
       redirectToShopifyCheckout();
     });
   } else {
-    console.warn('⚠️ Checkout button not found');
+    console.warn('Checkout button not found');
   }
 }
 
 // Health check function
 function performHealthCheck() {
-  console.log('🏥 Performing Shopify integration health check...');
+  // Performing health check
   
   const checks = {
     sdkLoaded: !!window.ShopifyBuy,
@@ -289,13 +281,13 @@ function performHealthCheck() {
     domain: SHOPIFY_CONFIG.domain
   };
   
-  console.log('📊 Health Check Results:', checks);
+  // Health check complete
   return checks;
 }
 
 // Initialize Shopify integration when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Initializing Shopify integration...');
+  // Initializing Shopify integration
   
   // Load Shopify SDK and initialize
   loadShopifySDK(() => {
@@ -323,7 +315,7 @@ window.shopifyDebug = {
   getClient: () => shopifyClient,
   getCheckout: () => shopifyCheckout,
   showDeploymentMessage: () => {
-    console.error('⚠️ This app requires deployment to Netlify to function properly.');
+    console.error('This app requires deployment to Netlify to function properly');
     if (typeof showNotification === 'function') {
       showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
     }

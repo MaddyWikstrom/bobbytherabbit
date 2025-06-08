@@ -8,7 +8,7 @@ class SilentCheckoutSystem {
     
     // Initialize checkout improvements
     static initialize() {
-        console.log('Initializing enhanced checkout system');
+        // Initialize enhanced checkout system
         SilentCheckoutSystem.patchCartManager();
         SilentCheckoutSystem.setupGlobalCheckoutListeners();
     }
@@ -19,7 +19,7 @@ class SilentCheckoutSystem {
         const waitForCartManager = setInterval(() => {
             if (window.cartManager) {
                 clearInterval(waitForCartManager);
-                console.log('Enhancing checkout system');
+                // Enhance checkout system
                 
                 // Store original methods we'll be overriding
                 const originalInitiateShopifyCheckout = window.cartManager.initiateShopifyCheckout;
@@ -29,7 +29,7 @@ class SilentCheckoutSystem {
                 window.cartManager.initiateShopifyCheckout = async function() {
                     try {
                         if (SilentCheckoutSystem.checkoutInProgress) {
-                            console.log('Checkout already in progress, preventing duplicate');
+                            // Prevent duplicate checkout attempts
                             return;
                         }
                         
@@ -77,7 +77,7 @@ class SilentCheckoutSystem {
                         SilentCheckoutSystem.showCheckoutProgress();
                         
                         // Call Netlify function to create checkout - with improved error handling
-                        console.log('Creating checkout with items:', checkoutItems);
+                        // Create checkout with prepared items
                         const response = await fetch('/.netlify/functions/create-checkout', {
                             method: 'POST',
                             headers: {
@@ -132,7 +132,7 @@ class SilentCheckoutSystem {
                 
                 // Add silent notification method to CartManager
                 window.cartManager.showSilentNotification = function(message, type = 'info') {
-                    console.log(`Silent notification: ${message} (${type})`);
+                    // Silent notification triggered
                     
                     // Only show error notifications as small indicators
                     if (type === 'error') {
@@ -162,7 +162,7 @@ class SilentCheckoutSystem {
                         
                         // If we couldn't prepare items, try an alternative approach
                         if (!checkoutItems || checkoutItems.length === 0) {
-                            console.log('Trying alternative checkout item preparation');
+                            // Try alternative checkout item preparation
                             checkoutItems = [];
                             
                             // Direct approach - construct variant IDs in Shopify format if missing
@@ -195,14 +195,14 @@ class SilentCheckoutSystem {
                                         quantity: cartItem.quantity
                                     });
                                     
-                                    console.log(`Using fallback variant ID for ${cartItem.title}: ${fallbackId}`);
+                                    // Using fallback variant ID
                                 }
                             }
                         }
                         
                         return checkoutItems;
                     } catch (error) {
-                        console.error('Enhanced checkout item preparation error:', error);
+                        console.error('Checkout preparation error:', error);
                         // Return whatever we had from the original method
                         return await originalPrepareCheckoutItems.call(this);
                     }

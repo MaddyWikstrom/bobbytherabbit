@@ -22,7 +22,7 @@ class ProductManager {
     async loadProducts() {
         try {
             // Try to load from Shopify API via Netlify function first
-            console.log('🛍️ Loading products from Shopify API...');
+            // Loading products from Shopify API
             const shopifyProducts = await this.loadShopifyProducts();
             
             if (shopifyProducts && shopifyProducts.length > 0) {
@@ -35,14 +35,12 @@ class ProductManager {
                 });
                 
                 this.products = Array.from(uniqueProducts.values());
-                console.log(`✅ Successfully loaded ${this.products.length} unique products from Shopify API!`);
+                // Successfully loaded products from Shopify API
                 this.filteredProducts = [...this.products];
                 return;
             }
             
             // API calls will only work when deployed, not locally
-            console.log('⚠️ IMPORTANT: Shopify API only works when deployed to Netlify, not during local development');
-            console.log('⚠️ Please deploy to Netlify to test with real products - mock data is no longer supported');
             
             // Do not use mock products - clear products instead
             this.products = [];
@@ -51,8 +49,7 @@ class ProductManager {
             // Show error notification
             this.showNotification('This app requires deployment to Netlify to function. Local testing is not supported.', 'error');
         } catch (error) {
-            console.error('❌ Error loading products:', error);
-            console.log('❌ No products loaded due to error');
+            console.error('Error loading products:', error);
             this.products = [];
             this.filteredProducts = [];
         }
@@ -60,7 +57,7 @@ class ProductManager {
 
     async loadShopifyProducts() {
         try {
-            console.log('🛍️ Fetching products via Netlify function to bypass CORS...');
+            // Fetching products via Netlify function
             
             // Use Netlify function to bypass CORS restrictions
             const response = await fetch('/.netlify/functions/get-products', {
@@ -73,7 +70,7 @@ class ProductManager {
             });
 
             if (!response.ok) {
-                console.log('❌ Netlify function failed, status:', response.status);
+                // Netlify function failed
                 throw new Error(`Netlify function failed with status: ${response.status}`);
             }
 
@@ -84,14 +81,12 @@ class ProductManager {
             
             if (data.products && Array.isArray(data.products)) {
                 // New API format with products array inside an object
-                console.log(`🛍️ Fetched ${data.products.length} products from Shopify via Netlify function (new format)`);
                 products = data.products;
             } else if (Array.isArray(data)) {
                 // Old API format with direct array
-                console.log(`🛍️ Fetched ${data.length} products from Shopify via Netlify function (legacy format)`);
                 products = data;
             } else {
-                console.error('❌ Received invalid product data from API:', data);
+                console.error('Received invalid product data from API');
                 throw new Error('Invalid product data format received');
             }
             
@@ -99,12 +94,12 @@ class ProductManager {
                 // Convert Shopify products to our format
                 return this.convertShopifyProducts(products);
             } else {
-                console.error('❌ No products found in API response');
+                console.error('No products found in API response');
                 throw new Error('No products found in API response');
             }
             
         } catch (error) {
-            console.error('❌ Error loading Shopify products via Netlify function:', error);
+            console.error('Error loading Shopify products via Netlify function:', error);
             return null;
         }
     }
@@ -144,8 +139,7 @@ class ProductManager {
                 let color = '';
                 let size = '';
                 
-                // Debug output to help diagnose issues
-                console.log(`Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
+                // Process variant data
                 
                 let foundSize = false;
                 
@@ -154,7 +148,6 @@ class ProductManager {
                 if (variant.title && variant.title !== 'Default Title') {
                     size = variant.title;
                     sizes.add(size);
-                    console.log(`Added variant title directly as size: ${size}`);
                     foundSize = true;
                 }
                 
@@ -167,7 +160,6 @@ class ProductManager {
                         size = option.value;
                         sizes.add(size);
                         foundSize = true;
-                        console.log(`Found direct size option: ${size}`);
                     }
                 });
                 
@@ -186,7 +178,6 @@ class ProductManager {
                             /^\d+$/.test(upperValue) || // Numeric sizes
                             /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
                             
-                            console.log(`Detected size "${option.value}" from option "${option.name}"`);
                             size = option.value;
                             sizes.add(size);
                             foundSize = true;
@@ -197,7 +188,6 @@ class ProductManager {
                 // Extract additional size info from variant title to ensure we catch everything
                 // This is for backward compatibility with our previous approach
                 if (variant.title && variant.title !== 'Default Title') {
-                    console.log(`Capturing all data from variant title: ${variant.title}`);
                     
                     // For variants with slash format (Color / Size)
                     if (variant.title.includes('/')) {
@@ -205,7 +195,6 @@ class ProductManager {
                         // Usually size is the second part (after color)
                         if (parts.length > 1) {
                             const extractedSize = parts[1];
-                            console.log(`Found additional size "${extractedSize}" from title with slash`);
                             sizes.add(extractedSize);
                         }
                     }
@@ -215,7 +204,6 @@ class ProductManager {
                 if (!size && variant.title) {
                     size = variant.title;
                     sizes.add(size);
-                    console.log(`Using variant title as last resort: ${size}`);
                 }
                 
                 // If variant has an image, associate it with the color
@@ -768,7 +756,6 @@ class ProductManager {
     }
 
     addToCart(productId) {
-        console.log(`Adding product to cart: ${productId}`);
         
         const product = this.products.find(p => p.id === productId);
         if (!product) {
@@ -1105,7 +1092,6 @@ class ProductManager {
                 // Try BobbyCart (consolidated cart)
                 if (window.BobbyCart) {
                     window.BobbyCart.addToCart(cartProduct);
-                    console.log('Item added to cart with BobbyCart');
                     cartAdded = true;
                     
                     // Force cart to open
@@ -1116,7 +1102,6 @@ class ProductManager {
                 // Try BobbyCarts (older system)
                 else if (window.BobbyCarts) {
                     window.BobbyCarts.addToCart(cartProduct);
-                    console.log('Item added to cart with BobbyCarts');
                     cartAdded = true;
                     
                     // Force cart to open
@@ -1127,7 +1112,6 @@ class ProductManager {
                 // Try cartManager (legacy system)
                 else if (window.cartManager) {
                     window.cartManager.addItem(cartProduct);
-                    console.log('Item added to cart with cartManager');
                     cartAdded = true;
                     
                     // Force cart to open
@@ -1137,14 +1121,13 @@ class ProductManager {
                 }
                 // Try to initialize CartManager as last resort
                 else if (typeof CartManager !== 'undefined') {
-                    console.log('Cart system not found, initializing CartManager...');
+                    // Initialize CartManager as fallback
                     window.cartManager = new CartManager();
                     
                     setTimeout(() => {
                         try {
                             window.cartManager.addItem(cartProduct);
                             window.cartManager.openCart();
-                            console.log('Item added to cart with new CartManager');
                             cartAdded = true;
                         } catch (e) {
                             console.error('Error adding to cart with new CartManager:', e);
@@ -1165,7 +1148,6 @@ class ProductManager {
                 } else {
                     // No cart system available
                     this.showNotification('Cart system is not available. This app requires deployment to Netlify.', 'error');
-                    console.warn('No cart system available');
                     
                     // Remove modal after error
                     setTimeout(() => {
@@ -1174,7 +1156,7 @@ class ProductManager {
                     }, 1000);
                 }
             } catch (error) {
-                console.error('Error adding product to cart:', error);
+                console.error('Error adding to cart:', error);
                 this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
                 
                 // Remove modal after error
@@ -1209,7 +1191,7 @@ class ProductManager {
         if (window.quickViewManager) {
             window.quickViewManager.openQuickView(productId);
         } else {
-            console.error('Quick View Manager not initialized');
+            // Quick View Manager not available
             this.showNotification('Quick View is not available at the moment', 'error');
         }
     }
