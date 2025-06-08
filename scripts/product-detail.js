@@ -1060,59 +1060,58 @@ renderProduct() {
                ['S', 'M', 'L', 'XL', 'XXL', 'XS', 'OS'].includes(upperSize) ? upperSize :
                sizeString;
     }
+filterImagesByColor(colorName) {
+    console.log(`🖼️ Filtering images for color: ${colorName}`);
 
-    filterImagesByColor(colorName) {
-        console.log(`Filtering images for color: ${colorName}`);
-        
-        // Basic implementation that will be enhanced by quick-view.js
-        if (!this.currentProduct || !this.currentProduct.images) {
-            console.error('No product data or images available for filtering');
-            this.filteredImages = [];
-            return;
-        }
-
-        if (!colorName) {
-            // If no color is selected, show all images
-            this.filteredImages = [...this.currentProduct.images];
-            this.updateThumbnailGrid();
-            return;
-        }
-        
-        // First priority: Use explicit color-specific images if available
-        if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
-            this.filteredImages = this.currentProduct.colorImages[colorName];
-            console.log(`Using ${this.filteredImages.length} color-specific images from mapping for ${colorName}`);
-            this.updateThumbnailGrid();
-            return;
-        }
-        
-        // Second priority: Look for color name in image filenames
-        const selectedColor = colorName.toLowerCase();
-        let colorImages = this.currentProduct.images.filter(imagePath => {
-            if (!imagePath || typeof imagePath !== 'string') return false;
-            const filename = imagePath.toLowerCase();
-            return filename.includes(selectedColor);
-        });
-        
-        if (colorImages.length > 0) {
-            this.filteredImages = colorImages;
-            console.log(`Found ${colorImages.length} images containing ${selectedColor}`);
-        } else {
-            // Fallback: use all images
-            console.log('No color-specific images found, using all images');
-            this.filteredImages = [...this.currentProduct.images];
-        }
-        
-        // Update the thumbnail grid with filtered images
+    if (!this.currentProduct || !this.currentProduct.images) {
+        console.error('🚫 No product data or images found');
+        this.filteredImages = [];
         this.updateThumbnailGrid();
-        
-        // Reset current image index and update main image
-        this.currentImageIndex = 0;
-        const mainImage = document.getElementById('main-image');
-        if (mainImage && this.filteredImages.length > 0) {
-            mainImage.src = this.filteredImages[0];
-        }
+        return;
     }
+
+    const allImages = this.currentProduct.images;
+    console.log('All available images:', allImages);
+
+    if (!colorName) {
+        console.log('⚠️ No color selected – showing all images');
+        this.filteredImages = [...allImages];
+        this.updateThumbnailGrid();
+        return;
+    }
+
+    // Try color-specific image mapping if available
+    if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
+        console.log(`✅ Found colorImages entry for "${colorName}"`);
+        this.filteredImages = this.currentProduct.colorImages[colorName];
+        this.updateThumbnailGrid();
+        return;
+    }
+
+    // Fallback: try to filter by color name in filename
+    const selectedColor = colorName.toLowerCase();
+    const matchedImages = allImages.filter(imagePath => {
+        if (!imagePath || typeof imagePath !== 'string') return false;
+        return imagePath.toLowerCase().includes(selectedColor);
+    });
+
+    if (matchedImages.length > 0) {
+        console.log(`🔍 Matched ${matchedImages.length} image(s) for "${selectedColor}"`);
+        this.filteredImages = matchedImages;
+    } else {
+        console.warn(`⚠️ No images matched color "${selectedColor}". Falling back to all images.`);
+        this.filteredImages = [...allImages];
+    }
+
+    this.updateThumbnailGrid();
+
+    // Update main image
+    const mainImage = document.getElementById('main-image');
+    if (mainImage && this.filteredImages.length > 0) {
+        mainImage.src = this.filteredImages[0];
+    }
+}
+
     
     updateThumbnailGrid() {
         const thumbnailGrid = document.querySelector('.thumbnail-grid');
