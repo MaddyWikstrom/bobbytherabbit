@@ -623,12 +623,12 @@ class ProductManager {
         return `
             <div class="product-card" data-product-id="${product.id}" data-color-images='${colorImagesJSON}'>
                 <div class="product-image-container">
-                    ${product.mainImage ? 
-                      `<img src="${product.mainImage}" alt="${product.title}" class="product-image" onerror="this.style.display='none'; this.parentElement.querySelector('.product-no-image').style.display='flex';">
-                       <div class="product-no-image" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:rgba(60,60,80,0.1); color:#555;">
+                    ${product.mainImage ?
+                      `<img src="${product.mainImage}" alt="${product.title}" class="product-image" style="background-color: #ffffff;" onerror="this.style.display='none'; this.parentElement.querySelector('.product-no-image').style.display='flex';">
+                       <div class="product-no-image" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:#ffffff; color:#555;">
                          <div>${product.title.charAt(0)}</div>
                        </div>` :
-                      `<div class="product-no-image" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center; background:rgba(60,60,80,0.1); color:#555;">
+                      `<div class="product-no-image" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center; background:#ffffff; color:#555;">
                          <div>${product.title.charAt(0)}</div>
                        </div>`
                     }
@@ -905,7 +905,7 @@ class ProductManager {
             </div>
             <div class="modal-body">
                 <div class="product-preview">
-                    <img src="${product.mainImage}" alt="${product.title}">
+                    <img src="${product.mainImage}" alt="${product.title}" style="background-color: #ffffff;">
                     <div class="product-info">
                         <h4>${product.title}</h4>
                         <div class="product-price">$${product.price.toFixed(2)}</div>
@@ -1005,6 +1005,7 @@ class ProductManager {
                 object-fit: cover;
                 border-radius: 4px;
                 margin-right: 15px;
+                background-color: #ffffff;
             }
             
             .product-info h4 {
