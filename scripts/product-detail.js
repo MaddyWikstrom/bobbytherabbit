@@ -213,7 +213,7 @@ class ProductDetailManager {
                         return product;
                     });
                 
-                console.log('Clean recently viewed products:', JSON.stringify(this.recentlyViewed));
+                // Clean the data without excessive logging
             }
         } catch (error) {
             console.error('Error loading recently viewed products:', error);
@@ -239,7 +239,7 @@ class ProductDetailManager {
             imageUrl = '/assets/product-placeholder.png';
         }
         
-        console.log(`Adding product to recently viewed with image: ${imageUrl}`);
+        // Add product to recently viewed
         
         const productToAdd = {
             id: product.id,
@@ -256,25 +256,46 @@ class ProductDetailManager {
         // Save to localStorage
         try {
             localStorage.setItem('recentlyViewed', JSON.stringify(this.recentlyViewed));
-            console.log(`Saved ${this.recentlyViewed.length} recently viewed products to localStorage`);
+            // Successfully saved to localStorage
         } catch (error) {
             console.error('Error saving recently viewed products:', error);
         }
     }
     
     loadRelatedProducts() {
-        // Add a style element to ensure product cards are properly styled
+        // Add a style element to ensure product cards are properly styled with enhanced design
         const styleEl = document.createElement('style');
         styleEl.id = 'product-cards-styles';
         styleEl.textContent = `
+            /* SVG for the wave pattern background */
+            .wave-pattern-bg {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0.07;
+                z-index: 0;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3Cpath id='wave' fill='none' stroke='%23FFFFFF' stroke-width='1.5' d='M0,100 C150,200 350,0 500,100 C650,200 850,0 1000,100 C1150,200 1350,0 1500,100 C1650,200 1850,0 2000,100 L2000,0 L0,0 Z' /%3E%3C/defs%3E%3Cg%3E%3Cuse href='%23wave' y='15' /%3E%3Cuse href='%23wave' y='45' /%3E%3Cuse href='%23wave' y='75' /%3E%3Cuse href='%23wave' y='105' /%3E%3Cuse href='%23wave' y='135' /%3E%3Cuse href='%23wave' y='165' /%3E%3Cuse href='%23wave' y='195' /%3E%3Cuse href='%23wave' y='225' /%3E%3Cuse href='%23wave' y='255' /%3E%3Cuse href='%23wave' y='285' /%3E%3Cuse href='%23wave' y='315' /%3E%3Cuse href='%23wave' y='345' /%3E%3Cuse href='%23wave' y='375' /%3E%3Cuse href='%23wave' y='405' /%3E%3Cuse href='%23wave' y='435' /%3E%3Cuse href='%23wave' y='465' /%3E%3Cuse href='%23wave' y='495' /%3E%3Cuse href='%23wave' y='525' /%3E%3Cuse href='%23wave' y='555' /%3E%3Cuse href='%23wave' y='585' /%3E%3Cuse href='%23wave' y='615' /%3E%3Cuse href='%23wave' y='645' /%3E%3Cuse href='%23wave' y='675' /%3E%3Cuse href='%23wave' y='705' /%3E%3C/g%3E%3C/svg%3E");
+                animation: waveDrift 60s linear infinite;
+            }
+
+            @keyframes waveDrift {
+                0% { background-position: 0% 0%; }
+                100% { background-position: 100% 0%; }
+            }
+
             /* Common styling for product cards in both related and recently viewed sections */
             .related-products-grid, .recently-viewed-grid {
                 display: grid !important;
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
                 gap: 20px !important;
-                margin-top: 20px !important;
+                margin: 20px auto !important;
                 padding: 0 20px !important;
+                justify-content: center !important;
+                max-width: 1200px !important;
             }
+            
             .related-product {
                 border: 1px solid rgba(168, 85, 247, 0.2) !important;
                 border-radius: 8px !important;
@@ -286,12 +307,16 @@ class ProductDetailManager {
                 flex-direction: column !important;
                 height: 100% !important;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+                position: relative !important;
+                z-index: 1 !important;
             }
+            
             .related-product:hover {
                 transform: translateY(-5px) !important;
                 box-shadow: 0 10px 15px rgba(168, 85, 247, 0.2) !important;
                 border-color: rgba(168, 85, 247, 0.4) !important;
             }
+            
             .related-product img {
                 width: 100% !important;
                 aspect-ratio: 1 !important;
@@ -300,6 +325,7 @@ class ProductDetailManager {
                 min-height: 180px !important;
                 background-color: #ffffff !important; /* WHITE background for images as requested */
             }
+            
             .related-product-info {
                 padding: 12px !important;
                 flex-grow: 1 !important;
@@ -307,7 +333,9 @@ class ProductDetailManager {
                 flex-direction: column !important;
                 justify-content: space-between !important;
                 background-color: #181830 !important;
+                text-align: center !important;
             }
+            
             .related-product-info h4 {
                 font-size: 16px !important;
                 margin-top: 0 !important;
@@ -319,32 +347,67 @@ class ProductDetailManager {
                 -webkit-box-orient: vertical !important;
                 overflow: hidden !important;
             }
+            
             .related-product-info span {
                 font-weight: 600 !important;
                 color: rgba(255, 255, 255, 0.8) !important;
             }
+            
             /* Ensure images have appropriate fallback colors */
             .related-product img[src=""],
             .related-product img:not([src]) {
                 background-color: #ffffff !important;
                 min-height: 180px !important;
             }
-            /* Ensure section styling */
+            
+            /* Enhanced section styling with wave pattern */
             .related-products, .recently-viewed {
                 background-color: #13132b !important;
                 border-radius: 12px !important;
                 padding: 2rem !important;
                 margin-top: 2rem !important;
+                position: relative !important;
+                overflow: hidden !important;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+                border: 1px solid rgba(168, 85, 247, 0.2) !important;
             }
+            
             .section-title {
                 color: #ffffff !important;
                 margin-bottom: 1.5rem !important;
                 text-align: center !important;
                 font-size: 1.8rem !important;
+                position: relative !important;
+                z-index: 1 !important;
+                font-weight: 700 !important;
+                letter-spacing: 1px !important;
+                text-transform: uppercase !important;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
             }
+            
             /* Fix for main product image */
             .main-image img {
                 background-color: #ffffff !important;
+            }
+            
+            /* Container for better centering */
+            .related-products .container, .recently-viewed .container {
+                position: relative !important;
+                z-index: 1 !important;
+                max-width: 1200px !important;
+                margin: 0 auto !important;
+            }
+            
+            /* No products message styling */
+            .no-products {
+                color: #ffffff !important;
+                text-align: center !important;
+                padding: 30px !important;
+                font-size: 18px !important;
+                background-color: rgba(24, 24, 48, 0.5) !important;
+                border-radius: 8px !important;
+                margin: 20px auto !important;
+                max-width: 600px !important;
             }
         `;
         document.head.appendChild(styleEl);
@@ -353,7 +416,7 @@ class ProductDetailManager {
     }
     
     renderProductCards() {
-        console.log(`Rendering product cards. Found ${this.recentlyViewed.length} recently viewed items.`);
+        // Render product cards
         
         // First render the "You Might Also Like" section
         const relatedContainer = document.getElementById('related-products-grid');
@@ -375,7 +438,7 @@ class ProductDetailManager {
     renderProductsToContainer(container) {
         if (this.recentlyViewed.length > 0) {
             // Log the recently viewed products for debugging
-            console.log('Rendering products to container:', container.id);
+            // Render products to specified container
             
             // Clear the container
             container.innerHTML = '';
@@ -393,7 +456,7 @@ class ProductDetailManager {
                     
                     if (product.image) {
                         imageUrl = this.ensureAbsoluteUrl(product.image);
-                        console.log(`Processing image for ${product.title}: ${imageUrl}`);
+                        // Process image URL
                     } else {
                         console.warn(`No image found for product ${product.title}`);
                     }
