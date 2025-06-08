@@ -39,8 +39,6 @@
         }
 
         setupEventListeners() {
-                    console.log('Setting up event listeners');
-                    
                     // Create navigation controls if needed
                     this.setupNavigationControls();
                     
@@ -56,14 +54,12 @@
                     
                     if (prevBtn) {
                         prevBtn.addEventListener('click', () => this.navigateImages(-1));
-                        console.log('Previous image button event listener added');
                     } else {
                         console.warn('Previous image button not found');
                     }
                     
                     if (nextBtn) {
                         nextBtn.addEventListener('click', () => this.navigateImages(1));
-                        console.log('Next image button event listener added');
                     } else {
                         console.warn('Next image button not found');
                     }
@@ -72,7 +68,6 @@
                     document.querySelectorAll('.color-option').forEach(colorOption => {
                         colorOption.addEventListener('click', (e) => {
                             const color = e.currentTarget.dataset.color;
-                            console.log(`Color selected: ${color}`);
                             this.selectColor(color);
                         });
                     });
@@ -81,7 +76,6 @@
                     document.querySelectorAll('.size-option').forEach(sizeOption => {
                         sizeOption.addEventListener('click', (e) => {
                             const size = e.currentTarget.dataset.size;
-                            console.log(`Size selected: ${size}`);
                             this.selectSize(size);
                         });
                     });
@@ -96,14 +90,12 @@
                             const newValue = Math.min(parseInt(quantityInput.value) + 1, 10);
                             quantityInput.value = newValue;
                             this.selectedVariant.quantity = newValue;
-                            console.log(`Quantity increased to: ${newValue}`);
                         });
                         
                         decrementBtn.addEventListener('click', () => {
                             const newValue = Math.max(parseInt(quantityInput.value) - 1, 1);
                             quantityInput.value = newValue;
                             this.selectedVariant.quantity = newValue;
-                            console.log(`Quantity decreased to: ${newValue}`);
                         });
                         
                         quantityInput.addEventListener('change', () => {
@@ -112,7 +104,6 @@
                             if (value > 10) value = 10;
                             quantityInput.value = value;
                             this.selectedVariant.quantity = value;
-                            console.log(`Quantity set to: ${value}`);
                         });
                     } else {
                         console.warn('Quantity controls not found in DOM');
@@ -122,14 +113,11 @@
                     const addToCartBtn = document.getElementById('add-to-cart');
                     if (addToCartBtn) {
                         addToCartBtn.addEventListener('click', () => {
-                            console.log('Add to cart button clicked');
                             this.addToCart();
                         });
                     } else {
                         console.warn('Add to cart button not found in DOM');
                     }
-                    
-                    console.log('Event listeners setup completed');
                 }
                 
                 setupNavigationControls() {
@@ -137,8 +125,6 @@
                     let navContainer = document.querySelector('.image-navigation');
                     
                     if (!navContainer) {
-                        console.log('Creating image navigation controls');
-                        
                         // Get or create the image section
                         let imageSection = document.querySelector('.product-image-section');
                         if (!imageSection) {
@@ -183,8 +169,6 @@
                         
                         // Add container to image section
                         imageSection.appendChild(navContainer);
-                        
-                        console.log('Navigation controls created successfully');
                     }
                 }
                 
@@ -194,8 +178,6 @@
                     let quantityInput = document.getElementById('quantity');
                     
                     if (!quantityContainer || !quantityInput) {
-                        console.log('Creating quantity controls');
-                        
                         // Get or create the product info section
                         let productInfoSection = document.querySelector('.product-info-section');
                         if (!productInfoSection) {
@@ -256,8 +238,6 @@
                         
                         // Add container to product info section
                         productInfoSection.appendChild(quantityContainer);
-                        
-                        console.log('Quantity controls created successfully');
                     }
                 }
                 
@@ -266,8 +246,6 @@
                     let addToCartBtn = document.getElementById('add-to-cart');
                     
                     if (!addToCartBtn) {
-                        console.log('Creating add to cart button');
-                        
                         // Get or create the product info section
                         let productInfoSection = document.querySelector('.product-info-section');
                         if (!productInfoSection) {
@@ -297,14 +275,10 @@
                         
                         // Add button to product info section
                         productInfoSection.appendChild(addToCartBtn);
-                        
-                        console.log('Add to cart button created successfully');
                     }
                 }
         
         startLoadingSequence() {
-            console.log('Starting loading sequence');
-            
             // Show loading animation
             const loadingElement = document.querySelector('.product-loading');
             if (loadingElement) {
@@ -313,8 +287,6 @@
         }
         
         completeLoadingSequence() {
-            console.log('Completing loading sequence');
-            
             // Hide the loading screen
             const loadingElement = document.querySelector('.product-loading');
             if (loadingElement) {
@@ -404,19 +376,15 @@
                     throw new Error('Product ID is required');
                 }
                 
-                console.log(`🔍 Loading product from Shopify: ${productId}`);
-                
                 // Add a timestamp to prevent caching issues
                 const timestamp = new Date().getTime();
                 const url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&_=${timestamp}`;
-                console.log(`📡 API URL: ${url}`);
                 
                 // Set up a controller for the fetch operation that we can abort
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased to 8-second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
                 
                 try {
-                    console.log(`⏳ Starting API request...`);
                     const response = await fetch(url, {
                         signal: controller.signal
                     });
@@ -424,28 +392,24 @@
                     // Clear the timeout since fetch completed
                     clearTimeout(timeoutId);
                     
-                    console.log(`✅ Response received, status: ${response.status}`);
-                    
                     if (!response.ok) {
                         const errorText = await response.text();
-                        console.error(`❌ API Error (${response.status}): ${errorText.substring(0, 200)}...`);
+                        console.error(`API Error (${response.status}): ${errorText.substring(0, 100)}`);
                         throw new Error(`API response error: ${response.status} - ${errorText.substring(0, 100)}`);
                     }
                     
                     const responseText = await response.text();
-                    console.log(`📦 Response body (first 100 chars): ${responseText.substring(0, 100)}...`);
                     
                     let data;
                     try {
                         data = JSON.parse(responseText);
                     } catch (parseError) {
-                        console.error(`❌ JSON Parse Error: ${parseError.message}`);
-                        console.error(`❌ Response is not valid JSON. First 200 chars: ${responseText.substring(0, 200)}`);
+                        console.error(`JSON Parse Error: ${parseError.message}`);
                         throw new Error(`Failed to parse API response as JSON: ${parseError.message}`);
                     }
                     
                     if (!data) {
-                        console.error(`❌ No data returned from API`);
+                        console.error(`No data returned from API`);
                         return null;
                     }
                     
@@ -486,15 +450,6 @@
             }
             
             try {
-                // Debug the product structure
-                console.log('Converting Shopify product with structure:', Object.keys(product));
-                
-                if (product.title) {
-                    console.log('Product title:', product.title);
-                } else {
-                    console.error('Product missing title property');
-                }
-                
                 // Create a more flexible conversion that handles different API response formats
                 
                 // Handle missing images
@@ -513,7 +468,6 @@
                 }
                 
                 if (images.length === 0) {
-                    console.warn('No images found for product, using fallback');
                     images = ['/assets/product-placeholder.png'];
                 }
                 
@@ -534,7 +488,7 @@
                         // REST API format
                         variantsArray = product.variants;
                     } else {
-                        console.warn('Unexpected variants format');
+                        // Variant format unrecognized, continue with empty array
                     }
                     
                     // Process variants
@@ -646,14 +600,12 @@
                             colors.add(tag);
                         }
                     });
-                    
-                    console.log(`Extracted ${colors.size} colors from product tags`);
                 }
                 
                 // If still no colors, add a default one based on the product title
                 if (colors.size === 0 && product.title) {
                     // Extract color from title if present
-                    const colorWords = ['black', 'white', 'blue', 'red', 'green', 'yellow', 'purple', 
+                    const colorWords = ['black', 'white', 'blue', 'red', 'green', 'yellow', 'purple',
                                        'orange', 'pink', 'gray', 'grey', 'navy', 'maroon', 'brown'];
                     
                     const title = product.title.toLowerCase();
@@ -668,8 +620,6 @@
                     if (colors.size === 0) {
                         colors.add('Default');
                     }
-                    
-                    console.log(`Added default color based on product title: ${Array.from(colors)[0]}`);
                 }
                 
                 // Map colors to objects with name and code properties
@@ -710,14 +660,10 @@
         
         async loadProduct() {
             try {
-                console.log('Starting product load process');
-                
                 // Parse URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
-                const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
+                const productId = urlParams.get('id');
                 const selectedColor = urlParams.get('color'); // Get color from URL if available
-                
-                console.log(`Loading product with ID: ${productId}`);
                 
                 try {
                     // Load product data from Shopify API with timeout to prevent hanging
@@ -730,13 +676,6 @@
                     
                     // Race the product fetch against the timeout
                     this.currentProduct = await Promise.race([productPromise, timeoutPromise]);
-                    
-                    // If we get here successfully, log information about the product
-                    if (this.currentProduct) {
-                        console.log(`Successfully loaded product: ${this.currentProduct.title}`);
-                        console.log(`Product ID: ${this.currentProduct.id}`);
-                        console.log(`Images available: ${this.currentProduct.images?.length || 0}`);
-                    }
                 } catch (fetchError) {
                     console.error('Error fetching product:', fetchError);
                     this.completeLoadingSequence();
@@ -746,8 +685,6 @@
                 
                 // If we got here, we have a product
                 if (this.currentProduct) {
-                    console.log('Product data loaded successfully:', this.currentProduct.title);
-                    
                     // Render the product to the DOM
                     await this.renderProduct();
                     
@@ -761,15 +698,12 @@
                         );
                         
                         if (colorExists) {
-                            console.log(`Setting selected color to: ${selectedColor}`);
                             this.selectColor(selectedColor);
                         }
                     }
                     
                     this.addToRecentlyViewed(this.currentProduct);
                     this.loadRelatedProducts();
-                    
-                    console.log('Product loading process completed successfully');
                 } else {
                     console.error('No product data available to render');
                     this.showProductNotFound();
@@ -786,31 +720,24 @@
 
         async fetchProductData(productId) {
             try {
-                console.log(`📦 Fetching product data for: ${productId}`);
-                
                 if (!productId) {
                     throw new Error('Invalid product ID');
                 }
                 
-                // Try to load from Shopify API with timeout
-                console.log(`🔍 Attempting to load product from Shopify API`);
+                // Try to load from Shopify API
                 let shopifyProduct = null;
                 
                 try {
                     shopifyProduct = await this.loadShopifyProduct(productId);
                 } catch (shopifyError) {
-                    console.error(`❌ Error loading from Shopify API:`, shopifyError.message);
-                    console.log(`⚠️ Will continue with fallback options`);
+                    console.error(`Error loading from Shopify API:`, shopifyError.message);
                 }
                 
                 if (shopifyProduct) {
-                    console.log(`✅ Successfully loaded product from Shopify API: ${shopifyProduct.title}`);
                     return shopifyProduct;
                 }
                 
                 // If we get here, Shopify API failed, try alternate IDs
-                console.log(`⚠️ Product not found with ID "${productId}", trying alternate variations...`);
-                
                 // Try some common ID variations
                 const alternateIds = [
                     productId.replace(/-/g, '_'),                     // Replace hyphens with underscores
@@ -821,29 +748,23 @@
                     productId.toLowerCase().replace(/\s+/g, '-')      // Lowercase with spaces to hyphens
                 ];
                 
-                console.log(`🔄 Trying ${alternateIds.length} alternate product IDs...`);
-                
                 for (const altId of alternateIds) {
                     if (altId === productId) continue; // Skip if same as original
                     
                     try {
-                        console.log(`🔍 Trying alternate ID: ${altId}`);
                         const altProduct = await this.loadShopifyProduct(altId);
                         
                         if (altProduct) {
-                            console.log(`✅ Successfully loaded product with alternate ID: ${altId}`);
                             return altProduct;
                         }
                     } catch (altError) {
-                        console.log(`❌ Alternate ID ${altId} failed:`, altError.message);
                         // Continue to next ID
                     }
                 }
                 
-                console.error(`❌ All product loading attempts failed for ${productId}`);
                 throw new Error(`Product not found: ${productId}`);
             } catch (error) {
-                console.error(`❌ Error fetching product data for ${productId}:`, error.message);
+                console.error(`Error fetching product data for ${productId}:`, error.message);
                 // Complete loading and don't hang
                 this.completeLoadingSequence();
                 throw error; // Re-throw to be handled by loadProduct
@@ -857,8 +778,6 @@
                         return;
                     }
                     
-                    console.log('Rendering product:', this.currentProduct.title);
-                    
                     try {
                         // Set page title
                         document.title = this.currentProduct.title || 'Product Details';
@@ -866,7 +785,6 @@
                         // Ensure main product container exists
                         let productContainer = document.querySelector('.product-container');
                         if (!productContainer) {
-                            console.log('Creating main product container');
                             productContainer = document.createElement('div');
                             productContainer.className = 'product-container';
                             document.body.appendChild(productContainer);
@@ -875,7 +793,6 @@
                         // Ensure product info section exists
                         let productInfoSection = document.querySelector('.product-info-section');
                         if (!productInfoSection) {
-                            console.log('Creating product info section');
                             productInfoSection = document.createElement('div');
                             productInfoSection.className = 'product-info-section';
                             productContainer.appendChild(productInfoSection);
@@ -884,7 +801,6 @@
                         // Create or update product title
                         let titleElement = document.getElementById('product-title');
                         if (!titleElement) {
-                            console.log('Creating product title element');
                             titleElement = document.createElement('h1');
                             titleElement.id = 'product-title';
                             productInfoSection.appendChild(titleElement);
@@ -894,7 +810,6 @@
                         // Create price container if needed
                         let priceContainer = document.querySelector('.price-container');
                         if (!priceContainer) {
-                            console.log('Creating price container');
                             priceContainer = document.createElement('div');
                             priceContainer.className = 'price-container';
                             productInfoSection.appendChild(priceContainer);
@@ -903,7 +818,6 @@
                         // Create or update product price
                         let priceElement = document.getElementById('product-price');
                         if (!priceElement) {
-                            console.log('Creating product price element');
                             priceElement = document.createElement('span');
                             priceElement.id = 'product-price';
                             priceContainer.appendChild(priceElement);
@@ -913,7 +827,6 @@
                         // Create or update compare price and discount elements
                         let comparePriceElement = document.getElementById('product-compare-price');
                         if (!comparePriceElement) {
-                            console.log('Creating compare price element');
                             comparePriceElement = document.createElement('span');
                             comparePriceElement.id = 'product-compare-price';
                             priceContainer.appendChild(comparePriceElement);
@@ -921,7 +834,6 @@
                         
                         let discountElement = document.getElementById('product-discount');
                         if (!discountElement) {
-                            console.log('Creating discount element');
                             discountElement = document.createElement('span');
                             discountElement.id = 'product-discount';
                             priceContainer.appendChild(discountElement);
@@ -944,7 +856,6 @@
                         // Create or update product description
                         let descriptionElement = document.getElementById('product-description');
                         if (!descriptionElement) {
-                            console.log('Creating product description element');
                             descriptionElement = document.createElement('div');
                             descriptionElement.id = 'product-description';
                             productInfoSection.appendChild(descriptionElement);
@@ -954,7 +865,6 @@
                         // Ensure image section exists
                         let imageSection = document.querySelector('.product-image-section');
                         if (!imageSection) {
-                            console.log('Creating product image section');
                             imageSection = document.createElement('div');
                             imageSection.className = 'product-image-section';
                             productContainer.insertBefore(imageSection, productInfoSection);
@@ -972,7 +882,6 @@
                         // Render size options
                         this.renderSizeOptions();
                         
-                        console.log('Product rendered successfully');
             } catch (error) {
                 console.error('Error rendering product:', error);
                 // Don't redirect to not-found in case of render errors, as the product data might be valid
@@ -985,12 +894,9 @@
         }
         
         renderProductImages() {
-                    console.log('Rendering product images');
-                    
                     // First, ensure image section exists
                     let imageSection = document.querySelector('.product-image-section');
                     if (!imageSection) {
-                        console.log('Creating product image section');
                         imageSection = document.createElement('div');
                         imageSection.className = 'product-image-section';
                         
@@ -1004,14 +910,12 @@
                             }
                         } else {
                             document.body.appendChild(imageSection);
-                            console.warn('Product container not found, appending image section to body');
                         }
                     }
                     
                     // Create main image container if it doesn't exist
                     let mainImageContainer = document.getElementById('main-product-image');
                     if (!mainImageContainer) {
-                        console.log('Creating main image container');
                         mainImageContainer = document.createElement('div');
                         mainImageContainer.id = 'main-product-image';
                         mainImageContainer.className = 'main-image';
@@ -1022,7 +926,6 @@
                     // Create gallery container if it doesn't exist
                     let galleryContainer = document.getElementById('product-gallery');
                     if (!galleryContainer) {
-                        console.log('Creating gallery container');
                         galleryContainer = document.createElement('div');
                         galleryContainer.id = 'product-gallery';
                         galleryContainer.className = 'gallery';
@@ -1071,14 +974,10 @@
                     });
                 });
             }
-            
-            console.log(`Rendered ${this.filteredImages?.length || 0} product images`);
         }
         
         // Add the missing updateThumbnailGrid method referenced in quick-view.js
                 updateThumbnailGrid() {
-                    console.log('Updating thumbnail grid with filtered images');
-                    
                     try {
                         // Verify we have product data and filtered images
                         if (!this.currentProduct) {
@@ -1088,8 +987,6 @@
                         
                         // Make sure filteredImages exists - default to all product images if not defined
                         if (!this.filteredImages || this.filteredImages.length === 0) {
-                            console.log('No filtered images available, using all product images');
-                            
                             if (this.currentProduct.images && this.currentProduct.images.length > 0) {
                                 this.filteredImages = [...this.currentProduct.images];
                             } else {
@@ -1101,7 +998,6 @@
                         // First, ensure image section exists
                         let imageSection = document.querySelector('.product-image-section');
                         if (!imageSection) {
-                            console.log('Creating product image section for thumbnail grid');
                             imageSection = document.createElement('div');
                             imageSection.className = 'product-image-section';
                             
@@ -1115,14 +1011,12 @@
                                 }
                             } else {
                                 document.body.appendChild(imageSection);
-                                console.warn('Product container not found, appending image section to body');
                             }
                         }
                         
                         // Create gallery container if it doesn't exist
                         let galleryContainer = document.getElementById('product-gallery');
                         if (!galleryContainer) {
-                            console.log('Creating gallery container for thumbnail grid');
                             galleryContainer = document.createElement('div');
                             galleryContainer.id = 'product-gallery';
                             galleryContainer.className = 'gallery';
@@ -1141,8 +1035,6 @@
                             const firstColor = this.currentProduct.colors[0];
                             selectedColor = typeof firstColor === 'object' ? firstColor.name : firstColor;
                         }
-                        
-                        console.log(`Updating thumbnail grid with ${this.filteredImages.length} images for color: ${selectedColor}`);
                 
                         // Generate HTML for filtered images with improved styling
                         galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
@@ -1161,7 +1053,6 @@
                             
                             // Create main image container if it doesn't exist
                             if (!mainImageContainer) {
-                                console.log('Main image container not found, creating it');
                                 const imageSection = document.querySelector('.product-image-section');
                                 
                                 if (imageSection) {
@@ -1199,21 +1090,15 @@
                                 item.style.border = '2px solid #4CAF50';
                             });
                         });
-                        
-                        console.log(`Thumbnail grid updated with ${this.filteredImages.length} images`);
                     } catch (error) {
                         console.error('Error updating thumbnail grid:', error);
-                        console.error('Stack trace:', error.stack);
                     }
                 }
         
         renderColorOptions() {
-            console.log('Rendering color options');
-            
             // First, ensure product info section exists
             let productInfoSection = document.querySelector('.product-info-section');
             if (!productInfoSection) {
-                console.log('Creating product info section for color options');
                 productInfoSection = document.createElement('div');
                 productInfoSection.className = 'product-info-section';
                 
@@ -1222,14 +1107,12 @@
                     productContainer.appendChild(productInfoSection);
                 } else {
                     document.body.appendChild(productInfoSection);
-                    console.warn('Product container not found, appending info section to body');
                 }
             }
             
             // Create color options container if it doesn't exist
             let colorOptionsContainer = document.getElementById('color-options');
             if (!colorOptionsContainer) {
-                console.log('Creating color options container');
                 colorOptionsContainer = document.createElement('div');
                 colorOptionsContainer.id = 'color-options';
                 colorOptionsContainer.className = 'options-container';
@@ -1241,27 +1124,18 @@
                 productInfoSection.appendChild(colorOptionsContainer);
             }
             
-            // Debug log - check product colors
-            console.log('Current product colors:', JSON.stringify(this.currentProduct.colors));
-            
             // If we don't have colors, create a default one
             if (!this.currentProduct.colors || this.currentProduct.colors.length === 0) {
-                console.log('No colors found, creating a default color');
                 this.currentProduct.colors = [{
                     name: 'Default',
                     code: '#333333'
                 }];
             }
             
-            console.log(`Rendering ${this.currentProduct.colors.length} color options with format:`,
-                typeof this.currentProduct.colors[0] === 'object' ? 'color objects' : 'color strings');
-            
             colorOptionsContainer.innerHTML = this.currentProduct.colors.map(color => {
                 // Handle both formats: string or {name, code} object
                 const colorName = typeof color === 'object' ? color.name : color;
                 const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
-                
-                console.log(`Rendering color: ${colorName} with code: ${colorCode}`);
                 
                 return `
                     <div class="color-option" data-color="${colorName}"
@@ -1286,21 +1160,15 @@
                 const firstColor = typeof this.currentProduct.colors[0] === 'object'
                     ? this.currentProduct.colors[0].name
                     : this.currentProduct.colors[0];
-                    
-                console.log(`Selecting first color by default: ${firstColor}`);
+                
                 this.selectColor(firstColor);
             }
-            
-            console.log(`Rendered ${this.currentProduct.colors?.length || 0} color options`);
         }
         
         renderSizeOptions() {
-                    console.log('Rendering size options');
-                    
                     // First, ensure product info section exists
                     let productInfoSection = document.querySelector('.product-info-section');
                     if (!productInfoSection) {
-                        console.log('Creating product info section for size options');
                         productInfoSection = document.createElement('div');
                         productInfoSection.className = 'product-info-section';
                         
@@ -1316,7 +1184,6 @@
                     // Create size options container if it doesn't exist
                     let sizeOptionsContainer = document.getElementById('size-options');
                     if (!sizeOptionsContainer) {
-                        console.log('Creating size options container');
                         sizeOptionsContainer = document.createElement('div');
                         sizeOptionsContainer.id = 'size-options';
                         sizeOptionsContainer.className = 'options-container';
@@ -1348,13 +1215,9 @@
                     } else {
                         sizeOptionsContainer.innerHTML = '<p>No size options available</p>';
                     }
-                    
-                    console.log(`Rendered ${this.currentProduct.sizes?.length || 0} size options`);
                 }
         
         selectColor(color) {
-            console.log(`Selecting color: ${color}`);
-            
             // Store the color name in selectedVariant
             this.selectedVariant.color = color;
             
@@ -1367,30 +1230,13 @@
                 }
             });
             
-            // Find the color object in our colors array for debugging
-            let colorObject = null;
-            if (this.currentProduct && this.currentProduct.colors) {
-                colorObject = this.currentProduct.colors.find(c =>
-                    typeof c === 'object' ? c.name === color : c === color
-                );
-                
-                if (colorObject) {
-                    console.log(`Found color object: ${JSON.stringify(colorObject)}`);
-                } else {
-                    console.log(`No color object found for: ${color}`);
-                }
-            }
-            
             // Filter images for this color if available
             if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
-                console.log(`Found ${this.currentProduct.colorImages[color].length} images for color: ${color}`);
                 this.filteredImages = this.currentProduct.colorImages[color];
                 this.currentImageIndex = 0;
                 this.renderProductImages();
             } else {
-                console.log(`No specific images found for color: ${color}, using all images`);
-                
-                // If no color-specific images, use all images but filter in the DOM
+                // If no color-specific images, use all images
                 if (this.currentProduct.images && this.currentProduct.images.length > 0) {
                     this.filteredImages = this.currentProduct.images;
                     this.currentImageIndex = 0;
@@ -1413,8 +1259,6 @@
         }
         
         navigateImages(direction) {
-                    console.log(`Navigating images in direction: ${direction}`);
-                    
                     if (!this.filteredImages || this.filteredImages.length === 0) {
                         console.warn('No filtered images available for navigation');
                         return;
@@ -1422,13 +1266,11 @@
                     
                     const imageCount = this.filteredImages.length;
                     if (imageCount <= 1) {
-                        console.log('Only one image available, navigation disabled');
                         return;
                     }
                     
                     // Calculate new index with boundary checking
                     const newIndex = (this.currentImageIndex + direction + imageCount) % imageCount;
-                    console.log(`Navigating from image ${this.currentImageIndex} to ${newIndex}`);
                     this.currentImageIndex = newIndex;
                     
                     // Update main image
@@ -1444,13 +1286,9 @@
                             item.style.border = '2px solid transparent';
                         }
                     });
-                    
-                    console.log('Image navigation completed successfully');
                 }
         
         updateMainImage() {
-                    console.log('Updating main product image');
-                    
                     const mainImageContainer = document.getElementById('main-product-image');
                     if (!mainImageContainer) {
                         console.error('Main image container not found');
@@ -1463,7 +1301,6 @@
                             newMainContainer.className = 'main-image';
                             newMainContainer.style.marginBottom = '15px';
                             imageSection.prepend(newMainContainer);
-                            console.log('Created missing main image container');
                         } else {
                             console.error('Image section not found, cannot create main image container');
                             return;
@@ -1488,12 +1325,9 @@
                     }
                     
                     mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain;">`;
-                    console.log('Main image updated successfully');
                 }
         
         addToCart() {
-                    console.log('Adding product to cart');
-                    
                     try {
                         if (!this.currentProduct) {
                             console.error('Cannot add to cart: Product not available');
@@ -1520,20 +1354,11 @@
                             quantity: this.selectedVariant.quantity || 1
                         };
                         
-                        console.log('Prepared cart product:', {
-                            id: cartProduct.id,
-                            title: cartProduct.title,
-                            color: cartProduct.selectedColor,
-                            size: cartProduct.selectedSize,
-                            quantity: cartProduct.quantity
-                        });
-                        
                         // Try to use any available cart system
                         let cartAdded = false;
                         
                         // Try BobbyCart (consolidated cart)
                         if (window.BobbyCart) {
-                            console.log('Using BobbyCart system');
                             try {
                                 window.BobbyCart.addToCart(cartProduct);
                                 cartAdded = true;
@@ -1548,7 +1373,6 @@
                         }
                         // Try other cart systems if needed
                         else if (window.cartManager) {
-                            console.log('Using cartManager system');
                             try {
                                 window.cartManager.addItem(cartProduct);
                                 cartAdded = true;
@@ -1563,7 +1387,6 @@
                         }
                         
                         if (cartAdded) {
-                            console.log('Product successfully added to cart');
                             this.showNotification('Product added to cart!', 'success');
                             
                             // Trigger add to cart animation
