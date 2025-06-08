@@ -172,9 +172,9 @@ class ProductDetailManager {
 
     async loadShopifyProduct(productId) {
         try {
-            // Use our new single-product Netlify function to avoid CORS issues
-            console.log('🛍️ Loading single product via Netlify function...');
-            const response = await fetch(`/.netlify/functions/get-product-by-handle?handle=${productId}`);
+            // Use Netlify function to avoid CORS issues
+            console.log('🛍️ Loading product via Netlify function...');
+            const response = await fetch('/.netlify/functions/get-products');
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -187,15 +187,36 @@ class ProductDetailManager {
                 return null;
             }
 
-            // Direct access to the product
-            if (!data.product) {
-                console.error('Unexpected API response format - no product found:', data);
+            // Find the specific product by handle/id or Shopify ID
+            // Check if data has a products array (new API format) or is an array directly (old format)
+            let products = [];
+            if (data.products && Array.isArray(data.products)) {
+                console.log('Processing product data from new API format');
+                products = data.products;
+            } else if (Array.isArray(data)) {
+                console.log('Processing product data from legacy API format');
+                products = data;
+            } else {
+                console.error('Unexpected data format from API:', data);
                 return null;
             }
             
-            // Log successful product fetch
-            console.log(`🛍️ Found product via Netlify function: ${data.product.title}`);
-            return this.convertShopifyProductForDetail(data.product);
+            const product = products.find(p => {
+                const node = p.node || p;
+                const shopifyId = node.id?.replace('gid://shopify/Product/', '');
+                return node.handle === productId ||
+                       shopifyId === productId ||
+                       node.id === productId;
+            });
+            
+            if (!product) {
+                console.log('❌ Product not found in Shopify data');
+                return null;
+            }
+
+            const productNode = product.node || product;
+            console.log(`🛍️ Found product via Netlify function: ${productNode.title}`);
+            return this.convertShopifyProductForDetail(productNode);
             
         } catch (error) {
             console.error('❌ Error loading product via Netlify function:', error);
@@ -223,11 +244,6 @@ class ProductDetailManager {
             console.log('No Shopify images found. Site requires deployment to Netlify to load images correctly.');
         }
         
-        // Debug the images we found
-        images.forEach((img, idx) => {
-            console.log(`Image ${idx}: ${img}`);
-        });
-        
         // Extract variants and organize by color/size
         const variants = [];
         const colorMap = {};
@@ -239,16 +255,6 @@ class ProductDetailManager {
         console.log("AVAILABLE VARIANTS:", shopifyProduct.variants.edges.length);
         shopifyProduct.variants.edges.forEach((variantEdge, index) => {
             console.log(`VARIANT ${index+1}:`, JSON.stringify(variantEdge.node, null, 2));
-            
-            // Log variant image if available
-            if (variantEdge.node.image && variantEdge.node.image.url) {
-                console.log(`  ▶ Variant ${index+1} has image: ${variantEdge.node.image.url}`);
-            }
-            
-            // Log selected options
-            variantEdge.node.selectedOptions.forEach(opt => {
-                console.log(`  ▶ Option: ${opt.name} = ${opt.value}`);
-            });
         });
         
         shopifyProduct.variants.edges.forEach(variantEdge => {
@@ -371,7 +377,6 @@ class ProductDetailManager {
                 // Only add if not already in the array
                 if (!colorToImagesMap.get(color).includes(variant.image.url)) {
                     colorToImagesMap.get(color).push(variant.image.url);
-                    console.log(`  ➕ Added image for color "${color}": ${variant.image.url}`);
                 }
             }
             
@@ -386,22 +391,12 @@ class ProductDetailManager {
             });
         });
         
-        // Summarize what we found for each color
-        Object.keys(colorMap).forEach(color => {
-            if (colorToImagesMap.has(color)) {
-                console.log(`📊 Found ${colorToImagesMap.get(color).length} images for color "${color}"`);
-            } else {
-                console.log(`📊 No specific images found for color "${color}"`);
-            }
-        });
-        
         // If we have color-specific images but not for all colors,
         // assign general images to colors without specific images
         if (colorToImagesMap.size > 0 && colorToImagesMap.size < Object.keys(colorMap).length) {
             Object.keys(colorMap).forEach(color => {
                 if (!colorToImagesMap.has(color)) {
                     colorToImagesMap.set(color, [...images]);
-                    console.log(`  ➕ Assigned all ${images.length} general images to color "${color}"`);
                 }
             });
         }
@@ -410,7 +405,6 @@ class ProductDetailManager {
             // Just assign all images to all colors
             Object.keys(colorMap).forEach(color => {
                 colorToImagesMap.set(color, [...images]);
-                console.log(`  ➕ Assigned all ${images.length} general images to color "${color}" (no color-specific images found)`);
             });
         }
         
@@ -993,16 +987,12 @@ class ProductDetailManager {
         
         console.log(`Finding sizes for color: ${colorName}`);
         
-        console.log(`Finding variants for color: ${colorName}`);
-        
         // Get all variants with exact color match
-        const colorVariants = this.currentProduct.variants.filter(v =>
+        const colorVariants = this.currentProduct.variants.filter(v => 
             v.color === colorName
         );
         
         console.log(`Found ${colorVariants.length} exact color match variants`);
-        
-        console.log(`Found ${colorVariants.length} variants for color ${colorName}`);
         
         // Extract sizes from these color-specific variants
         const colorSizes = new Set();
@@ -1029,9 +1019,6 @@ class ProductDetailManager {
                 }
             });
         }
-        
-        // REMOVED: Standard size fallback to ensure we only show sizes that are
-        // specifically available for this color
         
         // Convert to array and sort by size order
         const sizeOrder = { 'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4, '2XL': 5, 'XXL': 5, '3XL': 6, 'OS': 7 };
@@ -1147,135 +1134,43 @@ class ProductDetailManager {
             return;
         }
         
-        console.log(`🎨 Filtering images for color: ${colorName}`);
+        console.log(`Filtering images for color: ${colorName}`);
         
-        // PRIORITIZE: Check if we have explicit color-specific images from Shopify colorImages mapping
+        // Check if we have explicit color-specific images from Shopify
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
-            const colorImages = this.currentProduct.colorImages[colorName];
+            // Use the color-specific images from our mapping
+            this.filteredImages = this.currentProduct.colorImages[colorName];
+            console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
+        } else {
+            // Simple URL filtering - match the color name in the URL
+            const color = colorName.toLowerCase();
             
-            // Only use if we actually have images
-            if (colorImages && colorImages.length > 0) {
-                this.filteredImages = [...colorImages];
-                console.log(`✅ Using ${this.filteredImages.length} explicit color-specific images for "${colorName}"`);
-                
-                // Debug the actual images we're using
-                this.filteredImages.forEach((img, idx) => {
-                    console.log(`  Image ${idx}: ${img}`);
-                });
-                
-                // Update the DOM directly
-                this.updateDOMWithFilteredImages(colorName, this.filteredImages);
-                return;
-            }
-        }
-        
-        console.log(`⚠️ No explicit colorImages mapping found for "${colorName}", trying URL pattern matching`);
-        
-        // If no explicit color mapping, filter images based on URL patterns
-        // Convert color name to lowercase for case-insensitive comparison
-        const color = colorName.toLowerCase();
-        
-        // More comprehensive pattern matching for color-specific images
-        this.filteredImages = this.currentProduct.images.filter(imagePath => {
-            // First check if the image path exists
-            if (!imagePath || typeof imagePath !== 'string') {
-                return false;
-            }
-            
-            const imageName = imagePath.toLowerCase();
-            
-            // More extensive pattern matching to catch more color variants
-            const matches =
-                   imageName.includes(`/${color}/`) ||
-                   imageName.includes(`/${color}_`) ||
-                   imageName.includes(`/${color}-`) ||
-                   imageName.includes(`_${color}_`) ||
-                   imageName.includes(`-${color}-`) ||
-                   imageName.includes(`_${color}.`) ||
-                   imageName.includes(`-${color}.`) ||
-                   imageName.includes(`variant=${color}`) ||
-                   imageName.includes(`color=${color}`) ||
-                   imageName.includes(`${color.replace(' ', '')}_`) ||
-                   imageName.includes(`${color.replace(' ', '')}-`) ||
-                   // Check for color name as a distinct word
-                   new RegExp(`\\b${color}\\b`).test(imageName);
-                   
-            if (matches) {
-                console.log(`  ✓ URL match: "${imagePath}" contains "${color}"`);
-            }
-            
-            return matches;
-        });
-        
-        console.log(`🔍 Found ${this.filteredImages.length} images matching color "${colorName}" via URL patterns`);
-        
-        // If no images match the color, use a more aggressive approach
-        if (this.filteredImages.length === 0) {
-            console.log(`⚠️ No specific images found for color: "${colorName}", trying secondary matching`);
-            
-            // Try a more relaxed match - any occurrence of the color name in the URL
+            // Filter images that match the selected color
             this.filteredImages = this.currentProduct.images.filter(imagePath => {
-                if (!imagePath || typeof imagePath !== 'string') return false;
-                const matches = imagePath.toLowerCase().includes(color);
-                if (matches) {
-                    console.log(`  ✓ Secondary match: "${imagePath}" contains "${color}" anywhere`);
+                // Skip invalid paths
+                if (!imagePath || typeof imagePath !== 'string') {
+                    return false;
                 }
-                return matches;
+                
+                // Simple direct substring match
+                return imagePath.toLowerCase().includes(color);
             });
             
-            // Use fallback approach
+            // If no images match the color, use all images as fallback
             if (this.filteredImages.length === 0) {
-                console.log(`⚠️ Still no URL matches found for "${colorName}", using all images as fallback`);
+                console.log(`No specific images found for color: ${colorName}, using all images`);
                 this.filteredImages = [...this.currentProduct.images];
-                
-                // Debug which images we're using
-                console.log(`  Using ${this.filteredImages.length} fallback images for color "${colorName}"`);
             }
         }
         
-        // Update thumbnail grid and main image
+        // Update the thumbnail grid with filtered images
         this.updateThumbnailGrid();
-        this.updateDOMWithFilteredImages(colorName, this.filteredImages);
         
         // Reset current image index and update main image
         this.currentImageIndex = 0;
         const mainImage = document.getElementById('main-image');
         if (mainImage && this.filteredImages.length > 0) {
             mainImage.src = this.filteredImages[0];
-        }
-    }
-    
-    // Update DOM with filtered images for a specific color
-    updateDOMWithFilteredImages(colorName, filteredImages) {
-        if (!filteredImages || filteredImages.length === 0) {
-            console.log(`⚠️ No filtered images to update DOM with for color "${colorName}"`);
-            return;
-        }
-        
-        console.log(`🔄 Updating DOM with ${filteredImages.length} filtered images for color "${colorName}"`);
-        
-        // IMPORTANT: Skip DOM manipulation if we're just initializing and no thumbnails exist yet
-        // This prevents race conditions during page load
-        const thumbnailGrid = document.querySelector('.thumbnail-grid');
-        if (!thumbnailGrid) {
-            console.log('⚠️ No thumbnail grid found in DOM, cannot update images');
-            return;
-        }
-        
-        // Clear and regenerate the thumbnail grid with filtered images
-        thumbnailGrid.innerHTML = filteredImages.map((image, index) => `
-            <div class="thumbnail ${index === 0 ? 'active' : ''}" onclick="productDetailManager.changeImage(${index})">
-                <img src="${image}" alt="${this.currentProduct.title}" data-color="${colorName}">
-            </div>
-        `).join('');
-        
-        console.log(`✅ Regenerated ${filteredImages.length} thumbnails in grid`);
-        
-        // Update main image to first filtered image
-        const mainImage = document.getElementById('main-image');
-        if (mainImage && filteredImages.length > 0) {
-            mainImage.src = filteredImages[0];
-            console.log(`✅ Updated main image to ${filteredImages[0]}`);
         }
     }
     
@@ -1548,474 +1443,4 @@ class ProductDetailManager {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>S</td><td>20</td><td>27</td></tr>
-                    <tr><td>M</td><td>21</td><td>28</td></tr>
-                    <tr><td>L</td><td>23</td><td>29</td></tr>
-                    <tr><td>XL</td><td>25</td><td>30</td></tr>
-                    <tr><td>2XL</td><td>26½</td><td>31</td></tr>
-                    <tr><td>3XL</td><td>28</td><td>32</td></tr>
-                </tbody>
-            </table>
-            <p><strong>Note:</strong> This hoodie runs small. We recommend ordering one size larger than your usual size.</p>
-        `;
-        
-        modal.classList.add('active');
-    }
-
-    closeSizeGuide() {
-        const modal = document.getElementById('size-guide-modal');
-        modal.classList.remove('active');
-    }
-
-    openImageZoom() {
-        const modal = document.createElement('div');
-        modal.className = 'image-zoom-modal';
-        modal.innerHTML = `
-            <img src="${this.filteredImages[this.currentImageIndex]}" alt="${this.currentProduct.title}" class="zoom-image">
-            <button class="zoom-close" onclick="productDetailManager.closeImageZoom()">×</button>
-        `;
-        
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeImageZoom();
-            }
-        });
-    }
-
-    closeImageZoom() {
-        const modal = document.querySelector('.image-zoom-modal');
-        if (modal) {
-            modal.classList.remove('active');
-            setTimeout(() => modal.remove(), 300);
-        }
-    }
-
-    addToRecentlyViewed(product) {
-        if (!product) return;
-        
-        // Create a clean copy of the product with only Shopify API images
-        const cleanProduct = {
-            id: product.id,
-            title: product.title,
-            price: product.price,
-            comparePrice: product.comparePrice,
-            category: product.category,
-            featured: product.featured,
-            new: product.new,
-            sale: product.sale,
-            // Only keep Shopify images - no fallbacks
-            mainImage: product.mainImage && product.mainImage.startsWith('http') ?
-                product.mainImage : null,
-            images: product.images ? product.images.filter(img => img.startsWith('http')) : []
-        };
-        
-        // If no valid images, leave as empty array
-        if (!cleanProduct.images || cleanProduct.images.length === 0) {
-            cleanProduct.images = [];
-        }
-        
-        // If mainImage isn't valid, use first image or leave as null
-        if (!cleanProduct.mainImage && cleanProduct.images.length > 0) {
-            cleanProduct.mainImage = cleanProduct.images[0];
-        }
-        
-        // Update recently viewed list
-        this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== cleanProduct.id);
-        this.recentlyViewed.unshift(cleanProduct);
-        this.recentlyViewed = this.recentlyViewed.slice(0, 5);
-        
-        try {
-            localStorage.setItem('bobby-streetwear-recently-viewed', JSON.stringify(this.recentlyViewed));
-        } catch (error) {
-            console.error('Error saving recently viewed:', error);
-        }
-        
-        this.renderRecentlyViewed();
-    }
-
-    loadRecentlyViewed() {
-        try {
-            const saved = localStorage.getItem('bobby-streetwear-recently-viewed');
-            if (saved) {
-                let savedProducts = JSON.parse(saved);
-                
-                // Filter out any products with non-Shopify images
-                savedProducts = savedProducts.map(product => {
-                    // Create a clean version of each product
-                    const cleanProduct = {...product};
-                    
-                    // Filter images to only include Shopify URLs - no fallbacks
-                    if (cleanProduct.images && Array.isArray(cleanProduct.images)) {
-                        cleanProduct.images = cleanProduct.images.filter(img => img.startsWith('http'));
-                    } else {
-                        cleanProduct.images = [];
-                    }
-                    
-                    // Fix main image if needed
-                    if (!cleanProduct.mainImage || !cleanProduct.mainImage.startsWith('http')) {
-                        cleanProduct.mainImage = cleanProduct.images.length > 0 ? cleanProduct.images[0] : null;
-                    }
-                    
-                    return cleanProduct;
-                });
-                
-                this.recentlyViewed = savedProducts;
-                this.renderRecentlyViewed();
-                
-                // Save the cleaned list back to localStorage
-                localStorage.setItem('bobby-streetwear-recently-viewed', JSON.stringify(this.recentlyViewed));
-            }
-        } catch (error) {
-            console.error('Error loading recently viewed:', error);
-            // Clear potentially corrupted data
-            this.recentlyViewed = [];
-            localStorage.removeItem('bobby-streetwear-recently-viewed');
-        }
-    }
-
-    renderRecentlyViewed() {
-        const grid = document.getElementById('recently-viewed-grid');
-        const section = document.querySelector('.recently-viewed');
-        
-        // Filter out products with no images
-        const productsWithImages = this.recentlyViewed.filter(p => p.mainImage && p.images.length > 0);
-        
-        if (productsWithImages.length === 0) {
-            section.style.display = 'none';
-            return;
-        }
-        
-        section.style.display = 'block';
-        grid.innerHTML = productsWithImages.map(product => this.createProductCard(product)).join('');
-    }
-
-    async loadRelatedProducts() {
-        // Load related products based on category
-        const relatedProducts = await this.fetchRelatedProducts();
-        const grid = document.getElementById('related-products-grid');
-        
-        grid.innerHTML = relatedProducts.map(product => this.createProductCard(product)).join('');
-    }
-
-    async fetchRelatedProducts() {
-        try {
-            // Load all products from Shopify
-            const response = await fetch('/.netlify/functions/get-products');
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.error) {
-                console.error('Error loading related products:', data.error);
-                return [];
-            }
-
-            // Filter products by same category, excluding current product
-            const currentCategory = this.currentProduct.category.toLowerCase();
-            // Check if data has a products array (new API format) or is an array directly (old format)
-            let products = [];
-            if (data.products && Array.isArray(data.products)) {
-                console.log('Processing related products from new API format');
-                products = data.products;
-            } else if (Array.isArray(data)) {
-                console.log('Processing related products from legacy API format');
-                products = data;
-            } else {
-                console.error('Unexpected data format from API:', data);
-                return [];
-            }
-            
-            const relatedProducts = products
-                .filter(p => {
-                    const node = p.node || p;
-                    const productCategory = this.extractCategory(node.title).toLowerCase();
-                    return productCategory === currentCategory && node.handle !== this.currentProduct.id;
-                })
-                .slice(0, 4) // Get first 4 related products
-                .map(p => {
-                    const node = p.node || p;
-                    // Only use Shopify API images
-                    const shopifyImages = node.images.edges.map(imgEdge => imgEdge.node.url);
-                    // Only use Shopify images - no fallbacks
-                    const images = shopifyImages.length > 0 ? shopifyImages : [];
-                    const minPrice = parseFloat(node.priceRange.minVariantPrice.amount);
-                    const firstVariant = node.variants.edges[0]?.node;
-                    const comparePrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
-                    
-                    return {
-                        id: node.handle,
-                        title: node.title,
-                        price: minPrice,
-                        comparePrice: comparePrice,
-                        mainImage: images.length > 0 ? images[0] : null,
-                        images: images,
-                        category: this.extractCategory(node.title).toLowerCase(),
-                        featured: node.tags.includes('featured'),
-                        new: node.tags.includes('new'),
-                        sale: comparePrice && comparePrice > minPrice
-                    };
-                });
-            
-            return relatedProducts;
-            
-        } catch (error) {
-            console.error('Error loading related products:', error);
-            return [];
-        }
-    }
-
-    createProductCard(product) {
-        // Skip products without images
-        if (!product.mainImage) {
-            return '';
-        }
-        
-        const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
-        
-        return `
-            <div class="product-card" onclick="window.location.href='product.html?id=${product.id}'">
-                <div class="product-image-container">
-                    <img src="${product.mainImage}" alt="${product.title}" class="product-image"
-                         onerror="this.style.display='none'; this.parentElement.classList.add('no-image')">
-                    <div class="product-badges">
-                        ${product.new ? '<span class="product-badge new">New</span>' : ''}
-                        ${product.sale ? `<span class="product-badge sale">-${discount}%</span>` : ''}
-                        ${product.featured ? '<span class="product-badge">Featured</span>' : ''}
-                    </div>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">${product.category.replace('-', ' ')}</div>
-                    <h3 class="product-title">${product.title}</h3>
-                    <div class="product-price">
-                        <span class="price-current">$${product.price.toFixed(2)}</span>
-                        ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // Show added to cart feedback with button animation
-    showAddedFeedback() {
-        const addToCartBtn = document.querySelector('.add-to-cart-btn');
-        if (!addToCartBtn) return;
-        
-        // Remove any existing animation classes
-        addToCartBtn.classList.remove('adding', 'success');
-        
-        // Force browser reflow to restart animation
-        void addToCartBtn.offsetWidth;
-        
-        // Add animation class
-        addToCartBtn.classList.add('adding');
-        
-        // Show the cart notification with product image
-        this.showCartAddedNotification();
-        
-        // Remove animation class after it completes
-        setTimeout(() => {
-            addToCartBtn.classList.remove('adding');
-        }, 1200);
-    }
-    
-    // Show a cart notification with product details
-    showCartAddedNotification() {
-        if (!this.currentProduct) return;
-        
-        // Try to use BobbyCarts notification system first
-        if (window.BobbyCarts && window.BobbyCarts.showCartNotification) {
-            const currentImage = document.getElementById('main-image')?.getAttribute('src') ||
-                                 this.filteredImages[0] ||
-                                 this.currentProduct.mainImage;
-                                 
-            window.BobbyCarts.showCartNotification(
-                this.currentProduct.title,
-                currentImage,
-                this.currentProduct.price
-            );
-            return;
-        }
-        
-        // Fallback to our own notification system
-        const productImage = document.getElementById('main-image')?.getAttribute('src') ||
-                             this.filteredImages[0] ||
-                             this.currentProduct.mainImage;
-                             
-        const notification = document.createElement('div');
-        notification.className = 'cart-notification';
-        notification.innerHTML = `
-            <img src="${productImage}" class="cart-notification-image" alt="${this.currentProduct.title}">
-            <div class="cart-notification-content">
-                <div class="cart-notification-title">${this.currentProduct.title} added to cart</div>
-                <div class="cart-notification-info">
-                    <span class="cart-notification-variant">${this.selectedVariant.color}, ${this.selectedVariant.size}</span>
-                    <span class="cart-notification-price">$${this.currentProduct.price.toFixed(2)}</span>
-                </div>
-                <div class="cart-notification-buttons">
-                    <button class="cart-notification-btn view-cart-btn" onclick="window.cartManager?.openCart()">View Cart</button>
-                    <button class="cart-notification-btn checkout-btn" onclick="window.cartManager?.proceedToCheckout()">Checkout</button>
-                </div>
-            </div>
-            <button class="cart-notification-close" onclick="this.parentNode.classList.remove('show')">&times;</button>
-        `;
-        
-        // Add to page
-        document.body.appendChild(notification);
-        
-        // Show notification
-        setTimeout(() => notification.classList.add('show'), 10);
-        
-        // Auto hide after delay
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (document.body.contains(notification)) {
-                    notification.remove();
-                }
-            }, 400);
-        }, 5000);
-    }
-    
-    // Animate the cart icon
-    animateCartIcon() {
-        // First check if BobbyCarts has its own animation method
-        if (window.BobbyCarts && typeof window.BobbyCarts.animateCartIcon === 'function') {
-            window.BobbyCarts.animateCartIcon();
-            return;
-        }
-        
-        // Fallback to our own animation
-        const cartCounts = document.querySelectorAll('.cart-count');
-        const cartIcons = document.querySelectorAll('.cart-icon');
-        
-        // Animate cart count badges
-        if (cartCounts.length) {
-            cartCounts.forEach(count => {
-                // Remove existing animation class if present
-                count.classList.remove('updated');
-                
-                // Trigger reflow to restart animation
-                void count.offsetWidth;
-                
-                // Add animation class
-                count.classList.add('updated');
-                
-                // Remove animation class after animation completes
-                setTimeout(() => {
-                    count.classList.remove('updated');
-                }, 600);
-            });
-        }
-        
-        // Animate cart icons
-        if (cartIcons.length) {
-            cartIcons.forEach(icon => {
-                // Remove existing animation class if present
-                icon.classList.remove('pop');
-                
-                // Trigger reflow to restart animation
-                void icon.offsetWidth;
-                
-                // Add animation class
-                icon.classList.add('pop');
-                
-                // Remove animation class after animation completes
-                setTimeout(() => {
-                    icon.classList.remove('pop');
-                }, 500);
-            });
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</div>
-            <div class="notification-content">
-                <span class="notification-message">${message}</span>
-                <button class="notification-close">×</button>
-            </div>
-        `;
-
-        // Add to page
-        document.body.appendChild(notification);
-
-        // Show notification
-        setTimeout(() => notification.classList.add('show'), 100);
-
-        // Auto hide after 3 seconds
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-
-        // Manual close
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        });
-    }
-    // Validate product selection
-    validateProductSelection() {
-        // Check if color is selected
-        if (!this.selectedVariant.color) {
-            this.showNotification('Please select a color', 'error');
-            
-            // Highlight color options section
-            const colorOptionsGroup = document.querySelector('.option-group:has(.color-options)');
-            if (colorOptionsGroup) {
-                colorOptionsGroup.classList.remove('highlight-required');
-                // Force reflow to restart animation
-                void colorOptionsGroup.offsetWidth;
-                
-                colorOptionsGroup.classList.add('highlight-required');
-                setTimeout(() => {
-                    colorOptionsGroup.classList.remove('highlight-required');
-                }, 2000);
-                
-                // Scroll to the color options for better visibility
-                colorOptionsGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            return false;
-        }
-        
-        // Check if size is selected
-        if (!this.selectedVariant.size) {
-            this.showNotification('Please select a size', 'error');
-            
-            // Highlight size options section
-            const sizeOptionsGroup = document.querySelector('.option-group:has(.size-options)');
-            if (sizeOptionsGroup) {
-                sizeOptionsGroup.classList.remove('highlight-required');
-                // Force reflow to restart animation
-                void sizeOptionsGroup.offsetWidth;
-                
-                sizeOptionsGroup.classList.add('highlight-required');
-                setTimeout(() => {
-                    sizeOptionsGroup.classList.remove('highlight-required');
-                }, 2000);
-                
-                // Scroll to the size options for better visibility
-                sizeOptionsGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            return false;
-        }
-        
-        return true;
-    }
-}
-
-// Initialize product detail manager
-document.addEventListener('DOMContentLoaded', () => {
-    window.productDetailManager = new ProductDetailManager();
-});
+                    <tr><td>S</td><td>20</td>
