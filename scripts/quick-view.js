@@ -2142,6 +2142,7 @@ class QuickViewManager {
     }
     
     // Filter images by color using a direct approach with data-color attributes
+    // This method is used by both quick-view and product-detail pages
     filterImagesByColor(colorName) {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             console.log('QuickView: No images to filter');
@@ -2155,17 +2156,56 @@ class QuickViewManager {
             return;
         }
         
-        // Get all thumbnails
-        const thumbnails = document.querySelectorAll('.quick-view-thumbnail');
+        // Support both quick-view and product-detail pages
+        const thumbnailSelectors = ['.quick-view-thumbnail', '.thumbnail img'];
+        const thumbnails = [];
+        
+        // Collect all thumbnails from both selectors
+        thumbnailSelectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(thumb => {
+                thumbnails.push(thumb);
+            });
+        });
+        
+        if (thumbnails.length === 0) {
+            console.log('No thumbnails found with any selector');
+            return;
+        }
+        
+        console.log(`Found ${thumbnails.length} thumbnails to filter`);
+        
         let colorImagesFound = false;
         let firstMatchingImage = null;
         
-        // First pass: look for exact data-color attribute matches
+        // First: Set data-color attributes for any thumbnails that don't have them
+        thumbnails.forEach(thumbnail => {
+            if (!thumbnail.hasAttribute('data-color')) {
+                // Try to detect color from URL
+                const imgUrl = thumbnail.getAttribute('src').toLowerCase();
+                const colorNameLower = colorName.toLowerCase();
+                
+                // Check multiple URL patterns that might indicate color
+                if (imgUrl.includes(`/${colorNameLower}`) ||
+                    imgUrl.includes(`${colorNameLower}.`) ||
+                    imgUrl.includes(`_${colorNameLower}`) ||
+                    imgUrl.includes(`-${colorNameLower}`) ||
+                    imgUrl.includes(`${colorNameLower}_`) ||
+                    imgUrl.includes(`${colorNameLower}-`)) {
+                    thumbnail.setAttribute('data-color', colorName);
+                }
+            }
+        });
+        
+        // Second: Filter by data-color attribute
         thumbnails.forEach(thumbnail => {
             const thumbnailColor = thumbnail.getAttribute('data-color');
+            const thumbnailParent = thumbnail.closest('.thumbnail') || thumbnail.parentElement;
             
             if (thumbnailColor === colorName) {
                 // Show images matching the color
+                if (thumbnailParent) {
+                    thumbnailParent.style.display = 'block';
+                }
                 thumbnail.style.display = 'block';
                 colorImagesFound = true;
                 if (!firstMatchingImage) {
@@ -2173,19 +2213,12 @@ class QuickViewManager {
                 }
             } else if (thumbnailColor && thumbnailColor !== '') {
                 // Hide images with a different color
+                if (thumbnailParent) {
+                    thumbnailParent.style.display = 'none';
+                }
                 thumbnail.style.display = 'none';
             } else {
-                // For now, hide images without color data - we'll handle them in the second pass
-                thumbnail.style.display = 'none';
-            }
-        });
-        
-        // Second pass: if no matches were found, try URL-based matching
-        if (!colorImagesFound) {
-            console.log(`QuickView: No data-color matches found, trying URL matching`);
-            
-            thumbnails.forEach(thumbnail => {
-                // For images without data-color, try to match by URL
+                // For images without data-color attribute, try URL matching
                 const imgUrl = thumbnail.getAttribute('src').toLowerCase();
                 const colorNameLower = colorName.toLowerCase();
                 
@@ -2196,6 +2229,9 @@ class QuickViewManager {
                     imgUrl.includes(`${colorNameLower}-`) ||
                     imgUrl.includes(`${colorNameLower}_`)) {
                     
+                    if (thumbnailParent) {
+                        thumbnailParent.style.display = 'block';
+                    }
                     thumbnail.style.display = 'block';
                     colorImagesFound = true;
                     if (!firstMatchingImage) {
@@ -2204,14 +2240,24 @@ class QuickViewManager {
                     
                     // Set the data-color for future use
                     thumbnail.setAttribute('data-color', colorName);
+                } else {
+                    // Hide non-matching images
+                    if (thumbnailParent) {
+                        thumbnailParent.style.display = 'none';
+                    }
+                    thumbnail.style.display = 'none';
                 }
-            });
-        }
+            }
+        });
         
-        // If still no matches found, show all images as fallback
+        // If no matching images were found, show all images
         if (!colorImagesFound) {
             console.log(`QuickView: No matches found at all, showing all images as fallback`);
             thumbnails.forEach(thumbnail => {
+                const thumbnailParent = thumbnail.closest('.thumbnail') || thumbnail.parentElement;
+                if (thumbnailParent) {
+                    thumbnailParent.style.display = 'block';
+                }
                 thumbnail.style.display = 'block';
             });
             if (thumbnails.length > 0) {
@@ -2219,16 +2265,46 @@ class QuickViewManager {
             }
         }
         
-        // Update main image to the first matching thumbnail
-        const mainImage = document.getElementById('quick-view-main-image');
+        // Update main image - support both quick view and product detail pages
+        const mainImageSelectors = ['#quick-view-main-image', '.main-image'];
+        let mainImage = null;
+        
+        for (const selector of mainImageSelectors) {
+            const img = document.querySelector(selector);
+            if (img) {
+                mainImage = img;
+                break;
+            }
+        }
+        
         if (mainImage && firstMatchingImage) {
             mainImage.src = firstMatchingImage.src;
             
-            // Update active thumbnail
-            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            // Update active thumbnail in both contexts
+            thumbnails.forEach(thumb => {
+                const thumbParent = thumb.closest('.thumbnail') || thumb.parentElement;
+                if (thumbParent) {
+                    thumbParent.classList.remove('active');
+                }
+                thumb.classList.remove('active');
+            });
+            
+            // Mark the matching thumbnail as active
+            const matchingThumbParent = firstMatchingImage.closest('.thumbnail') || firstMatchingImage.parentElement;
+            if (matchingThumbParent) {
+                matchingThumbParent.classList.add('active');
+            }
             firstMatchingImage.classList.add('active');
             
-            console.log(`QuickView: Updated main image for color ${colorName}`);
+            console.log(`Updated main image for color ${colorName}`);
+        }
+        
+        // IMPORTANT: If we're on the product detail page (not in quick view),
+        // modify the product-detail.js behavior by injecting our function
+        if (window.productDetailManager && typeof window.productDetailManager.filterImagesByColor === 'function') {
+            // Overwrite the product detail manager's filterImagesByColor function
+            window.productDetailManager.filterImagesByColor = this.filterImagesByColor.bind(this);
+            console.log('Replaced productDetailManager.filterImagesByColor with our improved version');
         }
     }
     
@@ -2521,4 +2597,123 @@ class QuickViewManager {
 // Initialize quick view
 document.addEventListener('DOMContentLoaded', () => {
     window.quickViewManager = new QuickViewManager();
+    
+    // Apply immediate patching for URL-based color selection
+    const urlParams = new URLSearchParams(window.location.search);
+    const colorParam = urlParams.get('color');
+    
+    if (colorParam) {
+        console.log(`Found color parameter in URL: ${colorParam}`);
+        
+        // Set a timeout to give the product detail page time to load
+        setTimeout(() => {
+            if (window.productDetailManager && window.productDetailManager.currentProduct) {
+                console.log('Applying URL-specified color filter:', colorParam);
+                
+                // If the productDetailManager has already selected a color, update it
+                if (window.productDetailManager.selectedVariant) {
+                    window.productDetailManager.selectedVariant.color = colorParam;
+                }
+                
+                // Mark the correct color button as selected
+                const colorButtons = document.querySelectorAll('.color-option');
+                colorButtons.forEach(button => {
+                    if (button.getAttribute('data-color') === colorParam) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                });
+                
+                // Apply our enhanced image filtering
+                window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
+            }
+        }, 500);
+    }
+    
+    // Patch the product detail manager to use our simplified size display
+    if (window.productDetailManager) {
+        console.log('Patching productDetailManager with improved color filtering and size display');
+        
+        // Copy our simplifySize method to the product detail manager
+        window.productDetailManager.simplifySize = window.quickViewManager.simplifySize;
+        
+        // Enhance product detail selectColor method to use our better filtering
+        const originalSelectColor = window.productDetailManager.selectColor;
+        window.productDetailManager.selectColor = function(colorName) {
+            console.log(`Enhanced color selection applied: ${colorName}`);
+            
+            // Call original method first
+            if (originalSelectColor) {
+                originalSelectColor.call(window.productDetailManager, colorName);
+            }
+            
+            // Then apply our enhanced filtering
+            window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorName);
+        };
+        
+        // Replace filterImagesByColor with our improved version
+        window.productDetailManager.filterImagesByColor = function(colorName) {
+            // Use our enhanced version directly
+            window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorName);
+        };
+        
+        // Patch size display in product detail page
+        const productSizeOptions = document.querySelectorAll('.size-option');
+        if (productSizeOptions.length > 0) {
+            console.log('Updating size display in product detail page');
+            productSizeOptions.forEach(sizeOption => {
+                const originalSize = sizeOption.textContent.trim();
+                const simplifiedSize = window.quickViewManager.simplifySize(originalSize);
+                sizeOption.textContent = simplifiedSize;
+                sizeOption.setAttribute('data-display-size', simplifiedSize);
+            });
+        }
+        
+        // Monitor for any new thumbnail images being added to the page and add data-color attributes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                    // Check added nodes for thumbnails
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === 1) { // ELEMENT_NODE
+                            // Look for thumbnail containers or images
+                            const thumbnails = node.querySelectorAll('img');
+                            if (thumbnails.length > 0) {
+                                // Process all these new thumbnails
+                                thumbnails.forEach(thumbnail => {
+                                    // Try to detect color from URL if no data-color attribute
+                                    if (!thumbnail.hasAttribute('data-color') && thumbnail.src) {
+                                        const imgUrl = thumbnail.src.toLowerCase();
+                                        
+                                        // Check for color names in the URL
+                                        if (window.productDetailManager &&
+                                            window.productDetailManager.currentProduct &&
+                                            window.productDetailManager.currentProduct.colors) {
+                                                
+                                            window.productDetailManager.currentProduct.colors.forEach(color => {
+                                                const colorName = color.name.toLowerCase();
+                                                if (imgUrl.includes(colorName)) {
+                                                    thumbnail.setAttribute('data-color', color.name);
+                                                    console.log(`Set data-color=${color.name} for image: ${imgUrl}`);
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                                
+                                // If we have a color parameter, apply filtering again
+                                if (colorParam && window.productDetailManager) {
+                                    window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Start observing the document body for thumbnail changes
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 });
