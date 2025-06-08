@@ -31,7 +31,6 @@ class ProductDetailManager {
             styleLink.rel = 'stylesheet';
             styleLink.href = '/styles/add-to-cart-animations.css';
             document.head.appendChild(styleLink);
-            console.log('Cart animation styles loaded');
         }
     }
 
@@ -87,9 +86,7 @@ class ProductDetailManager {
         // Start loading the product data with better error handling
         this.loadProduct().then(() => {
             productLoaded = true;
-            console.log('Product loaded successfully');
         }).catch(error => {
-            console.error('Error loading product:', error);
             productLoaded = true; // Continue even if there's an error
             
             // Show a non-blocking error message
@@ -150,25 +147,20 @@ class ProductDetailManager {
     }
 
     async fetchProductData(productId) {
-        console.log('Loading product data for:', productId);
         
         try {
             // Only load from Shopify API - no fallbacks to sample data
-            console.log('🛍️ Loading product from Shopify API...');
             const shopifyProduct = await this.loadShopifyProduct(productId);
             
             if (shopifyProduct) {
-                console.log('✅ Successfully loaded product from Shopify!');
                 return shopifyProduct;
             }
             
-            console.error('❌ Product not found in Shopify');
             // Show error page instead of sample data
             this.showProductNotFound();
             return null;
             
         } catch (error) {
-            console.error('❌ Error loading product:', error);
             this.showProductNotFound();
             // Add clear message about deployment requirement
             console.error('❌ Product loading failed. This site requires deployment to Netlify to function correctly.');
@@ -179,7 +171,6 @@ class ProductDetailManager {
     async loadShopifyProduct(productId) {
         try {
             // Use Netlify function to avoid CORS issues
-            console.log('🛍️ Loading product via Netlify function...');
             const response = await fetch('/.netlify/functions/get-products');
             
             if (!response.ok) {
@@ -197,13 +188,10 @@ class ProductDetailManager {
             // Check if data has a products array (new API format) or is an array directly (old format)
             let products = [];
             if (data.products && Array.isArray(data.products)) {
-                console.log('Processing product data from new API format');
                 products = data.products;
             } else if (Array.isArray(data)) {
-                console.log('Processing product data from legacy API format');
                 products = data;
             } else {
-                console.error('Unexpected data format from API:', data);
                 return null;
             }
             
@@ -216,7 +204,6 @@ class ProductDetailManager {
             });
             
             if (!product) {
-                console.log('❌ Product not found in Shopify data');
                 return null;
             }
 
@@ -232,7 +219,6 @@ class ProductDetailManager {
     }
 
     convertShopifyProductForDetail(shopifyProduct) {
-        console.log("RAW SHOPIFY PRODUCT DATA:", JSON.stringify(shopifyProduct, null, 2));
         
         // Extract images from Shopify
         const shopifyImages = shopifyProduct.images.edges.map(imgEdge => imgEdge.node.url);
@@ -243,11 +229,9 @@ class ProductDetailManager {
         // Use Shopify images
         if (shopifyImages && shopifyImages.length > 0) {
             images = [...shopifyImages];
-            console.log(`Using ${images.length} Shopify API images for product`);
         }
         else {
             images = [];
-            console.log('No Shopify images found. Site requires deployment to Netlify to load images correctly.');
         }
         
         // Extract variants and organize by color/size
@@ -258,9 +242,7 @@ class ProductDetailManager {
         const colorToImagesMap = new Map(); // Create map for color-specific images
         
         // DIRECT DEBUG: Log all variant data to see what's available
-        console.log("AVAILABLE VARIANTS:", shopifyProduct.variants.edges.length);
         shopifyProduct.variants.edges.forEach((variantEdge, index) => {
-            console.log(`VARIANT ${index+1}:`, JSON.stringify(variantEdge.node, null, 2));
         });
         
         shopifyProduct.variants.edges.forEach(variantEdge => {
@@ -270,16 +252,13 @@ class ProductDetailManager {
             let size = '';
             
             // Debug output to help diagnose issues
-            console.log(`Product-detail: Processing variant: ${variant.title}`, JSON.stringify(variant.selectedOptions));
             
             // CRITICAL DEBUG: Log the entire variant data to see everything from the API
-            console.log(`Product-detail: FULL VARIANT DATA:`, JSON.stringify(variant, null, 2));
             
             // IMPORTANT: Always add the variant title as a size option first - no filtering
             if (variant.title && variant.title !== 'Default Title') {
                 size = variant.title;
                 sizes.add(size);
-                console.log(`Product-detail: Added variant title directly as size: ${size}`);
             }
             
             // Look for color and size options in the variant options
@@ -297,13 +276,11 @@ class ProductDetailManager {
                     size = option.value;
                     sizes.add(size);
                     foundSize = true;
-                    console.log(`Product-detail: Found direct size option: ${size}`);
                 }
                 
                 // IMPORTANT: Add ALL option values as potential sizes
                 if (option.value && option.value !== 'Default Title') {
                     sizes.add(option.value);
-                    console.log(`Product-detail: Added option value as potential size: ${option.value}`);
                 }
             });
             
@@ -322,7 +299,6 @@ class ProductDetailManager {
                         /^\d+$/.test(upperValue) || // Numeric sizes
                         /^[0-9]+\.[0-9]+$/.test(upperValue)) { // Decimal sizes
                         
-                        console.log(`Product-detail: Detected size "${option.value}" from option "${option.name}"`);
                         size = option.value;
                         sizes.add(size);
                         foundSize = true;
@@ -338,7 +314,6 @@ class ProductDetailManager {
                     // Usually size is the second part (after color)
                     if (parts.length > 1) {
                         size = parts[1];
-                        console.log(`Product-detail: Extracted size "${size}" from title with slash: ${variant.title}`);
                         sizes.add(size);
                         foundSize = true;
                     }
@@ -346,7 +321,6 @@ class ProductDetailManager {
                 // Check for "One Size" variant
                 else if (variant.title.toLowerCase().includes('one size')) {
                     size = 'One Size';
-                    console.log(`Product-detail: Found "One Size" variant`);
                     sizes.add(size);
                     foundSize = true;
                 }
@@ -362,7 +336,6 @@ class ProductDetailManager {
                         upperTitle) { // Just use the title as is if nothing else works
                         
                         size = variant.title;
-                        console.log(`Product-detail: Using variant title "${size}" as size`);
                         sizes.add(size);
                         foundSize = true;
                     }
@@ -530,7 +503,6 @@ class ProductDetailManager {
                 sizes.forEach(size => {
                     const inventoryKey = `${color}-${size}`;
                     inventory[inventoryKey] = 10; // Default stock of 10
-                    console.log(`Added inventory for ${inventoryKey}`);
                 });
             });
         } else {
@@ -1052,7 +1024,6 @@ class ProductDetailManager {
             return (sizeOrder[a] || 999) - (sizeOrder[b] || 999);
         });
         
-        console.log(`Final sizes for ${colorName}: ${sortedSizes.join(', ')}`);
         return sortedSizes;
     }
     
@@ -1157,7 +1128,6 @@ class ProductDetailManager {
             thumbnailGrid.appendChild(thumbnailElement);
         });
         
-        console.log(`Updated thumbnail grid with ${this.filteredImages.length} visible thumbnails`);
         
         // If there's at least one image, make sure it's shown in the main display
         if (this.filteredImages.length > 0) {
@@ -1176,7 +1146,6 @@ class ProductDetailManager {
             option.classList.toggle('active', option.dataset.size === size);
         });
         
-        console.log(`Selected size: ${size} for color: ${this.selectedVariant.color}`);
         this.updateInventoryDisplay();
     }
 
@@ -1271,7 +1240,6 @@ class ProductDetailManager {
             return false;
         }
         
-        console.log(`Adding to cart: Color=${this.selectedVariant.color}, Size=${this.selectedVariant.size}, Quantity=${this.selectedVariant.quantity}`);
         
         // Find the Shopify variant ID for the selected options
         let shopifyVariantId = null;
@@ -1289,7 +1257,6 @@ class ProductDetailManager {
                 shopifyVariantId = matchingVariant.id;
                 variantImage = matchingVariant.image;
                 foundExactMatch = true;
-                console.log(`Found exact variant match with ID: ${shopifyVariantId}`);
             }
             // If no exact match, try to find a match by size only (if color is less important)
             else if (this.selectedVariant.size) {
@@ -1300,18 +1267,15 @@ class ProductDetailManager {
                 if (sizeMatchVariant) {
                     shopifyVariantId = sizeMatchVariant.id;
                     variantImage = sizeMatchVariant.image;
-                    console.log(`Found size-only match with ID: ${shopifyVariantId}`);
                 }
             }
             // If still no match, use the first variant as a fallback
             if (!shopifyVariantId && this.currentProduct.variants.length > 0) {
                 shopifyVariantId = this.currentProduct.variants[0].id;
                 variantImage = this.currentProduct.variants[0].image;
-                console.log(`No exact match found, using first variant ID: ${shopifyVariantId}`);
             }
         }
         
-        console.log(`Selected variant ID: ${shopifyVariantId}`);
         
         // Get color-specific image - important for cart display
         let productImage = null;
@@ -1320,7 +1284,6 @@ class ProductDetailManager {
         const currentMainImage = document.getElementById('main-image');
         if (currentMainImage && currentMainImage.src) {
             productImage = currentMainImage.src;
-            console.log(`Using current main image for cart: ${productImage}`);
         }
         // If we have color-specific images for this product, use the first one for this color
         else if (this.currentProduct.colorImages &&
@@ -1328,22 +1291,18 @@ class ProductDetailManager {
             this.currentProduct.colorImages[this.selectedVariant.color].length > 0) {
             
             productImage = this.currentProduct.colorImages[this.selectedVariant.color][0];
-            console.log(`Using color-specific image for cart: ${productImage}`);
         }
         // If we have filtered images (currently showing), use the first one
         else if (this.filteredImages && this.filteredImages.length > 0) {
             productImage = this.filteredImages[0];
-            console.log(`Using filtered image for cart: ${productImage}`);
         }
         // If we have a variant image, use that
         else if (variantImage) {
             productImage = variantImage;
-            console.log(`Using variant image for cart: ${productImage}`);
         }
         // Last resort - use main product image
         else {
             productImage = this.currentProduct.mainImage || this.currentProduct.images[0];
-            console.log(`Using main product image for cart: ${productImage}`);
         }
         
         const cartItem = {
@@ -1369,11 +1328,9 @@ class ProductDetailManager {
             setTimeout(() => {
                 if (window.cartManager && window.cartManager.isOpen === false) {
                     window.cartManager.openCart();
-                    console.log('Forcing cart to open after adding item');
                 }
             }, 100);
         } else {
-            console.error('Cart manager not available, cannot add item to cart');
             this.showNotification('Cart system not available', 'error');
             
             // Try to initialize cart manager if it doesn't exist
