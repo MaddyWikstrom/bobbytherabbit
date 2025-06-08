@@ -186,6 +186,12 @@ class ProductDetailManager {
             const recentlyViewed = localStorage.getItem('recentlyViewed');
             if (recentlyViewed) {
                 this.recentlyViewed = JSON.parse(recentlyViewed);
+                
+                // Fix any image URLs that might be missing protocols or are relative
+                this.recentlyViewed = this.recentlyViewed.map(product => {
+                    product.image = this.ensureAbsoluteUrl(product.image);
+                    return product;
+                });
             }
         } catch (error) {
             console.error('Error loading recently viewed products:', error);
@@ -199,12 +205,17 @@ class ProductDetailManager {
         this.recentlyViewed = this.recentlyViewed.filter(p => p.id !== product.id);
         
         // Add to front of array
-        this.recentlyViewed.unshift({
+        // Make sure we store absolute URLs for images
+        let imageUrl = this.ensureAbsoluteUrl(product.mainImage);
+        
+        const productToAdd = {
             id: product.id,
             title: product.title,
-            image: product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : '/assets/product-placeholder.png'),
+            image: imageUrl,
             price: product.price
-        });
+        };
+        
+        this.recentlyViewed.unshift(productToAdd);
         
         // Limit to 4 items
         this.recentlyViewed = this.recentlyViewed.slice(0, 4);
@@ -226,55 +237,20 @@ class ProductDetailManager {
         }
         
         if (this.recentlyViewed.length > 0) {
-            const html = this.recentlyViewed.map(product => `
+            // Generate HTML for related products
+            const html = this.recentlyViewed.map(product => {
+                // Final check to ensure image URL is absolute before rendering
+                const imageUrl = this.ensureAbsoluteUrl(product.image);
+                
+                return `
                 <div class="related-product" data-product-id="${product.id}">
-                    <div class="related-product-image">
-                        <img src="${product.image || '/assets/product-placeholder.png'}" alt="${product.title}"
-                             onerror="this.onerror=null; this.src='/assets/product-placeholder.png';"
-                             style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
+                    <img src="${imageUrl}" alt="${product.title}">
                     <div class="related-product-info">
                         <h4>${product.title}</h4>
                         <span>$${product.price.toFixed(2)}</span>
                     </div>
                 </div>
-            `).join('');
-            
-            // Add styling for related products
-            const styleEl = document.createElement('style');
-            styleEl.textContent = `
-                .related-product {
-                    cursor: pointer;
-                    transition: transform 0.3s ease;
-                    border-radius: 8px;
-                    overflow: hidden;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                }
-                .related-product:hover {
-                    transform: translateY(-5px);
-                }
-                .related-product-image {
-                    width: 100%;
-                    height: 180px;
-                    overflow: hidden;
-                    background-color: #f5f5f5;
-                }
-                .related-product-info {
-                    padding: 10px;
-                    background: white;
-                }
-                .related-product-info h4 {
-                    margin: 0 0 5px 0;
-                    font-size: 14px;
-                }
-                #related-products-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-                    gap: 20px;
-                    margin-top: 20px;
-                }
-            `;
-            document.head.appendChild(styleEl);
+            `}).join('');
             
             container.innerHTML = html;
             
@@ -394,18 +370,18 @@ class ProductDetailManager {
         try {
             // Create a more flexible conversion that handles different API response formats
             
-            // Handle missing images
+            // Handle missing images and ensure absolute URLs
             let images = [];
             if (product.images) {
                 if (product.images.edges) {
                     // GraphQL API format
-                    images = product.images.edges.map(imgEdge => imgEdge.node.url);
+                    images = product.images.edges.map(imgEdge => this.ensureAbsoluteUrl(imgEdge.node.url));
                 } else if (Array.isArray(product.images)) {
                     // REST API format
-                    images = product.images.map(img => img.src || img.url || img);
+                    images = product.images.map(img => this.ensureAbsoluteUrl(img.src || img.url || img));
                 } else if (typeof product.images === 'string') {
                     // Simple string format
-                    images = [product.images];
+                    images = [this.ensureAbsoluteUrl(product.images)];
                 }
             }
             
@@ -467,7 +443,7 @@ class ProductDetailManager {
                     
                     // Handle variant images
                     if (variant.image) {
-                        const imageUrl = variant.image.url || variant.image.src || variant.image;
+                        const imageUrl = this.ensureAbsoluteUrl(variant.image.url || variant.image.src || variant.image);
                         if (imageUrl && color) {
                             if (!colorToImagesMap.has(color)) {
                                 colorToImagesMap.set(color, []);
@@ -486,7 +462,7 @@ class ProductDetailManager {
                             parseFloat(variant.compareAtPrice.amount || variant.compareAtPrice) : null,
                         availableForSale: variant.availableForSale !== false,
                         image: variant.image ?
-                            (variant.image.url || variant.image.src || variant.image) : (images[0] || '')
+                            this.ensureAbsoluteUrl(variant.image.url || variant.image.src || variant.image) : (images[0] || '')
                     });
                 });
             } else {
@@ -578,7 +554,10 @@ class ProductDetailManager {
                 colorImagesObj[color] = images;
             });
             
-            return {
+            // Process images for product conversion
+            
+            // Create the converted product
+            const convertedProduct = {
                 id: handle,
                 shopifyId: product.id,
                 title: product.title || 'Unknown Product',
@@ -593,6 +572,8 @@ class ProductDetailManager {
                 colorImages: colorImagesObj,
                 inventory: {} // Add inventory object for stock tracking
             };
+            
+            return convertedProduct;
         } catch (error) {
             console.error('Error converting Shopify product:', error);
             console.error('Problem occurred with product:', product?.title || 'unknown');
@@ -633,6 +614,10 @@ class ProductDetailManager {
                 if (loadingMessage) {
                     loadingMessage.textContent = 'LOADING PRODUCT';
                 }
+                
+                // For testing purposes only - comment out in production
+                // console.log('Clearing recently viewed for testing');
+                // localStorage.removeItem('recentlyViewed');
                 
                 // Simulate loading progress
                 let progress = 0;
@@ -1530,6 +1515,28 @@ class ProductDetailManager {
         } catch (error) {
             console.error('Error in updateThumbnailGrid:', error);
         }
+    }
+    // Helper method to ensure URLs are absolute
+    ensureAbsoluteUrl(url) {
+        if (!url) return '';
+        
+        // If it's already an absolute URL, return it
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        
+        // If it's a protocol-relative URL (starts with //), add https:
+        if (url.startsWith('//')) {
+            return 'https:' + url;
+        }
+        
+        // If it's a root-relative URL (starts with /), add the origin
+        if (url.startsWith('/')) {
+            return window.location.origin + url;
+        }
+        
+        // If it's a relative URL without leading slash, assume it's relative to origin
+        return window.location.origin + '/' + url;
     }
 }
 
