@@ -654,14 +654,14 @@ renderProduct() {
     document.title = `${this.currentProduct.title} - Bobby Streetwear`;
     this.updatePageTitle();
 
-    // Set up blank thumbnails before color filtering
+    // Clear thumbnails until filtering is done
     this.filteredImages = [];
 
-    const discount = this.currentProduct.comparePrice ?
-        Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100) : 0;
+    const discount = this.currentProduct.comparePrice
+        ? Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100)
+        : 0;
 
     productGrid.innerHTML = `
-        <!-- Product Images -->
         <div class="product-images">
             <div class="main-image-container">
                 <img src="" alt="${this.currentProduct.title}" class="main-image" id="main-image">
@@ -681,7 +681,6 @@ renderProduct() {
             <div class="thumbnail-grid"></div>
         </div>
 
-        <!-- Product Info -->
         <div class="product-info">
             <div class="product-category">${this.currentProduct.category}</div>
             <h1 class="product-title">${this.currentProduct.title}</h1>
@@ -759,9 +758,7 @@ renderProduct() {
             </div>
 
             <div class="product-actions">
-                <button class="add-to-cart-btn" onclick="productDetailManager.addToCart()">
-                    Add to Cart
-                </button>
+                <button class="add-to-cart-btn" onclick="productDetailManager.addToCart()">Add to Cart</button>
                 <button class="wishlist-btn" onclick="productDetailManager.toggleWishlist()">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -803,15 +800,18 @@ renderProduct() {
         </div>
     `;
 
-    // Set initial color and filter images correctly
+    // Defer filter after DOM insert
     if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
         this.selectedVariant.color = this.currentProduct.colors[0].name;
-        this.filterImagesByColor(this.selectedVariant.color);
-        this.updateSizeOptionsForColor(this.selectedVariant.color);
+        setTimeout(() => {
+            this.filterImagesByColor(this.selectedVariant.color);
+            this.updateSizeOptionsForColor(this.selectedVariant.color);
+        }, 0);
     }
 
     this.updateInventoryDisplay();
 }
+
 
 
     updatePageTitle() {
