@@ -202,7 +202,7 @@ class ProductDetailManager {
         this.recentlyViewed.unshift({
             id: product.id,
             title: product.title,
-            image: product.mainImage,
+            image: product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : '/assets/product-placeholder.png'),
             price: product.price
         });
         
@@ -228,13 +228,53 @@ class ProductDetailManager {
         if (this.recentlyViewed.length > 0) {
             const html = this.recentlyViewed.map(product => `
                 <div class="related-product" data-product-id="${product.id}">
-                    <img src="${product.image}" alt="${product.title}">
+                    <div class="related-product-image">
+                        <img src="${product.image || '/assets/product-placeholder.png'}" alt="${product.title}"
+                             onerror="this.onerror=null; this.src='/assets/product-placeholder.png';"
+                             style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
                     <div class="related-product-info">
                         <h4>${product.title}</h4>
                         <span>$${product.price.toFixed(2)}</span>
                     </div>
                 </div>
             `).join('');
+            
+            // Add styling for related products
+            const styleEl = document.createElement('style');
+            styleEl.textContent = `
+                .related-product {
+                    cursor: pointer;
+                    transition: transform 0.3s ease;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .related-product:hover {
+                    transform: translateY(-5px);
+                }
+                .related-product-image {
+                    width: 100%;
+                    height: 180px;
+                    overflow: hidden;
+                    background-color: #f5f5f5;
+                }
+                .related-product-info {
+                    padding: 10px;
+                    background: white;
+                }
+                .related-product-info h4 {
+                    margin: 0 0 5px 0;
+                    font-size: 14px;
+                }
+                #related-products-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                    gap: 20px;
+                    margin-top: 20px;
+                }
+            `;
+            document.head.appendChild(styleEl);
             
             container.innerHTML = html;
             
