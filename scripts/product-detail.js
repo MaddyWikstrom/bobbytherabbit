@@ -84,12 +84,18 @@ class ProductDetailManager {
         let messageIndex = 0;
         let productLoaded = false;
 
-        // Start loading the product data
+        // Start loading the product data with better error handling
         this.loadProduct().then(() => {
             productLoaded = true;
+            console.log('Product loaded successfully');
         }).catch(error => {
             console.error('Error loading product:', error);
             productLoaded = true; // Continue even if there's an error
+            
+            // Show a non-blocking error message
+            setTimeout(() => {
+                this.showNotification('Product data may be incomplete. Some features might not work correctly.', 'warning');
+            }, 3000);
         });
 
         const updateProgress = () => {
@@ -368,16 +374,31 @@ class ProductDetailManager {
                 inventory[`${color}-${size}`] = variant.quantityAvailable || 10; // Default to 10 if not available
             }
             
-            // If variant has an image, associate it with the color
-            if (variant.image && variant.image.url && color) {
+            // Since the API response doesn't include variant images, we'll use smarter matching
+            if (color) {
                 if (!colorToImagesMap.has(color)) {
                     colorToImagesMap.set(color, []);
                 }
                 
-                // Only add if not already in the array
-                if (!colorToImagesMap.get(color).includes(variant.image.url)) {
-                    colorToImagesMap.get(color).push(variant.image.url);
-                }
+                // For each image, check if it might belong to this color
+                shopifyImages.forEach(imageUrl => {
+                    if (!imageUrl || typeof imageUrl !== 'string') return;
+                    
+                    const lowerImageUrl = imageUrl.toLowerCase();
+                    const lowerColor = color.toLowerCase();
+                    
+                    // Check if the image URL contains the color name
+                    if (lowerImageUrl.includes(lowerColor) ||
+                        lowerImageUrl.includes(lowerColor.replace(' ', '-')) ||
+                        lowerImageUrl.includes(lowerColor.replace(' ', '_'))) {
+                        
+                        // Only add if not already in the array
+                        if (!colorToImagesMap.get(color).includes(imageUrl)) {
+                            colorToImagesMap.get(color).push(imageUrl);
+                            console.log(`Associated image with color ${color}: ${imageUrl}`);
+                        }
+                    }
+                });
             }
             
             variants.push({
@@ -1142,24 +1163,64 @@ class ProductDetailManager {
             this.filteredImages = this.currentProduct.colorImages[colorName];
             console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
         } else {
-            // Simple URL filtering - match the color name in the URL
+            // Enhanced URL filtering - match the color name in the URL
             const color = colorName.toLowerCase();
             
-            // Filter images that match the selected color
+            // Define color mapping for similar colors (e.g., navy and blue)
+            const colorAliases = {
+                'navy': ['navy', 'blue', 'indigo', 'navy-blue'],
+                'black': ['black', 'noir', 'nero', 'schwarz', 'dark'],
+                'white': ['white', 'blanc', 'bianco', 'weiss'],
+                'grey': ['grey', 'gray', 'charcoal', 'heather', 'silver'],
+                'red': ['red', 'rouge', 'rosso', 'rot', 'burgundy', 'maroon', 'crimson'],
+                'green': ['green', 'vert', 'verde', 'olive', 'emerald', 'forest'],
+                'blue': ['blue', 'navy', 'bleu', 'azure', 'cobalt', 'royal'],
+                'yellow': ['yellow', 'jaune', 'giallo', 'gelb', 'gold', 'mustard'],
+                'purple': ['purple', 'violet', 'lilac', 'lavender', 'magenta', 'plum'],
+                'pink': ['pink', 'rose', 'fuchsia', 'salmon'],
+                'orange': ['orange', 'coral', 'peach', 'tangerine'],
+                'brown': ['brown', 'tan', 'khaki', 'beige', 'camel', 'chocolate']
+            };
+            
+            // Get all possible color terms to match based on the selected color
+            const colorTerms = [color];
+            Object.entries(colorAliases).forEach(([key, aliases]) => {
+                // If the color is in the aliases or is the key itself
+                if (aliases.includes(color) || key === color) {
+                    // Add all aliases for this color family
+                    colorTerms.push(...aliases);
+                }
+            });
+            
+            console.log(`Looking for these color terms: ${colorTerms.join(', ')}`);
+            
+            // Filter images that match any of the color terms
             this.filteredImages = this.currentProduct.images.filter(imagePath => {
                 // Skip invalid paths
                 if (!imagePath || typeof imagePath !== 'string') {
                     return false;
                 }
                 
-                // Simple direct substring match
-                return imagePath.toLowerCase().includes(color);
+                const lowerPath = imagePath.toLowerCase();
+                
+                // Check for any of the color terms in the path
+                return colorTerms.some(term => {
+                    // Check for the term as a whole word or part of a word
+                    return lowerPath.includes(term) ||
+                           // Also check for the term with common separators
+                           lowerPath.includes(`_${term}`) ||
+                           lowerPath.includes(`-${term}`) ||
+                           lowerPath.includes(`${term}_`) ||
+                           lowerPath.includes(`${term}-`);
+                });
             });
             
             // If no images match the color, use all images as fallback
             if (this.filteredImages.length === 0) {
                 console.log(`No specific images found for color: ${colorName}, using all images`);
                 this.filteredImages = [...this.currentProduct.images];
+            } else {
+                console.log(`Found ${this.filteredImages.length} images for color: ${colorName}`);
             }
         }
         
