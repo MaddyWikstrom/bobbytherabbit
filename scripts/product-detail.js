@@ -1688,6 +1688,26 @@ class ProductDetailManager {
             }, 1000);
         }
     }
+    
+    // Add compatibility method for quick-view.js integration
+    updateDOMWithFilteredImages(colorName, filteredImages) {
+        if (!filteredImages || filteredImages.length === 0) return;
+        
+        console.log(`Updating DOM with ${filteredImages.length} filtered images for ${colorName}`);
+        
+        // Update filteredImages array
+        this.filteredImages = filteredImages;
+        
+        // Update the thumbnail grid to show only these images
+        this.updateThumbnailGrid();
+        
+        // Reset current image index and update main image
+        this.currentImageIndex = 0;
+        const mainImage = document.getElementById('main-image');
+        if (mainImage && this.filteredImages.length > 0) {
+            mainImage.src = this.filteredImages[0];
+        }
+    }
 }
 
 // Initialize product detail manager when document is ready
