@@ -172,84 +172,240 @@
         
         async loadShopifyProduct(productId) {
             try {
-                const response = await fetch(`/.netlify/functions/get-product-by-handle?handle=${productId}`);
+                console.log(`Making API request to Netlify function for product: ${productId}`);
+                
+                // Check if we're running locally
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                console.log(`Running in ${isLocal ? 'LOCAL' : 'PRODUCTION'} environment`);
+                
+                // For local development, you might want to consider a fallback approach
+                // But for now, we'll attempt to fetch from the Netlify function anyway
+                
+                // Add a timestamp to prevent caching issues
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/.netlify/functions/get-product-by-handle?handle=${productId}&_=${timestamp}`);
+                
+                console.log(`API response status: ${response.status}`);
+                
                 if (!response.ok) {
                     throw new Error(`API response error: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                return this.convertShopifyProduct(data);
+                
+                // Log simplified structure for debugging
+                console.log('API response keys:', Object.keys(data));
+                
+                // Check if we have product data in the response
+                if (!data) {
+                    console.error('No data in API response');
+                    return null;
+                }
+                
+                // Check direct data format - some APIs return the product directly
+                if (data.product) {
+                    console.log('Found product in data.product');
+                    return this.convertShopifyProduct(data.product);
+                }
+                
+                // Alternative format - some APIs might return product directly
+                if (data.id || data.handle) {
+                    console.log('Data appears to be a product object directly');
+                    return this.convertShopifyProduct(data);
+                }
+                
+                // Check for array format
+                if (Array.isArray(data) && data.length > 0) {
+                    console.log('Data is an array, using first item');
+                    return this.convertShopifyProduct(data[0]);
+                }
+                
+                console.error('Could not find valid product data in API response');
+                console.log('Response structure:', JSON.stringify(data, null, 2).substring(0, 200) + '...');
+                return null;
+                
             } catch (error) {
                 console.error('Error loading product from Shopify:', error);
+                console.error('Error details:', error.message);
+                
+                // This might be a CORS issue or a network issue
+                if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
+                    console.error('This appears to be a network or CORS issue. The site requires deployment to Netlify to function correctly.');
+                }
+                
                 return null;
             }
         }
         
         convertShopifyProduct(product) {
-            if (!product) return null;
+            if (!product) {
+                console.error('Cannot convert null/undefined product');
+                return null;
+            }
             
-            // Extract images from Shopify
-            const images = product.images.edges.map(imgEdge => imgEdge.node.url);
-            
-            // Extract variants and organize by color/size
-            const variants = [];
-            const colors = new Set();
-            const sizes = new Set();
-            
-            // Maps to associate images with colors
-            const colorToImagesMap = new Map();
-            
-            product.variants.edges.forEach(variantEdge => {
-                const variant = variantEdge.node;
+            try {
+                // Debug the product structure
+                console.log('Converting Shopify product with structure:', Object.keys(product));
                 
-                let color = '';
-                let size = '';
-                
-                variant.selectedOptions.forEach(option => {
-                    if (option.name.toLowerCase() === 'color') {
-                        color = option.value;
-                        colors.add(color);
-                    } else if (option.name.toLowerCase() === 'size') {
-                        size = option.value;
-                        sizes.add(size);
-                    }
-                });
-                
-                // If variant has an image, associate it with the color
-                if (variant.image && variant.image.url) {
-                    if (!colorToImagesMap.has(color)) {
-                        colorToImagesMap.set(color, []);
-                    }
-                    colorToImagesMap.get(color).push(variant.image.url);
+                if (product.title) {
+                    console.log('Product title:', product.title);
+                } else {
+                    console.error('Product missing title property');
                 }
                 
-                variants.push({
-                    id: variant.id,
-                    color: color,
-                    size: size,
-                    price: parseFloat(variant.price.amount),
-                    comparePrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
-                    availableForSale: variant.availableForSale,
-                    image: variant.image ? variant.image.url : (images[0] || '')
-                });
-            });
-            
-            return {
-                id: product.handle,
-                shopifyId: product.id,
-                title: product.title,
-                description: product.description,
-                price: parseFloat(product.priceRange.minVariantPrice.amount),
-                comparePrice: product.compareAtPriceRange?.maxVariantPrice?.amount
-                    ? parseFloat(product.compareAtPriceRange.maxVariantPrice.amount)
-                    : null,
-                images: images,
-                mainImage: images[0] || '',
-                variants: variants,
-                colors: Array.from(colors),
-                sizes: Array.from(sizes),
-                colorImages: Object.fromEntries(colorToImagesMap)
-            };
+                // Create a more flexible conversion that handles different API response formats
+                
+                // Handle missing images
+                let images = [];
+                if (product.images) {
+                    if (product.images.edges) {
+                        // GraphQL API format
+                        images = product.images.edges.map(imgEdge => imgEdge.node.url);
+                    } else if (Array.isArray(product.images)) {
+                        // REST API format
+                        images = product.images.map(img => img.src || img.url || img);
+                    } else if (typeof product.images === 'string') {
+                        // Simple string format
+                        images = [product.images];
+                    }
+                }
+                
+                if (images.length === 0) {
+                    console.warn('No images found for product, using fallback');
+                    images = ['/assets/product-placeholder.png'];
+                }
+                
+                // Handle missing variants
+                let variants = [];
+                let colors = new Set();
+                let sizes = new Set();
+                const colorToImagesMap = new Map();
+                
+                if (product.variants) {
+                    // Try to extract variants in different formats
+                    let variantsArray = [];
+                    
+                    if (product.variants.edges) {
+                        // GraphQL API format
+                        variantsArray = product.variants.edges.map(edge => edge.node);
+                    } else if (Array.isArray(product.variants)) {
+                        // REST API format
+                        variantsArray = product.variants;
+                    } else {
+                        console.warn('Unexpected variants format');
+                    }
+                    
+                    // Process variants
+                    variantsArray.forEach(variant => {
+                        let color = '';
+                        let size = '';
+                        
+                        // Extract color and size from variant
+                        if (variant.selectedOptions) {
+                            // GraphQL API format
+                            variant.selectedOptions.forEach(option => {
+                                if (option.name.toLowerCase() === 'color') {
+                                    color = option.value;
+                                    colors.add(color);
+                                } else if (option.name.toLowerCase() === 'size') {
+                                    size = option.value;
+                                    sizes.add(size);
+                                }
+                            });
+                        } else if (variant.option1 || variant.option2) {
+                            // REST API format - guess which option is color/size
+                            if (variant.option1 && variant.option1.match(/black|white|blue|red|green|yellow|purple|orange|pink|gray|grey|navy|maroon|charcoal/i)) {
+                                color = variant.option1;
+                                colors.add(color);
+                                size = variant.option2 || '';
+                                if (size) sizes.add(size);
+                            } else {
+                                size = variant.option1 || '';
+                                if (size) sizes.add(size);
+                                color = variant.option2 || '';
+                                if (color) colors.add(color);
+                            }
+                        }
+                        
+                        // Handle variant images
+                        if (variant.image) {
+                            const imageUrl = variant.image.url || variant.image.src || variant.image;
+                            if (imageUrl && color) {
+                                if (!colorToImagesMap.has(color)) {
+                                    colorToImagesMap.set(color, []);
+                                }
+                                colorToImagesMap.get(color).push(imageUrl);
+                            }
+                        }
+                        
+                        // Build variant object
+                        variants.push({
+                            id: variant.id,
+                            color: color,
+                            size: size,
+                            price: parseFloat(variant.price?.amount || variant.price || 0),
+                            comparePrice: variant.compareAtPrice ?
+                                parseFloat(variant.compareAtPrice.amount || variant.compareAtPrice) : null,
+                            availableForSale: variant.availableForSale !== false,
+                            image: variant.image ?
+                                (variant.image.url || variant.image.src || variant.image) : (images[0] || '')
+                        });
+                    });
+                } else {
+                    console.warn('No variants found for product, creating default variant');
+                    variants.push({
+                        id: product.id || 'default',
+                        color: '',
+                        size: '',
+                        price: parseFloat(product.price || 0),
+                        comparePrice: null,
+                        availableForSale: true,
+                        image: images[0] || ''
+                    });
+                }
+                
+                // Get price from various possible locations
+                let price = 0;
+                if (product.priceRange?.minVariantPrice?.amount) {
+                    price = parseFloat(product.priceRange.minVariantPrice.amount);
+                } else if (product.price) {
+                    price = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
+                } else if (variants.length > 0) {
+                    price = variants[0].price;
+                }
+                
+                // Get compare price
+                let comparePrice = null;
+                if (product.compareAtPriceRange?.maxVariantPrice?.amount) {
+                    comparePrice = parseFloat(product.compareAtPriceRange.maxVariantPrice.amount);
+                } else if (product.compareAtPrice) {
+                    comparePrice = parseFloat(typeof product.compareAtPrice === 'object' ?
+                        product.compareAtPrice.amount : product.compareAtPrice);
+                }
+                
+                // Prepare and return final converted product
+                const handle = product.handle ||
+                    (typeof product.id === 'string' ? product.id.split('/').pop() : 'unknown-product');
+                
+                return {
+                    id: handle,
+                    shopifyId: product.id,
+                    title: product.title || 'Unknown Product',
+                    description: product.description || '',
+                    price: price,
+                    comparePrice: comparePrice,
+                    images: images,
+                    mainImage: images[0] || '/assets/product-placeholder.png',
+                    variants: variants,
+                    colors: Array.from(colors),
+                    sizes: Array.from(sizes),
+                    colorImages: Object.fromEntries(colorToImagesMap)
+                };
+            } catch (error) {
+                console.error('Error converting Shopify product:', error);
+                console.error('Problem occurred with product:', product?.title || 'unknown');
+                return null;
+            }
         }
         
         async loadProduct() {
@@ -257,40 +413,51 @@
             const productId = urlParams.get('id') || 'bungi-hoodie-black'; // Default product if no ID
             const selectedColor = urlParams.get('color'); // Get color from URL if available
 
-            // Load product data (this would typically come from an API)
+            console.log(`Loading product with ID: ${productId}`);
+            
+            // Load product data from API
             this.currentProduct = await this.fetchProductData(productId);
             
-            // No fallback to sample data - if product not found, it stays null
-            // and will be handled by renderProduct()
-
-            this.renderProduct();
+            // Log product data for debugging
+            console.log('Product data loaded:', this.currentProduct ? 'Success' : 'Failed');
             
-            // Set the selected color if it was passed in the URL
-            if (selectedColor && this.currentProduct &&
-                this.currentProduct.colors.some(c => c.name === selectedColor)) {
-                this.selectColor(selectedColor);
+            if (this.currentProduct) {
+                this.renderProduct();
+                
+                // Set the selected color if it was passed in the URL
+                if (selectedColor && this.currentProduct.colors &&
+                    this.currentProduct.colors.includes(selectedColor)) {
+                    console.log(`Setting selected color to: ${selectedColor}`);
+                    this.selectColor(selectedColor);
+                }
+                
+                this.addToRecentlyViewed(this.currentProduct);
+                this.loadRelatedProducts();
+            } else {
+                console.log('No product data available to render');
             }
-            
-            this.addToRecentlyViewed(this.currentProduct);
-            this.loadRelatedProducts();
         }
 
         async fetchProductData(productId) {
             try {
+                console.log(`Fetching product data for: ${productId}`);
+                
                 // Only load from Shopify API - no fallbacks to sample data
                 const shopifyProduct = await this.loadShopifyProduct(productId);
                 
                 if (shopifyProduct) {
+                    console.log('Successfully loaded product from Shopify');
                     return shopifyProduct;
                 }
                 
+                console.log('Product not found in Shopify, showing error page');
                 // Show error page instead of sample data
                 this.showProductNotFound();
                 return null;
                 
             } catch (error) {
+                console.error('❌ Error fetching product data:', error);
                 this.showProductNotFound();
-                // Add clear message about deployment requirement
                 console.error('❌ Product loading failed. This site requires deployment to Netlify to function correctly.');
                 return null;
             }
@@ -556,8 +723,17 @@
         }
         
         showProductNotFound() {
-            // Redirect to product not found page
-            window.location.href = 'product-not-found.html';
+            // Check if we're running locally
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            
+            // If running locally, pass a 'deployment' reason to show the deployment message
+            if (isLocal) {
+                console.log('Running locally - redirecting to product not found page with deployment reason');
+                window.location.href = 'product-not-found.html?reason=deployment';
+            } else {
+                console.log('Redirecting to product not found page');
+                window.location.href = 'product-not-found.html';
+            }
         }
         
         getColorCode(colorName) {
