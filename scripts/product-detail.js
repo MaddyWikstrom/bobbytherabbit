@@ -825,7 +825,7 @@ class ProductDetailManager {
                                 
                                 return `
                                     <div class="color-option" data-color="${colorName}"
-                                        style="background-color: ${colorCode}"
+                                        style="color: ${colorCode}"
                                         title="${colorName}">
                                         <span class="color-name">${colorName}</span>
                                     </div>
