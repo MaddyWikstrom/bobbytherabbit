@@ -1163,38 +1163,46 @@ class ProductDetailManager {
             this.filteredImages = this.currentProduct.colorImages[colorName];
             console.log(`Using ${this.filteredImages.length} color-specific images for color: ${colorName}`);
         } else {
-            // Enhanced URL filtering - match the color name in the URL
+            // STRICT COLOR FILTERING - match the color name in the URL and exclude other color names
             const color = colorName.toLowerCase();
             
-            // Define color mapping for similar colors (e.g., navy and blue)
-            const colorAliases = {
-                'navy': ['navy', 'blue', 'indigo', 'navy-blue'],
-                'black': ['black', 'noir', 'nero', 'schwarz', 'dark'],
-                'white': ['white', 'blanc', 'bianco', 'weiss'],
-                'grey': ['grey', 'gray', 'charcoal', 'heather', 'silver'],
-                'red': ['red', 'rouge', 'rosso', 'rot', 'burgundy', 'maroon', 'crimson'],
-                'green': ['green', 'vert', 'verde', 'olive', 'emerald', 'forest'],
-                'blue': ['blue', 'navy', 'bleu', 'azure', 'cobalt', 'royal'],
-                'yellow': ['yellow', 'jaune', 'giallo', 'gelb', 'gold', 'mustard'],
-                'purple': ['purple', 'violet', 'lilac', 'lavender', 'magenta', 'plum'],
-                'pink': ['pink', 'rose', 'fuchsia', 'salmon'],
-                'orange': ['orange', 'coral', 'peach', 'tangerine'],
-                'brown': ['brown', 'tan', 'khaki', 'beige', 'camel', 'chocolate']
-            };
+            // Define ALL color terms to check for exclusion
+            const allColorTerms = [
+                'black', 'white', 'navy', 'blue', 'red', 'green', 'yellow', 'purple',
+                'pink', 'orange', 'brown', 'gray', 'grey', 'maroon', 'forest', 'charcoal',
+                'vintage', 'heather', 'azure', 'teal', 'olive', 'burgundy', 'lavender',
+                'mustard', 'indigo', 'crimson', 'coral', 'peach', 'tan', 'khaki', 'beige'
+            ];
             
-            // Get all possible color terms to match based on the selected color
-            const colorTerms = [color];
-            Object.entries(colorAliases).forEach(([key, aliases]) => {
-                // If the color is in the aliases or is the key itself
-                if (aliases.includes(color) || key === color) {
-                    // Add all aliases for this color family
-                    colorTerms.push(...aliases);
-                }
-            });
+            // Get terms related to the selected color
+            const relatedColorTerms = [];
             
-            console.log(`Looking for these color terms: ${colorTerms.join(', ')}`);
+            switch (color) {
+                case 'black':
+                    relatedColorTerms.push('black', 'noir', 'nero', 'schwarz', 'dark');
+                    break;
+                case 'green':
+                    relatedColorTerms.push('green', 'vert', 'verde', 'olive', 'emerald', 'forest');
+                    break;
+                case 'blue':
+                    relatedColorTerms.push('blue', 'navy', 'bleu', 'azure', 'cobalt', 'royal', 'indigo');
+                    break;
+                case 'navy':
+                    relatedColorTerms.push('navy', 'blue', 'dark-blue', 'navy-blue', 'indigo');
+                    break;
+                // Add other colors as needed
+                default:
+                    // Just use the color name itself if no specific aliases
+                    relatedColorTerms.push(color);
+            }
             
-            // Filter images that match any of the color terms
+            console.log(`Looking for these color terms: ${relatedColorTerms.join(', ')}`);
+            
+            // Get other color terms (not related to the selected color)
+            const otherColorTerms = allColorTerms.filter(term => !relatedColorTerms.includes(term));
+            console.log(`Excluding these color terms: ${otherColorTerms.join(', ')}`);
+            
+            // Filter images that match the color terms AND don't match other color terms
             this.filteredImages = this.currentProduct.images.filter(imagePath => {
                 // Skip invalid paths
                 if (!imagePath || typeof imagePath !== 'string') {
@@ -1203,25 +1211,67 @@ class ProductDetailManager {
                 
                 const lowerPath = imagePath.toLowerCase();
                 
-                // Check for any of the color terms in the path
-                return colorTerms.some(term => {
-                    // Check for the term as a whole word or part of a word
+                // First check if the image contains any term related to the selected color
+                const hasTargetColor = relatedColorTerms.some(term => {
                     return lowerPath.includes(term) ||
-                           // Also check for the term with common separators
                            lowerPath.includes(`_${term}`) ||
                            lowerPath.includes(`-${term}`) ||
                            lowerPath.includes(`${term}_`) ||
                            lowerPath.includes(`${term}-`);
                 });
+                
+                // If the image doesn't have the target color, exclude it
+                if (!hasTargetColor) return false;
+                
+                // Then check if the image contains any term related to OTHER colors
+                // This is important to exclude images like "black-and-green" when only "black" is selected
+                const hasOtherColor = otherColorTerms.some(term => {
+                    // If the term is part of another word (like 'greens' in 'greenscreen'), don't count it
+                    // We need to check for word boundaries or common separators
+                    return lowerPath.includes(`_${term}`) ||
+                           lowerPath.includes(`-${term}`) ||
+                           lowerPath.includes(`${term}_`) ||
+                           lowerPath.includes(`${term}-`) ||
+                           // Also check for the exact term with common filename patterns
+                           lowerPath.includes(`/${term}.`) ||
+                           lowerPath.includes(`_${term}.`) ||
+                           lowerPath.includes(`-${term}.`);
+                });
+                
+                // Only include the image if it has the target color AND doesn't have other colors
+                return hasTargetColor && !hasOtherColor;
             });
             
-            // If no images match the color, use all images as fallback
+            // If no images match the strict criteria, try a more relaxed approach
             if (this.filteredImages.length === 0) {
-                console.log(`No specific images found for color: ${colorName}, using all images`);
-                this.filteredImages = [...this.currentProduct.images];
-            } else {
-                console.log(`Found ${this.filteredImages.length} images for color: ${colorName}`);
+                console.log(`No specific images found with strict filtering, trying relaxed filtering`);
+                
+                // Just match the selected color without excluding other colors
+                this.filteredImages = this.currentProduct.images.filter(imagePath => {
+                    if (!imagePath || typeof imagePath !== 'string') return false;
+                    
+                    const lowerPath = imagePath.toLowerCase();
+                    return relatedColorTerms.some(term => lowerPath.includes(term));
+                });
+                
+                // If still no matches, use images without any color in the name
+                if (this.filteredImages.length === 0) {
+                    console.log(`No specific images found for color: ${colorName}, using generic images`);
+                    this.filteredImages = this.currentProduct.images.filter(imagePath => {
+                        if (!imagePath || typeof imagePath !== 'string') return false;
+                        
+                        const lowerPath = imagePath.toLowerCase();
+                        return !allColorTerms.some(term => lowerPath.includes(term));
+                    });
+                    
+                    // If absolutely nothing works, just use the first image as a last resort
+                    if (this.filteredImages.length === 0 && this.currentProduct.images.length > 0) {
+                        this.filteredImages = [this.currentProduct.images[0]];
+                    }
+                }
             }
+            
+            console.log(`Found ${this.filteredImages.length} images for color: ${colorName}`);
         }
         
         // Update the thumbnail grid with filtered images
