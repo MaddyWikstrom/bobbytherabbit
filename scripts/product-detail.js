@@ -608,6 +608,21 @@
                 const handle = product.handle ||
                     (typeof product.id === 'string' ? product.id.split('/').pop() : 'unknown-product');
                 
+                // Convert colors from strings to objects with name and code properties
+                // This ensures compatibility with quick-view.js which expects this format
+                const colorObjects = Array.from(colors).map(colorName => {
+                    return {
+                        name: colorName,
+                        code: this.getColorCode(colorName)
+                    };
+                });
+                
+                // Create colorImages object from Map
+                const colorImagesObj = {};
+                colorToImagesMap.forEach((images, color) => {
+                    colorImagesObj[color] = images;
+                });
+                
                 return {
                     id: handle,
                     shopifyId: product.id,
@@ -618,9 +633,10 @@
                     images: images,
                     mainImage: images[0] || '/assets/product-placeholder.png',
                     variants: variants,
-                    colors: Array.from(colors),
+                    colors: colorObjects, // Array of {name, code} objects instead of just strings
                     sizes: Array.from(sizes),
-                    colorImages: Object.fromEntries(colorToImagesMap)
+                    colorImages: colorImagesObj,
+                    inventory: {} // Add inventory object for stock tracking
                 };
             } catch (error) {
                 console.error('Error converting Shopify product:', error);
@@ -934,102 +950,133 @@
                 updateThumbnailGrid() {
                     console.log('Updating thumbnail grid with filtered images');
                     
-                    // This method should update the product thumbnails display
-                    // when filtering by color
-                    if (!this.filteredImages || this.filteredImages.length === 0) {
-                        console.log('No filtered images to display');
-                        return;
-                    }
-                    
-                    // First, ensure image section exists
-                    let imageSection = document.querySelector('.product-image-section');
-                    if (!imageSection) {
-                        console.log('Creating product image section for thumbnail grid');
-                        imageSection = document.createElement('div');
-                        imageSection.className = 'product-image-section';
-                        
-                        const productContainer = document.querySelector('.product-container');
-                        if (productContainer) {
-                            const productInfoSection = document.querySelector('.product-info-section');
-                            if (productInfoSection) {
-                                productContainer.insertBefore(imageSection, productInfoSection);
-                            } else {
-                                productContainer.appendChild(imageSection);
-                            }
-                        } else {
-                            document.body.appendChild(imageSection);
-                            console.warn('Product container not found, appending image section to body');
+                    try {
+                        // Verify we have product data and filtered images
+                        if (!this.currentProduct) {
+                            console.error('Cannot update thumbnail grid: No product data available');
+                            return;
                         }
-                    }
-                    
-                    // Create gallery container if it doesn't exist
-                    let galleryContainer = document.getElementById('product-gallery');
-                    if (!galleryContainer) {
-                        console.log('Creating gallery container for thumbnail grid');
-                        galleryContainer = document.createElement('div');
-                        galleryContainer.id = 'product-gallery';
-                        galleryContainer.className = 'gallery';
-                        galleryContainer.style.display = 'flex';
-                        galleryContainer.style.gap = '10px';
-                        galleryContainer.style.flexWrap = 'wrap';
-                        imageSection.appendChild(galleryContainer);
-                    }
-            
-            // Generate HTML for filtered images with improved styling
-            galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
-                <div class="gallery-item ${index === 0 ? 'active' : ''}" style="cursor:pointer; border:2px solid ${index === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
-                    <img src="${image}"
-                         alt="${this.currentProduct?.title || 'Product'} ${index + 1}"
-                         style="width:60px; height:60px; object-fit:cover;">
-                </div>
-            `).join('');
-            
-            // Update main image to the first filtered image
-            if (this.filteredImages.length > 0) {
-                let mainImageContainer = document.getElementById('main-product-image');
+                        
+                        // Make sure filteredImages exists - default to all product images if not defined
+                        if (!this.filteredImages || this.filteredImages.length === 0) {
+                            console.log('No filtered images available, using all product images');
+                            
+                            if (this.currentProduct.images && this.currentProduct.images.length > 0) {
+                                this.filteredImages = [...this.currentProduct.images];
+                            } else {
+                                console.warn('No images available to display');
+                                return;
+                            }
+                        }
+                        
+                        // First, ensure image section exists
+                        let imageSection = document.querySelector('.product-image-section');
+                        if (!imageSection) {
+                            console.log('Creating product image section for thumbnail grid');
+                            imageSection = document.createElement('div');
+                            imageSection.className = 'product-image-section';
+                            
+                            const productContainer = document.querySelector('.product-container');
+                            if (productContainer) {
+                                const productInfoSection = document.querySelector('.product-info-section');
+                                if (productInfoSection) {
+                                    productContainer.insertBefore(imageSection, productInfoSection);
+                                } else {
+                                    productContainer.appendChild(imageSection);
+                                }
+                            } else {
+                                document.body.appendChild(imageSection);
+                                console.warn('Product container not found, appending image section to body');
+                            }
+                        }
+                        
+                        // Create gallery container if it doesn't exist
+                        let galleryContainer = document.getElementById('product-gallery');
+                        if (!galleryContainer) {
+                            console.log('Creating gallery container for thumbnail grid');
+                            galleryContainer = document.createElement('div');
+                            galleryContainer.id = 'product-gallery';
+                            galleryContainer.className = 'gallery';
+                            galleryContainer.style.display = 'flex';
+                            galleryContainer.style.gap = '10px';
+                            galleryContainer.style.flexWrap = 'wrap';
+                            imageSection.appendChild(galleryContainer);
+                        }
+                        
+                        // Get the selected color for data attributes (handle both string and object formats)
+                        let selectedColor = '';
+                        if (this.selectedVariant && this.selectedVariant.color) {
+                            selectedColor = this.selectedVariant.color;
+                        } else if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+                            // Get first color (handle both formats)
+                            const firstColor = this.currentProduct.colors[0];
+                            selectedColor = typeof firstColor === 'object' ? firstColor.name : firstColor;
+                        }
+                        
+                        console.log(`Updating thumbnail grid with ${this.filteredImages.length} images for color: ${selectedColor}`);
                 
-                // Create main image container if it doesn't exist
-                if (!mainImageContainer) {
-                    console.log('Main image container not found, creating it');
-                    const imageSection = document.querySelector('.product-image-section');
-                    
-                    if (imageSection) {
-                        const newMainContainer = document.createElement('div');
-                        newMainContainer.id = 'main-product-image';
-                        newMainContainer.className = 'main-image';
-                        newMainContainer.style.marginBottom = '15px';
-                        imageSection.prepend(newMainContainer);
-                        mainImageContainer = newMainContainer;
+                        // Generate HTML for filtered images with improved styling
+                        galleryContainer.innerHTML = this.filteredImages.map((image, index) => `
+                            <div class="gallery-item ${index === 0 ? 'active' : ''}"
+                                 style="cursor:pointer; border:2px solid ${index === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
+                                <img src="${image}"
+                                     alt="${this.currentProduct?.title || 'Product'} ${index + 1}"
+                                     data-color="${selectedColor}"
+                                     style="width:60px; height:60px; object-fit:cover;">
+                            </div>
+                        `).join('');
+                        
+                        // Update main image to the first filtered image
+                        if (this.filteredImages.length > 0) {
+                            let mainImageContainer = document.getElementById('main-product-image');
+                            
+                            // Create main image container if it doesn't exist
+                            if (!mainImageContainer) {
+                                console.log('Main image container not found, creating it');
+                                const imageSection = document.querySelector('.product-image-section');
+                                
+                                if (imageSection) {
+                                    const newMainContainer = document.createElement('div');
+                                    newMainContainer.id = 'main-product-image';
+                                    newMainContainer.className = 'main-image';
+                                    newMainContainer.style.marginBottom = '15px';
+                                    imageSection.prepend(newMainContainer);
+                                    mainImageContainer = newMainContainer;
+                                }
+                            }
+                            
+                            if (mainImageContainer) {
+                                mainImageContainer.innerHTML = `
+                                    <img src="${this.filteredImages[0]}"
+                                         alt="${this.currentProduct?.title || 'Product'}"
+                                         data-color="${selectedColor}"
+                                         style="width:100%; max-height:500px; object-fit:contain;">`;
+                                this.currentImageIndex = 0;
+                            }
+                        }
+                        
+                        // Add click event listeners to gallery items
+                        document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                            item.addEventListener('click', () => {
+                                this.currentImageIndex = index;
+                                this.updateMainImage();
+                                
+                                // Update active class with visual feedback
+                                document.querySelectorAll('.gallery-item').forEach(i => {
+                                    i.classList.remove('active');
+                                    i.style.border = '2px solid transparent';
+                                });
+                                item.classList.add('active');
+                                item.style.border = '2px solid #4CAF50';
+                            });
+                        });
+                        
+                        console.log(`Thumbnail grid updated with ${this.filteredImages.length} images`);
+                    } catch (error) {
+                        console.error('Error updating thumbnail grid:', error);
+                        console.error('Stack trace:', error.stack);
                     }
                 }
-                
-                if (mainImageContainer) {
-                    mainImageContainer.innerHTML = `
-                        <img src="${this.filteredImages[0]}"
-                             alt="${this.currentProduct?.title || 'Product'}"
-                             style="width:100%; max-height:500px; object-fit:contain;">`;
-                    this.currentImageIndex = 0;
-                }
-            }
-            
-            // Add click event listeners to gallery items
-            document.querySelectorAll('.gallery-item').forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    this.currentImageIndex = index;
-                    this.updateMainImage();
-                    
-                    // Update active class with visual feedback
-                    document.querySelectorAll('.gallery-item').forEach(i => {
-                        i.classList.remove('active');
-                        i.style.border = '2px solid transparent';
-                    });
-                    item.classList.add('active');
-                    item.style.border = '2px solid #4CAF50';
-                });
-            });
-            
-            console.log(`Thumbnail grid updated with ${this.filteredImages.length} images`);
-        }
         
         renderColorOptions() {
                     console.log('Rendering color options');
@@ -1066,11 +1113,22 @@
                     }
                     
                     if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
-                        colorOptionsContainer.innerHTML = this.currentProduct.colors.map(color => `
-                            <div class="color-option" data-color="${color}" style="background-color: ${this.getColorCode(color)}" title="${color}">
-                                <span class="color-name">${color}</span>
-                            </div>
-                        `).join('');
+                        console.log(`Rendering ${this.currentProduct.colors.length} color options with format:`,
+                            typeof this.currentProduct.colors[0] === 'object' ? 'color objects' : 'color strings');
+                        
+                        colorOptionsContainer.innerHTML = this.currentProduct.colors.map(color => {
+                            // Handle both formats: string or {name, code} object
+                            const colorName = typeof color === 'object' ? color.name : color;
+                            const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
+                            
+                            return `
+                                <div class="color-option" data-color="${colorName}"
+                                     style="background-color: ${colorCode}"
+                                     title="${colorName}">
+                                    <span class="color-name">${colorName}</span>
+                                </div>
+                            `;
+                        }).join('');
                         
                         // Add event listeners to color options
                         document.querySelectorAll('.color-option').forEach(colorOption => {
@@ -1082,7 +1140,13 @@
                         
                         // Select first color by default
                         if (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) {
-                            this.selectColor(this.currentProduct.colors[0]);
+                            // Get the name property if it's an object, otherwise use the color string directly
+                            const firstColor = typeof this.currentProduct.colors[0] === 'object'
+                                ? this.currentProduct.colors[0].name
+                                : this.currentProduct.colors[0];
+                                
+                            console.log(`Selecting first color by default: ${firstColor}`);
+                            this.selectColor(firstColor);
                         }
                     } else {
                         colorOptionsContainer.innerHTML = '<p>No color options available</p>';
@@ -1150,6 +1214,9 @@
                 }
         
         selectColor(color) {
+            console.log(`Selecting color: ${color}`);
+            
+            // Store the color name in selectedVariant
             this.selectedVariant.color = color;
             
             // Update active class
@@ -1161,11 +1228,35 @@
                 }
             });
             
+            // Find the color object in our colors array for debugging
+            let colorObject = null;
+            if (this.currentProduct && this.currentProduct.colors) {
+                colorObject = this.currentProduct.colors.find(c =>
+                    typeof c === 'object' ? c.name === color : c === color
+                );
+                
+                if (colorObject) {
+                    console.log(`Found color object: ${JSON.stringify(colorObject)}`);
+                } else {
+                    console.log(`No color object found for: ${color}`);
+                }
+            }
+            
             // Filter images for this color if available
             if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
+                console.log(`Found ${this.currentProduct.colorImages[color].length} images for color: ${color}`);
                 this.filteredImages = this.currentProduct.colorImages[color];
                 this.currentImageIndex = 0;
                 this.renderProductImages();
+            } else {
+                console.log(`No specific images found for color: ${color}, using all images`);
+                
+                // If no color-specific images, use all images but filter in the DOM
+                if (this.currentProduct.images && this.currentProduct.images.length > 0) {
+                    this.filteredImages = this.currentProduct.images;
+                    this.currentImageIndex = 0;
+                    this.renderProductImages();
+                }
             }
         }
         
@@ -1402,7 +1493,15 @@
             }
         }
         
-        getColorCode(colorName) {
+        getColorCode(colorInput) {
+            // Handle both string and object formats
+            const colorName = typeof colorInput === 'object' ? colorInput.name : colorInput;
+            
+            // If input is already a color code (starts with #), return it
+            if (typeof colorName === 'string' && colorName.startsWith('#')) {
+                return colorName;
+            }
+            
             const colorMap = {
                 'Black': '#000000',
                 'White': '#FFFFFF',
@@ -1413,9 +1512,39 @@
                 'Vintage Black': '#2C2C2C',
                 'Heather Grey': '#D3D3D3',
                 'French Navy': '#002868',
-                'Forest Green': '#228B22'
+                'Forest Green': '#228B22',
+                'Red': '#FF0000',
+                'Blue': '#0000FF',
+                'Green': '#00FF00',
+                'Yellow': '#FFFF00',
+                'Purple': '#800080',
+                'Pink': '#FFC0CB',
+                'Orange': '#FFA500',
+                'Brown': '#A52A2A',
+                'Gray': '#808080',
+                'Grey': '#808080'
             };
-            return colorMap[colorName] || '#a855f7';
+            
+            // Case-insensitive lookup
+            if (typeof colorName === 'string') {
+                const normalizedName = colorName.trim();
+                
+                // Check exact match first
+                if (colorMap[normalizedName]) {
+                    return colorMap[normalizedName];
+                }
+                
+                // Check case-insensitive match
+                const lowerName = normalizedName.toLowerCase();
+                for (const [key, value] of Object.entries(colorMap)) {
+                    if (key.toLowerCase() === lowerName) {
+                        return value;
+                    }
+                }
+            }
+            
+            // Default purple color if no match found
+            return '#a855f7';
         }
     }
 
