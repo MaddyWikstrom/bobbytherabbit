@@ -910,7 +910,12 @@ class QuickViewManager {
             // View full details button
             if (e.target.matches('#quick-view-full-btn')) {
                 if (self.currentProduct) {
-                    window.location.href = `product.html?id=${self.currentProduct.id}`;
+                    // Include the selected color in the URL if available
+                    let url = `product.html?id=${self.currentProduct.id}`;
+                    if (self.selectedVariant && self.selectedVariant.color) {
+                        url += `&color=${encodeURIComponent(self.selectedVariant.color)}`;
+                    }
+                    window.location.href = url;
                 }
             }
         });
