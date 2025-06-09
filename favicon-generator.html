@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favicon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f4f4f8;
+        }
+        #preview {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #7877c6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #6766b5;
+        }
+        .download-btn {
+            background-color: #ff77c6;
+        }
+        .download-btn:hover {
+            background-color: #ee66b5;
+        }
+        #instructions {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        h1 {
+            color: #7877c6;
+        }
+        ol {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Favicon Generator for Bobby Streetwear</h1>
+    
+    <div id="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Below you'll see preview images of the favicon in different sizes</li>
+            <li>Click the "Generate Favicon Files" button</li>
+            <li>Save each file when prompted</li>
+            <li>The files will be automatically downloaded to your computer</li>
+            <li>Place these files in the root directory of your website</li>
+        </ol>
+    </div>
+    
+    <div id="preview">
+        <div class="canvas-container">
+            <h3>16x16</h3>
+            <canvas id="canvas16" width="16" height="16"></canvas>
+        </div>
+        <div class="canvas-container">
+            <h3>32x32</h3>
+            <canvas id="canvas32" width="32" height="32"></canvas>
+        </div>
+        <div class="canvas-container">
+            <h3>48x48</h3>
+            <canvas id="canvas48" width="48" height="48"></canvas>
+        </div>
+    </div>
+    
+    <button id="generate">Generate Favicon Files</button>
+    
+    <div id="download-links"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const imagePath = 'assets/hat.png';
+            const canvas16 = document.getElementById('canvas16');
+            const canvas32 = document.getElementById('canvas32');
+            const canvas48 = document.getElementById('canvas48');
+            const ctx16 = canvas16.getContext('2d');
+            const ctx32 = canvas32.getContext('2d');
+            const ctx48 = canvas48.getContext('2d');
+            const downloadLinks = document.getElementById('download-links');
+            
+            const img = new Image();
+            img.onload = function() {
+                // Draw on all canvases
+                drawImageProp(ctx16, img, 0, 0, 16, 16);
+                drawImageProp(ctx32, img, 0, 0, 32, 32);
+                drawImageProp(ctx48, img, 0, 0, 48, 48);
+            };
+            img.src = imagePath;
+            
+            // Function to draw image proportionally
+            function drawImageProp(ctx, img, x, y, w, h) {
+                const imgRatio = img.width / img.height;
+                const canvasRatio = w / h;
+                let drawWidth, drawHeight, offsetX, offsetY;
+                
+                // Fill the canvas
+                if (imgRatio > canvasRatio) {
+                    drawHeight = h;
+                    drawWidth = img.width * (h / img.height);
+                    offsetX = (w - drawWidth) / 2;
+                    offsetY = 0;
+                } else {
+                    drawWidth = w;
+                    drawHeight = img.height * (w / img.width);
+                    offsetX = 0;
+                    offsetY = (h - drawHeight) / 2;
+                }
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            }
+            
+            document.getElementById('generate').addEventListener('click', function() {
+                // Clear previous links
+                downloadLinks.innerHTML = '';
+                
+                // Create favicon.ico link (use the 32x32 version)
+                const link = document.createElement('a');
+                link.href = canvas32.toDataURL('image/png');
+                link.download = 'favicon.ico';
+                link.textContent = 'Download favicon.ico';
+                link.className = 'download-btn';
+                link.style.display = 'block';
+                link.style.margin = '10px auto';
+                link.style.width = '200px';
+                link.style.textAlign = 'center';
+                link.style.padding = '10px';
+                link.style.textDecoration = 'none';
+                downloadLinks.appendChild(link);
+                
+                // Create PNG links
+                const sizes = [16, 32, 48];
+                sizes.forEach(size => {
+                    const canvas = document.getElementById(`canvas${size}`);
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    link.download = `favicon-${size}x${size}.png`;
+                    link.textContent = `Download ${size}x${size} PNG`;
+                    link.className = 'download-btn';
+                    link.style.display = 'block';
+                    link.style.margin = '10px auto';
+                    link.style.width = '200px';
+                    link.style.textAlign = 'center';
+                    link.style.padding = '10px';
+                    link.style.textDecoration = 'none';
+                    downloadLinks.appendChild(link);
+                });
+                
+                // Auto download the favicon.ico after a short delay
+                setTimeout(() => {
+                    const links = document.querySelectorAll('.download-btn');
+                    alert('Please save each file when prompted. Four files will be downloaded.');
+                    
+                    // Click each link with a slight delay
+                    links.forEach((link, index) => {
+                        setTimeout(() => {
+                            link.click();
+                        }, index * 1000); // 1 second between each download
+                    });
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
