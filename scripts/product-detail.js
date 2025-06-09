@@ -1551,6 +1551,74 @@ class ProductDetailManager {
                             }
                         }
                         
+                        // Try a more advanced matching approach if still no match
+                        if (!foundMatchingColor) {
+                            console.log(`No partial match found for ${selectedColor}, trying normalized matching`);
+                            
+                            // Normalize the selected color (remove spaces, make lowercase)
+                            const normalizedSelectedColor = selectedColor.toLowerCase()
+                                .replace(/[\s-_]/g, '')                  // Remove spaces, dashes, underscores
+                                .replace(/\(.*?\)/g, '')                // Remove anything in parentheses
+                                .replace(/v\d+$/, '')                   // Remove version numbers like "v1", "v2"
+                                .replace(/variant\d*$/, '');            // Remove "variant" or "variant1", etc.
+                            
+                            console.log(`Normalized selected color: "${normalizedSelectedColor}"`);
+                            
+                            for (const color of this.currentProduct.colors) {
+                                const colorName = typeof color === 'object' ? color.name : color;
+                                const normalizedColorName = colorName.toLowerCase()
+                                    .replace(/[\s-_]/g, '')              // Same normalization as above
+                                    .replace(/\(.*?\)/g, '')
+                                    .replace(/v\d+$/, '')
+                                    .replace(/variant\d*$/, '');
+                                
+                                console.log(`Comparing with normalized color: "${normalizedColorName}" (original: "${colorName}")`);
+                                
+                                // Compare normalized versions
+                                if (normalizedColorName === normalizedSelectedColor) {
+                                    console.log(`Found normalized match: ${colorName} for requested ${selectedColor}`);
+                                    this.selectColor(colorName);
+                                    foundMatchingColor = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Try even more aggressive matching if still no match
+                        if (!foundMatchingColor) {
+                            console.log(`No normalized match found for ${selectedColor}, trying color word extraction`);
+                            
+                            // Extract primary color words from the selected color
+                            const commonColorWords = [
+                                'black', 'white', 'red', 'blue', 'green', 'yellow', 'purple', 'pink',
+                                'orange', 'brown', 'gray', 'grey', 'navy', 'teal', 'olive', 'maroon',
+                                'indigo', 'violet', 'turquoise', 'cyan', 'magenta', 'lime', 'coral',
+                                'gold', 'silver', 'ivory', 'beige', 'tan', 'khaki', 'charcoal'
+                            ];
+                            
+                            // Extract main color words from the selected color
+                            const selectedColorWords = selectedColor.toLowerCase().split(/[\s-_]+/)
+                                .filter(word => commonColorWords.includes(word));
+                            
+                            if (selectedColorWords.length > 0) {
+                                console.log(`Extracted color words from "${selectedColor}": ${selectedColorWords.join(', ')}`);
+                                
+                                // Look for any color that contains these color words
+                                for (const color of this.currentProduct.colors) {
+                                    const colorName = typeof color === 'object' ? color.name : color;
+                                    const colorNameLower = colorName.toLowerCase();
+                                    
+                                    // Check if any of the extracted color words are in this color name
+                                    if (selectedColorWords.some(word => colorNameLower.includes(word))) {
+                                        console.log(`Found color word match: ${colorName} for requested ${selectedColor}`);
+                                        this.selectColor(colorName);
+                                        foundMatchingColor = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
                         // If still no match, use the default first color
                         if (!foundMatchingColor) {
                             console.log(`No match found for color: ${selectedColor}, defaulting to: ${defaultColorName}`);
