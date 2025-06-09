@@ -1949,9 +1949,10 @@ class ProductDetailManager {
                     groupedImages.get(identifier).push(imgUrl);
                 });
                 
-                // Step 3: For each group, keep all images that are clearly different views
-                // This preserves front/back/side views of the same product color
+                // Step 3: Keep only distinct views for each product color to reduce redundancy
+                // While preserving important angle variations (front, back, side)
                 const dedupedImages = [];
+                const maxImagesPerGroup = 4; // Limit to maximum 4 images per color/pattern to avoid overwhelming gallery
                 
                 groupedImages.forEach((urls, identifier) => {
                     // If there's only one image in the group, keep it
@@ -1964,6 +1965,7 @@ class ProductDetailManager {
                     const viewPatterns = ['front', 'back', 'side', 'detail', 'angle', 'closeup', 'full'];
                     const foundViews = new Set();
                     const remainingUrls = [...urls];
+                    const viewImages = [];
                     
                     // First pass: find images with clearly identified views
                     for (const pattern of viewPatterns) {
@@ -1973,24 +1975,34 @@ class ProductDetailManager {
                         );
                         
                         if (matchIndex !== -1) {
-                            dedupedImages.push(remainingUrls[matchIndex]);
+                            viewImages.push(remainingUrls[matchIndex]);
                             foundViews.add(pattern);
                             remainingUrls.splice(matchIndex, 1);
+                            
+                            // Stop if we've reached our limit
+                            if (viewImages.length >= maxImagesPerGroup) break;
                         }
                     }
                     
-                    // If we have no clear view indicators, keep all images in the group
-                    // This ensures we don't lose important images
-                    if (dedupedImages.length === 0 || (remainingUrls.length > 0 && foundViews.size === 0)) {
-                        urls.forEach(url => dedupedImages.push(url));
-                    } else if (remainingUrls.length > 0) {
-                        // Add at least one more image from remaining if available
-                        // This ensures we have multiple views when possible
-                        dedupedImages.push(remainingUrls[0]);
+                    // If we found specific views, add them
+                    if (viewImages.length > 0) {
+                        viewImages.forEach(img => dedupedImages.push(img));
+                        
+                        // If we still have room and remaining images, add one more for completeness
+                        if (viewImages.length < maxImagesPerGroup && remainingUrls.length > 0) {
+                            dedupedImages.push(remainingUrls[0]);
+                        }
+                    } else {
+                        // No specific views found, just use a subset of the images
+                        // Only take up to maxImagesPerGroup to avoid duplication
+                        urls.slice(0, maxImagesPerGroup).forEach(url => dedupedImages.push(url));
                     }
                 });
                 
-                console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images for color: ${color}`);
+                // Only log if we actually deduplicated something
+                if (dedupedImages.length < images.length) {
+                    console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images for color: ${color}`);
+                }
                 
                 return dedupedImages;
             };
@@ -2276,7 +2288,7 @@ class ProductDetailManager {
                 this.selectedVariant?.color &&
                 this.currentProduct.colorImages[this.selectedVariant.color]) {
                 this.filteredImages = [...this.currentProduct.colorImages[this.selectedVariant.color]];
-                console.log(`Retrieved ${this.filteredImages.length} images from colorImages map for main image`);
+                // Only log detailed info when debugging is needed
             } else if (this.currentProduct?.images) {
                 // Fallback to all product images
                 this.filteredImages = [...this.currentProduct.images];
@@ -2327,8 +2339,7 @@ class ProductDetailManager {
                  onerror="this.src='/assets/product-placeholder.png'; console.warn('Failed to load main image: ${image.replace(/'/g, "\\'")}');">
         `;
         
-        // Add debug information about current display
-        console.log(`Updated main image to index ${this.currentImageIndex} for color: ${this.selectedVariant?.color}`);
+        // Debug logging removed to reduce console spam
     }
     
     addToCart() {
@@ -2741,7 +2752,8 @@ class ProductDetailManager {
             const galleryContainer = document.getElementById('product-gallery');
             if (!galleryContainer) return;
             
-            console.log(`Updating thumbnail grid with ${this.filteredImages?.length || 0} filtered images for color: ${this.selectedVariant?.color || 'unknown'}`);
+            // Only log when there's a significant change in the number of images
+            // This prevents spamming the console on every update
             
             // Ensure filtered images are properly set
             if (!this.filteredImages || this.filteredImages.length === 0) {
