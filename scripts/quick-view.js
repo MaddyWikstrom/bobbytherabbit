@@ -2097,10 +2097,38 @@ class QuickViewManager {
             return;
         }
         
+        // Helper function to deduplicate image URLs
+        const deduplicateImages = (images) => {
+            // Create a map to track image URLs we've seen
+            const uniqueImagesMap = new Map();
+            const uniqueImages = [];
+            
+            images.forEach(imgUrl => {
+                // Get filename from URL as the deduplication key
+                const urlObj = new URL(imgUrl, window.location.origin);
+                const pathname = urlObj.pathname;
+                const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+                
+                // If we haven't seen this filename before, add it
+                if (!uniqueImagesMap.has(filename)) {
+                    uniqueImagesMap.set(filename, true);
+                    uniqueImages.push(imgUrl);
+                } else {
+                    console.log(`Skipping duplicate image: ${filename}`);
+                }
+            });
+            
+            console.log(`Deduplicated from ${images.length} to ${uniqueImages.length} images`);
+            return uniqueImages;
+        };
+        
         // First try to find images in the colorImages mapping if available
         if (this.currentProduct.colorImages && this.currentProduct.colorImages[colorName]) {
             // Use these specific images for this color
-            const colorSpecificImages = this.currentProduct.colorImages[colorName];
+            let colorSpecificImages = this.currentProduct.colorImages[colorName];
+            
+            // Deduplicate images
+            colorSpecificImages = deduplicateImages(colorSpecificImages);
             
             // Set these as the filtered images if we're in product-detail.js context
             if (this.filteredImages) {
@@ -2131,8 +2159,11 @@ class QuickViewManager {
             }
         }
         
-        // If we found variant images, use them
+        // If we found variant images, use them (after deduplication)
         if (variantImages.length > 0) {
+            // Deduplicate images
+            variantImages = deduplicateImages(variantImages);
+            
             if (this.filteredImages) {
                 this.filteredImages = variantImages;
             }
@@ -2220,6 +2251,9 @@ class QuickViewManager {
             matchingImages.push(...potentiallyMatching);
         }
         
+        // Deduplicate matching images before updating DOM
+        const uniqueMatchingImages = deduplicateImages(matchingImages);
+        
         // Update DOM thumbnails based on our matching results
         thumbnails.forEach(thumbnail => {
             const thumbnailParent = thumbnail.closest('.thumbnail') ||
@@ -2228,7 +2262,7 @@ class QuickViewManager {
             const imgUrl = thumbnail.getAttribute('src');
             
             // Show matching images, hide non-matching ones
-            if (matchingImages.includes(imgUrl)) {
+            if (uniqueMatchingImages.includes(imgUrl)) {
                 if (thumbnailParent) {
                     thumbnailParent.style.display = 'block';
                 }
@@ -2246,17 +2280,17 @@ class QuickViewManager {
         // Update filtered images array if we're in the product-detail.js context
         if (this.filteredImages) {
             // If we found matching images, use them
-            if (matchingImages.length > 0) {
-                this.filteredImages = matchingImages;
+            if (uniqueMatchingImages.length > 0) {
+                this.filteredImages = uniqueMatchingImages;
             }
-            // Otherwise fallback to all product images
+            // Otherwise fallback to all product images (deduplicated)
             else {
-                this.filteredImages = this.currentProduct.images;
+                this.filteredImages = deduplicateImages(this.currentProduct.images);
             }
         }
         
         // If we didn't find any matching images, show all images
-        if (matchingImages.length === 0) {
+        if (uniqueMatchingImages.length === 0) {
             console.log(`No images found for color: ${colorName}, showing all images`);
             thumbnails.forEach(thumbnail => {
                 const thumbnailParent = thumbnail.closest('.thumbnail') ||
@@ -2268,9 +2302,9 @@ class QuickViewManager {
                 thumbnail.style.display = 'block';
             });
             
-            // Reset filtered images to all images
+            // Reset filtered images to all images (deduplicated)
             if (this.filteredImages) {
-                this.filteredImages = this.currentProduct.images;
+                this.filteredImages = deduplicateImages(this.currentProduct.images);
             }
             
             // Use the first thumbnail as the first matching image
@@ -2280,7 +2314,7 @@ class QuickViewManager {
         } else {
             // Update main image with the first matching image
             const firstMatchingThumbnail = thumbnails.find(thumb => {
-                return matchingImages.includes(thumb.getAttribute('src'));
+                return uniqueMatchingImages.includes(thumb.getAttribute('src'));
             });
             
             if (firstMatchingThumbnail) {

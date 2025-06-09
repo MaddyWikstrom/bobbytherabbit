@@ -1521,6 +1521,31 @@ class ProductDetailManager {
                 console.log(`No matching color option found in DOM for: ${color}`);
             }
             
+            // Helper function to deduplicate image URLs
+            const deduplicateImages = (images) => {
+                // Create a map to track image URLs we've seen
+                const uniqueImagesMap = new Map();
+                const uniqueImages = [];
+                
+                images.forEach(imgUrl => {
+                    // Get filename from URL as the deduplication key
+                    const urlObj = new URL(imgUrl, window.location.origin);
+                    const pathname = urlObj.pathname;
+                    const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+                    
+                    // If we haven't seen this filename before, add it
+                    if (!uniqueImagesMap.has(filename)) {
+                        uniqueImagesMap.set(filename, true);
+                        uniqueImages.push(imgUrl);
+                    } else {
+                        console.log(`Skipping duplicate image: ${filename}`);
+                    }
+                });
+                
+                console.log(`Deduplicated from ${images.length} to ${uniqueImages.length} images`);
+                return uniqueImages;
+            };
+            
             // Try to find color images
             let colorImagesFound = false;
             let colorImages = [];
@@ -1544,7 +1569,8 @@ class ProductDetailManager {
                 
                 if (colorImagesFound) {
                     console.log(`Found ${colorImages.length} images for color ${color}`);
-                    this.filteredImages = colorImages;
+                    // Deduplicate images
+                    this.filteredImages = deduplicateImages(colorImages);
                     this.currentImageIndex = 0;
                     this.updateMainImage();
                     this.updateThumbnailGrid();
@@ -1567,7 +1593,8 @@ class ProductDetailManager {
                     
                     if (variantImages.length > 0) {
                         console.log(`Found ${variantImages.length} variant images for color ${color}`);
-                        this.filteredImages = variantImages;
+                        // Deduplicate images
+                        this.filteredImages = deduplicateImages(variantImages);
                         this.currentImageIndex = 0;
                         this.updateMainImage();
                         this.updateThumbnailGrid();
@@ -1597,7 +1624,8 @@ class ProductDetailManager {
                 
                 if (matchingImages.length > 0) {
                     console.log(`Found ${matchingImages.length} URL-matched images for color ${color}`);
-                    this.filteredImages = matchingImages;
+                    // Deduplicate images
+                    this.filteredImages = deduplicateImages(matchingImages);
                     this.currentImageIndex = 0;
                     this.updateMainImage();
                     this.updateThumbnailGrid();
@@ -1608,7 +1636,8 @@ class ProductDetailManager {
             // If no color-specific images found after all attempts, use all images
             if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
                 console.log(`No color-specific images found for ${color}, using all ${this.currentProduct.images.length} images`);
-                this.filteredImages = this.currentProduct.images;
+                // Deduplicate all images too
+                this.filteredImages = deduplicateImages(this.currentProduct.images);
                 this.currentImageIndex = 0;
                 this.updateMainImage();
                 this.updateThumbnailGrid();
@@ -1619,6 +1648,12 @@ class ProductDetailManager {
                 try {
                     // This may enhance our filtering with additional DOM-based logic
                     window.quickViewManager.filterImagesByColor.call(this, color);
+                    
+                    // Deduplicate images again after quickViewManager filtering
+                    if (this.filteredImages && this.filteredImages.length > 0) {
+                        this.filteredImages = deduplicateImages(this.filteredImages);
+                        this.updateThumbnailGrid();
+                    }
                 } catch (error) {
                     console.warn('Error using quickViewManager filtering:', error);
                 }
@@ -1628,7 +1663,7 @@ class ProductDetailManager {
             console.error('Error in selectColor:', error);
             // Fallback to using all images
             if (this.currentProduct && this.currentProduct.images) {
-                this.filteredImages = this.currentProduct.images;
+                this.filteredImages = deduplicateImages(this.currentProduct.images);
                 this.currentImageIndex = 0;
                 this.updateMainImage();
                 this.updateThumbnailGrid();
