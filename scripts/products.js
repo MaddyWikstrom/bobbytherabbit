@@ -35,6 +35,14 @@ class ProductManager {
                 });
                 
                 this.products = Array.from(uniqueProducts.values());
+                
+                // Apply initial sorting by display priority before applying any filters
+                this.products.sort((a, b) => {
+                    const priorityA = a.displayPriority || 999;
+                    const priorityB = b.displayPriority || 999;
+                    return priorityA - priorityB;
+                });
+                
                 // Successfully loaded products from Shopify API
                 this.filteredProducts = [...this.products];
                 return;
@@ -306,6 +314,21 @@ class ProductManager {
                 code: this.getColorCode(color)
             }));
             
+            // Extract priority from tags (format: "priority:N" where N is a number)
+            let displayPriority = 999; // Default to low priority if no priority tag exists
+            
+            if (product.tags && Array.isArray(product.tags)) {
+                for (const tag of product.tags) {
+                    if (typeof tag === 'string' && tag.startsWith('priority:')) {
+                        const priorityValue = parseInt(tag.split(':')[1]);
+                        if (!isNaN(priorityValue)) {
+                            displayPriority = priorityValue;
+                            break;
+                        }
+                    }
+                }
+            }
+            
             const convertedProduct = {
                 id: product.handle || (product.id ? String(product.id).split('/').pop() : 'unknown'),
                 shopifyId: product.id,
@@ -325,7 +348,9 @@ class ProductManager {
                 tags: product.tags || [],
                 productType: product.productType || '',
                 // Add the color to images mapping for easy filtering
-                colorImages: Object.fromEntries(colorToImagesMap)
+                colorImages: Object.fromEntries(colorToImagesMap),
+                // Add display priority for controlling product order
+                displayPriority: displayPriority
             };
             
             uniqueProductsMap.set(product.handle, convertedProduct);
@@ -619,14 +644,66 @@ class ProductManager {
             case 'name':
                 this.filteredProducts.sort((a, b) => a.title.localeCompare(b.title));
                 break;
-            case 'featured':
-            default:
+            case 'newest':
+                // Sort by "new" tag first, then by most recently added (using ID as proxy for recency)
+                this.filteredProducts.sort((a, b) => {
+                    if (a.new && !b.new) return -1;
+                    if (!a.new && b.new) return 1;
+                    // Assuming newer products have higher IDs or were added later in the array
+                    return a.id > b.id ? -1 : 1;
+                });
+                break;
+            case 'bestselling':
+                // In a real implementation, this would use sales data
+                // For now, we'll prioritize featured products then new products
+                // as a proxy for popularity
                 this.filteredProducts.sort((a, b) => {
                     if (a.featured && !b.featured) return -1;
                     if (!a.featured && b.featured) return 1;
                     if (a.new && !b.new) return -1;
                     if (!a.new && b.new) return 1;
+                    // Could add logic here to incorporate sales data when available
                     return 0;
+                });
+                break;
+            case 'sale':
+                // Sort by items on sale first, then by discount percentage
+                this.filteredProducts.sort((a, b) => {
+                    if (a.sale && !b.sale) return -1;
+                    if (!a.sale && b.sale) return 1;
+                    if (a.sale && b.sale) {
+                        // Calculate discount percentages
+                        const aDiscount = a.comparePrice ? ((a.comparePrice - a.price) / a.comparePrice) * 100 : 0;
+                        const bDiscount = b.comparePrice ? ((b.comparePrice - b.price) / b.comparePrice) * 100 : 0;
+                        return bDiscount - aDiscount; // Higher discount first
+                    }
+                    return 0;
+                });
+                break;
+            case 'featured':
+            default:
+                this.filteredProducts.sort((a, b) => {
+                    // First, sort by featured tag
+                    if (a.featured && !b.featured) return -1;
+                    if (!a.featured && b.featured) return 1;
+                    
+                    // Then by new tag
+                    if (a.new && !b.new) return -1;
+                    if (!a.new && b.new) return 1;
+                    
+                    // Then by sale items
+                    if (a.sale && !b.sale) return -1;
+                    if (!a.sale && b.sale) return 1;
+                    
+                    // If both are on sale, sort by discount percentage
+                    if (a.sale && b.sale) {
+                        const aDiscount = a.comparePrice ? ((a.comparePrice - a.price) / a.comparePrice) * 100 : 0;
+                        const bDiscount = b.comparePrice ? ((b.comparePrice - b.price) / b.comparePrice) * 100 : 0;
+                        if (bDiscount !== aDiscount) return bDiscount - aDiscount; // Higher discount first
+                    }
+                    
+                    // Finally, sort alphabetically as a last resort
+                    return a.title.localeCompare(b.title);
                 });
                 break;
         }
