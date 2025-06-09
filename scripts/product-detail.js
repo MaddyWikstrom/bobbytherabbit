@@ -1521,26 +1521,51 @@ class ProductDetailManager {
                 console.log(`No matching color option found in DOM for: ${color}`);
             }
             
-            // Helper function to deduplicate image URLs
+            // Helper function to deduplicate image URLs with improved accuracy
             const deduplicateImages = (images) => {
                 // Create a map to track image URLs we've seen
                 const uniqueImagesMap = new Map();
                 const uniqueImages = [];
                 
                 images.forEach(imgUrl => {
-                    // Get filename from URL as the deduplication key
-                    const urlObj = new URL(imgUrl, window.location.origin);
-                    const pathname = urlObj.pathname;
-                    const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
-                    
-                    // If we haven't seen this filename before, add it
-                    if (!uniqueImagesMap.has(filename)) {
-                        uniqueImagesMap.set(filename, true);
-                        uniqueImages.push(imgUrl);
-                    } else {
-                        console.log(`Skipping duplicate image: ${filename}`);
+                    try {
+                        // Generate a more comprehensive key using both path and query parameters
+                        const urlObj = new URL(imgUrl, window.location.origin);
+                        const pathname = urlObj.pathname;
+                        
+                        // Get the last two path segments if available (more precise than just filename)
+                        const pathParts = pathname.split('/').filter(part => part.trim() !== '');
+                        const lastSegments = pathParts.slice(-Math.min(2, pathParts.length)).join('/');
+                        
+                        // Include any 'variant' or 'id' query params if they exist
+                        const variantId = urlObj.searchParams.get('variant') || '';
+                        const productId = urlObj.searchParams.get('id') || '';
+                        
+                        // Create a composite key that includes important URL components
+                        const key = `${lastSegments}${variantId}${productId}`;
+                        
+                        // Use the full URL as a fallback if key generation fails
+                        const dedupeKey = key || imgUrl;
+                        
+                        // Only add if we haven't seen this key before
+                        if (!uniqueImagesMap.has(dedupeKey)) {
+                            uniqueImagesMap.set(dedupeKey, true);
+                            uniqueImages.push(imgUrl);
+                        }
+                    } catch (e) {
+                        // If URL parsing fails, use the full URL as the key
+                        if (!uniqueImagesMap.has(imgUrl)) {
+                            uniqueImagesMap.set(imgUrl, true);
+                            uniqueImages.push(imgUrl);
+                        }
                     }
                 });
+                
+                // If deduplication reduced the images too much, revert to original set
+                if (uniqueImages.length < Math.max(2, images.length / 3)) {
+                    console.log(`Deduplication was too aggressive (${images.length} → ${uniqueImages.length}), using all images`);
+                    return images;
+                }
                 
                 console.log(`Deduplicated from ${images.length} to ${uniqueImages.length} images`);
                 return uniqueImages;

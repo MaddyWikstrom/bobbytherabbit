@@ -2097,26 +2097,51 @@ class QuickViewManager {
             return;
         }
         
-        // Helper function to deduplicate image URLs
+        // Helper function to deduplicate image URLs with improved accuracy
         const deduplicateImages = (images) => {
             // Create a map to track image URLs we've seen
             const uniqueImagesMap = new Map();
             const uniqueImages = [];
             
             images.forEach(imgUrl => {
-                // Get filename from URL as the deduplication key
-                const urlObj = new URL(imgUrl, window.location.origin);
-                const pathname = urlObj.pathname;
-                const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
-                
-                // If we haven't seen this filename before, add it
-                if (!uniqueImagesMap.has(filename)) {
-                    uniqueImagesMap.set(filename, true);
-                    uniqueImages.push(imgUrl);
-                } else {
-                    console.log(`Skipping duplicate image: ${filename}`);
+                try {
+                    // Generate a more comprehensive key using both path and query parameters
+                    const urlObj = new URL(imgUrl, window.location.origin);
+                    const pathname = urlObj.pathname;
+                    
+                    // Get the last two path segments if available (more precise than just filename)
+                    const pathParts = pathname.split('/').filter(part => part.trim() !== '');
+                    const lastSegments = pathParts.slice(-Math.min(2, pathParts.length)).join('/');
+                    
+                    // Include any 'variant' or 'id' query params if they exist
+                    const variantId = urlObj.searchParams.get('variant') || '';
+                    const productId = urlObj.searchParams.get('id') || '';
+                    
+                    // Create a composite key that includes important URL components
+                    const key = `${lastSegments}${variantId}${productId}`;
+                    
+                    // Use the full URL as a fallback if key generation fails
+                    const dedupeKey = key || imgUrl;
+                    
+                    // Only add if we haven't seen this key before
+                    if (!uniqueImagesMap.has(dedupeKey)) {
+                        uniqueImagesMap.set(dedupeKey, true);
+                        uniqueImages.push(imgUrl);
+                    }
+                } catch (e) {
+                    // If URL parsing fails, use the full URL as the key
+                    if (!uniqueImagesMap.has(imgUrl)) {
+                        uniqueImagesMap.set(imgUrl, true);
+                        uniqueImages.push(imgUrl);
+                    }
                 }
             });
+            
+            // If deduplication reduced the images too much, revert to original set
+            if (uniqueImages.length < Math.max(2, images.length / 3)) {
+                console.log(`Deduplication was too aggressive (${images.length} → ${uniqueImages.length}), using all images`);
+                return images;
+            }
             
             console.log(`Deduplicated from ${images.length} to ${uniqueImages.length} images`);
             return uniqueImages;
@@ -2196,8 +2221,9 @@ class QuickViewManager {
                 // Try to detect color from URL
                 const imgUrl = thumbnail.getAttribute('src').toLowerCase();
                 const colorNameLower = colorName.toLowerCase();
+                let matched = false;
                 
-                // More comprehensive URL pattern matching
+                // 1. Standard URL pattern matching
                 if (imgUrl.includes(`/${colorNameLower}`) ||
                     imgUrl.includes(`${colorNameLower}.`) ||
                     imgUrl.includes(`_${colorNameLower}`) ||
@@ -2210,6 +2236,35 @@ class QuickViewManager {
                     imgUrl.includes(colorNameLower)) {
                     
                     thumbnail.setAttribute('data-color', colorName);
+                    matched = true;
+                }
+                
+                // If already matched, skip further checks
+                if (matched) return;
+                
+                // 2. Handle multi-word color names (e.g., "Forest Green")
+                const colorParts = colorNameLower.split(/\s+/);
+                if (colorParts.length > 1) {
+                    // Check if all parts of the color name appear in the URL
+                    const allPartsPresent = colorParts.every(part =>
+                        imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                    );
+                    
+                    if (allPartsPresent) {
+                        thumbnail.setAttribute('data-color', colorName);
+                        matched = true;
+                    }
+                }
+                
+                // If already matched, skip further checks
+                if (matched) return;
+                
+                // 3. Handle color initials (e.g., "fg" for "forest green")
+                if (colorParts && colorParts.length > 1) {
+                    const colorInitials = colorParts.map(part => part[0]).join('');
+                    if (colorInitials.length > 1 && imgUrl.includes(colorInitials)) {
+                        thumbnail.setAttribute('data-color', colorName);
+                    }
                 }
             }
         });
@@ -2223,8 +2278,9 @@ class QuickViewManager {
         allImages.forEach(imgUrl => {
             const imgUrlLower = imgUrl.toLowerCase();
             const colorNameLower = colorName.toLowerCase();
+            let matched = false;
             
-            // Strong match: File contains color in specific URL patterns
+            // 1. Strong match: File contains color in specific URL patterns
             if (imgUrlLower.includes(`/${colorNameLower}/`) ||
                 imgUrlLower.includes(`/${colorNameLower}_`) ||
                 imgUrlLower.includes(`/${colorNameLower}-`) ||
@@ -2236,12 +2292,49 @@ class QuickViewManager {
                 imgUrlLower.includes(`variant=${colorNameLower}`)) {
                 
                 matchingImages.push(imgUrl);
+                matched = true;
             }
-            // Weak match: Color name appears somewhere in URL
-            else if (imgUrlLower.includes(colorNameLower)) {
+            
+            // If already matched, skip further checks
+            if (matched) return;
+            
+            // 2. Weak match: Color name appears somewhere in URL
+            if (imgUrlLower.includes(colorNameLower)) {
                 potentiallyMatching.push(imgUrl);
+                matched = true;
             }
-            else {
+            
+            // If already matched, skip further checks
+            if (matched) return;
+            
+            // 3. Handle multi-word color names (e.g., "Forest Green")
+            const colorParts = colorNameLower.split(/\s+/);
+            if (colorParts.length > 1) {
+                // Check if all parts of the color name appear in the URL
+                const allPartsPresent = colorParts.every(part =>
+                    imgUrlLower.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                );
+                
+                if (allPartsPresent) {
+                    potentiallyMatching.push(imgUrl);
+                    matched = true;
+                }
+            }
+            
+            // If already matched, skip further checks
+            if (matched) return;
+            
+            // 4. Handle color initials (e.g., "fg" for "forest green")
+            if (colorParts.length > 1) {
+                const colorInitials = colorParts.map(part => part[0]).join('');
+                if (colorInitials.length > 1 && imgUrlLower.includes(colorInitials)) {
+                    potentiallyMatching.push(imgUrl);
+                    matched = true;
+                }
+            }
+            
+            // If not matched by any criteria, it's a non-matching image
+            if (!matched) {
                 nonMatchingImages.push(imgUrl);
             }
         });
@@ -2474,6 +2567,9 @@ class QuickViewManager {
                 const colorNameLower = colorName.toLowerCase();
                 
                 // Use more robust URL pattern matching for color
+                let matched = false;
+                
+                // Standard pattern matching
                 if (imgUrl.includes(`/${colorNameLower}_`) ||
                     imgUrl.includes(`/${colorNameLower}-`) ||
                     imgUrl.includes(`_${colorNameLower}_`) ||
@@ -2485,6 +2581,35 @@ class QuickViewManager {
                     imgUrl.includes(colorNameLower)) {
                     
                     colorImages.push(image);
+                    matched = true;
+                }
+                
+                // If already matched, continue to next image
+                if (matched) continue;
+                
+                // Handle multi-word color names (e.g., "Forest Green")
+                const colorParts = colorNameLower.split(/\s+/);
+                if (colorParts.length > 1) {
+                    // Check if all parts of the color name appear in the URL
+                    const allPartsPresent = colorParts.every(part =>
+                        imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                    );
+                    
+                    if (allPartsPresent) {
+                        colorImages.push(image);
+                        matched = true;
+                    }
+                }
+                
+                // If already matched, continue to next image
+                if (matched) continue;
+                
+                // Handle color initials (e.g., "fg" for "forest green")
+                if (colorParts && colorParts.length > 1) {
+                    const colorInitials = colorParts.map(part => part[0]).join('');
+                    if (colorInitials.length > 1 && imgUrl.includes(colorInitials)) {
+                        colorImages.push(image);
+                    }
                 }
             }
             
@@ -2755,9 +2880,34 @@ document.addEventListener('DOMContentLoaded', () => {
                         const colorImages = window.productDetailManager.currentProduct.images.filter(img => {
                             const imgUrl = img.toLowerCase();
                             const colorNameLower = colorParam.toLowerCase();
-                            return imgUrl.includes(colorNameLower) ||
-                                   imgUrl.includes(`-${colorNameLower}`) ||
-                                   imgUrl.includes(`_${colorNameLower}`);
+                            
+                            // Standard pattern matching
+                            if (imgUrl.includes(colorNameLower) ||
+                                imgUrl.includes(`-${colorNameLower}`) ||
+                                imgUrl.includes(`_${colorNameLower}`)) {
+                                return true;
+                            }
+                            
+                            // Handle multi-word color names (e.g., "Forest Green")
+                            const colorParts = colorNameLower.split(/\s+/);
+                            if (colorParts.length > 1) {
+                                // Check if all parts of the color name appear in the URL
+                                const allPartsPresent = colorParts.every(part =>
+                                    imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                                );
+                                
+                                if (allPartsPresent) {
+                                    return true;
+                                }
+                                
+                                // Check for color initials (e.g., "fg" for "forest green")
+                                const colorInitials = colorParts.map(part => part[0]).join('');
+                                if (colorInitials.length > 1 && imgUrl.includes(colorInitials)) {
+                                    return true;
+                                }
+                            }
+                            
+                            return false;
                         });
                         
                         if (colorImages.length > 0) {
