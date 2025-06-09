@@ -3061,34 +3061,64 @@ class ProductDetailManager {
             console.log(`Thumbnail grid updated with ${this.filteredImages?.length} images for color: ${this.selectedVariant?.color}`);
         }
     }
-    // Helper method to ensure URLs are absolute
+    // Enhanced helper method to ensure URLs are absolute and properly formatted
     ensureAbsoluteUrl(url) {
+        // Use BobbyImageUtils if available (from image-url-resolver.js)
+        if (window.BobbyImageUtils && typeof window.BobbyImageUtils.ensureAbsoluteUrl === 'function') {
+            return window.BobbyImageUtils.ensureAbsoluteUrl(url);
+        }
+        
+        // Fallback implementation if BobbyImageUtils is not available
         if (!url) return '/assets/product-placeholder.png';
         
         try {
             // Check for common error patterns
-            if (url.includes('product.html?id=')) {
-                console.error(`Invalid image URL detected (contains product.html): ${url}`);
+            if (url.includes('product.html?id=') || url === 'null' || url === window.location.href) {
+                console.error(`Invalid image URL detected: ${url}`);
                 return '/assets/product-placeholder.png';
             }
             
-            // If it's already an absolute URL, return it
-            if (url.startsWith('http://') || url.startsWith('https://')) {
+            // Already a placeholder - keep it
+            if (url.includes('product-placeholder')) {
                 return url;
             }
             
-            // If it's a protocol-relative URL (starts with //), add https:
-            if (url.startsWith('//')) {
-                return 'https:' + url;
+            let fixedUrl = url;
+            
+            // Fix protocol-relative URLs
+            if (fixedUrl.startsWith('//')) {
+                fixedUrl = 'https:' + fixedUrl;
             }
             
-            // If it's a root-relative URL (starts with /), add the origin
-            if (url.startsWith('/')) {
-                return window.location.origin + url;
+            // Fix common Shopify CDN issues
+            if (fixedUrl.includes('cdn.shopify.com')) {
+                // Ensure HTTPS
+                if (fixedUrl.startsWith('http:')) {
+                    fixedUrl = fixedUrl.replace('http:', 'https:');
+                }
+                
+                // Fix any double slashes (except for protocol)
+                fixedUrl = fixedUrl.replace(/([^:])\/\//g, '$1/');
+                
+                // Add proper extension if missing
+                if (!fixedUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i)) {
+                    // Try to detect if URL has parameters
+                    if (fixedUrl.includes('?')) {
+                        fixedUrl = fixedUrl.replace('?', '.jpg?');
+                    } else {
+                        fixedUrl += '.jpg';
+                    }
+                }
             }
             
-            // If it's a relative URL without leading slash, assume it's relative to origin
-            return window.location.origin + '/' + url;
+            // Complete the URL based on its format
+            if (fixedUrl.startsWith('http://') || fixedUrl.startsWith('https://')) {
+                return fixedUrl; // Already absolute
+            } else if (fixedUrl.startsWith('/')) {
+                return window.location.origin + fixedUrl; // Root-relative
+            } else {
+                return window.location.origin + '/' + fixedUrl; // Relative to origin
+            }
         } catch (error) {
             console.error(`Error processing URL: ${url}`, error);
             return '/assets/product-placeholder.png';
