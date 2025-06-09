@@ -1704,33 +1704,51 @@ class ProductManager {
         });
     }
     
-    // Simplified method to update product card images based on selected color
+    // Method to update product card images based on selected color
     updateProductCardImage(productCard, colorName) {
         if (!productCard || !colorName) return;
         
         try {
+            console.log(`updateProductCardImage instance method called for color: ${colorName}`);
+            
             // Get product ID
             const productId = productCard.dataset.productId;
             if (!productId) return;
             
+            console.log(`Finding product with ID: ${productId} for color: ${colorName}`);
+            
             // Find product in our data
             const product = this.products.find(p => p.id === productId);
-            if (!product) return;
+            if (!product) {
+                console.warn(`Product not found with ID: ${productId}`);
+                return;
+            }
+            
+            console.log(`Found product: ${product.title}, updating image for color: ${colorName}`);
             
             // Get product image element
             const productImage = productCard.querySelector('.product-image');
-            if (!productImage) return;
+            if (!productImage) {
+                console.warn('Product image element not found in card');
+                return;
+            }
             
-            // Find the matching color option which already has the image data
+            // Try several methods to find the right image for this color
+            
+            // Method 1: Try to get image from variant option data attribute
+            console.log(`Looking for variant option with color: ${colorName}`);
             const colorOption = productCard.querySelector(`.variant-option[data-color="${colorName}"]`);
             if (colorOption && colorOption.dataset.colorImage) {
+                console.log(`Found color option with image: ${colorOption.dataset.colorImage}`);
                 // Use the image directly from the option's data attribute
                 productImage.src = colorOption.dataset.colorImage;
                 productImage.dataset.originalSrc = colorOption.dataset.colorImage;
                 
                 // Update all other instances of this product
+                console.log(`Updating all instances of product ${productId} with color ${colorName}`);
                 document.querySelectorAll(`.product-card[data-product-id="${productId}"]`).forEach(card => {
                     if (card !== productCard) {
+                        console.log(`Found another instance of product ${productId}, updating color and image`);
                         const matchingOption = card.querySelector(`.variant-option[data-color="${colorName}"]`);
                         const cardImage = card.querySelector('.product-image');
                         
@@ -1743,13 +1761,101 @@ class ProductManager {
                             
                             // Update image if the option has a color image
                             if (matchingOption.dataset.colorImage) {
+                                console.log(`Setting image for other card to: ${matchingOption.dataset.colorImage}`);
                                 cardImage.src = matchingOption.dataset.colorImage;
                                 cardImage.dataset.originalSrc = matchingOption.dataset.colorImage;
                             }
                         }
                     }
                 });
+                
+                return; // Exit if we successfully updated the image
             }
+            
+            // Method 2: Try to get image from product's colorImages mapping
+            console.log(`Checking product data for colorImages mapping for color: ${colorName}`);
+            if (product.colorImages && product.colorImages[colorName] &&
+                Array.isArray(product.colorImages[colorName]) && product.colorImages[colorName].length > 0) {
+                
+                const colorImage = product.colorImages[colorName][0];
+                console.log(`Found color image in product data: ${colorImage}`);
+                
+                productImage.src = colorImage;
+                productImage.dataset.originalSrc = colorImage;
+                
+                // Update all other instances of this product
+                console.log(`Updating all instances of product ${productId} with color ${colorName}`);
+                document.querySelectorAll(`.product-card[data-product-id="${productId}"]`).forEach(card => {
+                    if (card !== productCard) {
+                        console.log(`Found another card instance, updating with image: ${colorImage}`);
+                        const cardImage = card.querySelector('.product-image');
+                        const matchingOption = card.querySelector(`.variant-option[data-color="${colorName}"]`);
+                        
+                        if (cardImage) {
+                            cardImage.src = colorImage;
+                            cardImage.dataset.originalSrc = colorImage;
+                        }
+                        
+                        if (matchingOption) {
+                            // Update active color selection
+                            card.querySelectorAll('.variant-option').forEach(opt => {
+                                opt.classList.remove('active');
+                            });
+                            matchingOption.classList.add('active');
+                        }
+                    }
+                });
+                
+                return; // Exit if we successfully updated the image
+            }
+            
+            // Method 3: Try to get image from card's data-color-images attribute
+            console.log(`Trying to parse colorImages from card's dataset`);
+            if (productCard.dataset.colorImages) {
+                try {
+                    const colorImagesMap = JSON.parse(productCard.dataset.colorImages);
+                    if (colorImagesMap[colorName] && Array.isArray(colorImagesMap[colorName]) &&
+                        colorImagesMap[colorName].length > 0) {
+                        
+                        const colorImage = colorImagesMap[colorName][0];
+                        console.log(`Found color image in card's dataset: ${colorImage}`);
+                        
+                        productImage.src = colorImage;
+                        productImage.dataset.originalSrc = colorImage;
+                        
+                        // Update all other instances
+                        console.log(`Updating all instances of product ${productId} with color ${colorName}`);
+                        document.querySelectorAll(`.product-card[data-product-id="${productId}"]`).forEach(card => {
+                            if (card !== productCard) {
+                                console.log(`Found another card instance for update`);
+                                const cardImage = card.querySelector('.product-image');
+                                const matchingOption = card.querySelector(`.variant-option[data-color="${colorName}"]`);
+                                
+                                if (cardImage) {
+                                    console.log(`Setting image for other card to: ${colorImage}`);
+                                    cardImage.src = colorImage;
+                                    cardImage.dataset.originalSrc = colorImage;
+                                }
+                                
+                                if (matchingOption) {
+                                    // Update active color selection
+                                    card.querySelectorAll('.variant-option').forEach(opt => {
+                                        opt.classList.remove('active');
+                                    });
+                                    matchingOption.classList.add('active');
+                                }
+                            }
+                        });
+                        
+                        return; // Exit if we successfully updated the image
+                    }
+                } catch (parseError) {
+                    console.error(`Error parsing color images JSON:`, parseError);
+                }
+            }
+            
+            // If we get here, we couldn't find a color-specific image
+            console.warn(`Could not find color-specific image for color: ${colorName}`);
         } catch (error) {
             console.error('Error updating product card image:', error);
         }
