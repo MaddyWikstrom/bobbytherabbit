@@ -656,15 +656,15 @@ class ProductDetailManager {
         });
     }
     
-    // Get recommended products based on current product but different from recently viewed
+    // Simple function to show random product recommendations
     renderRecommendedProducts(container) {
-        // Start by fetching products via the Shopify API if needed
-        this.fetchRecommendedProducts().then(recommendedProducts => {
-            if (recommendedProducts && recommendedProducts.length > 0) {
+        try {
+            // Just use the product list from homepage as the source of recommendations
+            this.loadRandomProducts().then(randomProducts => {
                 // Clear the container
                 container.innerHTML = '';
                 
-                // Apply grid styling directly with improved centering
+                // Apply grid styling
                 container.style.display = 'grid';
                 container.style.justifyItems = 'center';
                 container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
@@ -678,157 +678,175 @@ class ProductDetailManager {
                 container.style.maxWidth = '1200px';
                 container.style.padding = '0 20px';
                 
-                // Loop through each product and create elements manually
-                recommendedProducts.forEach(product => {
-                    try {
-                        // Create product container
-                        const productDiv = document.createElement('div');
-                        productDiv.className = 'related-product';
-                        productDiv.dataset.productId = product.id;
-                        
-                        // Prepare image URL
-                        let imageUrl = '/assets/product-placeholder.png'; // Default fallback image
-                        
-                        if (product.image) {
-                            imageUrl = this.ensureAbsoluteUrl(product.image);
-                        } else {
-                            // Silently fall back to placeholder instead of logging
-                            imageUrl = '/assets/product-placeholder.png';
+                // If we got random products, display them
+                if (randomProducts && randomProducts.length > 0) {
+                    randomProducts.forEach(product => {
+                        try {
+                            // Create product container
+                            const productDiv = document.createElement('div');
+                            productDiv.className = 'related-product';
+                            productDiv.dataset.productId = product.id;
+                            
+                            // Prepare image URL
+                            let imageUrl = product.mainImage || product.image || '/assets/product-placeholder.png';
+                            imageUrl = this.ensureAbsoluteUrl(imageUrl);
+                            
+                            // Create and append image
+                            const img = document.createElement('img');
+                            img.alt = product.title;
+                            img.style.backgroundColor = '#ffffff';
+                            img.style.minHeight = '180px';
+                            img.style.objectFit = 'contain';
+                            img.style.padding = '5px';
+                            
+                            // Error handling
+                            img.onerror = function() {
+                                this.src = '/assets/product-placeholder.png';
+                                this.style.backgroundColor = '#ffffff';
+                            };
+                            
+                            img.src = imageUrl;
+                            
+                            // Create product info container
+                            const infoDiv = document.createElement('div');
+                            infoDiv.className = 'related-product-info';
+                            
+                            // Add title
+                            const titleEl = document.createElement('h4');
+                            titleEl.textContent = product.title;
+                            
+                            // Add price
+                            const priceEl = document.createElement('span');
+                            priceEl.textContent = `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}`;
+                            
+                            // Assemble the elements
+                            infoDiv.appendChild(titleEl);
+                            infoDiv.appendChild(priceEl);
+                            
+                            productDiv.appendChild(img);
+                            productDiv.appendChild(infoDiv);
+                            
+                            // Add event listener
+                            productDiv.addEventListener('click', () => {
+                                window.location.href = `product.html?id=${product.id}`;
+                            });
+                            
+                            // Append to container
+                            container.appendChild(productDiv);
+                            
+                            // Add border and box shadow
+                            productDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+                            productDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                            
+                        } catch (error) {
+                            console.error(`Error creating related product element:`, error);
                         }
-                        
-                        // Create and append image
-                        const img = document.createElement('img');
-                        img.alt = product.title;
-                        img.style.backgroundColor = '#ffffff'; // WHITE background for all product images
-                        img.style.minHeight = '180px';
-                        img.style.objectFit = 'contain';
-                        img.style.padding = '5px'; // Add slight padding for better presentation
-                        
-                        // Improved error handling
-                        img.onerror = function() {
-                            this.src = '/assets/product-placeholder.png';
-                            this.style.backgroundColor = '#ffffff';
-                        };
-                        
-                        // Set src after defining onerror to ensure handler catches loading issues
-                        img.src = imageUrl;
-                        
-                        // Create product info container
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'related-product-info';
-                        
-                        // Add title
-                        const titleEl = document.createElement('h4');
-                        titleEl.textContent = product.title;
-                        
-                        // Add price
-                        const priceEl = document.createElement('span');
-                        priceEl.textContent = `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}`;
-                        
-                        // Assemble the elements
-                        infoDiv.appendChild(titleEl);
-                        infoDiv.appendChild(priceEl);
-                        
-                        productDiv.appendChild(img);
-                        productDiv.appendChild(infoDiv);
-                        
-                        // Add event listener
-                        productDiv.addEventListener('click', () => {
-                            window.location.href = `product.html?id=${product.id}`;
-                        });
-                        
-                        // Append to container
-                        container.appendChild(productDiv);
-                        
-                        // Add border and box shadow to make images pop more on dark background
-                        productDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
-                        productDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-                        
-                    } catch (error) {
-                        console.error(`Error creating related product element for ${product.title}:`, error);
-                    }
-                });
-            } else {
-                // Add a styled "No products found" message
-                container.innerHTML = `
-                    <div class="no-products" style="color: white; text-align: center; padding: 30px;
-                        background-color: rgba(24, 24, 48, 0.5); border-radius: 8px;
-                        margin: 20px auto; max-width: 600px; grid-column: 1 / -1;
-                        position: relative; z-index: 2; border: 1px solid rgba(168, 85, 247, 0.2);">
-                        <p>No recommended products available. Start browsing our collection!</p>
-                        <a href="products.html" style="display: inline-block; margin-top: 15px; padding: 8px 16px;
-                            background: linear-gradient(45deg, #a855f7, #6366f1); color: white; text-decoration: none;
-                            border-radius: 4px; font-weight: bold; transition: all 0.3s ease;">
-                            Browse Products
-                        </a>
-                    </div>`;
-            }
+                    });
+                } else {
+                    // Just in case we still couldn't get products, create some fake ones
+                    this.createFallbackProducts(container);
+                }
+            });
+        } catch (error) {
+            console.error('Error rendering recommended products:', error);
+            // If anything fails, create fallback products
+            this.createFallbackProducts(container);
+        }
+    }
+    
+    // Create fallback product recommendations if everything else fails
+    createFallbackProducts(container) {
+        // Hardcoded fallback products - generic streetwear items
+        const fallbacks = [
+            { id: 'hoodie-black', title: 'Black Hoodie', price: 59.99, image: '/assets/hoodie-black.png' },
+            { id: 'hoodie-white', title: 'White Hoodie', price: 59.99, image: '/assets/hoodie-white.png' },
+            { id: 'hoodie-navy', title: 'Navy Hoodie', price: 59.99, image: '/assets/hoodie-navy.png' },
+            { id: 'hoodie-maroon', title: 'Maroon Hoodie', price: 59.99, image: '/assets/hoodie-maroon.png' }
+        ];
+        
+        // Display the fallback products
+        fallbacks.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'related-product';
+            productDiv.dataset.productId = product.id;
+            
+            const img = document.createElement('img');
+            img.src = product.image;
+            img.alt = product.title;
+            img.style.backgroundColor = '#ffffff';
+            img.style.minHeight = '180px';
+            img.style.objectFit = 'contain';
+            img.style.padding = '5px';
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'related-product-info';
+            
+            const titleEl = document.createElement('h4');
+            titleEl.textContent = product.title;
+            
+            const priceEl = document.createElement('span');
+            priceEl.textContent = `$${product.price.toFixed(2)}`;
+            
+            infoDiv.appendChild(titleEl);
+            infoDiv.appendChild(priceEl);
+            
+            productDiv.appendChild(img);
+            productDiv.appendChild(infoDiv);
+            
+            productDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+            productDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            
+            container.appendChild(productDiv);
         });
     }
     
-    // Fetch recommended products based on current product category or random selection
-    async fetchRecommendedProducts() {
+    // Simple function to load random products
+    async loadRandomProducts() {
         try {
-            // If we already have product data from Shopify, use it to get recommendations
-            let recommendedProducts = [];
-            
-            // Try to get products from Shopify API
+            // Try to fetch products from the Shopify API first
             const response = await fetch('/.netlify/functions/get-products');
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error('Failed to fetch products');
             }
             
             const data = await response.json();
-            let allProducts = [];
+            let products = [];
             
-            // Extract products from API response
+            // Parse products from the response
             if (data.products && Array.isArray(data.products)) {
-                allProducts = data.products.map(product =>
-                    this.transformShopifyProduct(product.node || product));
+                products = data.products.map(p => this.transformShopifyProduct(p.node || p));
             } else if (Array.isArray(data)) {
-                allProducts = data.map(product =>
-                    this.transformShopifyProduct(product.node || product));
+                products = data.map(p => this.transformShopifyProduct(p.node || p));
             }
             
-            if (allProducts.length === 0) {
-                return [];
+            // No products found
+            if (!products || products.length === 0) {
+                throw new Error('No products found');
             }
             
-            // Get the category of the current product to find similar items
-            const currentProductCategory = this.currentProduct?.category || '';
-            
-            // Filter out the current product and any recently viewed products
+            // Filter out the current product and recently viewed products
+            const currentProductId = this.currentProduct?.id;
             const recentlyViewedIds = this.recentlyViewed.map(p => p.id);
-            let filteredProducts = allProducts.filter(product => {
-                return product.id !== this.currentProduct?.id &&
-                       !recentlyViewedIds.includes(product.id);
-            });
             
-            // If we have a category, prioritize products from the same category
-            if (currentProductCategory) {
-                const sameCategory = filteredProducts.filter(p =>
-                    p.category && p.category.toLowerCase() === currentProductCategory.toLowerCase());
-                
-                // If we have enough same-category products, use those
-                if (sameCategory.length >= 4) {
-                    // Shuffle the array to get random products from the same category
-                    recommendedProducts = this.shuffleArray(sameCategory).slice(0, 4);
-                } else {
-                    // Not enough same-category products, add some from other categories
-                    recommendedProducts = [
-                        ...sameCategory,
-                        ...this.shuffleArray(filteredProducts.filter(p =>
-                            !sameCategory.includes(p))).slice(0, 4 - sameCategory.length)
-                    ];
-                }
-            } else {
-                // No category info, just get random products
-                recommendedProducts = this.shuffleArray(filteredProducts).slice(0, 4);
+            let filteredProducts = products.filter(p =>
+                p.id !== currentProductId && !recentlyViewedIds.includes(p.id)
+            );
+            
+            // If we don't have enough filtered products, just use all products except current
+            if (filteredProducts.length < 4) {
+                filteredProducts = products.filter(p => p.id !== currentProductId);
             }
             
-            return recommendedProducts;
+            // If we still don't have enough, use all products including current
+            if (filteredProducts.length < 4) {
+                filteredProducts = products;
+            }
+            
+            // Shuffle the products to get random ones
+            return this.shuffleArray(filteredProducts).slice(0, 4);
+            
         } catch (error) {
-            console.error('Error fetching recommended products:', error);
+            console.error('Error loading random products:', error);
             return [];
         }
     }
