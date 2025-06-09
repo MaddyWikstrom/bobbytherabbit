@@ -1881,7 +1881,7 @@ class ProductDetailManager {
                             <h3>Size:</h3>
                         </div>
                         <div id="size-options" class="options-container">
-                            <div class="size-option active" data-size="One Size">One Size</div>
+                            <div class="size-option active" data-size="One Size">OS</div>
                         </div>
                     `}
                     

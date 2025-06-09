@@ -1727,8 +1727,16 @@ class QuickViewManager {
             return upperSize;
         }
         
-        // Fallback to the original size rather than converting to "OS"
-        // This ensures we show the actual size instead of converting to "One Size"
+        // Check for genuinely one-size items (beanies, hats, etc.)
+        if (upperSize === "ONE SIZE" ||
+            sizeString === "One Size" ||
+            sizeString === "ONESIZE" ||
+            sizeString === "one size" ||
+            sizeString === "one-size") {
+            return "OS"; // Convert genuine one-size items to OS
+        }
+        
+        // Fallback to the original size for numbered sizes and other formats
         return sizeString;
     }
     
