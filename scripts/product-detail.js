@@ -2397,8 +2397,22 @@ class ProductDetailManager {
             // Try to use any available cart system
             let cartAdded = false;
             
-            // Try BobbyCart (consolidated cart)
-            if (window.BobbyCart) {
+            // Try BobbyCarts system first (main cart system)
+            if (window.BobbyCarts) {
+                try {
+                    window.BobbyCarts.addToCart(cartProduct);
+                    cartAdded = true;
+                    
+                    // Force cart to open
+                    setTimeout(() => {
+                        window.BobbyCarts.openCart();
+                    }, 300);
+                } catch (error) {
+                    console.error('Error adding to BobbyCarts:', error);
+                }
+            }
+            // Try BobbyCart (consolidated cart) as fallback
+            else if (window.BobbyCart) {
                 try {
                     window.BobbyCart.addToCart(cartProduct);
                     cartAdded = true;
@@ -2411,7 +2425,7 @@ class ProductDetailManager {
                     console.error('Error adding to BobbyCart:', error);
                 }
             }
-            // Try other cart systems if needed
+            // Try cartManager as final fallback
             else if (window.cartManager) {
                 try {
                     window.cartManager.addItem(cartProduct);
