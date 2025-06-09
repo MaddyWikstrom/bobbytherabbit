@@ -253,21 +253,28 @@ const BobbyCart = (function() {
   function addItem(product) {
     if (!product || !product.id) return;
     
+    console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
+    
     // Check if item already exists in cart
     const existingItemIndex = items.findIndex(item => item.id === product.id);
     
     if (existingItemIndex >= 0) {
-      // Update quantity if item exists
-      items[existingItemIndex].quantity += (product.quantity || 1);
+      // Update quantity if item exists (using exact quantity, not adding to it)
+      console.log(`Item already exists in cart, updating quantity from ${items[existingItemIndex].quantity} to ${product.quantity || 1}`);
+      items[existingItemIndex].quantity = product.quantity || 1;
     } else {
       // Add new item with default quantity of 1
+      console.log(`Adding new item to cart: ${product.title}`);
       items.push({
         id: product.id,
+        productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
         price: product.price || 0,
         image: product.image || 'assets/placeholder.png',
         quantity: product.quantity || 1,
-        variant: product.variant || ''
+        variant: product.variantTitle || product.variant || '',
+        selectedColor: product.selectedColor || '',
+        selectedSize: product.selectedSize || ''
       });
     }
     
@@ -341,7 +348,9 @@ const BobbyCart = (function() {
             </div>
             <div class="cart-item-details">
               <div class="cart-item-title">${item.title}</div>
-              <div class="cart-item-variant">${item.variant || ''}</div>
+              <div class="cart-item-variant">${item.variant || (item.selectedColor && item.selectedSize) ?
+                `${item.selectedColor || ''} / ${item.selectedSize || ''}` :
+                ''}</div>
               <div class="cart-item-price">$${(item.price).toFixed(2)}</div>
               <div class="cart-item-quantity">
                 <button class="quantity-decrease" data-item-id="${item.id}">-</button>

@@ -2418,9 +2418,14 @@ class ProductDetailManager {
                 return;
             }
             
+            // Create a unique ID for each product variant combination
+            const variantId = `${this.currentProduct.id}_${this.selectedVariant.color}_${this.selectedVariant.size}`.replace(/\s+/g, '_');
+            
             // Create a properly formatted product object for cart system
             const cartProduct = {
-                id: this.currentProduct.id,
+                // Use the variant-specific ID to ensure different variants are treated as different items
+                id: variantId,
+                productId: this.currentProduct.id, // Keep original product ID for reference
                 title: this.currentProduct.title,
                 price: this.currentProduct.price,
                 image: this.currentProduct.mainImage,
@@ -2433,8 +2438,12 @@ class ProductDetailManager {
                 variants: {
                     color: this.selectedVariant.color,
                     size: this.selectedVariant.size
-                }
+                },
+                // Add variant details directly in the title for display in cart
+                variantTitle: `${this.selectedVariant.color} / ${this.selectedVariant.size}`
             };
+            
+            console.log(`Adding to cart: ${cartProduct.title} - ${cartProduct.variantTitle} (Quantity: ${cartProduct.quantity})`);
             
             // Try to use any available cart system
             let cartAdded = false;
