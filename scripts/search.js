@@ -474,8 +474,35 @@ class SearchManager {
 
     quickAdd(productId) {
         const product = window.productManager.products.find(p => p.id === productId);
-        if (product && window.cartManager) {
+        if (!product) return;
+        
+        let added = false;
+        
+        // Try BobbyCart first (our main cart system)
+        if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+            window.BobbyCart.addItem(product);
+            added = true;
+        }
+        // Fallback to old cart manager
+        else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
             window.cartManager.addItem(product);
+            added = true;
+        }
+        
+        if (added) {
+            // Show notification if available
+            if (typeof this.showNotification === 'function') {
+                this.showNotification('Added to cart', 'success');
+            }
+            
+            // Try to open cart
+            setTimeout(() => {
+                if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
+                    window.BobbyCart.openCart();
+                } else if (window.cartManager && typeof window.cartManager.openCart === 'function') {
+                    window.cartManager.openCart();
+                }
+            }, 300);
         }
     }
 

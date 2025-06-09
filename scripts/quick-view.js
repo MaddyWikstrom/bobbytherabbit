@@ -1197,7 +1197,7 @@ class QuickViewManager {
             let cartAddSuccess = false;
             
             if (window.BobbyCart) {
-                window.BobbyCart.addToCart(cartItem);
+                window.BobbyCart.addItem(cartItem);
                 // Added to cart using BobbyCart
                 cartAddSuccess = true;
                 
@@ -2792,7 +2792,7 @@ class QuickViewManager {
                 }, 500);
             } else if (window.BobbyCarts) {
                 // Fallback to old system if present
-                window.BobbyCarts.addToCart(cartItem);
+                window.BobbyCarts.addItem(cartItem);
                 // Added to cart using BobbyCarts
                 cartAddSuccess = true;
                 

@@ -367,12 +367,8 @@ class HomepageProductLoader {
                 try {
                     console.log('Using BobbyCart for quick add');
                     
-                    // Use addItem if available, otherwise fall back to addToCart
-                    if (typeof window.BobbyCart.addItem === 'function') {
-                        window.BobbyCart.addItem(cartProduct);
-                    } else if (typeof window.BobbyCart.addToCart === 'function') {
-                        window.BobbyCart.addToCart(cartProduct);
-                    }
+                    // Always use addItem since we've added the compatibility method
+                    window.BobbyCart.addItem(cartProduct);
                     
                     console.log('Product successfully added to BobbyCart');
                     this.showNotification('Product added to cart!', 'success');
@@ -388,12 +384,8 @@ class HomepageProductLoader {
                 try {
                     console.log('Using cartManager for quick add');
                     
-                    // Use addItem if available, otherwise fall back to addToCart
-                    if (typeof window.cartManager.addItem === 'function') {
-                        window.cartManager.addItem(cartProduct);
-                    } else if (typeof window.cartManager.addToCart === 'function') {
-                        window.cartManager.addToCart(cartProduct);
-                    }
+                    // Always use addItem since we've standardized method names
+                    window.cartManager.addItem(cartProduct);
                     
                     console.log('Product successfully added to cartManager');
                     this.showNotification('Product added to cart!', 'success');
