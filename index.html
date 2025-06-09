@@ -433,58 +433,114 @@
     <!-- Note: Cart elements are now dynamically created by simple-cart-system.js -->
 
     <script>
-        // Password validation functionality - improved to prevent input issues
-        document.addEventListener('DOMContentLoaded', function() {
+        // Password validation functionality - complete rewrite to fix typing issues
+        window.addEventListener('load', function() {
+            console.log("Password system initializing");
+            
             const correctPassword = "bajablastrabbit47";
             const submitButton = document.getElementById("submit-password");
             const passwordInput = document.getElementById("password-input");
             const errorMessage = document.getElementById("error-message");
             const passwordScreen = document.getElementById("password-screen");
             const loadingScreen = document.getElementById("loading-screen");
-
-            // Ensure password input is enabled and ready
-            passwordInput.disabled = false;
-            passwordInput.focus();
-
-            // Simplified submit handler with debounce protection
-            let isProcessing = false;
             
-            function handleSubmit() {
-                if (isProcessing) return;
+            // Immediately make sure input is enabled
+            if (passwordInput) {
+                passwordInput.removeAttribute('disabled');
+                passwordInput.value = '';
+                console.log("Password input ready");
                 
-                isProcessing = true;
+                // Force focus after a slight delay to ensure browser is ready
+                setTimeout(function() {
+                    passwordInput.focus();
+                    console.log("Focus set on password input");
+                }, 300);
+            } else {
+                console.error("Password input element not found");
+            }
+            
+            // Single global processing flag
+            let passwordProcessing = false;
+            
+            // Clear submit handler function
+            function handlePasswordSubmit() {
+                console.log("Submit handler called");
+                
+                // Prevent multiple submissions
+                if (passwordProcessing) {
+                    console.log("Already processing, ignoring request");
+                    return;
+                }
+                
+                passwordProcessing = true;
+                console.log("Processing password submission");
+                
+                // Get current value
                 const enteredPassword = passwordInput.value;
+                console.log("Password entered (length: " + enteredPassword.length + ")");
                 
                 if (enteredPassword === correctPassword) {
+                    console.log("Password correct!");
+                    
+                    // Hide password screen
                     passwordScreen.style.display = "none";
+                    
+                    // Show loading screen
                     loadingScreen.style.display = "flex";
-                    // Initialize loading screen after password is correct
+                    
+                    // Safely initialize loading screen
                     setTimeout(function() {
-                        initializeLoadingScreen();
-                    }, 100);
+                        try {
+                            console.log("Starting loading screen");
+                            initializeLoadingScreen();
+                        } catch (err) {
+                            console.error("Error in loading screen:", err);
+                            // Fallback: show main site directly in case of error
+                            loadingScreen.style.display = "none";
+                            document.getElementById("main-site").classList.remove("hidden");
+                        }
+                    }, 500);
                 } else {
+                    console.log("Password incorrect");
                     errorMessage.style.display = "block";
                     passwordInput.value = ""; // Clear the input
+                    
+                    // Reset processing flag after delay
                     setTimeout(function() {
-                        isProcessing = false;
+                        passwordProcessing = false;
                         passwordInput.focus();
-                    }, 100);
+                    }, 300);
                 }
             }
-
-            // Add event listener for submit button with error handling
-            submitButton.addEventListener("click", function(e) {
-                e.preventDefault();
-                handleSubmit();
-            });
-
-            // Allow Enter key to submit password
-            passwordInput.addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
+            
+            // Click handler for submit button
+            if (submitButton) {
+                submitButton.addEventListener("click", function(event) {
                     event.preventDefault();
-                    handleSubmit();
-                }
-            });
+                    event.stopPropagation();
+                    handlePasswordSubmit();
+                });
+                console.log("Submit button handler attached");
+            }
+            
+            // Keyboard handler for password input
+            if (passwordInput) {
+                passwordInput.addEventListener("keydown", function(event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        handlePasswordSubmit();
+                    }
+                });
+                console.log("Keyboard handler attached");
+                
+                // Additional keyup handler to verify typing works
+                passwordInput.addEventListener("keyup", function() {
+                    console.log("Key pressed - current length: " + passwordInput.value.length);
+                });
+            }
+            
+            console.log("Password system ready");
         });
     </script>
     
