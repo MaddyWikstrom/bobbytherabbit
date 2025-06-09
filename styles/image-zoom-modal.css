@@ -33,15 +33,34 @@
   object-fit: contain;
   transform-origin: center;
   cursor: zoom-in;
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease-out;
+  will-change: transform; /* Performance optimization */
 }
 
 .zoom-image.zoomed {
   cursor: grab;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }
 
 .zoom-image.zoomed:active {
   cursor: grabbing;
+}
+
+/* Better visual feedback during dragging */
+.image-zoom-modal.dragging .zoom-image {
+  transition: none; /* No transition during active dragging for responsiveness */
+}
+
+/* Adds subtle drag feedback */
+.image-zoom-modal.dragging::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  pointer-events: none;
 }
 
 .zoom-controls {
@@ -121,6 +140,51 @@
 
 .zoom-instructions.fade {
   opacity: 0;
+  pointer-events: none;
+}
+
+/* Progress indicators for boundaries */
+.boundary-indicator {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.boundary-indicator.left {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to right, rgba(168, 85, 247, 0.5), transparent);
+}
+
+.boundary-indicator.right {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to left, rgba(168, 85, 247, 0.5), transparent);
+}
+
+.boundary-indicator.top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to bottom, rgba(168, 85, 247, 0.5), transparent);
+}
+
+.boundary-indicator.bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to top, rgba(168, 85, 247, 0.5), transparent);
+}
+
+.boundary-indicator.visible {
+  opacity: 1;
 }
 
 /* Animation for modal opening */

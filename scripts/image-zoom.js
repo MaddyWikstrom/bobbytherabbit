@@ -14,6 +14,9 @@ class ImageZoom {
         this.zoomLevel = document.querySelector('.zoom-level');
         this.instructions = document.querySelector('.zoom-instructions');
         
+        // Create boundary indicators
+        this.createBoundaryIndicators();
+        
         // State variables
         this.currentZoom = 1;
         this.minZoom = 1;
@@ -24,6 +27,8 @@ class ImageZoom {
         this.startY = 0;
         this.translateX = 0;
         this.translateY = 0;
+        this.dragThreshold = 5; // Pixels to move before a click becomes a drag
+        this.hasMoved = false; // Track if user has moved during mousedown
         
         this.init();
     }
@@ -37,6 +42,28 @@ class ImageZoom {
         
         // Setup touch support
         this.setupTouchSupport();
+        
+        // Add keyboard navigation support
+        this.setupKeyboardNavigation();
+    }
+    
+    createBoundaryIndicators() {
+        // Create boundary indicators for better user feedback
+        const indicators = ['left', 'right', 'top', 'bottom'];
+        
+        indicators.forEach(position => {
+            const indicator = document.createElement('div');
+            indicator.className = `boundary-indicator ${position}`;
+            this.modal.appendChild(indicator);
+        });
+        
+        // Store references to the indicators
+        this.boundaryIndicators = {
+            left: this.modal.querySelector('.boundary-indicator.left'),
+            right: this.modal.querySelector('.boundary-indicator.right'),
+            top: this.modal.querySelector('.boundary-indicator.top'),
+            bottom: this.modal.querySelector('.boundary-indicator.bottom')
+        };
     }
     
     setupProductImageClick() {
@@ -129,31 +156,55 @@ class ImageZoom {
             }
         });
         
-        // Click to zoom in
+        // Click to zoom in only when at minimum zoom level
         this.image.addEventListener('click', (e) => {
-            if (this.currentZoom < this.maxZoom) {
+            // Only zoom in on click if we're at the initial zoom level
+            if (this.currentZoom === this.minZoom) {
                 // Calculate where to zoom based on click position
                 this.zoomToPoint(e.clientX, e.clientY);
-            } else {
+            } else if (this.currentZoom === this.maxZoom) {
+                // If at max zoom, clicking resets
                 this.resetZoom();
             }
+            // If already zoomed in but not at max, do nothing on click (let dragging work)
         });
         
-        // Dragging functionality
+        // Dragging functionality with improved click detection
         this.image.addEventListener('mousedown', (e) => {
+            // Store initial position to detect if this is a click or drag
+            this.hasMoved = false;
+            this.initialClickX = e.clientX;
+            this.initialClickY = e.clientY;
+            
             if (this.currentZoom > 1) {
                 this.startDrag(e.clientX, e.clientY);
             }
         });
         
         document.addEventListener('mousemove', (e) => {
+            // Determine if user has moved enough to consider it a drag
             if (this.isDragging) {
+                const deltaX = Math.abs(e.clientX - this.initialClickX);
+                const deltaY = Math.abs(e.clientY - this.initialClickY);
+                
+                if (deltaX > this.dragThreshold || deltaY > this.dragThreshold) {
+                    this.hasMoved = true;
+                }
+                
                 this.drag(e.clientX, e.clientY);
             }
         });
         
-        document.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', (e) => {
+            const wasClick = !this.hasMoved;
             this.stopDrag();
+            
+            // If it was a click (not a drag) and at minimum zoom, perform zoom in
+            if (wasClick && this.currentZoom === this.minZoom) {
+                this.zoomToPoint(e.clientX, e.clientY);
+            } else if (wasClick && this.currentZoom === this.maxZoom) {
+                this.resetZoom();
+            }
         });
         
         // Hide instructions after 3 seconds
@@ -241,6 +292,57 @@ class ImageZoom {
         }, { passive: false });
     }
     
+    setupKeyboardNavigation() {
+        // Add keyboard shortcuts for zoom and navigation
+        document.addEventListener('keydown', (e) => {
+            if (!this.modal.classList.contains('active')) return;
+            
+            switch (e.key) {
+                case '+':
+                case '=':
+                    e.preventDefault();
+                    this.zoomIn();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    this.zoomOut();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    this.resetZoom();
+                    break;
+                case 'ArrowLeft':
+                    if (this.currentZoom > 1) {
+                        e.preventDefault();
+                        this.translateX += 20;
+                        this.updatePosition();
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (this.currentZoom > 1) {
+                        e.preventDefault();
+                        this.translateX -= 20;
+                        this.updatePosition();
+                    }
+                    break;
+                case 'ArrowUp':
+                    if (this.currentZoom > 1) {
+                        e.preventDefault();
+                        this.translateY += 20;
+                        this.updatePosition();
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (this.currentZoom > 1) {
+                        e.preventDefault();
+                        this.translateY -= 20;
+                        this.updatePosition();
+                    }
+                    break;
+            }
+        });
+    }
+    
     openZoomModal(imageSrc, imageAlt) {
         // Set the image source
         this.image.src = imageSrc;
@@ -252,11 +354,15 @@ class ImageZoom {
         // Show the modal
         this.modal.classList.add('active');
         
+        // Hide boundary indicators initially
+        this.updateBoundaryIndicators();
+        
         // Prevent body scrolling
         document.body.style.overflow = 'hidden';
         
-        // Reset instructions visibility
+        // Show helpful instructions
         if (this.instructions) {
+            this.instructions.textContent = 'Click to zoom in, drag to move when zoomed';
             this.instructions.classList.remove('fade');
             
             // Hide instructions after 3 seconds
@@ -350,16 +456,21 @@ class ImageZoom {
     }
     
     startDrag(clientX, clientY) {
+        if (this.currentZoom <= this.minZoom) return; // Don't start dragging if not zoomed in
+        
         this.isDragging = true;
         this.startX = clientX - this.translateX;
         this.startY = clientY - this.translateY;
         this.image.style.cursor = 'grabbing';
+        
+        // Add a dragging class to the modal for visual feedback
+        this.modal.classList.add('dragging');
     }
     
     drag(clientX, clientY) {
         if (!this.isDragging) return;
         
-        // Calculate new position
+        // Calculate new position with smoother movement
         let newTranslateX = clientX - this.startX;
         let newTranslateY = clientY - this.startY;
         
@@ -367,26 +478,78 @@ class ImageZoom {
         const rect = this.image.getBoundingClientRect();
         const containerRect = this.modal.getBoundingClientRect();
         
-        // Calculate bounds to keep image within view
+        // Calculate the image center point
+        const imageCenterX = rect.width / 2;
+        const imageCenterY = rect.height / 2;
+        
+        // Calculate the container center point
+        const containerCenterX = containerRect.width / 2;
+        const containerCenterY = containerRect.height / 2;
+        
+        // Calculate bounds to keep image within view with improved edge behavior
         const scaledWidth = rect.width * this.currentZoom;
         const scaledHeight = rect.height * this.currentZoom;
         
         // Calculate how much the image can move in each direction
+        // This creates a "rubber band" effect near the edges
         const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2);
         const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2);
         
-        // Apply bounds
-        newTranslateX = Math.min(Math.max(newTranslateX, -maxTranslateX), maxTranslateX);
-        newTranslateY = Math.min(Math.max(newTranslateY, -maxTranslateY), maxTranslateY);
+        // Apply bounds with slight elasticity for more natural feeling
+        if (Math.abs(newTranslateX) > maxTranslateX) {
+            // Apply elastic resistance when dragging beyond bounds
+            const overflowX = Math.abs(newTranslateX) - maxTranslateX;
+            const elasticX = overflowX * 0.2; // 20% elasticity
+            newTranslateX = (newTranslateX > 0) ?
+                maxTranslateX + elasticX :
+                -maxTranslateX - elasticX;
+        }
         
-        // Update position
+        if (Math.abs(newTranslateY) > maxTranslateY) {
+            // Apply elastic resistance when dragging beyond bounds
+            const overflowY = Math.abs(newTranslateY) - maxTranslateY;
+            const elasticY = overflowY * 0.2; // 20% elasticity
+            newTranslateY = (newTranslateY > 0) ?
+                maxTranslateY + elasticY :
+                -maxTranslateY - elasticY;
+        }
+        
+        // Update position with smoother transition
         this.translateX = newTranslateX;
         this.translateY = newTranslateY;
         this.updatePosition();
     }
     
     stopDrag() {
+        if (!this.isDragging) return;
+        
         this.isDragging = false;
+        this.modal.classList.remove('dragging');
+        
+        // Snap back to bounds if we're outside with elastic effect
+        const rect = this.image.getBoundingClientRect();
+        const containerRect = this.modal.getBoundingClientRect();
+        
+        const scaledWidth = rect.width * this.currentZoom;
+        const scaledHeight = rect.height * this.currentZoom;
+        
+        const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+        const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+        
+        // Apply bounds strictly when releasing drag
+        this.translateX = Math.min(Math.max(this.translateX, -maxTranslateX), maxTranslateX);
+        this.translateY = Math.min(Math.max(this.translateY, -maxTranslateY), maxTranslateY);
+        
+        // Apply the snapped position with a slight transition
+        this.image.style.transition = 'transform 0.2s ease-out';
+        this.updatePosition();
+        
+        // Remove the transition after it completes
+        setTimeout(() => {
+            this.image.style.transition = '';
+        }, 200);
+        
+        // Update cursor based on zoom level
         this.image.style.cursor = this.currentZoom > 1 ? 'grab' : 'zoom-in';
     }
     
@@ -412,6 +575,42 @@ class ImageZoom {
     updatePosition() {
         // Update image position without changing zoom
         this.image.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
+        
+        // Check if we need to update boundary indicators
+        this.updateBoundaryIndicators();
+    }
+    
+    updateBoundaryIndicators(checkBounds = true) {
+        if (!this.boundaryIndicators) return;
+        
+        if (!checkBounds || this.currentZoom <= 1) {
+            // Hide all indicators when not zoomed in
+            Object.values(this.boundaryIndicators).forEach(indicator => {
+                indicator.classList.remove('visible');
+            });
+            return;
+        }
+        
+        // When zoomed, check if we're at boundaries
+        const rect = this.image.getBoundingClientRect();
+        const containerRect = this.modal.getBoundingClientRect();
+        
+        const scaledWidth = rect.width * this.currentZoom;
+        const scaledHeight = rect.height * this.currentZoom;
+        
+        const maxTranslateX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+        const maxTranslateY = Math.max(0, (scaledHeight - containerRect.height) / 2);
+        
+        // Show indicators when near bounds (within 5 pixels)
+        const nearLeftBound = Math.abs(this.translateX - maxTranslateX) < 5;
+        const nearRightBound = Math.abs(this.translateX - (-maxTranslateX)) < 5;
+        const nearTopBound = Math.abs(this.translateY - maxTranslateY) < 5;
+        const nearBottomBound = Math.abs(this.translateY - (-maxTranslateY)) < 5;
+        
+        this.boundaryIndicators.left.classList.toggle('visible', nearLeftBound);
+        this.boundaryIndicators.right.classList.toggle('visible', nearRightBound);
+        this.boundaryIndicators.top.classList.toggle('visible', nearTopBound);
+        this.boundaryIndicators.bottom.classList.toggle('visible', nearBottomBound);
     }
 }
 
