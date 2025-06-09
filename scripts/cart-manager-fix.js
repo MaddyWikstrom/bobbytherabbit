@@ -532,7 +532,7 @@ function createEmergencyCartItemHTML(item) {
                 <div class="cart-item-title">${item.title}</div>
                 <div class="cart-item-variant">
                     ${item.color !== 'Default' ? `Color: ${item.color}` : ''}
-                    ${item.size !== 'One Size' ? ` • Size: ${item.size}` : ''}
+                    ${item.size !== 'One Size' ? ` • Size: ${item.size}` : ` • Size: OS`}
                 </div>
                 <div class="cart-item-price">$${item.price.toFixed(2)}</div>
                 <div class="cart-item-controls">

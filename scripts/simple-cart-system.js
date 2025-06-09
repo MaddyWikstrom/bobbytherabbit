@@ -349,7 +349,7 @@ const BobbyCart = (function() {
             <div class="cart-item-details">
               <div class="cart-item-title">${item.title}</div>
               <div class="cart-item-variant">${item.variant || (item.selectedColor && item.selectedSize) ?
-                `${item.selectedColor || ''} / ${item.selectedSize || ''}` :
+                `${item.selectedColor || ''} / ${item.selectedSize === 'One Size' ? 'OS' : item.selectedSize || ''}` :
                 ''}</div>
               <div class="cart-item-price">$${(item.price).toFixed(2)}</div>
               <div class="cart-item-quantity">
