@@ -342,16 +342,51 @@ class HomepageProductLoader {
             // Get the first available color for the product (needed for cart variant identification)
             const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : '';
             
+            // Find the color-specific image for the product if possible
+            let productImage = product.mainImage || '';
+            
+            // If we have color and it doesn't match the image, look for a color-specific image
+            if (selectedColor && product.images && product.images.length > 0) {
+                const colorNameLower = selectedColor.toLowerCase();
+                
+                // Try to find an image that matches the color
+                for (const image of product.images) {
+                    const imgUrl = image.toLowerCase();
+                    
+                    // Match if the color appears anywhere in the URL (more lenient matching)
+                    if (imgUrl.includes(colorNameLower)) {
+                        productImage = image;
+                        console.log(`Found color-specific image for ${selectedColor}: ${productImage}`);
+                        break;
+                    }
+                    
+                    // If multi-word color, check for any significant part
+                    if (colorNameLower.includes(' ')) {
+                        const colorParts = colorNameLower.split(/\s+/);
+                        for (const part of colorParts) {
+                            if (part.length > 2 && imgUrl.includes(part)) {
+                                productImage = image;
+                                console.log(`Found color-part specific image for ${selectedColor} (${part}): ${productImage}`);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
             // Create cart product with one-size - with additional validation
             const cartProduct = {
                 id: product.id || productId || 'unknown-product', // Better fallback chain
                 title: product.title || 'Product',
                 price: typeof product.price === 'number' ? product.price : 0,
-                image: product.mainImage || '',
+                image: productImage,
                 quantity: 1,
                 variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
                 selectedSize: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
-                selectedColor: selectedColor // Add color information for proper variant identification
+                selectedColor: selectedColor, // Add color information for proper variant identification
+                // Add extra fields for more compatibility across different cart systems
+                color: selectedColor,
+                size: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
             };
             
             console.log('Prepared cart product:', cartProduct);
