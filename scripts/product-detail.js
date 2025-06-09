@@ -1021,6 +1021,50 @@ class ProductDetailManager {
                 }
             }
             
+            // Special handling for multi-word colors (e.g., "forest green", "heather gray")
+            if (colors.size > 0) {
+                // Create normalized versions of multi-word colors for better matching
+                const multiWordColors = Array.from(colors).filter(c => c.includes(' '));
+                
+                for (const multiWordColor of multiWordColors) {
+                    const colorParts = multiWordColor.toLowerCase().split(/\s+/);
+                    const colorWithHyphen = colorParts.join('-');
+                    const colorWithUnderscore = colorParts.join('_');
+                    const colorNoSpace = colorParts.join('');
+                    
+                    // For each image, check if it might belong to this multi-word color
+                    for (const imgUrl of images) {
+                        const imgUrlLower = imgUrl.toLowerCase();
+                        
+                        // Check for variations of the multi-word color in the URL
+                        if (imgUrlLower.includes(colorWithHyphen) ||
+                            imgUrlLower.includes(colorWithUnderscore) ||
+                            imgUrlLower.includes(colorNoSpace)) {
+                            
+                            if (!colorToImagesMap.has(multiWordColor)) {
+                                colorToImagesMap.set(multiWordColor, []);
+                            }
+                            
+                            if (!colorToImagesMap.get(multiWordColor).includes(imgUrl)) {
+                                colorToImagesMap.get(multiWordColor).push(imgUrl);
+                                console.log(`Added image to multi-word color "${multiWordColor}" using format match: ${imgUrl}`);
+                            }
+                        }
+                        // Check if all color parts are present in the URL
+                        else if (colorParts.every(part => imgUrlLower.includes(part) && part.length > 2)) {
+                            if (!colorToImagesMap.has(multiWordColor)) {
+                                colorToImagesMap.set(multiWordColor, []);
+                            }
+                            
+                            if (!colorToImagesMap.get(multiWordColor).includes(imgUrl)) {
+                                colorToImagesMap.get(multiWordColor).push(imgUrl);
+                                console.log(`Added image to multi-word color "${multiWordColor}" using part match: ${imgUrl}`);
+                            }
+                        }
+                    }
+                }
+            }
+            
             // If a color has no images yet, try to find a matching variant image
             for (const color of colors) {
                 if (!colorToImagesMap.has(color) || colorToImagesMap.get(color).length === 0) {
@@ -1521,6 +1565,28 @@ class ProductDetailManager {
                 console.log(`No matching color option found in DOM for: ${color}`);
             }
             
+            // Special handling for multi-word colors with spaces like "forest green" or "heather gray"
+            const isMultiWordColor = color.includes(' ');
+            console.log(`Color "${color}" is multi-word: ${isMultiWordColor}`);
+            
+            // Prepare alternate color name formats for lookup
+            let colorVariations = [color.toLowerCase()];
+            
+            if (isMultiWordColor) {
+                const colorParts = color.toLowerCase().split(/\s+/);
+                colorVariations = [
+                    ...colorVariations,
+                    colorParts.join('-'),    // e.g., "forest-green"
+                    colorParts.join('_'),    // e.g., "forest_green"
+                    colorParts.join(''),     // e.g., "forestgreen"
+                    // Reverse word order variations
+                    [...colorParts].reverse().join(' '),  // e.g., "green forest"
+                    [...colorParts].reverse().join('-'),  // e.g., "green-forest"
+                    [...colorParts].reverse().join('_')   // e.g., "green_forest"
+                ];
+                console.log(`Generated color variations for "${color}":`, colorVariations);
+            }
+            
             // Helper function to deduplicate image URLs for the selected color
             const deduplicateImages = (images) => {
                 if (!images || images.length === 0) return [];
@@ -1618,13 +1684,29 @@ class ProductDetailManager {
                 if (this.currentProduct.colorImages[color]) {
                     colorImages = this.currentProduct.colorImages[color];
                     colorImagesFound = true;
+                    console.log(`Found direct match for color "${color}" with ${colorImages.length} images`);
                 } else {
-                    // Try case-insensitive match
+                    // Try case-insensitive match and variations for multi-word colors
                     for (const [key, images] of Object.entries(this.currentProduct.colorImages)) {
-                        if (key.toLowerCase() === color.toLowerCase()) {
+                        const keyLower = key.toLowerCase();
+                        
+                        // Try each variation of the color name
+                        if (colorVariations.some(variation => keyLower === variation)) {
                             colorImages = images;
                             colorImagesFound = true;
+                            console.log(`Found match for color "${color}" using variation in key "${key}" with ${images.length} images`);
                             break;
+                        }
+                        
+                        // For multi-word colors, also try checking if all parts are in the key
+                        if (isMultiWordColor) {
+                            const colorParts = color.toLowerCase().split(/\s+/);
+                            if (colorParts.every(part => keyLower.includes(part) && part.length > 2)) {
+                                colorImages = images;
+                                colorImagesFound = true;
+                                console.log(`Found match for multi-word color "${color}" by checking parts in key "${key}"`);
+                                break;
+                            }
                         }
                     }
                 }
@@ -1669,80 +1751,89 @@ class ProductDetailManager {
             if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
                 console.log(`Using URL filtering for color ${color}`);
                 
-                // Enhanced filtering with more comprehensive pattern matching
-                const colorLower = color.toLowerCase();
-                const matchingImages = this.currentProduct.images.filter(imgUrl => {
-                    const imgUrlLower = imgUrl.toLowerCase();
-                    
-                    // Standard pattern matching
-                    if (imgUrlLower.includes(`/${colorLower}`) ||
-                        imgUrlLower.includes(`_${colorLower}`) ||
-                        imgUrlLower.includes(`-${colorLower}`) ||
-                        imgUrlLower.includes(`${colorLower}_`) ||
-                        imgUrlLower.includes(`${colorLower}-`) ||
-                        imgUrlLower.includes(`color=${colorLower}`) ||
-                        imgUrlLower.includes(`variant=${colorLower}`) ||
-                        imgUrlLower.includes(`option=${colorLower}`) ||
-                        imgUrlLower.includes(colorLower)) {
-                        return true;
-                    }
-                    
-                    // Handle multi-word color names (e.g., "Forest Green")
-                    const colorParts = colorLower.split(/\s+/);
-                    if (colorParts.length > 1) {
-                        // Check if all parts of the color name appear in the URL
-                        const allPartsPresent = colorParts.every(part =>
-                            imgUrlLower.includes(part) && part.length > 2  // Only consider parts with 3+ chars
-                        );
+                // Create a comprehensive filtering function for multi-word colors
+                const getMatchingImages = () => {
+                    return this.currentProduct.images.filter(imgUrl => {
+                        const imgUrlLower = imgUrl.toLowerCase();
                         
-                        if (allPartsPresent) {
-                            return true;
-                        }
-                        
-                        // Check for color initials (e.g., "fg" for "forest green")
-                        const colorInitials = colorParts.map(part => part[0]).join('');
-                        if (colorInitials.length > 1 && imgUrlLower.includes(colorInitials)) {
-                            return true;
-                        }
-                        
-                        // Check for hyphenated version of the color (e.g., "forest-green")
-                        const hyphenatedColor = colorParts.join('-');
-                        if (imgUrlLower.includes(hyphenatedColor)) {
-                            return true;
-                        }
-                        
-                        // Check for underscore version of the color (e.g., "forest_green")
-                        const underscoreColor = colorParts.join('_');
-                        if (imgUrlLower.includes(underscoreColor)) {
-                            return true;
-                        }
-                        
-                        // Check for abbreviated color names (e.g., "fg" for "forest green")
-                        // This can catch color codes used in image filenames
-                        if (colorParts.length === 2) {
-                            const abbreviated = colorParts[0].charAt(0) + colorParts[1].charAt(0);
-                            if (imgUrlLower.includes(`_${abbreviated}_`) ||
-                                imgUrlLower.includes(`-${abbreviated}-`) ||
-                                imgUrlLower.includes(`_${abbreviated}.`) ||
-                                imgUrlLower.includes(`-${abbreviated}.`)) {
+                        // Try each variation of the color name
+                        for (const colorVariation of colorVariations) {
+                            // Standard pattern matching
+                            if (imgUrlLower.includes(`/${colorVariation}`) ||
+                                imgUrlLower.includes(`_${colorVariation}`) ||
+                                imgUrlLower.includes(`-${colorVariation}`) ||
+                                imgUrlLower.includes(`${colorVariation}_`) ||
+                                imgUrlLower.includes(`${colorVariation}-`) ||
+                                imgUrlLower.includes(`color=${colorVariation}`) ||
+                                imgUrlLower.includes(`variant=${colorVariation}`) ||
+                                imgUrlLower.includes(`option=${colorVariation}`) ||
+                                imgUrlLower.includes(colorVariation)) {
+                                return true;
+                            }
+                            
+                            // Check for color name at the end of the URL or filename
+                            const parts = imgUrlLower.split('/');
+                            const filename = parts[parts.length - 1];
+                            
+                            if (filename.startsWith(colorVariation + '_') ||
+                                filename.startsWith(colorVariation + '-') ||
+                                filename.endsWith('_' + colorVariation + '.') ||
+                                filename.endsWith('-' + colorVariation + '.')) {
                                 return true;
                             }
                         }
-                    }
-                    
-                    // Check for color name at the end of the URL or filename
-                    const parts = imgUrlLower.split('/');
-                    const filename = parts[parts.length - 1];
-                    
-                    if (filename.startsWith(colorLower + '_') ||
-                        filename.startsWith(colorLower + '-') ||
-                        filename.endsWith('_' + colorLower + '.') ||
-                        filename.endsWith('-' + colorLower + '.')) {
-                        return true;
-                    }
-                    
-                    return false;
-                });
+                        
+                        // For multi-word colors, apply additional patterns
+                        if (isMultiWordColor) {
+                            const colorParts = color.toLowerCase().split(/\s+/);
+                            
+                            // Check if all parts of the color name appear in the URL
+                            const allPartsPresent = colorParts.every(part =>
+                                imgUrlLower.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                            );
+                            
+                            if (allPartsPresent) {
+                                return true;
+                            }
+                            
+                            // Check for color initials (e.g., "fg" for "forest green")
+                            const colorInitials = colorParts.map(part => part[0]).join('');
+                            if (colorInitials.length > 1 &&
+                                (imgUrlLower.includes(`_${colorInitials}_`) ||
+                                 imgUrlLower.includes(`-${colorInitials}-`) ||
+                                 imgUrlLower.includes(`_${colorInitials}.`) ||
+                                 imgUrlLower.includes(`-${colorInitials}.`) ||
+                                 imgUrlLower.includes(`/${colorInitials}/`) ||
+                                 imgUrlLower.includes(`/${colorInitials}_`) ||
+                                 imgUrlLower.includes(`/${colorInitials}-`))) {
+                                return true;
+                            }
+                            
+                            // More aggressive matching for two-word colors by checking each word independently
+                            if (colorParts.length === 2) {
+                                // Check each word's presence in the filename
+                                const filename = imgUrlLower.split('/').pop() || '';
+                                
+                                // If both color parts appear in the filename, it's likely a match
+                                if (colorParts.every(part => filename.includes(part) && part.length > 2)) {
+                                    return true;
+                                }
+                                
+                                // Check for color adjective at the start of filename
+                                // (e.g., "forest" in "forest-hoodie.jpg" for "forest green")
+                                if (filename.startsWith(colorParts[0]) &&
+                                    !filename.includes(colorParts[1]) &&
+                                    colorParts[0].length > 3) {
+                                    return true;
+                                }
+                            }
+                        }
+                        
+                        return false;
+                    });
+                };
+                
+                const matchingImages = getMatchingImages();
                 
                 if (matchingImages.length > 0) {
                     console.log(`Found ${matchingImages.length} URL-matched images for color ${color}`);
@@ -1765,11 +1856,23 @@ class ProductDetailManager {
                 this.updateThumbnailGrid();
             }
             
+            // For multi-word colors, ensure the colorImages map has entries for all variations
+            if (isMultiWordColor && colorImagesFound && colorImages.length > 0) {
+                // Create entries for variations to improve future lookups
+                for (const variation of colorVariations) {
+                    if (variation !== color.toLowerCase() && !this.currentProduct.colorImages[variation]) {
+                        this.currentProduct.colorImages[variation] = [...colorImages];
+                        console.log(`Added color images entry for variation "${variation}" -> ${colorImages.length} images`);
+                    }
+                }
+            }
+            
             // Ensure there are no duplicate images in colorToImagesMap
             if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
                 // Make sure the color-specific images are properly deduplicated
                 const uniqueColorImages = [...new Set(this.currentProduct.colorImages[color])];
                 this.currentProduct.colorImages[color] = uniqueColorImages;
+                console.log(`Deduplicated color images for "${color}": ${uniqueColorImages.length} unique images`);
             }
             
             // Debug to show actual image count
