@@ -234,20 +234,13 @@
     background: #0a0a0f;
 }
 
-/* Simple grid pattern for product collection */
-.product-collection::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+/* Cyber grid pattern for product collection */
+.product-collection {
     background-image:
-        linear-gradient(0deg, rgba(139, 92, 246, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(139, 92, 246, 0.15) 1px, transparent 1px);
+        linear-gradient(0deg, rgba(139, 92, 246, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.3) 1px, transparent 1px);
     background-size: 100px 100px;
-    z-index: -1;
-    pointer-events: none;
+    background-color: #0a0a0f;
 }
 
 .products-grid {
