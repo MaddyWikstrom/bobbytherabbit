@@ -881,6 +881,9 @@ class ProductManager {
             // Store reference to the ProductManager instance
             const self = this;
             
+            // Store a reference to the product manager
+            const productManager = this;
+            
             // Change product image on hover
             option.addEventListener('mouseenter', (e) => {
                 const colorOption = e.target;
@@ -910,7 +913,7 @@ class ProductManager {
                 }
             });
             
-            // Set active color on click
+            // Set active color on click - use a regular function for proper 'this' binding
             option.addEventListener('click', function(e) {
                 e.stopPropagation(); // Prevent card click
                 
@@ -934,12 +937,55 @@ class ProductManager {
                     productImage.dataset.originalSrc = colorImage;
                 }
                 
-                // Update the product card with the selected color using the stored reference
-                self.updateProductCardImage(productCard, colorName);
-                
                 // Log for debugging
-                console.log(`Color selected: ${colorName}, updating image for product card`, productCard);
+                console.log(`Color selected: ${colorName}, updating image for product card`);
+                
+                // Use a direct approach that doesn't rely on 'this' context
+                updateProductCardImage(colorName, productCard);
+                
+                // Also try the instance method approach using stored reference
+                if (typeof productManager.updateProductCardImage === 'function') {
+                    try {
+                        productManager.updateProductCardImage(productCard, colorName);
+                    } catch (err) {
+                        console.warn("Error calling instance method:", err);
+                    }
+                }
             });
+            
+            // Direct function to update product card image that doesn't rely on 'this' context
+            function updateProductCardImage(colorName, productCard) {
+                if (!productCard || !colorName) return;
+                
+                // Get product ID
+                const productId = productCard.dataset.productId;
+                if (!productId) return;
+                
+                console.log(`Direct updateProductCardImage called for ${colorName} on product ${productId}`);
+                
+                // Try to get color images from data attribute
+                try {
+                    if (productCard.dataset.colorImages) {
+                        const colorImagesMap = JSON.parse(productCard.dataset.colorImages);
+                        if (colorImagesMap[colorName] && Array.isArray(colorImagesMap[colorName]) &&
+                            colorImagesMap[colorName].length > 0) {
+                            
+                            // Get the first image for this color
+                            const colorImage = colorImagesMap[colorName][0];
+                            
+                            // Update the product image
+                            const productImage = productCard.querySelector('.product-image');
+                            if (productImage) {
+                                productImage.src = colorImage;
+                                productImage.dataset.originalSrc = colorImage;
+                                console.log(`Updated image to ${colorImage} for color ${colorName}`);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error updating product card image:", e);
+                }
+            }
         });
 
         // Product card clicks
