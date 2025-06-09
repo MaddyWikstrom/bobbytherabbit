@@ -163,14 +163,19 @@ document.addEventListener('DOMContentLoaded', function() {
             rightArrow.style.cursor = scrollGrid.scrollLeft >= maxScrollLeft ? 'default' : 'pointer';
         };
         
-        // Add click handlers to the already styled arrows with improved logic
+        // Add click handlers to the already styled arrows with improved dynamic sizing
         if (leftArrow && scrollGrid) {
             leftArrow.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Calculate how much to scroll (with bounds checking)
-                const scrollAmount = 332; // product width (300px) + gap (32px)
-                const newScrollLeft = Math.max(scrollGrid.scrollLeft - scrollAmount, 0);
+                // Dynamically measure one product card's width
+                const cardWidth = scrollGrid.querySelector('.product-card')?.offsetWidth || 300; // fallback width
+                const gap = 32; // If you have gap: 2rem (32px) in CSS
+                const scrollStep = cardWidth + gap;
+                
+                // Calculate next scroll position with bounds check
+                const nextScroll = scrollGrid.scrollLeft - scrollStep;
+                const newScrollLeft = nextScroll < 0 ? 0 : nextScroll;
                 
                 // Scroll with smooth behavior
                 scrollGrid.scrollTo({
@@ -184,10 +189,15 @@ document.addEventListener('DOMContentLoaded', function() {
             rightArrow.addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                // Calculate how much to scroll (with bounds checking)
-                const scrollAmount = 332; // product width (300px) + gap (32px)
+                // Dynamically measure one product card's width
+                const cardWidth = scrollGrid.querySelector('.product-card')?.offsetWidth || 300; // fallback width
+                const gap = 32; // If you have gap: 2rem (32px) in CSS
+                const scrollStep = cardWidth + gap;
+                
+                // Calculate next scroll position with bounds check
                 const maxScrollLeft = scrollGrid.scrollWidth - scrollGrid.clientWidth;
-                const newScrollLeft = Math.min(scrollGrid.scrollLeft + scrollAmount, maxScrollLeft);
+                const nextScroll = scrollGrid.scrollLeft + scrollStep;
+                const newScrollLeft = nextScroll > maxScrollLeft ? maxScrollLeft : nextScroll;
                 
                 // Scroll with smooth behavior
                 scrollGrid.scrollTo({
@@ -256,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
-                overflow-x: auto !important; /* Changed from hidden to auto */
+                overflow-x: auto !important;
                 position: relative !important;
                 padding: 0 !important;
                 margin: 0 !important;
@@ -265,17 +275,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .product-grid-scroll {
                 display: flex !important;
                 flex-wrap: nowrap !important;
-                overflow-x: visible !important; /* Changed from auto to visible */
-                padding: 2rem !important; /* Increased padding */
+                overflow-x: visible !important;
+                padding: 0 2rem !important; /* Padding only on sides */
                 -ms-overflow-style: none !important;  /* IE and Edge */
                 scrollbar-width: none !important;  /* Firefox */
-                justify-content: flex-start !important; /* Changed from center to flex-start */
+                justify-content: flex-start !important;
                 align-items: center !important;
-                min-width: max-content !important; /* Added to prevent children from getting cut off */
+                width: max-content !important; /* Ensures only content width as recommended */
+                max-width: 100% !important; /* Prevents scroll container from overexpanding */
                 margin: 0 auto !important;
                 scroll-behavior: smooth !important;
                 gap: 2rem !important;
-                min-height: 450px !important; /* Ensure enough height for products */
+                min-height: 450px !important;
                 box-sizing: border-box !important;
             }
             
