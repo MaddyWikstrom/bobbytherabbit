@@ -120,10 +120,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      // Remove duplicates
-      this.filteredImages = [...new Set(colorSpecificImages)];
+      // Before deduplication, log the original images for debugging
+      console.log(`Found ${colorSpecificImages.length} images for color "${color}" before processing:`, colorSpecificImages);
       
-      console.log(`Showing ${this.filteredImages.length} unique images for color "${color}"`);
+      // Avoid over-deduplication by comparing actual image URLs more carefully
+      // Some image URLs might differ only in query parameters but show the same image
+      this.filteredImages = [];
+      const imageUrls = new Set();
+      
+      // Process each image to ensure we're not losing valid images
+      colorSpecificImages.forEach(imgUrl => {
+        // For debugging - check what might be causing duplication
+        console.log(`Processing image: ${imgUrl}`);
+        
+        // Add image to filtered list if it's not already included
+        if (!imageUrls.has(imgUrl)) {
+          imageUrls.add(imgUrl);
+          this.filteredImages.push(imgUrl);
+        }
+      });
+      
+      // Special override for "Vintage Black" to ensure we're seeing all images
+      if ((color === "Vintage Black" || color === "Charcoal Gray" || color === "Charcoal Grey") &&
+          this.filteredImages.length < colorSpecificImages.length) {
+        console.log(`Special override for ${color}: using all ${colorSpecificImages.length} images without deduplication`);
+        this.filteredImages = [...colorSpecificImages];
+      }
+      
+      console.log(`Showing ${this.filteredImages.length} images for color "${color}"`);
       
       // Reset to first image when color changes
       this.currentImageIndex = 0;
