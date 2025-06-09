@@ -990,6 +990,63 @@ class ProductDetailManager {
                 });
             }
             
+            // Enhanced image processing: associate images with colors
+            // Go through all images and try to determine which color they belong to
+            for (const imgUrl of images) {
+                const imgUrlLower = imgUrl.toLowerCase();
+                
+                // Try to match images to colors using URL patterns
+                for (const color of colors) {
+                    const colorLower = color.toLowerCase();
+                    
+                    // Check for color in URL patterns
+                    if (imgUrlLower.includes(`/${colorLower}`) ||
+                        imgUrlLower.includes(`_${colorLower}`) ||
+                        imgUrlLower.includes(`-${colorLower}`) ||
+                        imgUrlLower.includes(`${colorLower}_`) ||
+                        imgUrlLower.includes(`${colorLower}-`) ||
+                        imgUrlLower.includes(`color=${colorLower}`) ||
+                        imgUrlLower.includes(`variant=${colorLower}`) ||
+                        imgUrlLower.includes(colorLower)) {
+                        
+                        if (!colorToImagesMap.has(color)) {
+                            colorToImagesMap.set(color, []);
+                        }
+                        
+                        // Only add image if it's not already in the array
+                        if (!colorToImagesMap.get(color).includes(imgUrl)) {
+                            colorToImagesMap.get(color).push(imgUrl);
+                        }
+                    }
+                }
+            }
+            
+            // If a color has no images yet, try to find a matching variant image
+            for (const color of colors) {
+                if (!colorToImagesMap.has(color) || colorToImagesMap.get(color).length === 0) {
+                    // Find variants with this color
+                    const matchingVariants = variants.filter(v => v.color === color);
+                    
+                    if (matchingVariants.length > 0) {
+                        colorToImagesMap.set(color, []);
+                        
+                        // Add images from matching variants
+                        for (const variant of matchingVariants) {
+                            if (variant.image && !colorToImagesMap.get(color).includes(variant.image)) {
+                                colorToImagesMap.get(color).push(variant.image);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If after all this, a color still has no images, add all product images as fallback
+            for (const color of colors) {
+                if (!colorToImagesMap.has(color) || colorToImagesMap.get(color).length === 0) {
+                    colorToImagesMap.set(color, [...images]);
+                }
+            }
+            
             // Get price from various possible locations
             let price = 0;
             if (product.priceRange?.minVariantPrice?.amount) {
@@ -1443,6 +1500,8 @@ class ProductDetailManager {
                 return;
             }
             
+            console.log(`Selecting color: ${color}`);
+            
             // Store the color name in selectedVariant
             this.selectedVariant.color = color;
             
@@ -1464,35 +1523,107 @@ class ProductDetailManager {
             
             // Try to find color images
             let colorImagesFound = false;
+            let colorImages = [];
             
-            // First check direct match
-            if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
-                this.filteredImages = this.currentProduct.colorImages[color];
-                this.currentImageIndex = 0;
-                this.updateMainImage();
-                colorImagesFound = true;
+            // Check if we have a colorImages map in the product data
+            if (this.currentProduct.colorImages) {
+                // First try direct match
+                if (this.currentProduct.colorImages[color]) {
+                    colorImages = this.currentProduct.colorImages[color];
+                    colorImagesFound = true;
+                } else {
+                    // Try case-insensitive match
+                    for (const [key, images] of Object.entries(this.currentProduct.colorImages)) {
+                        if (key.toLowerCase() === color.toLowerCase()) {
+                            colorImages = images;
+                            colorImagesFound = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (colorImagesFound) {
+                    console.log(`Found ${colorImages.length} images for color ${color}`);
+                    this.filteredImages = colorImages;
+                    this.currentImageIndex = 0;
+                    this.updateMainImage();
+                    this.updateThumbnailGrid();
+                }
             }
-            // Then try case-insensitive match
-            else if (this.currentProduct.colorImages) {
-                // Look for case-insensitive match
-                for (const [key, images] of Object.entries(this.currentProduct.colorImages)) {
-                    if (key.toLowerCase() === color.toLowerCase()) {
-                        this.filteredImages = images;
+            
+            // If no color-specific images were found, look for images in variants
+            if (!colorImagesFound && this.currentProduct.variants && this.currentProduct.variants.length > 0) {
+                const colorVariants = this.currentProduct.variants.filter(v =>
+                    v.color && v.color.toLowerCase() === color.toLowerCase()
+                );
+                
+                if (colorVariants.length > 0) {
+                    console.log(`Found ${colorVariants.length} variants for color ${color}`);
+                    
+                    // Collect images from these variants
+                    const variantImages = colorVariants
+                        .filter(v => v.image)
+                        .map(v => v.image);
+                    
+                    if (variantImages.length > 0) {
+                        console.log(`Found ${variantImages.length} variant images for color ${color}`);
+                        this.filteredImages = variantImages;
                         this.currentImageIndex = 0;
                         this.updateMainImage();
+                        this.updateThumbnailGrid();
                         colorImagesFound = true;
-                        break;
                     }
                 }
             }
             
-            // If no color-specific images found, use all images
+            // If still no color-specific images found, try URL-based filtering
             if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
-                console.log('No color-specific images found, using all images');
+                console.log(`Using URL filtering for color ${color}`);
+                
+                // Filter images based on URL patterns containing the color name
+                const colorLower = color.toLowerCase();
+                const matchingImages = this.currentProduct.images.filter(imgUrl => {
+                    const imgUrlLower = imgUrl.toLowerCase();
+                    return (
+                        imgUrlLower.includes(`/${colorLower}`) ||
+                        imgUrlLower.includes(`_${colorLower}`) ||
+                        imgUrlLower.includes(`-${colorLower}`) ||
+                        imgUrlLower.includes(`${colorLower}_`) ||
+                        imgUrlLower.includes(`${colorLower}-`) ||
+                        imgUrlLower.includes(`color=${colorLower}`) ||
+                        imgUrlLower.includes(colorLower)
+                    );
+                });
+                
+                if (matchingImages.length > 0) {
+                    console.log(`Found ${matchingImages.length} URL-matched images for color ${color}`);
+                    this.filteredImages = matchingImages;
+                    this.currentImageIndex = 0;
+                    this.updateMainImage();
+                    this.updateThumbnailGrid();
+                    colorImagesFound = true;
+                }
+            }
+            
+            // If no color-specific images found after all attempts, use all images
+            if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
+                console.log(`No color-specific images found for ${color}, using all ${this.currentProduct.images.length} images`);
                 this.filteredImages = this.currentProduct.images;
                 this.currentImageIndex = 0;
                 this.updateMainImage();
+                this.updateThumbnailGrid();
             }
+            
+            // Try to use quick-view manager's filtering if available
+            if (window.quickViewManager && typeof window.quickViewManager.filterImagesByColor === 'function') {
+                try {
+                    // This may enhance our filtering with additional DOM-based logic
+                    window.quickViewManager.filterImagesByColor.call(this, color);
+                } catch (error) {
+                    console.warn('Error using quickViewManager filtering:', error);
+                }
+            }
+            
         } catch (error) {
             console.error('Error in selectColor:', error);
             // Fallback to using all images
@@ -1500,6 +1631,7 @@ class ProductDetailManager {
                 this.filteredImages = this.currentProduct.images;
                 this.currentImageIndex = 0;
                 this.updateMainImage();
+                this.updateThumbnailGrid();
             }
         }
     }
@@ -1985,49 +2117,103 @@ class ProductDetailManager {
         return false;
     }
     
-    // Add updateThumbnailGrid method for compatibility with quick-view.js
+    // Enhanced updateThumbnailGrid method for better color-specific image handling
     updateThumbnailGrid() {
-        // This is a compatibility method to match quick-view.js functionality
         try {
             // Find the thumbnail container
             const galleryContainer = document.getElementById('product-gallery');
             if (!galleryContainer) return;
             
+            console.log(`Updating thumbnail grid with ${this.filteredImages?.length || 0} filtered images`);
+            
             // Update thumbnails based on filtered images
             if (this.filteredImages && this.filteredImages.length > 0) {
-                galleryContainer.innerHTML = this.filteredImages.map((img, idx) => `
-                    <div class="gallery-item ${idx === 0 ? 'active' : ''}"
-                         style="cursor:pointer; border:2px solid ${idx === 0 ? '#4CAF50' : 'transparent'}; transition:all 0.2s ease;">
-                        <img src="${img}" alt="${this.currentProduct.title} ${idx + 1}"
-                             style="width:60px; height:60px; object-fit:cover;">
-                    </div>
-                `).join('');
+                // Clear existing thumbnails
+                galleryContainer.innerHTML = '';
                 
-                // Update main image to the first filtered image
-                this.currentImageIndex = 0;
-                this.updateMainImage();
-                
-                // Add click event listeners to the new thumbnails
-                document.querySelectorAll('.gallery-item').forEach((item, index) => {
-                    item.addEventListener('click', () => {
-                        this.currentImageIndex = index;
+                // Create thumbnails for each filtered image with proper metadata
+                this.filteredImages.forEach((img, idx) => {
+                    const thumbnailDiv = document.createElement('div');
+                    thumbnailDiv.className = `gallery-item ${idx === 0 ? 'active' : ''}`;
+                    thumbnailDiv.style.cursor = 'pointer';
+                    thumbnailDiv.style.border = idx === 0 ? '2px solid #a855f7' : '2px solid transparent';
+                    thumbnailDiv.style.transition = 'all 0.2s ease';
+                    thumbnailDiv.style.borderRadius = '4px';
+                    thumbnailDiv.style.overflow = 'hidden';
+                    thumbnailDiv.style.margin = '4px';
+                    thumbnailDiv.setAttribute('data-index', idx.toString());
+                    
+                    // Create and configure image element
+                    const imgElement = document.createElement('img');
+                    imgElement.src = img;
+                    imgElement.alt = `${this.currentProduct.title} ${idx + 1}`;
+                    imgElement.style.width = '60px';
+                    imgElement.style.height = '60px';
+                    imgElement.style.objectFit = 'contain';
+                    imgElement.style.backgroundColor = '#ffffff';
+                    
+                    // If the color is known, add it as metadata
+                    if (this.selectedVariant && this.selectedVariant.color) {
+                        imgElement.setAttribute('data-color', this.selectedVariant.color);
+                    }
+                    
+                    // Add error handling for image
+                    imgElement.onerror = function() {
+                        this.src = '/assets/product-placeholder.png';
+                        this.style.objectFit = 'contain';
+                    };
+                    
+                    // Add image to thumbnail container
+                    thumbnailDiv.appendChild(imgElement);
+                    galleryContainer.appendChild(thumbnailDiv);
+                    
+                    // Add click event listener to thumbnail
+                    thumbnailDiv.addEventListener('click', () => {
+                        this.currentImageIndex = idx;
                         this.updateMainImage();
                         
-                        // Update active state of thumbnails
-                        document.querySelectorAll('.gallery-item').forEach((i, idx) => {
-                            if (idx === index) {
-                                i.classList.add('active');
-                                i.style.border = '2px solid #4CAF50';
+                        // Update active state for all thumbnails
+                        document.querySelectorAll('.gallery-item').forEach((item) => {
+                            const itemIndex = parseInt(item.getAttribute('data-index') || '0');
+                            if (itemIndex === idx) {
+                                item.classList.add('active');
+                                item.style.border = '2px solid #a855f7';
+                                item.style.transform = 'scale(1.05)';
                             } else {
-                                i.classList.remove('active');
-                                i.style.border = '2px solid transparent';
+                                item.classList.remove('active');
+                                item.style.border = '2px solid transparent';
+                                item.style.transform = 'scale(1)';
                             }
                         });
                     });
                 });
+                
+                // Update main image to show the first filtered image
+                this.currentImageIndex = 0;
+                this.updateMainImage();
+            } else if (this.currentProduct && this.currentProduct.images && this.currentProduct.images.length > 0) {
+                // Fallback to all product images if no filtered images are available
+                console.log('No filtered images available, using all product images');
+                this.filteredImages = this.currentProduct.images;
+                
+                // Recursively call to update with all images
+                this.updateThumbnailGrid();
+            } else {
+                console.warn('No images available to display in thumbnail grid');
             }
         } catch (error) {
             console.error('Error in updateThumbnailGrid:', error);
+            // Fallback: try to at least display the main image if available
+            if (this.currentProduct && this.currentProduct.mainImage) {
+                const mainImageContainer = document.getElementById('main-product-image');
+                if (mainImageContainer) {
+                    mainImageContainer.innerHTML = `
+                        <img src="${this.currentProduct.mainImage}"
+                             alt="${this.currentProduct.title}"
+                             style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">
+                    `;
+                }
+            }
         }
     }
     // Helper method to ensure URLs are absolute
