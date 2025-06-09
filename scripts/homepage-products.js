@@ -210,8 +210,30 @@ class HomepageProductLoader {
         
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
+        // Get the first available color for the product (for data attributes)
+        const firstColor = product.colors && product.colors.length > 0 ? product.colors[0] : '';
+        
+        // Store all colors as a JSON string (escaped for HTML safety)
+        const allColorsJson = product.colors && product.colors.length > 0
+            ? JSON.stringify(product.colors).replace(/"/g, '&quot;')
+            : '[]';
+            
+        // Determine if this is a one-size product based on category
+        const isOneSize = (product.category === 'beanie' || product.category === 'hat') &&
+                          !(product.category === 'hoodie' ||
+                            product.category === 't-shirt' ||
+                            product.category === 'sweatshirt' ||
+                            product.category === 'joggers' ||
+                            product.category === 'windbreaker');
+        
         return `
-            <div class="product-card" data-product-id="${product.id}" data-shopify-id="${product.shopifyId}">
+            <div class="product-card"
+                data-product-id="${product.id}"
+                data-shopify-id="${product.shopifyId}"
+                data-product-category="${product.category}"
+                data-product-color="${firstColor}"
+                data-product-colors='${allColorsJson}'
+                data-product-one-size="${isOneSize}">
                 <div class="product-image">
                     <img src="${product.mainImage}"
                          alt="${product.title}"
@@ -279,7 +301,15 @@ class HomepageProductLoader {
                     e.stopPropagation(); // Stop event propagation
                     return; // Don't navigate if clicking on controls
                 }
-                this.viewProduct(productId);
+                
+                try {
+                    console.log(`Card clicked, navigating to product: ${productId}`);
+                    this.viewProduct(productId);
+                } catch (err) {
+                    console.error('Error navigating to product page:', err);
+                    // Fallback navigation in case of error
+                    window.location.href = `product.html?id=${productId}`;
+                }
             });
             
             // Add quick view button handler
@@ -343,55 +373,132 @@ class HomepageProductLoader {
                 return;
             }
             
-            // Get the first available color for the product (needed for cart variant identification)
-            const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : '';
+            // Get color from data attribute if available, or from product data
+            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            let selectedColor = '';
+            
+            if (productCard && productCard.dataset.productColor) {
+                // Get color from the data attribute (more reliable)
+                selectedColor = productCard.dataset.productColor;
+                console.log(`Using color from data attribute: ${selectedColor}`);
+            } else if (product.colors && product.colors.length > 0) {
+                // Fallback to first color in product data
+                selectedColor = product.colors[0];
+                console.log(`Using first available color: ${selectedColor}`);
+            }
+            
+            console.log(`Selected color for cart: ${selectedColor || 'none'}`);
             
             // Find the color-specific image for the product if possible
             let productImage = product.mainImage || '';
+            let foundColorMatch = false;
             
-            // If we have color and it doesn't match the image, look for a color-specific image
+            // If we have color and product has multiple images, look for a color-specific image
             if (selectedColor && product.images && product.images.length > 0) {
                 const colorNameLower = selectedColor.toLowerCase();
+                console.log(`Looking for image matching color: ${colorNameLower}`);
                 
-                // Try to find an image that matches the color
+                // First try exact color name match
                 for (const image of product.images) {
                     const imgUrl = image.toLowerCase();
                     
-                    // Match if the color appears anywhere in the URL (more lenient matching)
+                    // Try exact match first
                     if (imgUrl.includes(colorNameLower)) {
                         productImage = image;
-                        console.log(`Found color-specific image for ${selectedColor}: ${productImage}`);
+                        foundColorMatch = true;
+                        console.log(`Found exact color match image for ${selectedColor}: ${productImage}`);
                         break;
                     }
+                }
+                
+                // If no exact match and multi-word color, try individual word matching
+                if (!foundColorMatch && colorNameLower.includes(' ')) {
+                    console.log(`Trying partial matches for multi-word color: ${colorNameLower}`);
+                    const colorParts = colorNameLower.split(/\s+/);
                     
-                    // If multi-word color, check for any significant part
-                    if (colorNameLower.includes(' ')) {
-                        const colorParts = colorNameLower.split(/\s+/);
+                    // Try significant color parts (longer words first)
+                    colorParts.sort((a, b) => b.length - a.length);
+                    
+                    for (const image of product.images) {
+                        const imgUrl = image.toLowerCase();
+                        
                         for (const part of colorParts) {
+                            // Only use meaningful parts (skip 'the', 'and', etc)
                             if (part.length > 2 && imgUrl.includes(part)) {
                                 productImage = image;
-                                console.log(`Found color-part specific image for ${selectedColor} (${part}): ${productImage}`);
+                                foundColorMatch = true;
+                                console.log(`Found partial color match image for ${selectedColor} (part: ${part}): ${productImage}`);
                                 break;
                             }
                         }
+                        
+                        if (foundColorMatch) break;
+                    }
+                }
+                
+                // If still no match, just use the first image that looks like it might be for this color
+                if (!foundColorMatch && product.images.length > 1) {
+                    // For colors with unique words like "vintage" or "heather", check if any image contains those terms
+                    const specialTerms = ['vintage', 'heather', 'melange', 'washed', 'distressed'];
+                    for (const term of specialTerms) {
+                        if (colorNameLower.includes(term)) {
+                            for (const image of product.images) {
+                                const imgUrl = image.toLowerCase();
+                                if (imgUrl.includes(term)) {
+                                    productImage = image;
+                                    foundColorMatch = true;
+                                    console.log(`Found special term match for ${selectedColor} (term: ${term}): ${productImage}`);
+                                    break;
+                                }
+                            }
+                        }
+                        if (foundColorMatch) break;
                     }
                 }
             }
             
-            // Create cart product with one-size - with additional validation
+            // If we still don't have a color-specific image, use the main image
+            if (!foundColorMatch) {
+                console.log(`No color-specific image found, using default: ${productImage}`);
+            }
+            
+            // Create a unique variant ID that combines product ID and color/size
+            // This ensures proper handling of colors even for one-size products
+            const size = (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size';
+            const variantId = `${product.id || productId}_${selectedColor || 'default'}_${size}`.replace(/\s+/g, '-').toLowerCase();
+            
+            console.log(`Generated variant ID: ${variantId}`);
+            
+            // Create cart product with improved variant handling
             const cartProduct = {
-                id: product.id || productId || 'unknown-product', // Better fallback chain
+                id: product.id || productId || 'unknown-product', // Product ID
                 title: product.title || 'Product',
                 price: typeof product.price === 'number' ? product.price : 0,
                 image: productImage,
                 quantity: 1,
-                variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
-                selectedSize: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
-                selectedColor: selectedColor, // Add color information for proper variant identification
-                // Add extra fields for more compatibility across different cart systems
+                // Include variant ID for proper cart item grouping
+                variantId: variantId,
+                // Include size information
+                variant: size,
+                selectedSize: size,
+                size: size,
+                // Include color information for proper variant identification
+                selectedColor: selectedColor,
                 color: selectedColor,
-                size: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
+                // Add category information to help identify product type
+                category: product.category || '',
+                // Add metadata to track origin
+                addedFrom: 'homepage-quick-add'
             };
+            
+            // Log the prepared cart product for debugging
+            console.log('Prepared cart product with variant info:', {
+                id: cartProduct.id,
+                title: cartProduct.title,
+                variantId: cartProduct.variantId,
+                size: cartProduct.size,
+                color: cartProduct.color
+            });
             
             console.log('Prepared cart product:', cartProduct);
             
@@ -722,54 +829,110 @@ class HomepageProductLoader {
     }
 
     viewProduct(productId) {
-        // Get the product
-        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
-        if (!product) {
-            window.location.href = `product.html?id=${productId}`;
-            return;
-        }
-        
-        // Check if a specific color was selected
-        let selectedColor = '';
-        const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-        
-        if (productCard) {
-            // If we had color selectors in homepage products, we would get the selected color here
-            // For now, just use the product's first available color if present
-            if (product.colors && product.colors.length > 0) {
-                selectedColor = product.colors[0];
+        try {
+            console.log(`View product called for ID: ${productId}`);
+            
+            // Get the product with error handling
+            const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+            if (!product) {
+                console.warn(`Product not found in local data, redirecting with ID only: ${productId}`);
+                window.location.href = `product.html?id=${productId}`;
+                return;
             }
-        }
-        
-        // Navigate to product detail page with the handle or Shopify ID and selected color
-        if (selectedColor) {
-            window.location.href = `product.html?id=${product.handle || productId}&color=${encodeURIComponent(selectedColor)}`;
-        } else {
-            window.location.href = `product.html?id=${product.handle || productId}`;
+            
+            console.log(`Found product: ${product.title}, handle: ${product.handle}`);
+            
+            // Check if a specific color was selected
+            let selectedColor = '';
+            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            
+            if (productCard && productCard.dataset.productColor) {
+                // Get color from the data attribute (more reliable)
+                selectedColor = productCard.dataset.productColor;
+                console.log(`Using color from data attribute: ${selectedColor}`);
+            } else if (product.colors && product.colors.length > 0) {
+                // Fallback to first color in product data
+                selectedColor = product.colors[0];
+                console.log(`Using first available color: ${selectedColor}`);
+            }
+            
+            console.log(`Selected color for navigation: ${selectedColor || 'none'}`);
+            
+            // Ensure we have a valid ID to navigate with
+            const navigateId = product.handle || product.id || productId;
+            console.log(`Navigating with ID: ${navigateId}`);
+            
+            // Navigate to product detail page with handle/ID and selected color
+            if (selectedColor) {
+                const url = `product.html?id=${navigateId}&color=${encodeURIComponent(selectedColor)}`;
+                console.log(`Navigating to: ${url}`);
+                window.location.href = url;
+            } else {
+                const url = `product.html?id=${navigateId}`;
+                console.log(`Navigating to: ${url}`);
+                window.location.href = url;
+            }
+        } catch (error) {
+            console.error('Error in viewProduct:', error);
+            // Fallback navigation
+            window.location.href = `product.html?id=${productId}`;
         }
     }
     
     showQuickView(productId) {
-        // Find the product
-        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
-        if (!product) return;
-        
-        // Get the first available color for the product for better quick view display
-        const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : null;
-        
-        // Use the main product manager's showQuickView if available
-        if (window.productManager && typeof window.productManager.showQuickView === 'function') {
-            // Pass the product ID and color to the main product manager
-            if (selectedColor) {
-                // If we have a color, explicitly pass it for better image filtering
-                window.productManager.showQuickView(product.id || productId, selectedColor);
-                console.log(`Opening quick view for product: ${product.title} with color: ${selectedColor}`);
-            } else {
-                window.productManager.showQuickView(product.id || productId);
-                console.log(`Opening quick view for product: ${product.title}`);
+        try {
+            console.log(`Quick view requested for product ID: ${productId}`);
+            
+            // Find the product with better error handling
+            const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+            if (!product) {
+                console.warn(`Product not found for quick view: ${productId}, falling back to product page`);
+                this.viewProduct(productId);
+                return;
             }
-        } else {
-            // Product manager not available, navigating to product page instead
+            
+            console.log(`Quick view for product: ${product.title} (${product.category})`);
+            
+            // Get color from data attribute if available, or from product data
+            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+            let selectedColor = '';
+            
+            if (productCard && productCard.dataset.productColor) {
+                // Get color from the data attribute (more reliable)
+                selectedColor = productCard.dataset.productColor;
+                console.log(`Using color from data attribute for quick view: ${selectedColor}`);
+            } else if (product.colors && product.colors.length > 0) {
+                // Fallback to first color in product data
+                selectedColor = product.colors[0];
+                console.log(`Using first available color for quick view: ${selectedColor}`);
+            }
+            
+            console.log(`Selected color for quick view: ${selectedColor || 'none'}`);
+            
+            // Log available colors for debugging
+            if (product.colors && product.colors.length > 0) {
+                console.log(`Available colors: ${product.colors.join(', ')}`);
+            }
+            
+            // Use the main product manager's showQuickView if available
+            if (window.productManager && typeof window.productManager.showQuickView === 'function') {
+                // Pass the product ID and color to the main product manager
+                if (selectedColor) {
+                    // If we have a color, explicitly pass it for better image filtering
+                    console.log(`Opening quick view with color: ${selectedColor}`);
+                    window.productManager.showQuickView(product.id || productId, selectedColor);
+                } else {
+                    console.log(`Opening quick view without color parameter`);
+                    window.productManager.showQuickView(product.id || productId);
+                }
+            } else {
+                // Product manager not available, navigating to product page instead
+                console.warn('Quick view not available, redirecting to product page');
+                this.viewProduct(productId);
+            }
+        } catch (error) {
+            console.error('Error in showQuickView:', error);
+            // Fallback to product page in case of error
             this.viewProduct(productId);
         }
     }
