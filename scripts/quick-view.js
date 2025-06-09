@@ -1179,13 +1179,13 @@ class QuickViewManager {
             if (initialColor && product.colors && !product.colors.some(c =>
                 c.name === initialColor || c.name.toLowerCase() === initialColor.toLowerCase())) {
                 this.selectedVariant.color = null;
-                console.log(`Reset color: ${initialColor} not found in product colors`);
+                // Reset color: initial color not found in product colors
             }
             
             // If we don't have a color yet but the product has colors, use the first one
             if (!this.selectedVariant.color && product.colors && product.colors.length > 0) {
                 this.selectedVariant.color = product.colors[0].name;
-                console.log(`Using default color: ${this.selectedVariant.color}`);
+                // Using default color
             }
             
             this.renderQuickView();
@@ -1984,19 +1984,19 @@ class QuickViewManager {
             if (this.currentProduct.category &&
                 (this.currentProduct.category.toLowerCase().includes('beanie') ||
                  this.currentProduct.category.toLowerCase().includes('hat'))) {
-                console.log("Product is a beanie or hat - adding One Size option");
+                // Product is a beanie or hat - adding One Size option
                 sizes.add('One Size');
             }
             // Otherwise try to extract variant titles
             else if (variantsToProcess && variantsToProcess.length > 0) {
-                console.log("Extracting variant titles for size options");
+                // Extracting variant titles for size options
                 
                 variantsToProcess.forEach(variant => {
                     // Add EVERY variant title without filtering
                     if (variant.title) {
                         const title = variant.title.trim();
                         sizes.add(title);
-                        console.log(`Added title as size: ${title}`);
+                        // Added title as size
                     }
                     
                     // Also add any raw option values
@@ -2004,7 +2004,7 @@ class QuickViewManager {
                         variant.selectedOptions.forEach(opt => {
                             if (opt.value) {
                                 sizes.add(opt.value);
-                                console.log(`Added option value as size: ${opt.value}`);
+                                // Added option value as size
                             }
                         });
                     }
@@ -2013,7 +2013,7 @@ class QuickViewManager {
             
             // If still no sizes found, add "One Size" as a fallback
             if (!sizes.size) {
-                console.log("No sizes found - adding One Size as fallback");
+                // No sizes found - adding One Size as fallback
                 sizes.add('One Size');
             }
         }
@@ -2205,9 +2205,8 @@ class QuickViewManager {
             }
             
             // Hard limit to prevent excessive processing
-            const MAX_IMAGES = 8;
+            const MAX_IMAGES = 12; // Increased from 8 to show more color variants
             if (images.length <= MAX_IMAGES) {
-                console.log("Small number of images, skipping deduplication");
                 return images.slice(0, MAX_IMAGES);
             }
             
@@ -2217,7 +2216,6 @@ class QuickViewManager {
             }).slice(0, 25); // Process at most 25 images
             
             if (validImages.length <= MAX_IMAGES) {
-                console.log(`Only ${validImages.length} valid images, skipping complex deduplication`);
                 return validImages;
             }
             
@@ -2226,11 +2224,11 @@ class QuickViewManager {
             
             // If deduplication reduced to an acceptable number, return early
             if (uniqueUrls.length <= MAX_IMAGES) {
-                console.log(`Basic deduplication reduced from ${validImages.length} to ${uniqueUrls.length} images`);
                 return uniqueUrls;
             }
             
-            // Simple deduplication based on filename patterns
+            // Less aggressive deduplication based on filename patterns
+            // Allow more similar images to appear for better color representation
             const dedupedByFilename = [];
             const seenPatterns = new Set();
             
@@ -2238,8 +2236,8 @@ class QuickViewManager {
                 try {
                     // Extract filename from URL
                     const filename = imgUrl.split('/').pop().split('?')[0];
-                    // Create a pattern based on first part of filename
-                    const basePattern = filename.split('.')[0].substring(0, 10);
+                    // Use a shorter pattern to be less aggressive with deduplication
+                    const basePattern = filename.split('.')[0].substring(0, 6);
                     
                     if (!seenPatterns.has(basePattern)) {
                         seenPatterns.add(basePattern);
@@ -2258,8 +2256,6 @@ class QuickViewManager {
                     }
                 }
             }
-            
-            console.log(`Deduplicated from ${images.length} to ${dedupedByFilename.length} images`);
             
             // Ensure we don't return more than MAX_IMAGES
             return dedupedByFilename.slice(0, MAX_IMAGES);
@@ -2519,7 +2515,7 @@ class QuickViewManager {
         
         // If we didn't find any matching images, show all images
         if (uniqueMatchingImages.length === 0) {
-            console.log(`No images found for color: ${colorName}, showing all images`);
+            // No images found for color, showing all images
             thumbnails.forEach(thumbnail => {
                 const thumbnailParent = thumbnail.closest('.thumbnail') ||
                                         thumbnail.closest('.gallery-item') ||
@@ -2862,7 +2858,7 @@ class QuickViewManager {
             // Use first matching color image if found
             if (colorImages.length > 0) {
                 colorSpecificImage = colorImages[0];
-                console.log(`Found color-specific image for ${this.selectedVariant.color}: ${colorSpecificImage}`);
+                // Found color-specific image
             }
         }
         
@@ -3074,7 +3070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (colorImages.length > 0) {
                             // Limit to 8 images max to prevent excessive processing
-                            window.productDetailManager.filteredImages = colorImages.slice(0, 8);
+                            window.productDetailManager.filteredImages = colorImages.slice(0, 12);
                         }
                     }
                     

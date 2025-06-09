@@ -3,7 +3,7 @@
 // only images matching the exact selected color are displayed
 
 (function() {
-    console.log("Enhanced color image selection installed");
+    // Enhanced color image selection installed
 
     // Function to strictly filter images for a specific color
     function strictColorFiltering(manager, color) {
@@ -12,11 +12,8 @@
                 return false; // Can't filter without color or product
             }
 
-            console.log(`Applying strict filtering for color: ${color}`);
-
             // Get product images
             const allImages = manager.currentProduct.images || [];
-            console.log(`Total product images: ${allImages.length}`);
 
             // Create exact matching pattern for the selected color
             const normalizedColor = color.toLowerCase().trim();
@@ -105,7 +102,7 @@
             const maxImages = 8;
             const limitedImages = strictlyFilteredImages.slice(0, maxImages);
             
-            console.log(`Found ${strictlyFilteredImages.length} strictly matched images for color ${color}`);
+            // Found matching images for color
             
             if (strictlyFilteredImages.length > 0) {
                 // Use strictly filtered images if available, limit to prevent excessive processing
@@ -126,13 +123,13 @@
     // Function to handle both initialization and color selection
     function enhanceProductManager() {
         if (!window.productDetailManager) {
-            console.warn("Product detail manager not found, will retry");
+            // Product detail manager not found, will retry
             setTimeout(enhanceProductManager, 100);
             return;
         }
 
         const manager = window.productDetailManager;
-        console.log("Found product detail manager, enhancing color selection");
+        // Found product detail manager, enhancing color selection
 
         // Store the original selectColor method
         const originalSelectColor = manager.selectColor;
@@ -141,11 +138,11 @@
         manager.selectColor = function(color) {
             try {
                 if (!color) {
-                    console.warn('No color provided to selectColor');
+                    // No color provided to selectColor
                     return;
                 }
 
-                console.log(`Enhanced selectColor called for: ${color}`);
+                // Enhanced selectColor called for color
 
                 // Store the color name in selectedVariant
                 this.selectedVariant.color = color;
@@ -163,7 +160,7 @@
                 });
 
                 if (!found) {
-                    console.log(`No matching color option found in DOM for: ${color}`);
+                    // No matching color option found in DOM
                 }
 
                 // Apply strict filtering first
@@ -171,11 +168,11 @@
                 
                 // If strict filtering didn't work, fall back to original method
                 if (!filterSuccess) {
-                    console.log(`No strict matches found for ${color}, falling back to original filtering method`);
+                    // No strict matches found, falling back to original filtering method
                     originalSelectColor.call(this, color);
                 }
             } catch (error) {
-                console.error('Error in enhanced selectColor:', error);
+                console.error('Error in enhanced selectColor');
                 // Fallback to original method
                 originalSelectColor.call(this, color);
             }
@@ -185,24 +182,24 @@
         // If a color is already selected, re-apply selection with our enhanced method
         if (manager.selectedVariant && manager.selectedVariant.color) {
             const currentColor = manager.selectedVariant.color;
-            console.log(`Reapplying color selection for initial color: ${currentColor}`);
+            // Reapplying color selection for initial color
             manager.selectColor(currentColor);
         } 
         // If no color is selected yet but product is loaded, handle the default selection
         else if (manager.currentProduct) {
-            console.log("Applying strict filtering for default color");
+            // Applying strict filtering for default color
             
             // Default to first variant color if available
             if (manager.currentProduct.variants && manager.currentProduct.variants.length > 0) {
                 const firstVariant = manager.currentProduct.variants[0];
                 if (firstVariant && firstVariant.color) {
-                    console.log(`Selecting default color from first variant: ${firstVariant.color}`);
+                    // Selecting default color from first variant
                     manager.selectColor(firstVariant.color);
                 }
             }
         }
         
-        console.log("Color selection method enhanced with strict filtering");
+        // Color selection method enhanced with strict filtering
     }
 
     // Apply enhancement immediately and also listen for product detail initialization
@@ -216,9 +213,9 @@
     let selectionInProgress = false;
     
     document.addEventListener('productDetailRendered', function() {
-        console.log("Product detail rendered, checking color selection");
+        // Product detail rendered, checking color selection
         if (selectionInProgress) {
-            console.log("Selection already in progress, skipping");
+            // Selection already in progress, skipping
             return;
         }
         
@@ -227,7 +224,7 @@
         if (window.productDetailManager && window.productDetailManager.selectedVariant) {
             const currentColor = window.productDetailManager.selectedVariant.color;
             if (currentColor) {
-                console.log(`Re-applying color selection after render: ${currentColor}`);
+                // Re-applying color selection after render
                 window.productDetailManager.selectColor(currentColor);
                 
                 // Reset the flag after a delay
