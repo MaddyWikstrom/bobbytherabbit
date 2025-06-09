@@ -348,39 +348,118 @@ class ProductManager {
         }
     }
     
-    // Add color code mapping similar to product-detail.js for consistency
-    getColorCode(colorName) {
-        if (!colorName || typeof colorName !== 'string') {
-            return '#333333'; // Default gray
-        }
+    getColorCode(colorInput) {
+        // Handle both string and object formats
+        const colorName = typeof colorInput === 'object' ? colorInput.name : colorInput;
         
         // If input is already a color code (starts with #), return it
-        if (colorName.startsWith('#')) {
+        if (typeof colorName === 'string' && colorName.startsWith('#')) {
             return colorName;
         }
         
-        // Common color mapping
+        // Enhanced color mapping that includes all predefined CSS colors
         const colorMap = {
+            // Core colors
             'black': '#000000',
             'white': '#FFFFFF',
-            'red': '#FF0000',
+            'red': '#EF4444',
             'green': '#008000',
             'blue': '#0000FF',
             'yellow': '#FFFF00',
             'purple': '#800080',
             'orange': '#FFA500',
+            'brown': '#A52A2A',
             'pink': '#FFC0CB',
             'gray': '#808080',
             'grey': '#808080',
-            'brown': '#A52A2A',
+            
+            // Specific named colors
+            'forest green': '#228B22',
+            'navy blazer': '#001F3F',
             'navy': '#000080',
-            'maroon': '#800000',
+            'navy blue': '#000080',
+            'charcoal gray': '#36454F',
+            'charcoal grey': '#36454F',
             'charcoal': '#36454F',
-            'default': '#333333'
+            'burgundy': '#800020',
+            'olive': '#808000',
+            'olive green': '#556B2F',
+            'teal': '#008080',
+            'maroon': '#800000',
+            'royal blue': '#4169E1',
+            'sky blue': '#87CEEB',
+            'turquoise': '#40E0D0',
+            'mint green': '#98FB98',
+            'sage green': '#BCBFA3',
+            'hunter green': '#355E3B',
+            'emerald': '#50C878',
+            'jade': '#00A86B',
+            'khaki': '#C3B091',
+            'beige': '#F5F5DC',
+            'tan': '#D2B48C',
+            'cream': '#FFFDD0',
+            'ivory': '#FFFFF0',
+            'coral': '#FF7F50',
+            'salmon': '#FA8072',
+            'peach': '#FFE5B4',
+            'rust': '#B7410E',
+            'copper': '#B87333',
+            'gold': '#FFD700',
+            'silver': '#C0C0C0',
+            'slate': '#708090',
+            'indigo': '#4B0082',
+            'lavender': '#E6E6FA',
+            'plum': '#8E4585',
+            'magenta': '#FF00FF',
+            'violet': '#8A2BE2',
+            'mustard': '#FFDB58',
+            'taupe': '#483C32',
+            'light gray': '#D3D3D3',
+            'light grey': '#D3D3D3',
+            'dark gray': '#A9A9A9',
+            'dark grey': '#A9A9A9',
+            'vintage black': '#202020',
+            'off white': '#F5F5F5',
+            'deep purple': '#301934',
+            'hot pink': '#FF69B4',
+            'dark brown': '#5C4033',
+            'light brown': '#B5651D',
+            'heather grey': '#D3D3D3',
+            'french navy': '#002868',
+            
+            // Default
+            'default': '#a855f7'  // Site's main accent color as default
         };
         
-        const lowerColor = colorName.toLowerCase();
-        return colorMap[lowerColor] || '#333333'; // Default gray if not found
+        if (typeof colorName === 'string') {
+            // Try exact match first
+            const lowerColor = colorName.toLowerCase();
+            if (colorMap[lowerColor]) {
+                return colorMap[lowerColor];
+            }
+            
+            // If no exact match, try to match just the main color word
+            // For compound colors like "Dark Blue" or "Light Green"
+            const colorWords = lowerColor.split(' ');
+            const lastWord = colorWords[colorWords.length - 1];
+            if (colorMap[lastWord]) {
+                return colorMap[lastWord];
+            }
+            
+            // Check if this is a compound color with words reversed
+            // e.g. "Blue Navy" instead of "Navy Blue"
+            if (colorWords.length >= 2) {
+                const reversedKey = `${colorWords[1]} ${colorWords[0]}`;
+                if (colorMap[reversedKey]) {
+                    return colorMap[reversedKey];
+                }
+            }
+            
+            // If no match was found, return the default color
+            return `var(--dynamic-color, #a855f7)`;
+        }
+        
+        return '#a855f7'; // Default purple fallback
     }
 
     extractCategory(title) {
@@ -683,21 +762,8 @@ class ProductManager {
         `;
     }
 
-    getColorCode(colorName) {
-        const colorMap = {
-            'Black': '#000000',
-            'White': '#FFFFFF',
-            'Navy': '#001f3f',
-            'Navy Blazer': '#001f3f',
-            'Maroon': '#800000',
-            'Charcoal Heather': '#36454F',
-            'Vintage Black': '#2C2C2C',
-            'Heather Grey': '#D3D3D3',
-            'French Navy': '#002868',
-            'Forest Green': '#228B22'
-        };
-        return colorMap[colorName] || '#a855f7';
-    }
+    // This method doesn't need a legacy version since we've updated
+    // the main getColorCode method to handle all color formats
 
     attachProductEventListeners() {
         // Quick view buttons
