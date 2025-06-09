@@ -326,11 +326,15 @@ class HomepageProductLoader {
             console.log('Processing quick add for product:', product.title);
             
             // Check if it's a one-size product like a beanie or hat
-            const isOneSize = product.category === 'beanie' ||
-                              product.category === 'hat' ||
-                              (product.sizes && product.sizes.length === 1);
+            // Make sure hoodies and other apparel are NEVER treated as one-size
+            const isOneSize = (product.category === 'beanie' || product.category === 'hat') &&
+                              !(product.category === 'hoodie' ||
+                                product.category === 't-shirt' ||
+                                product.category === 'sweatshirt' ||
+                                product.category === 'joggers' ||
+                                product.category === 'windbreaker');
             
-            console.log(`Product category: ${product.category}, isOneSize: ${isOneSize}`);
+            console.log(`Product category: ${product.category}, isOneSize: ${isOneSize}, sizes: ${JSON.stringify(product.sizes || [])}`);
             
             // Check if we should use quick view instead of redirecting
             if (!isOneSize) {
