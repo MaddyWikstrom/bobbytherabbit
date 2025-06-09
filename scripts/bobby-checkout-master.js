@@ -7,30 +7,380 @@
 (function() {
   console.log('🔄 Initializing Bobby Checkout Master System...');
   
-  // Ensure Shopify client is properly initialized
+  // Execute fixes in stages to ensure they work
+  
+  // Stage 1: Immediate execution for critical fixes
   fixShopifyClient();
+  registerDirectCartButtonHandlers();
   
-  // Load our fix scripts if they're not already loaded
-  loadFixScripts([
-    '/scripts/universal-cart-fix.js',
-    '/scripts/cart-bridge-fix.js'
-  ]);
+  // Stage 2: Early DOM interaction (happens before DOMContentLoaded)
+  setTimeout(function() {
+    initializeUniversalCheckout();
+    forceEnableCartButtons();
+  }, 100);
   
-  // Load checkout-fix.js conditionally to prevent duplicate declaration errors
-  if (!window.SilentCheckoutSystem) {
-    loadFixScripts(['/scripts/checkout-fix.js']);
-  }
-  
-  // Add universal cart functionality to all pages
+  // Stage 3: When DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
     initializeUniversalCheckout();
+    forceEnableCartButtons();
+    ensureLiveCartButtons();
+    
+    // Load our fix scripts if they're not already loaded
+    loadFixScripts([
+      '/scripts/universal-cart-fix.js',
+      '/scripts/cart-bridge-fix.js'
+    ]);
+    
+    // Load checkout-fix.js conditionally to prevent duplicate declaration errors
+    if (!window.SilentCheckoutSystem) {
+      loadFixScripts(['/scripts/checkout-fix.js']);
+    }
+  });
+  
+  // Stage 4: After everything is loaded
+  window.addEventListener('load', function() {
+    initializeUniversalCheckout();
+    forceEnableCartButtons();
+    ensureLiveCartButtons();
+    
+    // Re-apply again after a short delay to catch any late initialization
+    setTimeout(function() {
+      forceEnableCartButtons();
+      ensureLiveCartButtons();
+    }, 1000);
   });
   
   // Also initialize immediately if DOM is already loaded
   if (document.readyState === 'interactive' || document.readyState === 'complete') {
     initializeUniversalCheckout();
+    forceEnableCartButtons();
+    ensureLiveCartButtons();
   }
 })();
+
+/**
+ * Force enable cart buttons specifically on bobbytherabbit.com
+ */
+function forceEnableCartButtons() {
+  // Specific selectors for the live site
+  const cartButtonSelectors = [
+    '.cart-btn', '#cart-btn', '.cart-icon', '.shopping-cart',
+    '.nav-actions button', 'button.cart-btn', '[data-cart-toggle]',
+    '.nav-cart', 'button:has(.cart-icon)', '.cart-toggle'
+  ];
+  
+  cartButtonSelectors.forEach(selector => {
+    try {
+      const buttons = document.querySelectorAll(selector);
+      if (buttons.length > 0) {
+        console.log(`Found ${buttons.length} cart buttons with selector: ${selector}`);
+        buttons.forEach(button => {
+          // Remove any existing click handlers
+          const clone = button.cloneNode(true);
+          if (button.parentNode) {
+            button.parentNode.replaceChild(clone, button);
+          }
+          
+          // Add our direct handler
+          clone.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Force-enabled cart button clicked');
+            directlyOpenCart();
+            return false;
+          });
+        });
+      }
+    } catch (err) {
+      console.error(`Error selecting cart buttons with selector ${selector}:`, err);
+    }
+  });
+}
+
+/**
+ * Register global event handlers for cart buttons
+ */
+function registerDirectCartButtonHandlers() {
+  // Remove any existing handler
+  document.removeEventListener('click', globalCartButtonHandler);
+  
+  // Add global click listener
+  document.addEventListener('click', globalCartButtonHandler);
+  
+  function globalCartButtonHandler(event) {
+    const target = event.target;
+    
+    // Check if the click is on or within anything that could be a cart button
+    if (
+      target.classList.contains('cart-btn') ||
+      target.id === 'cart-btn' ||
+      target.classList.contains('cart-icon') ||
+      target.closest('.cart-btn, #cart-btn, .cart-icon, [data-cart-toggle]')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('Direct cart button handler activated');
+      directlyOpenCart();
+      return false;
+    }
+  }
+}
+
+/**
+ * Ensure cart buttons work on live site by adding direct DOM event listeners
+ */
+function ensureLiveCartButtons() {
+  // Special handling for bobbytherabbit.com
+  if (window.location.hostname.includes('bobbytherabbit.com')) {
+    console.log('Applying special cart fixes for bobbytherabbit.com');
+    
+    // Aggressively attach handlers to all nav buttons
+    const navButtons = document.querySelectorAll('.nav-actions button, .nav-cart, header button');
+    navButtons.forEach(button => {
+      button.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Live site cart button clicked');
+        directlyOpenCart();
+        return false;
+      };
+    });
+    
+    // Add a floating cart button that always works
+    addFloatingCartButton();
+  }
+}
+
+/**
+ * Add a floating cart button that will always work
+ */
+function addFloatingCartButton() {
+  // Only add if needed
+  if (document.querySelector('#emergency-cart-button')) return;
+  
+  const button = document.createElement('button');
+  button.id = 'emergency-cart-button';
+  button.innerHTML = '🛒';
+  button.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #a855f7, #3b82f6);
+    color: white;
+    font-size: 20px;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  button.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('Emergency cart button clicked');
+    directlyOpenCart();
+  });
+  
+  document.body.appendChild(button);
+}
+
+/**
+ * Directly open cart without relying on existing systems
+ */
+function directlyOpenCart() {
+  console.log('Directly opening cart');
+  
+  // Try all possible cart systems first
+  let cartOpened = false;
+  
+  // Try standard cart systems
+  if (window.BobbyCarts && typeof window.BobbyCarts.openCart === 'function') {
+    try {
+      window.BobbyCarts.openCart();
+      cartOpened = true;
+    } catch(e) {
+      console.error('Error using BobbyCarts.openCart:', e);
+    }
+  }
+  
+  if (!cartOpened && window.cartManager && typeof window.cartManager.openCart === 'function') {
+    try {
+      window.cartManager.openCart();
+      cartOpened = true;
+    } catch(e) {
+      console.error('Error using cartManager.openCart:', e);
+    }
+  }
+  
+  // If cart systems failed, try direct DOM manipulation
+  if (!cartOpened) {
+    const cartSelectors = [
+      '#cart-sidebar', '.cart-sidebar', '.cart-drawer',
+      '.shopping-cart', '.cart', '#cart', '#shopping-cart'
+    ];
+    
+    // Find cart element
+    let cartElement = null;
+    for (const selector of cartSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        cartElement = element;
+        break;
+      }
+    }
+    
+    // Find overlay element
+    const overlaySelectors = [
+      '#cart-overlay', '.cart-overlay', '.overlay',
+      '.backdrop', '.drawer-backdrop', '.modal-backdrop'
+    ];
+    
+    let overlayElement = null;
+    for (const selector of overlaySelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        overlayElement = element;
+        break;
+      }
+    }
+    
+    // Apply all possible open states to cart
+    if (cartElement) {
+      // Apply all possible CSS classes for open state
+      cartElement.classList.add('active', 'open', 'visible', 'show', 'opened');
+      
+      // Apply inline styles for positioning
+      cartElement.style.transform = 'translateX(0)';
+      cartElement.style.right = '0';
+      cartElement.style.opacity = '1';
+      cartElement.style.visibility = 'visible';
+      cartElement.style.display = 'flex';
+      
+      // Also show overlay if available
+      if (overlayElement) {
+        overlayElement.classList.add('active', 'open', 'visible', 'show');
+        overlayElement.style.display = 'block';
+        overlayElement.style.opacity = '1';
+        overlayElement.style.visibility = 'visible';
+      }
+      
+      cartOpened = true;
+    }
+  }
+  
+  // If nothing worked, create our own cart popup
+  if (!cartOpened) {
+    createEmergencyCartPopup();
+  }
+}
+
+/**
+ * Create an emergency cart popup when all else fails
+ */
+function createEmergencyCartPopup() {
+  console.log('Creating emergency cart popup');
+  
+  // Check if popup already exists
+  if (document.querySelector('#emergency-cart-popup')) {
+    document.querySelector('#emergency-cart-popup').style.display = 'block';
+    return;
+  }
+  
+  // Create a minimal cart popup
+  const cartPopup = document.createElement('div');
+  cartPopup.id = 'emergency-cart-popup';
+  cartPopup.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 35, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    padding: 20px;
+    min-width: 300px;
+    max-width: 90vw;
+  `;
+  
+  // Try to get cart items from any available cart system
+  let cartItems = [];
+  if (window.BobbyCarts && window.BobbyCarts.items) {
+    cartItems = window.BobbyCarts.items;
+  } else if (window.cartManager && window.cartManager.items) {
+    cartItems = window.cartManager.items;
+  } else if (window.BobbyCart && window.BobbyCart.items) {
+    cartItems = window.BobbyCart.items;
+  }
+  
+  // Create cart content
+  let cartContent = `
+    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+      <h3 style="margin: 0; color: white;">Your Cart</h3>
+      <button id="emergency-cart-close" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+    </div>
+    <div style="max-height: 60vh; overflow-y: auto;">
+  `;
+  
+  if (cartItems.length === 0) {
+    cartContent += `<p style="color: rgba(255,255,255,0.7); text-align: center;">Your cart is empty</p>`;
+  } else {
+    cartItems.forEach(item => {
+      cartContent += `
+        <div style="display: flex; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <div style="width: 50px; height: 50px; margin-right: 10px;">
+            <img src="${item.image || 'assets/placeholder.png'}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+          </div>
+          <div style="flex: 1;">
+            <div style="color: white; font-weight: bold;">${item.title || 'Product'}</div>
+            <div style="color: rgba(255,255,255,0.7);">Qty: ${item.quantity || 1}</div>
+            <div style="color: #a855f7;">$${(item.price || 0).toFixed(2)}</div>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  // Calculate total
+  const total = cartItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+  
+  cartContent += `
+    </div>
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+        <span style="color: white;">Total:</span>
+        <span style="color: white; font-weight: bold;">$${total.toFixed(2)}</span>
+      </div>
+      <button id="emergency-checkout-btn" style="width: 100%; padding: 10px; background: linear-gradient(45deg, #a855f7, #3b82f6); border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer;">
+        Checkout
+      </button>
+    </div>
+  `;
+  
+  cartPopup.innerHTML = cartContent;
+  document.body.appendChild(cartPopup);
+  
+  // Add event listeners
+  document.getElementById('emergency-cart-close').addEventListener('click', () => {
+    cartPopup.style.display = 'none';
+  });
+  
+  document.getElementById('emergency-checkout-btn').addEventListener('click', () => {
+    // Try all available checkout methods
+    if (window.BobbyCarts && typeof window.BobbyCarts.proceedToCheckout === 'function') {
+      window.BobbyCarts.proceedToCheckout();
+    } else if (window.cartManager && typeof window.cartManager.initiateShopifyCheckout === 'function') {
+      window.cartManager.initiateShopifyCheckout();
+    } else {
+      alert('Checkout functionality is not available at this time. Please try again later.');
+    }
+  });
+}
 
 /**
  * Fix issues with Shopify client initialization
