@@ -1514,8 +1514,16 @@ class ProductDetailManager {
             if (mainContent) {
                 mainContent.style.display = 'block';
             }
-            
             console.log('Product rendered successfully');
+            
+            // Trigger an event to notify that product detail rendering is complete
+            document.dispatchEvent(new CustomEvent('productDetailRendered'));
+            
+            // Initialize size guide if the global function is available
+            if (window.SizeGuide && typeof window.SizeGuide.init === 'function') {
+                window.SizeGuide.init();
+            }
+            
             
         } catch (error) {
             console.error('Error rendering product:', error);
