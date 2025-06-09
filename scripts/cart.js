@@ -139,9 +139,12 @@ class CartManager {
         }
         
         if (existingItem) {
-            existingItem.quantity += 1;
+            // Increment quantity when adding the same item again
+            existingItem.quantity += (variant.quantity || 1);
+            console.log(`Added to existing item in cart, new quantity: ${existingItem.quantity}`);
         } else {
-            this.items.push({
+            // Add as new item at the top of the cart for better visibility
+            this.items.unshift({
                 id: itemId,
                 productId: product.id,
                 shopifyProductId: product.shopifyId || product.shopifyProductId,
@@ -154,6 +157,7 @@ class CartManager {
                 quantity: variant.quantity || 1,
                 category: product.category
             });
+            console.log(`Added new item to cart: ${product.title} (${variant.color}/${variant.size})`);
         }
 
         this.saveCartToStorage();

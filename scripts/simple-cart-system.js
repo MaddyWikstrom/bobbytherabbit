@@ -255,26 +255,39 @@ const BobbyCart = (function() {
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
     
-    // Check if item already exists in cart
-    const existingItemIndex = items.findIndex(item => item.id === product.id);
+    // Create a variant-specific ID that combines product ID with color and size
+    const color = product.selectedColor || '';
+    const size = product.selectedSize || '';
+    const variantId = `${product.id}-${color}-${size}`;
+    
+    console.log(`Generated variant ID: ${variantId}`);
+    
+    // Check if this specific variant already exists in cart
+    const existingItemIndex = items.findIndex(item =>
+      item.id === variantId ||
+      (item.productId === product.id &&
+       item.selectedColor === color &&
+       item.selectedSize === size)
+    );
     
     if (existingItemIndex >= 0) {
-      // Update quantity if item exists (using exact quantity, not adding to it)
-      console.log(`Item already exists in cart, updating quantity from ${items[existingItemIndex].quantity} to ${product.quantity || 1}`);
-      items[existingItemIndex].quantity = product.quantity || 1;
+      // Increment quantity if this variant already exists
+      const newQuantity = items[existingItemIndex].quantity + (product.quantity || 1);
+      console.log(`Item already exists in cart, increasing quantity from ${items[existingItemIndex].quantity} to ${newQuantity}`);
+      items[existingItemIndex].quantity = newQuantity;
     } else {
       // Add new item with default quantity of 1 at the top of the cart
-      console.log(`Adding new item to cart: ${product.title}`);
+      console.log(`Adding new item to cart: ${product.title} (${color}/${size})`);
       items.unshift({
-        id: product.id,
+        id: variantId,
         productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
         price: product.price || 0,
         image: product.image || 'assets/placeholder.png',
         quantity: product.quantity || 1,
         variant: product.variantTitle || product.variant || '',
-        selectedColor: product.selectedColor || '',
-        selectedSize: product.selectedSize || ''
+        selectedColor: color,
+        selectedSize: size
       });
     }
     
