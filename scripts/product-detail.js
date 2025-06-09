@@ -2437,6 +2437,30 @@ class ProductDetailManager {
             // Create a unique ID for each product variant combination
             const variantId = `${this.currentProduct.id}_${this.selectedVariant.color}_${this.selectedVariant.size}`.replace(/\s+/g, '_');
             
+            // Find a color-specific image for the cart thumbnail
+            let colorImage = this.currentProduct.mainImage;
+            
+            // Try to get a color-specific image from the filtered images (already filtered by color)
+            if (this.filteredImages && this.filteredImages.length > 0) {
+                colorImage = this.filteredImages[0]; // Use the first image of the filtered set
+            }
+            // Or try the colorImages map directly
+            else if (this.currentProduct.colorImages &&
+                    this.currentProduct.colorImages[this.selectedVariant.color] &&
+                    this.currentProduct.colorImages[this.selectedVariant.color].length > 0) {
+                colorImage = this.currentProduct.colorImages[this.selectedVariant.color][0];
+            }
+            // If all else fails, look through variants
+            else if (this.currentProduct.variants) {
+                const matchingVariant = this.currentProduct.variants.find(v =>
+                    v.color === this.selectedVariant.color);
+                if (matchingVariant && matchingVariant.image) {
+                    colorImage = matchingVariant.image;
+                }
+            }
+            
+            console.log(`Using color image for ${this.selectedVariant.color}: ${colorImage}`);
+            
             // Create a properly formatted product object for cart system
             const cartProduct = {
                 // Use the variant-specific ID to ensure different variants are treated as different items
@@ -2444,7 +2468,7 @@ class ProductDetailManager {
                 productId: this.currentProduct.id, // Keep original product ID for reference
                 title: this.currentProduct.title,
                 price: this.currentProduct.price,
-                image: this.currentProduct.mainImage,
+                image: colorImage, // Use the color-specific image instead of main image
                 shopifyId: this.currentProduct.shopifyId,
                 // Provide both formats for maximum compatibility
                 selectedColor: this.selectedVariant.color,
