@@ -115,14 +115,30 @@ class ProductDetailManager {
             const decrementBtn = document.getElementById('decrement');
             
             if (quantityInput && incrementBtn && decrementBtn) {
-                incrementBtn.addEventListener('click', () => {
-                    const newValue = Math.min(parseInt(quantityInput.value) + 1, 10);
+                // Remove any existing event listeners by cloning and replacing the element
+                const newIncrementBtn = incrementBtn.cloneNode(true);
+                incrementBtn.parentNode.replaceChild(newIncrementBtn, incrementBtn);
+                incrementBtn = newIncrementBtn;
+
+                incrementBtn.addEventListener('click', (e) => {
+                    // Use current value to avoid accumulation issues
+                    const currentVal = parseInt(quantityInput.value) || 1;
+                    const newValue = Math.min(currentVal + 1, 10);
+                    console.log(`Incrementing quantity from ${currentVal} to ${newValue}`);
                     quantityInput.value = newValue;
                     this.selectedVariant.quantity = newValue;
                 });
                 
-                decrementBtn.addEventListener('click', () => {
-                    const newValue = Math.max(parseInt(quantityInput.value) - 1, 1);
+                // Remove any existing event listeners by cloning and replacing the element
+                const newDecrementBtn = decrementBtn.cloneNode(true);
+                decrementBtn.parentNode.replaceChild(newDecrementBtn, decrementBtn);
+                decrementBtn = newDecrementBtn;
+
+                decrementBtn.addEventListener('click', (e) => {
+                    // Use current value to avoid accumulation issues
+                    const currentVal = parseInt(quantityInput.value) || 1;
+                    const newValue = Math.max(currentVal - 1, 1);
+                    console.log(`Decrementing quantity from ${currentVal} to ${newValue}`);
                     quantityInput.value = newValue;
                     this.selectedVariant.quantity = newValue;
                 });
