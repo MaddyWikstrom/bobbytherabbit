@@ -1394,6 +1394,16 @@ class ProductManager {
         });
         
         // Auto-select size for one-size items (like beanies)
+        if (product.category === 'beanie' || product.category === 'hat' || sizeOptionElements.length === 1) {
+            // For one-size products, automatically select the first size option
+            if (sizeOptionElements.length > 0) {
+                sizeOptionElements[0].classList.add('active');
+                selectedSize = sizeOptionElements[0].dataset.size;
+                confirmBtn.disabled = false;
+            }
+        }
+        
+        // Auto-select size for one-size items (like beanies)
         if (sizeOptionElements.length === 1) {
             // Only one size available, automatically select it
             sizeOptionElements[0].classList.add('active');

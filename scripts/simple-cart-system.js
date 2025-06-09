@@ -30,11 +30,6 @@ const BobbyCart = (function() {
     
     // Update cart UI
     updateCartUI();
-    
-    // Notify that cart is ready for use
-    if (typeof window.cartSystemReadyCallback === 'function') {
-      window.cartSystemReadyCallback();
-    }
   }
   
   // Create cart drawer and overlay if they don't exist
@@ -601,38 +596,42 @@ const BobbyCart = (function() {
   
   // Initialize on DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      init();
-      // Set up the observer after DOM is loaded and body is available
-      setupMutationObserver();
-    });
+    document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
-    // Set up the observer immediately if DOM is already loaded
-    setupMutationObserver();
   }
   
-  // Function to safely set up the mutation observer
-  function setupMutationObserver() {
+  // Create observer for mutation events
+  let mutationObserver = null;
+  
+  // Set up the observer after init
+  function setupCartButtonObserver() {
+    // Only create one observer
+    if (mutationObserver) return;
+    
     try {
+      // Make sure body exists
       if (document.body) {
-        const observer = new MutationObserver(function(mutations) {
+        mutationObserver = new MutationObserver(function() {
+          // Check for new cart buttons
           setupCartButtons();
         });
         
-        observer.observe(document.body, {
+        mutationObserver.observe(document.body, {
           childList: true,
           subtree: true
         });
-        console.log('Cart MutationObserver initialized successfully');
       } else {
-        console.warn('document.body not available yet, retrying in 100ms');
-        setTimeout(setupMutationObserver, 100);
+        // Retry if body not available yet
+        setTimeout(setupCartButtonObserver, 100);
       }
-    } catch (error) {
-      console.error('Error setting up cart MutationObserver:', error);
+    } catch (e) {
+      console.error("Error setting up cart button observer:", e);
     }
   }
+  
+  // Run setup after a small delay to ensure DOM is ready
+  setTimeout(setupCartButtonObserver, 100);
   
   // Public API
   return {
