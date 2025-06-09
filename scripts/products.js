@@ -878,6 +878,9 @@ class ProductManager {
 
         // Color variant options for product cards
         document.querySelectorAll('.variant-option').forEach(option => {
+            // Store reference to the ProductManager instance
+            const self = this;
+            
             // Change product image on hover
             option.addEventListener('mouseenter', (e) => {
                 const colorOption = e.target;
@@ -908,7 +911,7 @@ class ProductManager {
             });
             
             // Set active color on click
-            option.addEventListener('click', (e) => {
+            option.addEventListener('click', function(e) {
                 e.stopPropagation(); // Prevent card click
                 
                 const colorOption = e.target;
@@ -931,8 +934,11 @@ class ProductManager {
                     productImage.dataset.originalSrc = colorImage;
                 }
                 
-                // Update the product card with the selected color
-                this.updateProductCardImage(productCard, colorName);
+                // Update the product card with the selected color using the stored reference
+                self.updateProductCardImage(productCard, colorName);
+                
+                // Log for debugging
+                console.log(`Color selected: ${colorName}, updating image for product card`, productCard);
             });
         });
 
@@ -1534,6 +1540,7 @@ class ProductManager {
     
     // New method to update product card images based on selected color
     updateProductCardImage(productCard, colorName) {
+        console.log(`updateProductCardImage called for color: ${colorName}`);
         if (!productCard || !colorName) return;
         
         try {
@@ -1576,7 +1583,7 @@ class ProductManager {
                 productImage.src = colorImages[0];
                 // Update the original source to keep this color selected
                 productImage.dataset.originalSrc = colorImages[0];
-                console.log(`Updated product card image for ${product.title} to color: ${colorName}`);
+                console.log(`Updated product card image for ${product.title} to color: ${colorName} with image: ${colorImages[0]}`);
             } else {
                 console.warn(`No specific images found for color: ${colorName} on product: ${product.title}`);
             }
