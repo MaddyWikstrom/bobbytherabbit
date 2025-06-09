@@ -308,58 +308,89 @@ class HomepageProductLoader {
         const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
         if (!product) return;
         
-        try {
-            // First check if BobbyCart (new system) is available
-            if (window.BobbyCart) {
-                // For one-size products like beanies, add directly
-                if (product.category === 'beanie' || product.category === 'hat' || product.sizes.length === 1) {
-                    const cartProduct = {
-                        id: product.id || 'unknown-product',
-                        title: product.title || 'Product',
-                        price: product.price || 0,
-                        image: product.mainImage || '',
-                        quantity: 1,
-                        variant: product.sizes.length === 1 ? product.sizes[0] : 'One Size'
-                    };
-                    
+        // Prepare the cart product for one-size items
+        const isOneSize = product.category === 'beanie' || product.category === 'hat' ||
+                         (product.sizes && product.sizes.length === 1);
+        
+        // For products with multiple sizes, redirect to product page
+        if (!isOneSize) {
+            this.viewProduct(productId);
+            return;
+        }
+
+        // Show a loading notification
+        this.showNotification('Adding to cart...', 'info');
+        
+        const cartProduct = {
+            id: product.id || 'unknown-product',
+            title: product.title || 'Product',
+            price: product.price || 0,
+            image: product.mainImage || '',
+            quantity: 1,
+            variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
+        };
+        
+        // Try different methods with fallbacks
+        const addToCartWithRetries = (retries = 3) => {
+            console.log(`Attempting to add to cart (retries left: ${retries})`);
+            
+            try {
+                // Try BobbyCart with addItem method
+                if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
                     window.BobbyCart.addItem(cartProduct);
-                    console.log('Added to cart via BobbyCart:', cartProduct);
+                    console.log('Successfully added to cart via BobbyCart.addItem');
                     this.showNotification('Product added to cart!', 'success');
-                } else {
-                    // For products with multiple sizes, redirect to product page
-                    this.viewProduct(productId);
+                    return true;
                 }
-            } else {
-                // Fallback to check other cart systems
-                if (window.cartManager) {
-                    // For one-size products like beanies, add directly
-                    if (product.category === 'beanie' || product.category === 'hat' || product.sizes.length === 1) {
-                        const cartProduct = {
-                            id: product.id || 'unknown-product',
-                            title: product.title || 'Product',
-                            price: product.price || 0,
-                            image: product.mainImage || '',
-                            quantity: 1,
-                            variant: product.sizes.length === 1 ? product.sizes[0] : 'One Size'
-                        };
-                        
-                        window.cartManager.addItem(cartProduct);
-                        console.log('Added to cart via cartManager:', cartProduct);
-                        this.showNotification('Product added to cart!', 'success');
-                    } else {
-                        // For products with multiple sizes, redirect to product page
-                        this.viewProduct(productId);
-                    }
+                
+                // Try BobbyCart with addToCart method
+                if (window.BobbyCart && typeof window.BobbyCart.addToCart === 'function') {
+                    window.BobbyCart.addToCart(cartProduct);
+                    console.log('Successfully added to cart via BobbyCart.addToCart');
+                    this.showNotification('Product added to cart!', 'success');
+                    return true;
+                }
+                
+                // Try cartManager with addItem method
+                if (window.cartManager && typeof window.cartManager.addItem === 'function') {
+                    window.cartManager.addItem(cartProduct);
+                    console.log('Successfully added to cart via cartManager.addItem');
+                    this.showNotification('Product added to cart!', 'success');
+                    return true;
+                }
+                
+                // Try cartManager with addToCart method
+                if (window.cartManager && typeof window.cartManager.addToCart === 'function') {
+                    window.cartManager.addToCart(cartProduct);
+                    console.log('Successfully added to cart via cartManager.addToCart');
+                    this.showNotification('Product added to cart!', 'success');
+                    return true;
+                }
+                
+                // If we get here, no cart system is available yet
+                if (retries > 0) {
+                    console.log(`Cart system not available yet, retrying in ${500 * (4-retries)}ms...`);
+                    setTimeout(() => addToCartWithRetries(retries - 1), 500 * (4-retries));
+                    return false;
                 } else {
-                    // No cart system available
-                    console.error('Cart system is not available');
-                    this.showNotification('Cart system is not available', 'error');
+                    throw new Error('Cart system not available after multiple retries');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                
+                if (retries > 0) {
+                    console.log(`Error occurred, retrying in ${500 * (4-retries)}ms...`);
+                    setTimeout(() => addToCartWithRetries(retries - 1), 500 * (4-retries));
+                    return false;
+                } else {
+                    this.showNotification('Error adding to cart', 'error');
+                    return false;
                 }
             }
-        } catch (error) {
-            console.error('Error adding to cart:', error);
-            this.showNotification('Error adding to cart', 'error');
-        }
+        };
+        
+        // Start the retry process
+        addToCartWithRetries();
     }
     
     // Show notification

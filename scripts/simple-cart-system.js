@@ -30,6 +30,11 @@ const BobbyCart = (function() {
     
     // Update cart UI
     updateCartUI();
+    
+    // Notify that cart is ready for use
+    if (typeof window.cartSystemReadyCallback === 'function') {
+      window.cartSystemReadyCallback();
+    }
   }
   
   // Create cart drawer and overlay if they don't exist
@@ -596,20 +601,38 @@ const BobbyCart = (function() {
   
   // Initialize on DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() {
+      init();
+      // Set up the observer after DOM is loaded and body is available
+      setupMutationObserver();
+    });
   } else {
     init();
+    // Set up the observer immediately if DOM is already loaded
+    setupMutationObserver();
   }
   
-  // Reinitialize cart buttons when DOM changes
-  const observer = new MutationObserver(function(mutations) {
-    setupCartButtons();
-  });
-  
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // Function to safely set up the mutation observer
+  function setupMutationObserver() {
+    try {
+      if (document.body) {
+        const observer = new MutationObserver(function(mutations) {
+          setupCartButtons();
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        console.log('Cart MutationObserver initialized successfully');
+      } else {
+        console.warn('document.body not available yet, retrying in 100ms');
+        setTimeout(setupMutationObserver, 100);
+      }
+    } catch (error) {
+      console.error('Error setting up cart MutationObserver:', error);
+    }
+  }
   
   // Public API
   return {

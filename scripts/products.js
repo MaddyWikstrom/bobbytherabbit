@@ -1451,50 +1451,65 @@ class ProductManager {
                 let cartAdded = false;
                 
                 // Try BobbyCart (consolidated cart)
-                if (window.BobbyCart) {
-                    window.BobbyCart.addToCart(cartProduct);
-                    cartAdded = true;
-                    
-                    // Force cart to open
-                    setTimeout(() => {
-                        window.BobbyCart.openCart();
-                    }, 300);
+                if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+                    try {
+                        window.BobbyCart.addItem(cartProduct);
+                        cartAdded = true;
+                        
+                        // Force cart to open
+                        setTimeout(() => {
+                            window.BobbyCart.openCart();
+                        }, 300);
+                    } catch (e) {
+                        console.error('Error using BobbyCart:', e);
+                    }
                 }
-                // Try BobbyCarts (older system)
-                else if (window.BobbyCarts) {
-                    window.BobbyCarts.addToCart(cartProduct);
-                    cartAdded = true;
-                    
-                    // Force cart to open
-                    setTimeout(() => {
-                        window.BobbyCarts.openCart();
-                    }, 300);
-                }
-                // Try cartManager (legacy system)
-                else if (window.cartManager) {
-                    window.cartManager.addItem(cartProduct);
-                    cartAdded = true;
-                    
-                    // Force cart to open
-                    setTimeout(() => {
-                        window.cartManager.openCart();
-                    }, 300);
-                }
-                // Try to initialize CartManager as last resort
-                else if (typeof CartManager !== 'undefined') {
-                    // Initialize CartManager as fallback
-                    window.cartManager = new CartManager();
-                    
-                    setTimeout(() => {
-                        try {
-                            window.cartManager.addItem(cartProduct);
+                // Try cartManager (alternative reference to BobbyCart)
+                else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
+                    try {
+                        window.cartManager.addItem(cartProduct);
+                        cartAdded = true;
+                        
+                        // Force cart to open
+                        setTimeout(() => {
                             window.cartManager.openCart();
-                            cartAdded = true;
-                        } catch (e) {
-                            console.error('Error adding to cart with new CartManager:', e);
-                            this.showNotification('Error adding to cart. This app requires deployment to Netlify.', 'error');
+                        }, 300);
+                    } catch (e) {
+                        console.error('Error using cartManager:', e);
+                    }
+                }
+                // Wait and retry if cart systems aren't available yet
+                else {
+                    console.log('Cart system not available yet, waiting...');
+                    setTimeout(() => {
+                        if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+                            try {
+                                window.BobbyCart.addItem(cartProduct);
+                                window.BobbyCart.openCart();
+                                cartAdded = true;
+                                this.showNotification('Product added to cart!', 'success');
+                            } catch (e) {
+                                console.error('Error using delayed BobbyCart:', e);
+                                this.showNotification('Error adding to cart', 'error');
+                            }
+                        } else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
+                            try {
+                                window.cartManager.addItem(cartProduct);
+                                window.cartManager.openCart();
+                                cartAdded = true;
+                                this.showNotification('Product added to cart!', 'success');
+                            } catch (e) {
+                                console.error('Error using delayed cartManager:', e);
+                                this.showNotification('Error adding to cart', 'error');
+                            }
+                        } else {
+                            console.error('Cart system not available after waiting');
+                            this.showNotification('Cart system is not available', 'error');
                         }
-                    }, 100);
+                    }, 1000); // Wait a bit longer for cart to initialize
+                    
+                    // Return early since we're handling this asynchronously
+                    return;
                 }
                 
                 if (cartAdded) {

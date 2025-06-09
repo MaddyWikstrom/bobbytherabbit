@@ -19,6 +19,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Simple Cart System - Clean, reliable implementation -->
+    <script>
+        // Create a global flag to track cart system readiness
+        window.cartSystemReady = false;
+        
+        // Function to notify when cart is ready
+        window.cartSystemReadyCallback = function() {
+            window.cartSystemReady = true;
+            console.log('Cart system ready for use');
+            // Dispatch a custom event that other scripts can listen for
+            document.dispatchEvent(new CustomEvent('cartSystemReady'));
+        };
+        
+        // Create a helper function to safely use the cart
+        window.safelyUseCart = function(callback, maxRetries = 5, retryDelay = 300) {
+            if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+                callback(window.BobbyCart);
+                return true;
+            }
+            else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
+                callback(window.cartManager);
+                return true;
+            }
+            else if (maxRetries > 0) {
+                console.log(`Cart system not ready, retrying in ${retryDelay}ms... (${maxRetries} retries left)`);
+                setTimeout(() => {
+                    window.safelyUseCart(callback, maxRetries - 1, retryDelay * 1.5);
+                }, retryDelay);
+                return false;
+            }
+            else {
+                console.error('Cart system not available after multiple retries');
+                return false;
+            }
+        };
+    </script>
     <script src="/scripts/simple-cart-system.js"></script>
     <style>
         .password-screen {
@@ -433,6 +468,24 @@
     <!-- Note: Cart elements are now dynamically created by simple-cart-system.js -->
 
     <script>
+        // Add a notification when cart system is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if cart system is already initialized
+            if (window.BobbyCart || window.cartManager) {
+                window.cartSystemReadyCallback();
+            } else {
+                // Set a safety timeout to check for cart system
+                setTimeout(function checkCartSystem() {
+                    if (window.BobbyCart || window.cartManager) {
+                        window.cartSystemReadyCallback();
+                    } else {
+                        // Try again in 100ms
+                        setTimeout(checkCartSystem, 100);
+                    }
+                }, 100);
+            }
+        });
+        
         // Password validation functionality
         document.addEventListener('DOMContentLoaded', function() {
             const correctPassword = "bajablastrabbit47";
