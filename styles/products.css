@@ -231,46 +231,23 @@
     min-height: 60vh;
     position: relative;
     overflow: hidden;
+    background: #0a0a0f;
 }
 
-/* Cyber grid background for product collection */
+/* Simple grid pattern for product collection */
 .product-collection::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(0deg, rgba(139, 92, 246, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 92, 246, 0.02) 1px, transparent 1px);
+    background-size: 100px 100px;
+    animation: grid-drift 120s linear infinite;
     z-index: -1;
-    background:
-        /* Checkerboard mask */
-        repeating-linear-gradient(
-            0deg,
-            transparent 0,
-            transparent 600px,
-            #0a0a0a 600px,
-            #0a0a0a 1200px
-        ),
-        repeating-linear-gradient(
-            90deg,
-            transparent 0,
-            transparent 600px,
-            #0a0a0a 600px,
-            #0a0a0a 1200px
-        ),
-        /* Pattern image */
-        url('../assets/bg-pattern.png');
-    background-size:
-        1200px 1200px,
-        1200px 1200px,
-        600px 600px;
-    background-position:
-        0 0,
-        0 0,
-        0 0;
-    background-repeat: repeat;
-    background-blend-mode: multiply, multiply, normal;
-    animation: pattern-scroll 120s linear infinite;
     pointer-events: none;
 }
 
