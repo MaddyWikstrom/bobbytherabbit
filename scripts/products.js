@@ -748,6 +748,26 @@ class ProductManager {
             productsGrid.innerHTML = productsToShow.map(product => this.createProductCard(product)).join('');
             this.renderPagination();
             this.attachProductEventListeners();
+            
+            // Ensure initial images show the active color for each product card
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                try {
+                    // Find the active color option
+                    const activeColorOption = card.querySelector('.variant-option.active');
+                    if (activeColorOption && activeColorOption.dataset.colorImage) {
+                        // Get the product image and update it with the active color's image
+                        const productImage = card.querySelector('.product-image');
+                        if (productImage) {
+                            productImage.src = activeColorOption.dataset.colorImage;
+                            productImage.dataset.originalSrc = activeColorOption.dataset.colorImage;
+                            console.log('Set initial product image to active color:', activeColorOption.dataset.color);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Error setting initial product image:', err);
+                }
+            });
         }, 500);
     }
 
@@ -755,24 +775,48 @@ class ProductManager {
         const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
         
         // Store color-specific data for JavaScript handling
-        const colorImagesJSON = product.colorImages ? JSON.stringify(product.colorImages) : '{}';
+        // Ensure the color keys are strings, not objects
+        let colorImagesForJSON = {};
+        if (product.colorImages) {
+            // Convert any object keys to string keys
+            Object.keys(product.colorImages).forEach(colorKey => {
+                // Use the color name as the key
+                const colorName = typeof colorKey === 'object' ? colorKey.name : colorKey;
+                colorImagesForJSON[colorName] = product.colorImages[colorKey];
+            });
+        }
+        
+        // Log for debugging
+        console.log(`Preparing color images for product ${product.id}:`, colorImagesForJSON);
+        
+        // Stringify with proper error handling
+        let colorImagesJSON = '{}';
+        try {
+            colorImagesJSON = JSON.stringify(colorImagesForJSON);
+        } catch (err) {
+            console.error(`Error stringifying color images for product ${product.id}:`, err);
+        }
         
         // Create HTML for variant options with data attributes for main page color switching
         const variantOptionsHTML = product.colors.length > 0
             ? product.colors.slice(0, 4).map((color, index) => {
+                // Extract color name from object or string
+                const colorName = typeof color === 'object' ? color.name : color;
+                const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
+                
                 // Get the first image for this color
-                const colorImage = product.colorImages && product.colorImages[color] && product.colorImages[color].length > 0
-                    ? product.colorImages[color][0]
+                const colorImage = product.colorImages && product.colorImages[colorName] && product.colorImages[colorName].length > 0
+                    ? product.colorImages[colorName][0]
                     : product.mainImage;
                 
                 // Set the first color as active by default
                 const isActive = index === 0 ? 'active' : '';
                 
                 return `<div class="variant-option ${isActive}"
-                           data-color="${color}"
+                           data-color="${colorName}"
                            data-color-image="${colorImage}"
-                           style="background-color: ${this.getColorCode(color)}"
-                           title="${color}"></div>`;
+                           style="background-color: ${colorCode}"
+                           title="${colorName}"></div>`;
             }).join('')
             : '';
         
@@ -951,6 +995,32 @@ class ProductManager {
                     console.log(`Updated product image to: ${colorSpecificImage}`);
                 }
                 
+                // Update all instances of this product across the page
+                // Find all cards for the same product
+                const productId = productCard.dataset.productId;
+                document.querySelectorAll(`.product-card[data-product-id="${productId}"]`).forEach(card => {
+                    if (card !== productCard) { // Skip the card we already updated
+                        // Find the matching color option
+                        const matchingOption = card.querySelector(`.variant-option[data-color="${colorName}"]`);
+                        if (matchingOption) {
+                            // Remove active class from all options in this card
+                            card.querySelectorAll('.variant-option').forEach(opt => {
+                                opt.classList.remove('active');
+                            });
+                            // Add active class to matching option
+                            matchingOption.classList.add('active');
+                            
+                            // Update image
+                            const cardImage = card.querySelector('.product-image');
+                            if (cardImage && matchingOption.dataset.colorImage) {
+                                cardImage.src = matchingOption.dataset.colorImage;
+                                cardImage.dataset.originalSrc = matchingOption.dataset.colorImage;
+                                console.log(`Updated duplicate card image to: ${matchingOption.dataset.colorImage}`);
+                            }
+                        }
+                    }
+                });
+                
                 // Use a direct approach that doesn't rely on 'this' context
                 updateProductCardImage(colorName, productCard, colorSpecificImage);
                 
@@ -981,6 +1051,26 @@ class ProductManager {
                         productImage.src = colorSpecificImage;
                         productImage.dataset.originalSrc = colorSpecificImage;
                         console.log(`Used direct color image: ${colorSpecificImage}`);
+                        
+                        // Also update all other instances of this product with the same color
+                        document.querySelectorAll(`.product-card[data-product-id="${productId}"]`).forEach(card => {
+                            if (card !== productCard) { // Skip the current card
+                                const cardImage = card.querySelector('.product-image');
+                                if (cardImage) {
+                                    cardImage.src = colorSpecificImage;
+                                    cardImage.dataset.originalSrc = colorSpecificImage;
+                                    
+                                    // Also update the active color selection
+                                    card.querySelectorAll('.variant-option').forEach(opt => {
+                                        opt.classList.remove('active');
+                                        if (opt.dataset.color === colorName) {
+                                            opt.classList.add('active');
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        
                         return; // Exit early if we used the direct image
                     }
                 }
@@ -1666,6 +1756,30 @@ class ProductManager {
                 // Update the original source to keep this color selected
                 productImage.dataset.originalSrc = colorImages[0];
                 console.log(`Updated product card image for ${product.title} to color: ${colorName} with image: ${colorImages[0]}`);
+                
+                // Also update all other instances of this product on the page
+                const allProductCards = document.querySelectorAll(`.product-card[data-product-id="${productId}"]`);
+                allProductCards.forEach(card => {
+                    if (card !== productCard) { // Skip the card we already updated
+                        const cardImage = card.querySelector('.product-image');
+                        const cardColorOption = card.querySelector(`.variant-option[data-color="${colorName}"]`);
+                        
+                        // Update active color selection
+                        if (cardColorOption) {
+                            card.querySelectorAll('.variant-option').forEach(opt => {
+                                opt.classList.remove('active');
+                            });
+                            cardColorOption.classList.add('active');
+                        }
+                        
+                        // Update image
+                        if (cardImage) {
+                            cardImage.src = colorImages[0];
+                            cardImage.dataset.originalSrc = colorImages[0];
+                            console.log(`Updated duplicate card image for ${product.title}`);
+                        }
+                    }
+                });
             } else {
                 console.warn(`No specific images found for color: ${colorName} on product: ${product.title}`);
             }
