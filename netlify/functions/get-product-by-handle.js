@@ -222,12 +222,8 @@ exports.handler = async function(event, context) {
     handle.toLowerCase(),
     handle.replace(/-/g, '_'),
     handle.replace(/_/g, '-'),
-    handle.replace(/\s+/g, '-').toLowerCase(),
-    // Add special case for the hardware hoodie which is having image issues
-    handle === 'bungi-x-bobby-rabbit-hardware-unisex-hoodie' ? 'bungi-hardware-hoodie' : null,
-    handle === 'bungi-x-bobby-rabbit-hardware-unisex-hoodie' ? 'bungi-hardware-hoodie-unisex' : null,
-    handle === 'bungi-x-bobby-rabbit-hardware-unisex-hoodie' ? 'bungi-x-bobby-hardware-hoodie' : null
-  ].filter(Boolean); // Remove null values
+    handle.replace(/\s+/g, '-').toLowerCase()
+  ];
   
   console.log(`Will try these handle variations if needed:`, handleVariations);
   
