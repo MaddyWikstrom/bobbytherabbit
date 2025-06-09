@@ -275,6 +275,12 @@ const BobbyCart = (function() {
       const newQuantity = items[existingItemIndex].quantity + (product.quantity || 1);
       console.log(`Item already exists in cart, increasing quantity from ${items[existingItemIndex].quantity} to ${newQuantity}`);
       items[existingItemIndex].quantity = newQuantity;
+      
+      // Update image if a better one is provided
+      if (product.image && product.image !== 'assets/placeholder.png') {
+        console.log(`Updating image for existing cart item: ${product.title}`);
+        items[existingItemIndex].image = product.image;
+      }
     } else {
       // Add new item with default quantity of 1 at the top of the cart
       console.log(`Adding new item to cart: ${product.title} (${color}/${size})`);

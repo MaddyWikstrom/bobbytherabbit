@@ -2769,8 +2769,32 @@ class QuickViewManager {
             }
         }
         
-        // Get current product image
-        const image = document.getElementById('quick-view-main-image').src;
+        // Get current product image - this is the currently displayed image in the quick view modal
+        const currentMainImage = document.getElementById('quick-view-main-image');
+        const image = currentMainImage ? currentMainImage.src : '';
+        
+        // If we have color-specific images, make sure we use the right one
+        let colorSpecificImage = image;
+        if (this.selectedVariant.color && this.currentProduct.images) {
+            // Find images for this color
+            const colorImages = this.currentProduct.images.filter(imgUrl => {
+                const imgUrlLower = imgUrl.toLowerCase();
+                const colorNameLower = this.selectedVariant.color.toLowerCase();
+                
+                return imgUrlLower.includes(`/${colorNameLower}`) ||
+                    imgUrlLower.includes(`${colorNameLower}.`) ||
+                    imgUrlLower.includes(`_${colorNameLower}`) ||
+                    imgUrlLower.includes(`-${colorNameLower}`) ||
+                    imgUrlLower.includes(`color=${colorNameLower}`) ||
+                    imgUrlLower.includes(colorNameLower);
+            });
+            
+            // Use first matching color image if found
+            if (colorImages.length > 0) {
+                colorSpecificImage = colorImages[0];
+                console.log(`Found color-specific image for ${this.selectedVariant.color}: ${colorSpecificImage}`);
+            }
+        }
         
         // Create cart item with multiple variant formats to ensure compatibility
         const cartItem = {
@@ -2779,8 +2803,8 @@ class QuickViewManager {
             selectedSize: this.selectedVariant.size,
             quantity: this.selectedVariant.quantity,
             shopifyVariantId: variantId,
-            mainImage: image,
-            image: image,
+            mainImage: colorSpecificImage,
+            image: colorSpecificImage,
             // Provide variants in multiple formats for different cart systems
             variants: {
                 size: this.selectedVariant.size,
