@@ -2306,17 +2306,25 @@ class QuickViewManager {
                 // If already matched, skip further checks
                 if (matched) return;
                 
-                // 2. Handle multi-word color names (e.g., "Forest Green")
+                // 2. Handle multi-word color names (e.g., "Forest Green", "Charcoal Heather", "Vintage Black")
                 const colorParts = colorNameLower.split(/\s+/);
                 if (colorParts.length > 1) {
-                    // Check if all parts of the color name appear in the URL
-                    const allPartsPresent = colorParts.every(part =>
-                        imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
-                    );
+                    // First approach: Match if ANY meaningful part is present (more lenient)
+                    for (const part of colorParts) {
+                        if (part.length > 2 && imgUrl.includes(part)) {
+                            thumbnail.setAttribute('data-color', colorName);
+                            matched = true;
+                            break;
+                        }
+                    }
                     
-                    if (allPartsPresent) {
-                        thumbnail.setAttribute('data-color', colorName);
-                        matched = true;
+                    // If still no match, try the combined color name
+                    if (!matched) {
+                        const combinedColorName = colorParts.join("");
+                        if (imgUrl.includes(combinedColorName)) {
+                            thumbnail.setAttribute('data-color', colorName);
+                            matched = true;
+                        }
                     }
                 }
                 
@@ -2371,17 +2379,26 @@ class QuickViewManager {
             // If already matched, skip further checks
             if (matched) return;
             
-            // 3. Handle multi-word color names (e.g., "Forest Green")
+            // 3. Handle multi-word color names (e.g., "Forest Green", "Charcoal Heather", "Vintage Black")
             const colorParts = colorNameLower.split(/\s+/);
             if (colorParts.length > 1) {
-                // Check if all parts of the color name appear in the URL
-                const allPartsPresent = colorParts.every(part =>
-                    imgUrlLower.includes(part) && part.length > 2  // Only consider parts with 3+ chars
-                );
+                // More lenient approach for multi-word colors - check if ANY meaningful part is in the URL
+                for (const part of colorParts) {
+                    // Only check parts with 3+ characters to avoid false matches with short words
+                    if (part.length > 2 && imgUrlLower.includes(part)) {
+                        potentiallyMatching.push(imgUrl);
+                        matched = true;
+                        break;
+                    }
+                }
                 
-                if (allPartsPresent) {
-                    potentiallyMatching.push(imgUrl);
-                    matched = true;
+                // If not matched yet, try the combined name (e.g., "charcoalheather" or "vintageblack")
+                if (!matched) {
+                    const combinedColorName = colorParts.join("");
+                    if (imgUrlLower.includes(combinedColorName)) {
+                        potentiallyMatching.push(imgUrl);
+                        matched = true;
+                    }
                 }
             }
             
@@ -2651,17 +2668,25 @@ class QuickViewManager {
                 // If already matched, continue to next image
                 if (matched) continue;
                 
-                // Handle multi-word color names (e.g., "Forest Green")
+                // Handle multi-word color names (e.g., "Forest Green", "Charcoal Heather", "Vintage Black")
                 const colorParts = colorNameLower.split(/\s+/);
                 if (colorParts.length > 1) {
-                    // Check if all parts of the color name appear in the URL
-                    const allPartsPresent = colorParts.every(part =>
-                        imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
-                    );
+                    // Try matching with any meaningful part of the multi-word color
+                    for (const part of colorParts) {
+                        if (part.length > 2 && imgUrl.includes(part)) {
+                            colorImages.push(image);
+                            matched = true;
+                            break;
+                        }
+                    }
                     
-                    if (allPartsPresent) {
-                        colorImages.push(image);
-                        matched = true;
+                    // If still not matched, try the combined name without spaces
+                    if (!matched) {
+                        const combinedColorName = colorParts.join("");
+                        if (imgUrl.includes(combinedColorName)) {
+                            colorImages.push(image);
+                            matched = true;
+                        }
                     }
                 }
                 
@@ -2976,15 +3001,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 return true;
                             }
                             
-                            // Handle multi-word color names (e.g., "Forest Green")
+                            // Handle multi-word color names (e.g., "Forest Green", "Charcoal Heather", "Vintage Black")
                             const colorParts = colorNameLower.split(/\s+/);
                             if (colorParts.length > 1) {
-                                // Check if all parts of the color name appear in the URL
-                                const allPartsPresent = colorParts.every(part =>
-                                    imgUrl.includes(part) && part.length > 2  // Only consider parts with 3+ chars
-                                );
+                                // More lenient approach - match if ANY significant part is found
+                                for (const part of colorParts) {
+                                    if (part.length > 2 && imgUrl.includes(part)) {
+                                        return true;
+                                    }
+                                }
                                 
-                                if (allPartsPresent) {
+                                // Try combined color name without spaces
+                                const combinedColor = colorParts.join("");
+                                if (imgUrl.includes(combinedColor)) {
                                     return true;
                                 }
                                 
