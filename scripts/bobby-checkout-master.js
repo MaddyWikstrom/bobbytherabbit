@@ -12,10 +12,14 @@
   
   // Load our fix scripts if they're not already loaded
   loadFixScripts([
-    '/scripts/checkout-fix.js',
     '/scripts/universal-cart-fix.js',
     '/scripts/cart-bridge-fix.js'
   ]);
+  
+  // Load checkout-fix.js conditionally to prevent duplicate declaration errors
+  if (!window.SilentCheckoutSystem) {
+    loadFixScripts(['/scripts/checkout-fix.js']);
+  }
   
   // Add universal cart functionality to all pages
   document.addEventListener('DOMContentLoaded', function() {
