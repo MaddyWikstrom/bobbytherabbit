@@ -2197,82 +2197,72 @@ class QuickViewManager {
             return;
         }
         
-        // Helper function to deduplicate image URLs with strict matching for Forest Green and other multi-word colors
+        // Helper function to deduplicate image URLs with strict matching
         const deduplicateImages = (images) => {
-            // Create a map to track image URLs we've seen
-            const uniqueImagesMap = new Map();
-            const uniqueImages = [];
-            
-            // Extract color from URL for classification
-            const getColorFromUrl = (url) => {
-                const lowerUrl = url.toLowerCase();
-                // Common color names we might find in URLs
-                const colorNames = ['forest green', 'navy blue', 'olive green', 'black', 'white', 'red', 'blue', 'green'];
-                
-                for (const colorName of colorNames) {
-                    // Check for color name in various formats
-                    if (lowerUrl.includes(colorName) ||
-                        lowerUrl.includes(colorName.replace(' ', '-')) ||
-                        lowerUrl.includes(colorName.replace(' ', '_'))) {
-                        return colorName;
-                    }
-                }
-                return null;
-            };
-            
-            // Pre-process: Sort images by color for more consistent selection
-            const sortedImages = [...images].sort((a, b) => {
-                const colorA = getColorFromUrl(a) || '';
-                const colorB = getColorFromUrl(b) || '';
-                return colorA.localeCompare(colorB);
-            });
-            
-            // First pass: Group by color to ensure we keep one image per distinct view
-            const colorGroups = new Map();
-            
-            sortedImages.forEach(imgUrl => {
-                try {
-                    // Generate a simpler but effective key based on filename
-                    const urlObj = new URL(imgUrl, window.location.origin);
-                    const filename = urlObj.pathname.split('/').pop();
-                    
-                    // Extract color from URL
-                    const detectedColor = getColorFromUrl(imgUrl);
-                    
-                    // Create a key that combines detected color and filename pattern
-                    // This makes deduplication more aggressive for multi-word colors
-                    let groupKey;
-                    
-                    if (detectedColor && detectedColor.includes(' ')) {
-                        // For multi-word colors, create a stricter key to avoid duplicates
-                        groupKey = `${detectedColor}-${filename.split('.')[0].substring(0, 8)}`;
-                    } else {
-                        // For single-word colors, be less strict
-                        groupKey = filename;
-                    }
-                    
-                    // Only save the first image we see for each group key
-                    if (!colorGroups.has(groupKey)) {
-                        colorGroups.set(groupKey, imgUrl);
-                    }
-                } catch (e) {
-                    // If URL parsing fails, use the full URL as the key
-                    colorGroups.set(imgUrl, imgUrl);
-                }
-            });
-            
-            // Convert the map values back to an array
-            const dedupedImages = Array.from(colorGroups.values());
-            
-            console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images using strict color-based grouping`);
-            
-            // If we have too few images, ensure at least one per color for better representation
-            if (dedupedImages.length < 2 && images.length > 2) {
-                console.log(`Too few images after deduplication, ensuring minimum representation`);
-                return images.slice(0, Math.min(5, images.length));
+            // Safety check - validate input
+            if (!images || !Array.isArray(images)) {
+                return [];
             }
             
-            return dedupedImages;
+            // Hard limit to prevent excessive processing
+            const MAX_IMAGES = 8;
+            if (images.length <= MAX_IMAGES) {
+                console.log("Small number of images, skipping deduplication");
+                return images.slice(0, MAX_IMAGES);
+            }
+            
+            // Filter out invalid URLs first (e.g., product.html links incorrectly added as images)
+            const validImages = images.filter(imgUrl => {
+                return imgUrl && typeof imgUrl === 'string' && !imgUrl.includes('product.html');
+            }).slice(0, 25); // Process at most 25 images
+            
+            if (validImages.length <= MAX_IMAGES) {
+                console.log(`Only ${validImages.length} valid images, skipping complex deduplication`);
+                return validImages;
+            }
+            
+            // Use a simple Set for deduplication of exact duplicates
+            const uniqueUrls = [...new Set(validImages)];
+            
+            // If deduplication reduced to an acceptable number, return early
+            if (uniqueUrls.length <= MAX_IMAGES) {
+                console.log(`Basic deduplication reduced from ${validImages.length} to ${uniqueUrls.length} images`);
+                return uniqueUrls;
+            }
+            
+            // Simple deduplication based on filename patterns
+            const dedupedByFilename = [];
+            const seenPatterns = new Set();
+            
+            for (const imgUrl of uniqueUrls) {
+                try {
+                    // Extract filename from URL
+                    const filename = imgUrl.split('/').pop().split('?')[0];
+                    // Create a pattern based on first part of filename
+                    const basePattern = filename.split('.')[0].substring(0, 10);
+                    
+                    if (!seenPatterns.has(basePattern)) {
+                        seenPatterns.add(basePattern);
+                        dedupedByFilename.push(imgUrl);
+                        
+                        // If we've reached our limit, stop processing
+                        if (dedupedByFilename.length >= MAX_IMAGES) {
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // If filename extraction fails, just add the URL
+                    dedupedByFilename.push(imgUrl);
+                    if (dedupedByFilename.length >= MAX_IMAGES) {
+                        break;
+                    }
+                }
+            }
+            
+            console.log(`Deduplicated from ${images.length} to ${dedupedByFilename.length} images`);
+            
+            // Ensure we don't return more than MAX_IMAGES
+            return dedupedByFilename.slice(0, MAX_IMAGES);
         };
         
         // First try to find images in the colorImages mapping if available
@@ -3083,7 +3073,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         
                         if (colorImages.length > 0) {
-                            window.productDetailManager.filteredImages = colorImages;
+                            // Limit to 8 images max to prevent excessive processing
+                            window.productDetailManager.filteredImages = colorImages.slice(0, 8);
                         }
                     }
                     
@@ -3203,7 +3194,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // If new thumbnails were added and we have a color parameter, apply filtering again
             if (thumbnailsAdded && colorParam && window.productDetailManager) {
-                window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
+                // Use a timeout and a flag to prevent multiple calls
+                if (!window.isFilteringInProgress) {
+                    window.isFilteringInProgress = true;
+                    setTimeout(() => {
+                        window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
+                        window.isFilteringInProgress = false;
+                    }, 100);
+                }
             }
             
             // If new size elements were added, apply size simplification

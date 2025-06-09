@@ -17,9 +17,11 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // Get product handle from query params
+  // Get product handle/ID from query params
   const params = event.queryStringParameters;
   const handle = params && params.handle;
+  const idType = params && params.id_type;
+  const isNumericId = idType === 'numeric' || /^\d+$/.test(handle);
   
   if (!handle) {
     return {
@@ -28,11 +30,11 @@ exports.handler = async function(event, context) {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: 'Product handle is required' })
+      body: JSON.stringify({ error: 'Product handle or ID is required' })
     };
   }
 
-  console.log(`Fetching product with handle: ${handle}`);
+  console.log(`Fetching product with ${isNumericId ? 'numeric ID' : 'handle'}: ${handle}`);
 
   // Configuration with fallback domains
   const SHOPIFY_CONFIGS = [
@@ -50,12 +52,71 @@ exports.handler = async function(event, context) {
   ];
   
   // Add debugging for the request
-  console.log(`Attempting to fetch product with handle: ${handle} from ${SHOPIFY_CONFIGS.length} configured domains`);
+  console.log(`Attempting to fetch product from ${SHOPIFY_CONFIGS.length} configured domains`);
 
   // GraphQL query for a single product by handle
-  const productQuery = `
+  const productByHandleQuery = `
     query ProductByHandle($handle: String!) {
       product(handle: $handle) {
+        id
+        title
+        handle
+        description
+        descriptionHtml
+        priceRange {
+          minVariantPrice {
+            amount
+            currencyCode
+          }
+          maxVariantPrice {
+            amount
+            currencyCode
+          }
+        }
+        images(first: 250) {
+          edges {
+            node {
+              url
+              altText
+            }
+          }
+        }
+        variants(first: 100) {
+          edges {
+            node {
+              id
+              title
+              price {
+                amount
+                currencyCode
+              }
+              compareAtPrice {
+                amount
+                currencyCode
+              }
+              availableForSale
+              quantityAvailable
+              image {
+                url
+                altText
+              }
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+        tags
+        productType
+      }
+    }
+  `;
+
+  // GraphQL query for a single product by ID
+  const productByIdQuery = `
+    query ProductById($id: ID!) {
+      product(id: $id) {
         id
         title
         handle
@@ -135,7 +196,25 @@ exports.handler = async function(event, context) {
         // Try each handle format
         for (const currentHandle of handleFormats) {
           try {
-            console.log(`Attempt ${i + 1}: Trying domain ${config.domain} for product handle "${currentHandle}"`);
+            console.log(`Attempt ${i + 1}: Trying domain ${config.domain} for ${isNumericId ? 'product ID' : 'product handle'} "${currentHandle}"`);
+            
+            // Determine which query to use based on whether this looks like an ID or a handle
+            let queryBody;
+            if (isNumericId) {
+              // If it's a numeric ID, we need to format it as a global ID for the Shopify API
+              const globalId = `gid://shopify/Product/${currentHandle}`;
+              queryBody = {
+                query: productByIdQuery,
+                variables: { id: globalId }
+              };
+              console.log(`Using ID query with global ID: ${globalId}`);
+            } else {
+              // Otherwise use the handle query
+              queryBody = {
+                query: productByHandleQuery,
+                variables: { handle: currentHandle }
+              };
+            }
             
             const response = await fetch(`https://${config.domain}/api/${config.apiVersion}/graphql.json`, {
               method: 'POST',
@@ -145,10 +224,7 @@ exports.handler = async function(event, context) {
                 'Accept': 'application/json',
                 'User-Agent': 'Netlify-Function/1.0'
               },
-              body: JSON.stringify({ 
-                query: productQuery,
-                variables: { handle: currentHandle }
-              })
+              body: JSON.stringify(queryBody)
             });
 
             console.log(`Response status: ${response.status} for domain ${config.domain} with handle "${currentHandle}"`);
@@ -217,15 +293,35 @@ exports.handler = async function(event, context) {
   }
 
   // Try variations of the handle if the original doesn't work
-  const handleVariations = [
-    handle,
-    handle.toLowerCase(),
-    handle.replace(/-/g, '_'),
-    handle.replace(/_/g, '-'),
-    handle.replace(/\s+/g, '-').toLowerCase()
-  ];
+  let handleVariations;
   
-  console.log(`Will try these handle variations if needed:`, handleVariations);
+  if (isNumericId) {
+    // If it's a numeric ID, we typically don't need variations
+    handleVariations = [handle];
+    console.log(`Using numeric ID: ${handle} without variations`);
+  } else {
+    // Special case for the hoodie product
+    if (handle === 'hoodie' || handle === '8535770792103') {
+      handleVariations = [
+        'hoodie',
+        'tech-animal-hoodie',
+        'bobby-hoodie',
+        'bungi-hoodie',
+        'streetwear-hoodie'
+      ];
+      console.log(`Special case for hoodie product, using predefined handles:`, handleVariations);
+    } else {
+      // For regular handles, try multiple formats
+      handleVariations = [
+        handle,
+        handle.toLowerCase(),
+        handle.replace(/-/g, '_'),
+        handle.replace(/_/g, '-'),
+        handle.replace(/\s+/g, '-').toLowerCase()
+      ];
+      console.log(`Will try these handle variations if needed:`, handleVariations);
+    }
+  }
   
   // Try each configuration
   let lastError = null;

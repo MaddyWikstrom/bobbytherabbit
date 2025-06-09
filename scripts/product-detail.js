@@ -1027,9 +1027,25 @@ class ProductDetailManager {
             
             console.log(`Loading product with ID: ${productId}`);
             
-            // Add a timestamp to prevent caching issues
+            // Special case for the hoodie product
+            if (productId === '8535770792103' || productId === 'hoodie') {
+                console.log('Special case detected: using hardcoded hoodie ID');
+                productId = 'hoodie'; // Force using the handle 'hoodie'
+            }
+            
+            // Check if the ID is a numeric Shopify ID
+            const isNumericId = /^\d+$/.test(productId);
+            
+            // Build URL based on ID type
             const timestamp = new Date().getTime();
-            const url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&_=${timestamp}`;
+            let url;
+            
+            if (isNumericId) {
+                console.log(`Numeric ID detected, adding id_type=numeric parameter`);
+                url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&id_type=numeric&_=${timestamp}`;
+            } else {
+                url = `/.netlify/functions/get-product-by-handle?handle=${encodeURIComponent(productId)}&_=${timestamp}`;
+            }
             
             // Log the URL we're trying to fetch for debugging
             console.log(`Fetching from URL: ${url}`);

@@ -59,18 +59,37 @@
                 // If we're dealing with a variant of black, set up exclusion rules
                 if (normalizedColor === 'black') {
                     // For plain "black", exclude images with "vintage-black"
-                    blackExclusionCheck = (url) => !url.toLowerCase().includes('vintage-black');
+                    blackExclusionCheck = (url) => {
+                        const lowerUrl = url.toLowerCase();
+                        // Make sure URL is valid and specifically for plain "black", not "vintage black"
+                        if (lowerUrl.includes('product.html')) {
+                            return false; // Skip invalid URLs that are actually product links
+                        }
+                        // Match only "black" but not "vintage black"
+                        return (lowerUrl.includes('-black') || lowerUrl.includes('_black') || lowerUrl.includes('/black/')) &&
+                               !lowerUrl.includes('vintage-black') &&
+                               !lowerUrl.includes('vintage_black');
+                    };
                 } else if (normalizedColor === 'vintage black') {
                     // For "vintage black", only include images specifically with vintage black
                     blackExclusionCheck = (url) => {
                         const lowerUrl = url.toLowerCase();
+                        if (lowerUrl.includes('product.html')) {
+                            return false; // Skip invalid URLs that are actually product links
+                        }
                         return lowerUrl.includes('vintage-black') || lowerUrl.includes('vintage_black');
                     };
                 }
             }
             
             // Filter images based on strict color matching
-            const strictlyFilteredImages = allImages.filter(imgUrl => {
+            // Filter out invalid URLs first (e.g., product.html links incorrectly added as images)
+            const validImages = allImages.filter(imgUrl => {
+                return imgUrl && typeof imgUrl === 'string' && !imgUrl.includes('product.html');
+            });
+            
+            // Then apply color filtering on valid images only
+            const strictlyFilteredImages = validImages.filter(imgUrl => {
                 const imgUrlLower = imgUrl.toLowerCase();
                 
                 // Special handling for black variants
@@ -82,11 +101,15 @@
                 return strictPatterns.some(pattern => imgUrlLower.includes(pattern));
             });
             
+            // Limit to a reasonable number to prevent processing too many images
+            const maxImages = 8;
+            const limitedImages = strictlyFilteredImages.slice(0, maxImages);
+            
             console.log(`Found ${strictlyFilteredImages.length} strictly matched images for color ${color}`);
             
             if (strictlyFilteredImages.length > 0) {
-                // Use strictly filtered images if available
-                manager.filteredImages = strictlyFilteredImages;
+                // Use strictly filtered images if available, limit to prevent excessive processing
+                manager.filteredImages = limitedImages;
                 manager.currentImageIndex = 0;
                 manager.updateMainImage();
                 manager.updateThumbnailGrid();
@@ -189,14 +212,33 @@
     document.addEventListener('productDetailInitialized', enhanceProductManager);
     
     // Additional handler for when product is rendered
+    // Use a flag to prevent multiple rapid selections
+    let selectionInProgress = false;
+    
     document.addEventListener('productDetailRendered', function() {
         console.log("Product detail rendered, checking color selection");
+        if (selectionInProgress) {
+            console.log("Selection already in progress, skipping");
+            return;
+        }
+        
+        selectionInProgress = true;
+        
         if (window.productDetailManager && window.productDetailManager.selectedVariant) {
             const currentColor = window.productDetailManager.selectedVariant.color;
             if (currentColor) {
                 console.log(`Re-applying color selection after render: ${currentColor}`);
                 window.productDetailManager.selectColor(currentColor);
+                
+                // Reset the flag after a delay
+                setTimeout(() => {
+                    selectionInProgress = false;
+                }, 500);
+            } else {
+                selectionInProgress = false;
             }
+        } else {
+            selectionInProgress = false;
         }
     });
 })();
