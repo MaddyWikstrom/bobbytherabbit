@@ -595,12 +595,37 @@
     <script src="scripts/mobile-navigation.js"></script>
     <script src="scripts/image-loader-fix.js"></script>
     
-    <!-- Simple cart system handles all cart functionality - no need for old scripts -->
+    <!-- Load cart system directly -->
+    <script src="scripts/simple-cart-system.js"></script>
     
     <!-- Quick View functionality -->
     <script src="scripts/quick-view.js"></script>
     
     <!-- Collection Wave Background -->
     <script src="scripts/collection-wave-bg.js"></script>
+    
+    <!-- Direct cart button handler for homepage -->
+    <script>
+        // Ensure cart button on homepage works properly
+        document.addEventListener('DOMContentLoaded', function() {
+            const cartButton = document.getElementById('cart-btn');
+            if (cartButton) {
+                cartButton.addEventListener('click', function() {
+                    console.log('Cart button clicked on homepage');
+                    // Try all possible cart open methods
+                    if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
+                        window.BobbyCart.openCart();
+                    } else if (window.cartManager && typeof window.cartManager.openCart === 'function') {
+                        window.cartManager.openCart();
+                    } else if (window.cartManager && typeof window.cartManager.toggleCart === 'function') {
+                        window.cartManager.toggleCart();
+                    } else {
+                        console.error('No cart system available to open');
+                    }
+                });
+                console.log('Homepage cart button handler attached');
+            }
+        });
+    </script>
 </body>
 </html>

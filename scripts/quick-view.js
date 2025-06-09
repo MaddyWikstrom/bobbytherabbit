@@ -1543,6 +1543,7 @@ class QuickViewManager {
                     else if (variantTitle.toLowerCase().includes('one size')) {
                         size = 'One Size';
                         sizes.add(size);
+                        console.log("Found One Size variant");
                     }
                     // Check for size-only variants
                     else {
@@ -1909,15 +1910,23 @@ class QuickViewManager {
         if (!sizes.size || sizes.size === 0) {
             // Add emergency fallbacks
             
-            // First, extract ANY variant titles available
-            if (variantsToProcess && variantsToProcess.length > 0) {
+            // First check if this is a beanie or hat (typically one size)
+            if (this.currentProduct.category &&
+                (this.currentProduct.category.toLowerCase().includes('beanie') ||
+                 this.currentProduct.category.toLowerCase().includes('hat'))) {
+                console.log("Product is a beanie or hat - adding One Size option");
+                sizes.add('One Size');
+            }
+            // Otherwise try to extract variant titles
+            else if (variantsToProcess && variantsToProcess.length > 0) {
+                console.log("Extracting variant titles for size options");
                 
                 variantsToProcess.forEach(variant => {
                     // Add EVERY variant title without filtering
                     if (variant.title) {
                         const title = variant.title.trim();
                         sizes.add(title);
-                        // Added title
+                        console.log(`Added title as size: ${title}`);
                     }
                     
                     // Also add any raw option values
@@ -1925,16 +1934,17 @@ class QuickViewManager {
                         variant.selectedOptions.forEach(opt => {
                             if (opt.value) {
                                 sizes.add(opt.value);
-                                // Added option value
+                                console.log(`Added option value as size: ${opt.value}`);
                             }
                         });
                     }
                 });
             }
             
-            // If still no sizes found, we'll rely on the raw variant data that was already added
+            // If still no sizes found, add "One Size" as a fallback
             if (!sizes.size) {
-                // Using raw variant data
+                console.log("No sizes found - adding One Size as fallback");
+                sizes.add('One Size');
             }
         }
         
