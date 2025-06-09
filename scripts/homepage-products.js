@@ -715,11 +715,20 @@ class HomepageProductLoader {
         const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
         if (!product) return;
         
+        // Get the first available color for the product for better quick view display
+        const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : null;
+        
         // Use the main product manager's showQuickView if available
         if (window.productManager && typeof window.productManager.showQuickView === 'function') {
-            // Pass the product ID to the main product manager
-            window.productManager.showQuickView(product.id || productId);
-            // Opening quick view for product
+            // Pass the product ID and color to the main product manager
+            if (selectedColor) {
+                // If we have a color, explicitly pass it for better image filtering
+                window.productManager.showQuickView(product.id || productId, selectedColor);
+                console.log(`Opening quick view for product: ${product.title} with color: ${selectedColor}`);
+            } else {
+                window.productManager.showQuickView(product.id || productId);
+                console.log(`Opening quick view for product: ${product.title}`);
+            }
         } else {
             // Product manager not available, navigating to product page instead
             this.viewProduct(productId);

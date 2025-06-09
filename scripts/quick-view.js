@@ -1120,15 +1120,15 @@ class QuickViewManager {
         });
     }
     
-    async openQuickView(productId) {
+    async openQuickView(productId, initialColor = null) {
         // Open quick view for product
         this.showLoading(true);
         this.openModal();
         
         try {
-            // Reset selected variant
+            // Reset selected variant with provided initial color if available
             this.selectedVariant = {
-                color: null,
+                color: initialColor,
                 size: null,
                 quantity: 1
             };
@@ -1143,10 +1143,43 @@ class QuickViewManager {
             }
             
             this.currentProduct = product;
+            
+            // If we have an initial color but it's not valid for this product, reset it
+            if (initialColor && product.colors && !product.colors.some(c =>
+                c.name === initialColor || c.name.toLowerCase() === initialColor.toLowerCase())) {
+                this.selectedVariant.color = null;
+                console.log(`Reset color: ${initialColor} not found in product colors`);
+            }
+            
+            // If we don't have a color yet but the product has colors, use the first one
+            if (!this.selectedVariant.color && product.colors && product.colors.length > 0) {
+                this.selectedVariant.color = product.colors[0].name;
+                console.log(`Using default color: ${this.selectedVariant.color}`);
+            }
+            
             this.renderQuickView();
+            
+            // If we have a valid color, filter images by it after rendering
+            if (this.selectedVariant.color) {
+                // Apply color filtering after rendering
+                setTimeout(() => {
+                    this.filterImagesByColor(this.selectedVariant.color);
+                    
+                    // Select the color option in the UI
+                    const colorOptions = document.querySelectorAll('.quick-view-color-option');
+                    colorOptions.forEach(option => {
+                        if (option.getAttribute('data-color') === this.selectedVariant.color) {
+                            option.classList.add('active');
+                        } else {
+                            option.classList.remove('active');
+                        }
+                    });
+                }, 100);
+            }
             
         } catch (error) {
             // Error opening quick view - silently handle
+            console.error('Error in openQuickView:', error);
         } finally {
             this.showLoading(false);
         }
