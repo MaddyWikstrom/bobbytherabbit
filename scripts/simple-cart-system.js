@@ -3,11 +3,14 @@
  * A clean, reliable cart implementation for Bobby Streetwear
  */
 
-// Create and initialize our cart system immediately
+// Create cart system with safer initialization
 const BobbyCart = (function() {
   // Cart state
   let items = [];
   let isCartOpen = false;
+  let isInitialized = false;
+  let initializationAttempts = 0;
+  const MAX_INIT_ATTEMPTS = 5;
   
   // DOM elements cache
   let cartDrawer = null;
@@ -15,127 +18,225 @@ const BobbyCart = (function() {
   let cartItemsContainer = null;
   let cartTotalElement = null;
   
-  // Initialize the cart system
+  // Initialize the cart system with safeguards
   function init() {
-    console.log('Initializing simple cart system');
-    
-    // Load cart data from storage
-    loadCartData();
-    
-    // Create cart elements if they don't exist
-    createCartElements();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Update cart UI
-    updateCartUI();
-  }
-  
-  // Create cart drawer and overlay if they don't exist
-  function createCartElements() {
-    // Create cart drawer if it doesn't exist
-    if (!document.getElementById('simple-cart-drawer')) {
-      const drawer = document.createElement('div');
-      drawer.id = 'simple-cart-drawer';
-      drawer.className = 'cart-drawer';
-      drawer.innerHTML = `
-        <div class="cart-header">
-          <h3>Your Cart</h3>
-          <button class="cart-close">&times;</button>
-        </div>
-        <div class="cart-items-container">
-          <div id="cart-items" class="cart-items"></div>
-        </div>
-        <div class="cart-footer">
-          <div class="cart-total">
-            <span>Total:</span>
-            <span>$<span id="cart-total-amount">0.00</span></span>
-          </div>
-          <button class="cart-checkout-btn">
-            <span>Checkout</span>
-          </button>
-        </div>
-      `;
-      document.body.appendChild(drawer);
-      cartDrawer = drawer;
-    } else {
-      cartDrawer = document.getElementById('simple-cart-drawer');
+    // Prevent multiple initializations
+    if (isInitialized) {
+      console.log('Cart system already initialized');
+      return;
     }
     
-    // Create cart overlay if it doesn't exist
-    if (!document.getElementById('simple-cart-overlay')) {
-      const overlay = document.createElement('div');
-      overlay.id = 'simple-cart-overlay';
-      overlay.className = 'cart-overlay';
-      document.body.appendChild(overlay);
-      cartOverlay = overlay;
-    } else {
-      cartOverlay = document.getElementById('simple-cart-overlay');
+    if (initializationAttempts >= MAX_INIT_ATTEMPTS) {
+      console.warn('Max initialization attempts reached, aborting cart setup');
+      return;
     }
     
-    // Cache other elements
-    cartItemsContainer = document.getElementById('cart-items');
-    cartTotalElement = document.getElementById('cart-total-amount');
+    initializationAttempts++;
+    console.log(`Initializing simple cart system (attempt ${initializationAttempts})`);
     
-    // Add cart styles
-    addCartStyles();
-  }
-  
-  // Set up event listeners
-  function setupEventListeners() {
-    // Add event listeners to cart drawer close button
-    const closeButton = cartDrawer.querySelector('.cart-close');
-    if (closeButton) {
-      closeButton.addEventListener('click', closeCart);
-    }
-    
-    // Add event listener to overlay
-    if (cartOverlay) {
-      cartOverlay.addEventListener('click', closeCart);
-    }
-    
-    // Add event listener to checkout button
-    const checkoutButton = cartDrawer.querySelector('.cart-checkout-btn');
-    if (checkoutButton) {
-      checkoutButton.addEventListener('click', proceedToCheckout);
-    }
-    
-    // Find and set up all cart buttons on the page
-    setupCartButtons();
-  }
-  
-  // Find and set up all cart buttons
-  function setupCartButtons() {
-    // Find all cart buttons using various selectors
-    const cartButtons = document.querySelectorAll('.cart-btn, #cart-btn, .cart-icon, [data-cart-toggle]');
-    
-    cartButtons.forEach(button => {
-      // Remove any existing click handlers
-      const newButton = button.cloneNode(true);
+    try {
+      // Load cart data from storage
+      loadCartData();
       
-      // Replace with our new button
-      if (button.parentNode) {
-        button.parentNode.replaceChild(newButton, button);
+      // Only proceed with DOM operations if document.body exists
+      if (!document.body) {
+        console.log('Body not available yet, retrying initialization in 200ms');
+        setTimeout(init, 200);
+        return;
       }
       
-      // Add our clean click handler
-      newButton.addEventListener('click', function(event) {
-        event.preventDefault();
-        openCart();
-      });
-    });
+      // Create cart elements if they don't exist
+      createCartElements();
+      
+      // Set up event listeners
+      setupEventListeners();
+      
+      // Update cart UI
+      updateCartUI();
+      
+      // Mark as initialized
+      isInitialized = true;
+      console.log('Cart system initialized successfully');
+    } catch (err) {
+      console.error('Error during cart initialization:', err);
+      
+      // Retry initialization with exponential backoff
+      if (initializationAttempts < MAX_INIT_ATTEMPTS) {
+        const delay = Math.min(1000 * Math.pow(1.5, initializationAttempts), 5000);
+        console.log(`Retrying cart initialization in ${delay}ms`);
+        setTimeout(init, delay);
+      }
+    }
   }
   
-  // Open the cart
+  // Create cart drawer and overlay if they don't exist - with error handling
+  function createCartElements() {
+    try {
+      if (!document.body) {
+        throw new Error('Document body not available');
+      }
+      
+      // Create cart drawer if it doesn't exist
+      if (!document.getElementById('simple-cart-drawer')) {
+        const drawer = document.createElement('div');
+        drawer.id = 'simple-cart-drawer';
+        drawer.className = 'cart-drawer';
+        drawer.innerHTML = `
+          <div class="cart-header">
+            <h3>Your Cart</h3>
+            <button class="cart-close">&times;</button>
+          </div>
+          <div class="cart-items-container">
+            <div id="cart-items" class="cart-items"></div>
+          </div>
+          <div class="cart-footer">
+            <div class="cart-total">
+              <span>Total:</span>
+              <span>$<span id="cart-total-amount">0.00</span></span>
+            </div>
+            <button class="cart-checkout-btn">
+              <span>Checkout</span>
+            </button>
+          </div>
+        `;
+        document.body.appendChild(drawer);
+        cartDrawer = drawer;
+      } else {
+        cartDrawer = document.getElementById('simple-cart-drawer');
+      }
+      
+      // Create cart overlay if it doesn't exist
+      if (!document.getElementById('simple-cart-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'simple-cart-overlay';
+        overlay.className = 'cart-overlay';
+        document.body.appendChild(overlay);
+        cartOverlay = overlay;
+      } else {
+        cartOverlay = document.getElementById('simple-cart-overlay');
+      }
+      
+      // Cache other elements
+      cartItemsContainer = document.getElementById('cart-items');
+      cartTotalElement = document.getElementById('cart-total-amount');
+      
+      // Add cart styles
+      addCartStyles();
+    } catch (err) {
+      console.error('Error creating cart elements:', err);
+      throw err; // Re-throw to trigger retry in init
+    }
+  }
+  
+  // Set up event listeners with error handling
+  function setupEventListeners() {
+    try {
+      if (!cartDrawer) {
+        console.warn('Cart drawer not available for event setup');
+        return;
+      }
+      
+      // Add event listeners to cart drawer close button
+      const closeButton = cartDrawer.querySelector('.cart-close');
+      if (closeButton) {
+        // Use event delegation with try/catch for safety
+        closeButton.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            closeCart();
+          } catch (err) {
+            console.error('Error in close button handler:', err);
+          }
+        });
+      }
+      
+      // Add event listener to overlay
+      if (cartOverlay) {
+        cartOverlay.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            closeCart();
+          } catch (err) {
+            console.error('Error in overlay click handler:', err);
+          }
+        });
+      }
+      
+      // Add event listener to checkout button
+      const checkoutButton = cartDrawer.querySelector('.cart-checkout-btn');
+      if (checkoutButton) {
+        checkoutButton.addEventListener('click', function(e) {
+          try {
+            e.preventDefault();
+            proceedToCheckout();
+          } catch (err) {
+            console.error('Error in checkout button handler:', err);
+            alert('An error occurred during checkout. Please try again.');
+          }
+        });
+      }
+      
+      // Find and set up all cart buttons on the page
+      setupCartButtons();
+    } catch (err) {
+      console.error('Error setting up cart event listeners:', err);
+    }
+  }
+  
+  // Find and set up cart buttons more safely - avoid DOM replacement that can cause issues
+  function setupCartButtons() {
+    try {
+      // Find all cart buttons using various selectors
+      const cartButtons = document.querySelectorAll('.cart-btn, #cart-btn, .cart-icon, [data-cart-toggle]');
+      
+      if (cartButtons.length === 0) {
+        console.log('No cart buttons found to set up');
+        return;
+      }
+      
+      console.log(`Setting up ${cartButtons.length} cart buttons`);
+      
+      cartButtons.forEach(button => {
+        // Skip if already set up
+        if (button.dataset.cartHandlerAttached === 'true') {
+          return;
+        }
+        
+        // Add our click handler without replacing the element
+        button.addEventListener('click', function(event) {
+          try {
+            event.preventDefault();
+            event.stopPropagation();
+            openCart();
+          } catch (err) {
+            console.error('Error in cart button click handler:', err);
+          }
+        });
+        
+        // Mark as set up
+        button.dataset.cartHandlerAttached = 'true';
+      });
+    } catch (err) {
+      console.error('Error setting up cart buttons:', err);
+    }
+  }
+  
+  // Open the cart with error handling
   function openCart() {
-    if (cartDrawer && cartOverlay) {
+    try {
+      if (!cartDrawer || !cartOverlay) {
+        console.warn('Cannot open cart: cart elements not initialized');
+        return;
+      }
+      
       cartDrawer.classList.add('open');
       cartOverlay.classList.add('open');
       isCartOpen = true;
       
       // Ensure the cart content is up to date
       updateCartUI();
+    } catch (err) {
+      console.error('Error opening cart:', err);
     }
   }
   
@@ -594,55 +695,173 @@ const BobbyCart = (function() {
     document.head.appendChild(style);
   }
   
-  // Initialize on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  // Initialize with window.load instead of DOMContentLoaded for better reliability
+  // This ensures all resources are fully loaded
+  window.addEventListener('load', function() {
+    try {
+      console.log('Window loaded, initializing cart system');
+      setTimeout(init, 300); // Delay initialization to ensure DOM is stable
+    } catch (err) {
+      console.error('Error during cart load handler:', err);
+    }
+  });
   
   // Create observer for mutation events
   let mutationObserver = null;
+  let observerSetupAttempts = 0;
+  const MAX_OBSERVER_ATTEMPTS = 3;
   
-  // Set up the observer after init
+  // Set up the observer after init with better error handling and fewer retries
   function setupCartButtonObserver() {
     // Only create one observer
     if (mutationObserver) return;
     
+    // Limit retry attempts
+    if (observerSetupAttempts >= MAX_OBSERVER_ATTEMPTS) {
+      console.warn('Max observer setup attempts reached');
+      return;
+    }
+    
+    observerSetupAttempts++;
+    
     try {
       // Make sure body exists
       if (document.body) {
-        mutationObserver = new MutationObserver(function() {
-          // Check for new cart buttons
-          setupCartButtons();
+        console.log('Setting up cart button observer');
+        
+        // Create a throttled version of setupCartButtons to prevent too many updates
+        let throttleTimeout = null;
+        const throttledSetupButtons = function() {
+          if (throttleTimeout) return;
+          
+          throttleTimeout = setTimeout(function() {
+            try {
+              setupCartButtons();
+              throttleTimeout = null;
+            } catch (err) {
+              console.error('Error in throttled setup buttons:', err);
+              throttleTimeout = null;
+            }
+          }, 200);
+        };
+        
+        // Create observer with error handling
+        mutationObserver = new MutationObserver(function(mutations) {
+          try {
+            // Only respond to meaningful DOM changes
+            const shouldUpdate = mutations.some(mutation =>
+              mutation.addedNodes.length > 0 ||
+              mutation.type === 'childList'
+            );
+            
+            if (shouldUpdate) {
+              throttledSetupButtons();
+            }
+          } catch (err) {
+            console.error('Error in mutation observer callback:', err);
+          }
         });
         
-        mutationObserver.observe(document.body, {
-          childList: true,
-          subtree: true
-        });
+        // Start observing with error handling
+        try {
+          mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+          console.log('Cart button observer started');
+        } catch (err) {
+          console.error('Error starting mutation observer:', err);
+          mutationObserver = null;
+        }
       } else {
-        // Retry if body not available yet
-        setTimeout(setupCartButtonObserver, 100);
+        // Retry if body not available yet, with increasing delay
+        const delay = Math.min(200 * Math.pow(1.5, observerSetupAttempts), 2000);
+        console.log(`Body not available for observer, retrying in ${delay}ms`);
+        setTimeout(setupCartButtonObserver, delay);
       }
-    } catch (e) {
-      console.error("Error setting up cart button observer:", e);
+    } catch (err) {
+      console.error("Error setting up cart button observer:", err);
+      
+      // Retry with delay
+      if (observerSetupAttempts < MAX_OBSERVER_ATTEMPTS) {
+        setTimeout(setupCartButtonObserver, 500 * observerSetupAttempts);
+      }
     }
   }
   
-  // Run setup after a small delay to ensure DOM is ready
-  setTimeout(setupCartButtonObserver, 100);
+  // Delay observer setup to avoid racing conditions
+  setTimeout(function() {
+    try {
+      setupCartButtonObserver();
+    } catch (err) {
+      console.error('Failed to setup cart button observer:', err);
+    }
+  }, 500);
   
-  // Public API
+  // Public API with error handling wrappers
   return {
-    openCart,
-    closeCart,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    getItems: () => items.slice(), // Return a copy of the items array
-    getItemCount: () => items.reduce((sum, item) => sum + item.quantity, 0)
+    openCart: function() {
+      try {
+        openCart();
+      } catch (err) {
+        console.error('Error in openCart API call:', err);
+      }
+    },
+    closeCart: function() {
+      try {
+        closeCart();
+      } catch (err) {
+        console.error('Error in closeCart API call:', err);
+      }
+    },
+    addItem: function(product) {
+      try {
+        if (!product) {
+          console.warn('Attempted to add undefined product to cart');
+          return;
+        }
+        addItem(product);
+      } catch (err) {
+        console.error('Error in addItem API call:', err);
+      }
+    },
+    removeItem: function(itemId) {
+      try {
+        removeItem(itemId);
+      } catch (err) {
+        console.error('Error in removeItem API call:', err);
+      }
+    },
+    updateQuantity: function(itemId, quantity) {
+      try {
+        updateQuantity(itemId, quantity);
+      } catch (err) {
+        console.error('Error in updateQuantity API call:', err);
+      }
+    },
+    clearCart: function() {
+      try {
+        clearCart();
+      } catch (err) {
+        console.error('Error in clearCart API call:', err);
+      }
+    },
+    getItems: function() {
+      try {
+        return items.slice(); // Return a copy of the items array
+      } catch (err) {
+        console.error('Error in getItems API call:', err);
+        return [];
+      }
+    },
+    getItemCount: function() {
+      try {
+        return items.reduce((sum, item) => sum + item.quantity, 0);
+      } catch (err) {
+        console.error('Error in getItemCount API call:', err);
+        return 0;
+      }
+    }
   };
 })();
 

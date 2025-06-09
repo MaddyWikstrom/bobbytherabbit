@@ -18,8 +18,34 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Simple Cart System - Clean, reliable implementation -->
-    <script src="/scripts/simple-cart-system.js"></script>
+    <!-- Simple Cart System with deferred initialization to avoid password screen conflicts -->
+    <script>
+        // Define a cart initialization flag to track state
+        window.cartSystemReady = false;
+        
+        // Create a function to safely load the cart system only after password verification
+        function initializeCartSystem() {
+            console.log("Initializing cart system after password verification");
+            
+            // Only load if not already loaded
+            if (!window.cartSystemReady) {
+                // Create script element
+                const script = document.createElement('script');
+                script.src = "/scripts/simple-cart-system.js";
+                script.async = true;
+                script.onload = function() {
+                    console.log("Cart system script loaded successfully");
+                    window.cartSystemReady = true;
+                };
+                script.onerror = function() {
+                    console.error("Failed to load cart system script");
+                };
+                
+                // Append to document
+                document.head.appendChild(script);
+            }
+        }
+    </script>
     <style>
         .password-screen {
             display: flex;
@@ -488,13 +514,26 @@
                     // Show loading screen
                     loadingScreen.style.display = "flex";
                     
-                    // Safely initialize loading screen
+                    // Safely initialize loading screen and cart system
                     setTimeout(function() {
                         try {
                             console.log("Starting loading screen");
+                            
+                            // Initialize cart system first
+                            initializeCartSystem();
+                            
+                            // Then initialize loading screen
                             initializeLoadingScreen();
                         } catch (err) {
                             console.error("Error in loading screen:", err);
+                            
+                            // Still try to initialize cart
+                            try {
+                                initializeCartSystem();
+                            } catch (cartErr) {
+                                console.error("Error initializing cart:", cartErr);
+                            }
+                            
                             // Fallback: show main site directly in case of error
                             loadingScreen.style.display = "none";
                             document.getElementById("main-site").classList.remove("hidden");

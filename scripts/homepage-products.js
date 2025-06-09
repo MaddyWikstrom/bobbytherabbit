@@ -302,64 +302,124 @@ class HomepageProductLoader {
         });
     }
     
-    // Quick add to cart functionality
+    // Quick add to cart functionality - with enhanced error handling and cart system verification
     quickAddToCart(productId) {
-        // Find the product
-        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
-        if (!product) return;
+        console.log(`Quick add to cart requested for product: ${productId}`);
+        
+        // Find the product with better error handling
+        let product;
+        try {
+            product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+            if (!product) {
+                console.warn(`Product not found for quick add: ${productId}`);
+                this.showNotification('Product not found', 'error');
+                return;
+            }
+        } catch (error) {
+            console.error('Error finding product for quick add:', error);
+            this.showNotification('Error finding product', 'error');
+            return;
+        }
         
         try {
+            // Log the product being added
+            console.log('Processing quick add for product:', product.title);
+            
             // Check if it's a one-size product like a beanie or hat
-            const isOneSize = product.category === 'beanie' || product.category === 'hat' ||
+            const isOneSize = product.category === 'beanie' ||
+                              product.category === 'hat' ||
                               (product.sizes && product.sizes.length === 1);
+            
+            console.log(`Product category: ${product.category}, isOneSize: ${isOneSize}`);
             
             // For multiple sizes, just redirect to product page
             if (!isOneSize) {
+                console.log('Not a one-size product, redirecting to product page');
                 this.viewProduct(productId);
                 return;
             }
             
-            // Create cart product with one-size
+            // Create cart product with one-size - with additional validation
             const cartProduct = {
-                id: product.id || 'unknown-product',
+                id: product.id || productId || 'unknown-product', // Better fallback chain
                 title: product.title || 'Product',
-                price: product.price || 0,
+                price: typeof product.price === 'number' ? product.price : 0,
                 image: product.mainImage || '',
                 quantity: 1,
                 variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
             };
             
-            // Try BobbyCart first
-            if (window.BobbyCart) {
-                // Use addItem if available, otherwise fall back to addToCart
-                if (typeof window.BobbyCart.addItem === 'function') {
-                    window.BobbyCart.addItem(cartProduct);
-                } else if (typeof window.BobbyCart.addToCart === 'function') {
-                    window.BobbyCart.addToCart(cartProduct);
+            console.log('Prepared cart product:', cartProduct);
+            
+            // Check if cart systems are available
+            const bobbyCartAvailable = window.BobbyCart &&
+                (typeof window.BobbyCart.addItem === 'function' ||
+                 typeof window.BobbyCart.addToCart === 'function');
+                 
+            const cartManagerAvailable = window.cartManager &&
+                (typeof window.cartManager.addItem === 'function' ||
+                 typeof window.cartManager.addToCart === 'function');
+            
+            console.log(`Cart availability - BobbyCart: ${bobbyCartAvailable}, cartManager: ${cartManagerAvailable}`);
+            
+            // Try BobbyCart first with safe checks
+            if (bobbyCartAvailable) {
+                try {
+                    console.log('Using BobbyCart for quick add');
+                    
+                    // Use addItem if available, otherwise fall back to addToCart
+                    if (typeof window.BobbyCart.addItem === 'function') {
+                        window.BobbyCart.addItem(cartProduct);
+                    } else if (typeof window.BobbyCart.addToCart === 'function') {
+                        window.BobbyCart.addToCart(cartProduct);
+                    }
+                    
+                    console.log('Product successfully added to BobbyCart');
+                    this.showNotification('Product added to cart!', 'success');
+                    return;
+                } catch (cartError) {
+                    console.error('Error using BobbyCart:', cartError);
+                    // Fall through to try cartManager
                 }
-                this.showNotification('Product added to cart!', 'success');
-                return;
             }
             
-            // Try cartManager as fallback
-            if (window.cartManager) {
-                // Use addItem if available, otherwise fall back to addToCart
-                if (typeof window.cartManager.addItem === 'function') {
-                    window.cartManager.addItem(cartProduct);
-                } else if (typeof window.cartManager.addToCart === 'function') {
-                    window.cartManager.addToCart(cartProduct);
+            // Try cartManager as fallback with safe checks
+            if (cartManagerAvailable) {
+                try {
+                    console.log('Using cartManager for quick add');
+                    
+                    // Use addItem if available, otherwise fall back to addToCart
+                    if (typeof window.cartManager.addItem === 'function') {
+                        window.cartManager.addItem(cartProduct);
+                    } else if (typeof window.cartManager.addToCart === 'function') {
+                        window.cartManager.addToCart(cartProduct);
+                    }
+                    
+                    console.log('Product successfully added to cartManager');
+                    this.showNotification('Product added to cart!', 'success');
+                    return;
+                } catch (cartError) {
+                    console.error('Error using cartManager:', cartError);
+                    // Fall through to error message
                 }
-                this.showNotification('Product added to cart!', 'success');
-                return;
             }
             
-            // If we get here, neither cart system was available
-            console.error('Cart system not available');
+            // If we get here, neither cart system was available or both failed
+            console.warn('No working cart system available');
             this.showNotification('Cart system not available', 'error');
             
+            // As a last resort, try to redirect to the product page
+            setTimeout(() => {
+                console.log('Redirecting to product page as fallback');
+                this.viewProduct(productId);
+            }, 1500);
+            
         } catch (error) {
-            console.error('Error adding to cart:', error);
+            console.error('Error in quickAddToCart:', error);
             this.showNotification('Error adding to cart', 'error');
+            
+            // Still try to redirect as last resort
+            setTimeout(() => this.viewProduct(productId), 1500);
         }
     }
     
