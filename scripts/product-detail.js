@@ -1515,36 +1515,41 @@ class ProductDetailManager {
                     
                     // Try to use the selected color from URL if it exists in product colors
                     if (selectedColor) {
+                        // Ensure the selectedColor is properly decoded from the URL
+                        let decodedColor = decodeURIComponent(selectedColor);
                         let foundMatchingColor = false;
                         
-                        console.log(`Attempting to match URL color parameter: ${selectedColor}`);
+                        console.log(`Attempting to match URL color parameter: ${decodedColor}`);
                         
-                        // Simple loop to find matching color (more robust than some())
-                        for (const color of this.currentProduct.colors) {
+                        // Create a color-to-image map for quick lookup
+                        const availableColors = new Map();
+                        this.currentProduct.colors.forEach(color => {
                             const colorName = typeof color === 'object' ? color.name : color;
-                            
-                            // Case insensitive comparison
-                            if (colorName.toLowerCase() === selectedColor.toLowerCase()) {
-                                console.log(`Found exact match for color: ${colorName}`);
-                                this.selectColor(colorName);
-                                foundMatchingColor = true;
-                                break;
-                            }
+                            availableColors.set(colorName.toLowerCase(), colorName);
+                        });
+                        
+                        // Try direct case-insensitive lookup in our map
+                        const exactMatch = availableColors.get(decodedColor.toLowerCase());
+                        if (exactMatch) {
+                            console.log(`Found exact match for color: ${exactMatch}`);
+                            this.selectColor(exactMatch);
+                            foundMatchingColor = true;
                         }
                         
-                        // If no exact match, try a more lenient matching approach
+                        // If no exact match, try a more lenient matching approach with partial matching
                         if (!foundMatchingColor) {
-                            console.log(`No exact match found for ${selectedColor}, trying partial matches`);
+                            console.log(`No exact match found for ${decodedColor}, trying partial matches`);
                             
                             // Try partial matching (useful for multi-word colors or alternate formats)
-                            for (const color of this.currentProduct.colors) {
-                                const colorName = typeof color === 'object' ? color.name : color;
-                                
+                            const decodedColorLower = decodedColor.toLowerCase();
+                            
+                            // Look through all available colors
+                            for (const [availableColorLower, originalColorName] of availableColors) {
                                 // Check if selected color is a substring of a color or vice versa
-                                if (colorName.toLowerCase().includes(selectedColor.toLowerCase()) ||
-                                    selectedColor.toLowerCase().includes(colorName.toLowerCase())) {
-                                    console.log(`Found partial match: ${colorName} for requested ${selectedColor}`);
-                                    this.selectColor(colorName);
+                                if (availableColorLower.includes(decodedColorLower) ||
+                                    decodedColorLower.includes(availableColorLower)) {
+                                    console.log(`Found partial match: ${originalColorName} for requested ${decodedColor}`);
+                                    this.selectColor(originalColorName);
                                     foundMatchingColor = true;
                                     break;
                                 }
@@ -1553,75 +1558,95 @@ class ProductDetailManager {
                         
                         // Try a more advanced matching approach if still no match
                         if (!foundMatchingColor) {
-                            console.log(`No partial match found for ${selectedColor}, trying normalized matching`);
+                            console.log(`No partial match found for ${decodedColor}, trying normalized matching`);
                             
                             // Normalize the selected color (remove spaces, make lowercase)
-                            const normalizedSelectedColor = selectedColor.toLowerCase()
+                            const normalizedSelectedColor = decodedColor.toLowerCase()
                                 .replace(/[\s-_]/g, '')                  // Remove spaces, dashes, underscores
                                 .replace(/\(.*?\)/g, '')                // Remove anything in parentheses
                                 .replace(/v\d+$/, '')                   // Remove version numbers like "v1", "v2"
                                 .replace(/variant\d*$/, '');            // Remove "variant" or "variant1", etc.
                             
-                            console.log(`Normalized selected color: "${normalizedSelectedColor}"`);
+                            // Create normalized versions of all available colors for matching
+                            const normalizedColorMap = new Map();
                             
-                            for (const color of this.currentProduct.colors) {
-                                const colorName = typeof color === 'object' ? color.name : color;
-                                const normalizedColorName = colorName.toLowerCase()
-                                    .replace(/[\s-_]/g, '')              // Same normalization as above
+                            for (const [availableColorLower, originalColorName] of availableColors) {
+                                const normalizedAvailableColor = availableColorLower
+                                    .replace(/[\s-_]/g, '')
                                     .replace(/\(.*?\)/g, '')
                                     .replace(/v\d+$/, '')
                                     .replace(/variant\d*$/, '');
-                                
-                                console.log(`Comparing with normalized color: "${normalizedColorName}" (original: "${colorName}")`);
-                                
-                                // Compare normalized versions
-                                if (normalizedColorName === normalizedSelectedColor) {
-                                    console.log(`Found normalized match: ${colorName} for requested ${selectedColor}`);
-                                    this.selectColor(colorName);
-                                    foundMatchingColor = true;
-                                    break;
-                                }
+                                    
+                                normalizedColorMap.set(normalizedAvailableColor, originalColorName);
+                            }
+                            
+                            // Try to find a normalized match
+                            const normalizedMatch = normalizedColorMap.get(normalizedSelectedColor);
+                            if (normalizedMatch) {
+                                console.log(`Found normalized match: ${normalizedMatch} for requested ${decodedColor}`);
+                                this.selectColor(normalizedMatch);
+                                foundMatchingColor = true;
                             }
                         }
                         
-                        // Try even more aggressive matching if still no match
+                        // Try even more aggressive matching if still no match - word extraction approach
                         if (!foundMatchingColor) {
-                            console.log(`No normalized match found for ${selectedColor}, trying color word extraction`);
+                            console.log(`No normalized match found for ${decodedColor}, trying color word extraction`);
                             
                             // Extract primary color words from the selected color
                             const commonColorWords = [
                                 'black', 'white', 'red', 'blue', 'green', 'yellow', 'purple', 'pink',
                                 'orange', 'brown', 'gray', 'grey', 'navy', 'teal', 'olive', 'maroon',
                                 'indigo', 'violet', 'turquoise', 'cyan', 'magenta', 'lime', 'coral',
-                                'gold', 'silver', 'ivory', 'beige', 'tan', 'khaki', 'charcoal'
+                                'gold', 'silver', 'ivory', 'beige', 'tan', 'khaki', 'charcoal', 'blazer'
                             ];
                             
                             // Extract main color words from the selected color
-                            const selectedColorWords = selectedColor.toLowerCase().split(/[\s-_]+/)
+                            const selectedColorWords = decodedColor.toLowerCase().split(/[\s-_]+/)
                                 .filter(word => commonColorWords.includes(word));
                             
                             if (selectedColorWords.length > 0) {
-                                console.log(`Extracted color words from "${selectedColor}": ${selectedColorWords.join(', ')}`);
+                                // Create a scoring system - match colors that have the most words in common
+                                let bestMatch = null;
+                                let highestScore = 0;
                                 
-                                // Look for any color that contains these color words
-                                for (const color of this.currentProduct.colors) {
-                                    const colorName = typeof color === 'object' ? color.name : color;
-                                    const colorNameLower = colorName.toLowerCase();
+                                for (const [availableColorLower, originalColorName] of availableColors) {
+                                    let score = 0;
+                                    const availableColorWords = availableColorLower.split(/[\s-_]+/);
                                     
-                                    // Check if any of the extracted color words are in this color name
-                                    if (selectedColorWords.some(word => colorNameLower.includes(word))) {
-                                        console.log(`Found color word match: ${colorName} for requested ${selectedColor}`);
-                                        this.selectColor(colorName);
-                                        foundMatchingColor = true;
-                                        break;
+                                    // Calculate a score based on word matches
+                                    for (const word of selectedColorWords) {
+                                        if (availableColorLower.includes(word)) {
+                                            score += 1;
+                                        }
                                     }
+                                    
+                                    // Also count words from available color that appear in selected color
+                                    for (const word of availableColorWords) {
+                                        if (commonColorWords.includes(word) && decodedColor.toLowerCase().includes(word)) {
+                                            score += 0.5; // Lower weight for this direction
+                                        }
+                                    }
+                                    
+                                    // Update best match if we found a better score
+                                    if (score > highestScore) {
+                                        highestScore = score;
+                                        bestMatch = originalColorName;
+                                    }
+                                }
+                                
+                                if (bestMatch && highestScore > 0) {
+                                    console.log(`Found color word match: ${bestMatch} for requested ${decodedColor} (score: ${highestScore})`);
+                                    this.selectColor(bestMatch);
+                                    foundMatchingColor = true;
                                 }
                             }
                         }
                         
-                        // If still no match, use the default first color
+                        // If still no match, use the default first color with improved error reporting
                         if (!foundMatchingColor) {
-                            console.log(`No match found for color: ${selectedColor}, defaulting to: ${defaultColorName}`);
+                            console.log(`No match found for color: ${decodedColor} among ${Array.from(availableColors.values()).join(', ')}`);
+                            console.log(`Defaulting to: ${defaultColorName}`);
                             this.selectColor(defaultColorName);
                         }
                     } else {
