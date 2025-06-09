@@ -1521,80 +1521,89 @@ class ProductDetailManager {
                 console.log(`No matching color option found in DOM for: ${color}`);
             }
             
-            // Helper function to deduplicate image URLs with strict color-based grouping
+            // Helper function to deduplicate image URLs for the selected color
             const deduplicateImages = (images) => {
-                // Create a map to track image URLs we've seen
-                const uniqueImagesMap = new Map();
-                const uniqueImages = [];
+                if (!images || images.length === 0) return [];
                 
-                // Extract color from URL for classification
-                const getColorFromUrl = (url) => {
-                    const lowerUrl = url.toLowerCase();
-                    // Common color names we might find in URLs
-                    const colorNames = ['forest green', 'navy blue', 'olive green', 'black', 'white', 'red', 'blue', 'green'];
-                    
-                    for (const colorName of colorNames) {
-                        // Check for color name in various formats
-                        if (lowerUrl.includes(colorName) ||
-                            lowerUrl.includes(colorName.replace(' ', '-')) ||
-                            lowerUrl.includes(colorName.replace(' ', '_'))) {
-                            return colorName;
-                        }
+                // Step 1: Create a set of unique image URLs to remove exact duplicates
+                const uniqueUrls = new Set(images);
+                
+                // Step 2: Group similar images based on filename patterns
+                const groupedImages = new Map();
+                
+                // Extract useful parts from URL for image identification
+                const getImageIdentifier = (url) => {
+                    try {
+                        const urlObj = new URL(url, window.location.origin);
+                        const path = urlObj.pathname;
+                        const filename = path.split('/').pop() || '';
+                        
+                        // Remove file extension and query parameters
+                        let baseName = filename.split('.')[0] || '';
+                        
+                        // Remove variant markers that might cause incorrect grouping
+                        baseName = baseName.replace(/[-_](front|back|side|detail|alt\d*|[0-9]+)$/i, '');
+                        
+                        return baseName;
+                    } catch (e) {
+                        // If URL parsing fails, return the original URL
+                        return url;
                     }
-                    return null;
                 };
                 
-                // Pre-process: Sort images by color for more consistent selection
-                const sortedImages = [...images].sort((a, b) => {
-                    const colorA = getColorFromUrl(a) || '';
-                    const colorB = getColorFromUrl(b) || '';
-                    return colorA.localeCompare(colorB);
+                // Group images by their base identifier
+                Array.from(uniqueUrls).forEach(imgUrl => {
+                    const identifier = getImageIdentifier(imgUrl);
+                    
+                    if (!groupedImages.has(identifier)) {
+                        groupedImages.set(identifier, []);
+                    }
+                    
+                    groupedImages.get(identifier).push(imgUrl);
                 });
                 
-                // First pass: Group by color to ensure we keep one image per distinct view
-                const colorGroups = new Map();
+                // Step 3: For each group, keep all images that are clearly different views
+                // This preserves front/back/side views of the same product color
+                const dedupedImages = [];
                 
-                sortedImages.forEach(imgUrl => {
-                    try {
-                        // Generate a simpler but effective key based on filename
-                        const urlObj = new URL(imgUrl, window.location.origin);
-                        const filename = urlObj.pathname.split('/').pop();
+                groupedImages.forEach((urls, identifier) => {
+                    // If there's only one image in the group, keep it
+                    if (urls.length === 1) {
+                        dedupedImages.push(urls[0]);
+                        return;
+                    }
+                    
+                    // For groups with multiple images, try to identify and keep different views
+                    const viewPatterns = ['front', 'back', 'side', 'detail', 'angle', 'closeup', 'full'];
+                    const foundViews = new Set();
+                    const remainingUrls = [...urls];
+                    
+                    // First pass: find images with clearly identified views
+                    for (const pattern of viewPatterns) {
+                        // Find an image with this view pattern
+                        const matchIndex = remainingUrls.findIndex(url =>
+                            url.toLowerCase().includes(pattern)
+                        );
                         
-                        // Extract color from URL
-                        const detectedColor = getColorFromUrl(imgUrl);
-                        
-                        // Create a key that combines detected color and filename pattern
-                        // This makes deduplication more aggressive for multi-word colors
-                        let groupKey;
-                        
-                        if (detectedColor && detectedColor.includes(' ')) {
-                            // For multi-word colors, create a stricter key to avoid duplicates
-                            groupKey = `${detectedColor}-${filename.split('.')[0].substring(0, 8)}`;
-                        } else {
-                            // For single-word colors, be less strict
-                            groupKey = filename;
+                        if (matchIndex !== -1) {
+                            dedupedImages.push(remainingUrls[matchIndex]);
+                            foundViews.add(pattern);
+                            remainingUrls.splice(matchIndex, 1);
                         }
-                        
-                        // Only save the first image we see for each group key
-                        if (!colorGroups.has(groupKey)) {
-                            colorGroups.set(groupKey, imgUrl);
-                        }
-                    } catch (e) {
-                        // If URL parsing fails, use the full URL as the key
-                        colorGroups.set(imgUrl, imgUrl);
+                    }
+                    
+                    // If we have no clear view indicators, keep all images in the group
+                    // This ensures we don't lose important images
+                    if (dedupedImages.length === 0 || (remainingUrls.length > 0 && foundViews.size === 0)) {
+                        urls.forEach(url => dedupedImages.push(url));
+                    } else if (remainingUrls.length > 0) {
+                        // Add at least one more image from remaining if available
+                        // This ensures we have multiple views when possible
+                        dedupedImages.push(remainingUrls[0]);
                     }
                 });
                 
-                // Convert the map values back to an array
-                const dedupedImages = Array.from(colorGroups.values());
-                
-                console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images using strict color-based grouping`);
-                
-                // If we have too few images, ensure at least one per color for better representation
-                if (dedupedImages.length < 2 && images.length > 2) {
-                    console.log(`Too few images after deduplication, ensuring minimum representation`);
-                    return images.slice(0, Math.min(5, images.length));
-                }
+                console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images for color: ${color}`);
                 
                 return dedupedImages;
             };
@@ -1660,7 +1669,7 @@ class ProductDetailManager {
             if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
                 console.log(`Using URL filtering for color ${color}`);
                 
-                // Filter images based on enhanced URL patterns with multi-word color support
+                // Enhanced filtering with more comprehensive pattern matching
                 const colorLower = color.toLowerCase();
                 const matchingImages = this.currentProduct.images.filter(imgUrl => {
                     const imgUrlLower = imgUrl.toLowerCase();
@@ -1672,6 +1681,8 @@ class ProductDetailManager {
                         imgUrlLower.includes(`${colorLower}_`) ||
                         imgUrlLower.includes(`${colorLower}-`) ||
                         imgUrlLower.includes(`color=${colorLower}`) ||
+                        imgUrlLower.includes(`variant=${colorLower}`) ||
+                        imgUrlLower.includes(`option=${colorLower}`) ||
                         imgUrlLower.includes(colorLower)) {
                         return true;
                     }
@@ -1705,6 +1716,29 @@ class ProductDetailManager {
                         if (imgUrlLower.includes(underscoreColor)) {
                             return true;
                         }
+                        
+                        // Check for abbreviated color names (e.g., "fg" for "forest green")
+                        // This can catch color codes used in image filenames
+                        if (colorParts.length === 2) {
+                            const abbreviated = colorParts[0].charAt(0) + colorParts[1].charAt(0);
+                            if (imgUrlLower.includes(`_${abbreviated}_`) ||
+                                imgUrlLower.includes(`-${abbreviated}-`) ||
+                                imgUrlLower.includes(`_${abbreviated}.`) ||
+                                imgUrlLower.includes(`-${abbreviated}.`)) {
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Check for color name at the end of the URL or filename
+                    const parts = imgUrlLower.split('/');
+                    const filename = parts[parts.length - 1];
+                    
+                    if (filename.startsWith(colorLower + '_') ||
+                        filename.startsWith(colorLower + '-') ||
+                        filename.endsWith('_' + colorLower + '.') ||
+                        filename.endsWith('-' + colorLower + '.')) {
+                        return true;
                     }
                     
                     return false;
@@ -1731,21 +1765,20 @@ class ProductDetailManager {
                 this.updateThumbnailGrid();
             }
             
-            // Try to use quick-view manager's filtering if available
-            if (window.quickViewManager && typeof window.quickViewManager.filterImagesByColor === 'function') {
-                try {
-                    // This may enhance our filtering with additional DOM-based logic
-                    window.quickViewManager.filterImagesByColor.call(this, color);
-                    
-                    // Deduplicate images again after quickViewManager filtering
-                    if (this.filteredImages && this.filteredImages.length > 0) {
-                        this.filteredImages = deduplicateImages(this.filteredImages);
-                        this.updateThumbnailGrid();
-                    }
-                } catch (error) {
-                    console.warn('Error using quickViewManager filtering:', error);
-                }
+            // Ensure there are no duplicate images in colorToImagesMap
+            if (this.currentProduct.colorImages && this.currentProduct.colorImages[color]) {
+                // Make sure the color-specific images are properly deduplicated
+                const uniqueColorImages = [...new Set(this.currentProduct.colorImages[color])];
+                this.currentProduct.colorImages[color] = uniqueColorImages;
             }
+            
+            // Debug to show actual image count
+            if (this.filteredImages && this.filteredImages.length > 0) {
+                console.log(`Final filtered images count for ${color}: ${this.filteredImages.length}`);
+            }
+            
+            // Make sure thumbnails and main image are updated
+            this.updateThumbnailGrid();
             
         } catch (error) {
             console.error('Error in selectColor:', error);
@@ -1812,11 +1845,22 @@ class ProductDetailManager {
             return;
         }
         
+        // Ensure we have a valid array of filtered images
         if (!this.filteredImages || this.filteredImages.length === 0) {
-            this.filteredImages = this.currentProduct.images;
-            if (!this.filteredImages || this.filteredImages.length === 0) {
-                console.warn('No images available');
-                return;
+            // Try to get images from the colorImages map first
+            if (this.currentProduct?.colorImages &&
+                this.selectedVariant?.color &&
+                this.currentProduct.colorImages[this.selectedVariant.color]) {
+                this.filteredImages = [...this.currentProduct.colorImages[this.selectedVariant.color]];
+                console.log(`Retrieved ${this.filteredImages.length} images from colorImages map for main image`);
+            } else if (this.currentProduct?.images) {
+                // Fallback to all product images
+                this.filteredImages = [...this.currentProduct.images];
+                console.log(`Falling back to all ${this.filteredImages.length} product images for main image`);
+            } else {
+                // Last resort - use placeholder
+                this.filteredImages = ['/assets/product-placeholder.png'];
+                console.warn('No images available for main image, using placeholder');
             }
         }
         
@@ -1826,15 +1870,41 @@ class ProductDetailManager {
             this.currentImageIndex = 0;
         }
         
+        // Get the current image to display
         const image = this.filteredImages[this.currentImageIndex];
         if (!image) {
-            // Silently use fallback instead of console error
+            // Use fallback if image is null or undefined
             const fallbackImage = '/assets/product-placeholder.png';
-            mainImageContainer.innerHTML = `<img src="${fallbackImage}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">`;
+            mainImageContainer.innerHTML = `
+                <img src="${fallbackImage}"
+                     alt="${this.currentProduct?.title || 'Product'}"
+                     style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">
+            `;
             return;
         }
         
-        mainImageContainer.innerHTML = `<img src="${image}" alt="${this.currentProduct?.title || 'Product'}" style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">`;
+        // Extract color and view type information from image URL if possible
+        const imgUrl = image.toLowerCase();
+        const viewTypes = ['front', 'back', 'side', 'detail', 'angle'];
+        let viewType = '';
+        
+        for (const type of viewTypes) {
+            if (imgUrl.includes(type)) {
+                viewType = type.charAt(0).toUpperCase() + type.slice(1);
+                break;
+            }
+        }
+        
+        // Create the main image with better error handling
+        mainImageContainer.innerHTML = `
+            <img src="${image}"
+                 alt="${this.currentProduct?.title || 'Product'}${viewType ? ' - ' + viewType + ' View' : ''}"
+                 style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;"
+                 onerror="this.src='/assets/product-placeholder.png'; console.warn('Failed to load main image: ${image.replace(/'/g, "\\'")}');">
+        `;
+        
+        // Add debug information about current display
+        console.log(`Updated main image to index ${this.currentImageIndex} for color: ${this.selectedVariant?.color}`);
     }
     
     addToCart() {
@@ -2247,83 +2317,117 @@ class ProductDetailManager {
             const galleryContainer = document.getElementById('product-gallery');
             if (!galleryContainer) return;
             
-            console.log(`Updating thumbnail grid with ${this.filteredImages?.length || 0} filtered images`);
+            console.log(`Updating thumbnail grid with ${this.filteredImages?.length || 0} filtered images for color: ${this.selectedVariant?.color || 'unknown'}`);
             
-            // Update thumbnails based on filtered images
-            if (this.filteredImages && this.filteredImages.length > 0) {
-                // Clear existing thumbnails
-                galleryContainer.innerHTML = '';
+            // Ensure filtered images are properly set
+            if (!this.filteredImages || this.filteredImages.length === 0) {
+                // Try to get images from the colorImages map first
+                if (this.currentProduct?.colorImages &&
+                    this.selectedVariant?.color &&
+                    this.currentProduct.colorImages[this.selectedVariant.color]) {
+                    this.filteredImages = [...this.currentProduct.colorImages[this.selectedVariant.color]];
+                    console.log(`Retrieved ${this.filteredImages.length} images from colorImages map`);
+                } else if (this.currentProduct?.images) {
+                    // Fallback to all product images
+                    this.filteredImages = [...this.currentProduct.images];
+                    console.log(`Falling back to all ${this.filteredImages.length} product images`);
+                }
+            }
+            
+            // Ensure we have at least one image
+            if (!this.filteredImages || this.filteredImages.length === 0) {
+                this.filteredImages = ['/assets/product-placeholder.png'];
+                console.warn('No images available, using placeholder');
+            }
+            
+            // Clear existing thumbnails
+            galleryContainer.innerHTML = '';
+            
+            // Create thumbnails for each filtered image with proper metadata
+            this.filteredImages.forEach((img, idx) => {
+                // Create thumbnail container
+                const thumbnailDiv = document.createElement('div');
+                thumbnailDiv.className = `gallery-item ${idx === this.currentImageIndex ? 'active' : ''}`;
+                thumbnailDiv.style.cursor = 'pointer';
+                thumbnailDiv.style.border = idx === this.currentImageIndex ? '2px solid #a855f7' : '2px solid transparent';
+                thumbnailDiv.style.transition = 'all 0.2s ease';
+                thumbnailDiv.style.borderRadius = '4px';
+                thumbnailDiv.style.overflow = 'hidden';
+                thumbnailDiv.style.margin = '4px';
+                thumbnailDiv.style.backgroundColor = '#ffffff';
+                thumbnailDiv.setAttribute('data-index', idx.toString());
                 
-                // Create thumbnails for each filtered image with proper metadata
-                this.filteredImages.forEach((img, idx) => {
-                    const thumbnailDiv = document.createElement('div');
-                    thumbnailDiv.className = `gallery-item ${idx === 0 ? 'active' : ''}`;
-                    thumbnailDiv.style.cursor = 'pointer';
-                    thumbnailDiv.style.border = idx === 0 ? '2px solid #a855f7' : '2px solid transparent';
-                    thumbnailDiv.style.transition = 'all 0.2s ease';
-                    thumbnailDiv.style.borderRadius = '4px';
-                    thumbnailDiv.style.overflow = 'hidden';
-                    thumbnailDiv.style.margin = '4px';
-                    thumbnailDiv.setAttribute('data-index', idx.toString());
-                    
-                    // Create and configure image element
-                    const imgElement = document.createElement('img');
-                    imgElement.src = img;
-                    imgElement.alt = `${this.currentProduct.title} ${idx + 1}`;
-                    imgElement.style.width = '60px';
-                    imgElement.style.height = '60px';
-                    imgElement.style.objectFit = 'contain';
-                    imgElement.style.backgroundColor = '#ffffff';
-                    
-                    // If the color is known, add it as metadata
-                    if (this.selectedVariant && this.selectedVariant.color) {
-                        imgElement.setAttribute('data-color', this.selectedVariant.color);
+                // Create and configure image element
+                const imgElement = document.createElement('img');
+                imgElement.src = img;
+                imgElement.alt = `${this.currentProduct?.title || 'Product'} ${idx + 1}`;
+                imgElement.style.width = '60px';
+                imgElement.style.height = '60px';
+                imgElement.style.objectFit = 'contain';
+                imgElement.style.backgroundColor = '#ffffff';
+                
+                // Extract view type from image URL if possible (front, back, etc.)
+                const imgUrl = img.toLowerCase();
+                const viewTypes = ['front', 'back', 'side', 'detail', 'angle'];
+                let viewType = '';
+                
+                for (const type of viewTypes) {
+                    if (imgUrl.includes(type)) {
+                        viewType = type.charAt(0).toUpperCase() + type.slice(1);
+                        break;
                     }
+                }
+                
+                // Add view type as tooltip if detected
+                if (viewType) {
+                    thumbnailDiv.title = viewType + ' View';
+                }
+                
+                // Add color information as metadata
+                if (this.selectedVariant && this.selectedVariant.color) {
+                    imgElement.setAttribute('data-color', this.selectedVariant.color);
+                    thumbnailDiv.setAttribute('data-color', this.selectedVariant.color);
+                }
+                
+                // Add error handling for image
+                imgElement.onerror = function() {
+                    this.src = '/assets/product-placeholder.png';
+                    this.style.objectFit = 'contain';
+                    console.warn(`Failed to load image: ${img}`);
+                };
+                
+                // Add image to thumbnail container
+                thumbnailDiv.appendChild(imgElement);
+                galleryContainer.appendChild(thumbnailDiv);
+                
+                // Add click event listener to thumbnail
+                thumbnailDiv.addEventListener('click', () => {
+                    this.currentImageIndex = idx;
+                    this.updateMainImage();
                     
-                    // Add error handling for image
-                    imgElement.onerror = function() {
-                        this.src = '/assets/product-placeholder.png';
-                        this.style.objectFit = 'contain';
-                    };
-                    
-                    // Add image to thumbnail container
-                    thumbnailDiv.appendChild(imgElement);
-                    galleryContainer.appendChild(thumbnailDiv);
-                    
-                    // Add click event listener to thumbnail
-                    thumbnailDiv.addEventListener('click', () => {
-                        this.currentImageIndex = idx;
-                        this.updateMainImage();
-                        
-                        // Update active state for all thumbnails
-                        document.querySelectorAll('.gallery-item').forEach((item) => {
-                            const itemIndex = parseInt(item.getAttribute('data-index') || '0');
-                            if (itemIndex === idx) {
-                                item.classList.add('active');
-                                item.style.border = '2px solid #a855f7';
-                                item.style.transform = 'scale(1.05)';
-                            } else {
-                                item.classList.remove('active');
-                                item.style.border = '2px solid transparent';
-                                item.style.transform = 'scale(1)';
-                            }
-                        });
+                    // Update active state for all thumbnails
+                    document.querySelectorAll('.gallery-item').forEach((item) => {
+                        const itemIndex = parseInt(item.getAttribute('data-index') || '0');
+                        if (itemIndex === idx) {
+                            item.classList.add('active');
+                            item.style.border = '2px solid #a855f7';
+                            item.style.transform = 'scale(1.05)';
+                        } else {
+                            item.classList.remove('active');
+                            item.style.border = '2px solid transparent';
+                            item.style.transform = 'scale(1)';
+                        }
                     });
                 });
+            });
                 
-                // Update main image to show the first filtered image
+            // Ensure we have a valid current image index
+            if (this.currentImageIndex >= this.filteredImages.length) {
                 this.currentImageIndex = 0;
-                this.updateMainImage();
-            } else if (this.currentProduct && this.currentProduct.images && this.currentProduct.images.length > 0) {
-                // Fallback to all product images if no filtered images are available
-                console.log('No filtered images available, using all product images');
-                this.filteredImages = this.currentProduct.images;
-                
-                // Recursively call to update with all images
-                this.updateThumbnailGrid();
-            } else {
-                console.warn('No images available to display in thumbnail grid');
             }
+            
+            // Update main image to show the current filtered image
+            this.updateMainImage();
         } catch (error) {
             console.error('Error in updateThumbnailGrid:', error);
             // Fallback: try to at least display the main image if available
@@ -2333,10 +2437,14 @@ class ProductDetailManager {
                     mainImageContainer.innerHTML = `
                         <img src="${this.currentProduct.mainImage}"
                              alt="${this.currentProduct.title}"
-                             style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;">
+                             style="width:100%; max-height:500px; object-fit:contain; background-color: #ffffff; padding:10px; border-radius:8px;"
+                             onerror="this.src='/assets/product-placeholder.png';">
                     `;
                 }
             }
+            
+            // Add debug information about current color and images
+            console.log(`Thumbnail grid updated with ${this.filteredImages?.length} images for color: ${this.selectedVariant?.color}`);
         }
     }
     // Helper method to ensure URLs are absolute
