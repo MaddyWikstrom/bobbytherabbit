@@ -151,7 +151,7 @@ class ProductDetailManager {
             const addToCartBtn = document.getElementById('add-to-cart');
             if (addToCartBtn) {
                 addToCartBtn.addEventListener('click', () => {
-                    this.addToCart();
+                    this.addItem(); // Use the compatible method name
                 });
             } else {
                 console.warn('Add to cart button not found in DOM');
@@ -1527,10 +1527,39 @@ class ProductDetailManager {
                 // Render the product to the DOM
                 await this.renderProduct();
                 
-                // Set default size for products without size options
-                if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
-                    console.log('Product has no size options, automatically selecting "One Size"');
-                    this.selectedVariant.size = "One Size";
+                // Check if there's a size in the URL that we should use
+                const urlParams = new URLSearchParams(window.location.search);
+                const sizeFromUrl = urlParams.get('size');
+                
+                // Get the default size from the product data or URL
+                let defaultSize = "One Size";
+                
+                // If there's a size in the URL, try to use it
+                if (sizeFromUrl) {
+                    console.log(`Found size parameter in URL: ${sizeFromUrl}`);
+                    defaultSize = sizeFromUrl;
+                }
+                // If product has a default variant size, use that
+                else if (this.currentProduct.variants && this.currentProduct.variants.length > 0 &&
+                         this.currentProduct.variants[0].size) {
+                    defaultSize = this.currentProduct.variants[0].size;
+                    console.log(`Using default size from first variant: ${defaultSize}`);
+                }
+                
+                // Set default size, either from sizes array or use the determined default
+                if (this.currentProduct.sizes && this.currentProduct.sizes.length > 0) {
+                    // If we have sizes, check if our default size exists in the available sizes
+                    if (this.currentProduct.sizes.includes(defaultSize)) {
+                        this.selectedVariant.size = defaultSize;
+                    } else {
+                        // Otherwise use the first available size
+                        this.selectedVariant.size = this.currentProduct.sizes[0];
+                    }
+                    console.log(`Selected size: ${this.selectedVariant.size} from available sizes`);
+                } else {
+                    // If no sizes array, use the default size we determined
+                    this.selectedVariant.size = defaultSize;
+                    console.log(`No size options, using default size: ${defaultSize}`);
                 }
                 
                 // Always select the first color by default
@@ -2286,14 +2315,24 @@ class ProductDetailManager {
     }
     
     selectSize(size) {
+        // Store the original size without modification
         this.selectedVariant.size = size;
         
-        // Update active class
+        console.log(`Size selected: "${size}"`);
+        
+        // Update active class and ensure the size is visually reflected
         document.querySelectorAll('.size-option').forEach(option => {
             if (option.dataset.size === size) {
                 option.classList.add('active');
+                // Make the active size more visible
+                option.style.backgroundColor = "rgba(168, 85, 247, 0.8)";
+                option.style.color = "white";
+                option.style.fontWeight = "bold";
             } else {
                 option.classList.remove('active');
+                option.style.backgroundColor = "";
+                option.style.color = "";
+                option.style.fontWeight = "";
             }
         });
     }
@@ -2548,6 +2587,11 @@ class ProductDetailManager {
             console.error('Critical error in addToCart:', error);
             this.showNotification('Error adding product to cart', 'error');
         }
+    }
+    
+    // Add compatibility method to match the cart system's naming convention
+    addItem() {
+        return this.addToCart();
     }
     
     playAddToCartAnimation() {
