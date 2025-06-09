@@ -1722,9 +1722,14 @@ class QuickViewManager {
             return sizeMatch[0];
         }
         
-        // Fallback to just returning "OS" (one size) if we can't determine
-        // This ensures we always show a simple size format
-        return 'OS';
+        // For extended sizes like 4XL, 5XL, etc., preserve the original size
+        if (/^\d+XL$/i.test(upperSize)) {
+            return upperSize;
+        }
+        
+        // Fallback to the original size rather than converting to "OS"
+        // This ensures we show the actual size instead of converting to "One Size"
+        return sizeString;
     }
     
     getColorCode(colorName) {
