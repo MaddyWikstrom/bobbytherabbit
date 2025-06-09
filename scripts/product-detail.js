@@ -629,10 +629,10 @@ class ProductDetailManager {
     renderProductCards() {
         // Render product cards
         
-        // First render the "You Might Also Like" section
+        // First render the "You Might Also Like" section with recommended products
         const relatedContainer = document.getElementById('related-products-grid');
         if (relatedContainer) {
-            this.renderProductsToContainer(relatedContainer);
+            this.renderRecommendedProducts(relatedContainer);
         } else {
             console.warn('Related products container not found');
         }
@@ -654,6 +654,193 @@ class ProductDetailManager {
             // Create the new structure with glitch effect
             title.innerHTML = `<span class="glitch-text" data-text="${titleText}">${titleText}</span>`;
         });
+    }
+    
+    // Get recommended products based on current product but different from recently viewed
+    renderRecommendedProducts(container) {
+        // Start by fetching products via the Shopify API if needed
+        this.fetchRecommendedProducts().then(recommendedProducts => {
+            if (recommendedProducts && recommendedProducts.length > 0) {
+                // Clear the container
+                container.innerHTML = '';
+                
+                // Apply grid styling directly with improved centering
+                container.style.display = 'grid';
+                container.style.justifyItems = 'center';
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
+                container.style.gap = '30px';
+                container.style.margin = '0 auto';
+                container.style.position = 'relative';
+                container.style.zIndex = '2';
+                container.style.placeContent = 'center';
+                container.style.justifyContent = 'center';
+                container.style.alignItems = 'start';
+                container.style.maxWidth = '1200px';
+                container.style.padding = '0 20px';
+                
+                // Loop through each product and create elements manually
+                recommendedProducts.forEach(product => {
+                    try {
+                        // Create product container
+                        const productDiv = document.createElement('div');
+                        productDiv.className = 'related-product';
+                        productDiv.dataset.productId = product.id;
+                        
+                        // Prepare image URL
+                        let imageUrl = '/assets/product-placeholder.png'; // Default fallback image
+                        
+                        if (product.image) {
+                            imageUrl = this.ensureAbsoluteUrl(product.image);
+                        } else {
+                            // Silently fall back to placeholder instead of logging
+                            imageUrl = '/assets/product-placeholder.png';
+                        }
+                        
+                        // Create and append image
+                        const img = document.createElement('img');
+                        img.alt = product.title;
+                        img.style.backgroundColor = '#ffffff'; // WHITE background for all product images
+                        img.style.minHeight = '180px';
+                        img.style.objectFit = 'contain';
+                        img.style.padding = '5px'; // Add slight padding for better presentation
+                        
+                        // Improved error handling
+                        img.onerror = function() {
+                            this.src = '/assets/product-placeholder.png';
+                            this.style.backgroundColor = '#ffffff';
+                        };
+                        
+                        // Set src after defining onerror to ensure handler catches loading issues
+                        img.src = imageUrl;
+                        
+                        // Create product info container
+                        const infoDiv = document.createElement('div');
+                        infoDiv.className = 'related-product-info';
+                        
+                        // Add title
+                        const titleEl = document.createElement('h4');
+                        titleEl.textContent = product.title;
+                        
+                        // Add price
+                        const priceEl = document.createElement('span');
+                        priceEl.textContent = `$${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}`;
+                        
+                        // Assemble the elements
+                        infoDiv.appendChild(titleEl);
+                        infoDiv.appendChild(priceEl);
+                        
+                        productDiv.appendChild(img);
+                        productDiv.appendChild(infoDiv);
+                        
+                        // Add event listener
+                        productDiv.addEventListener('click', () => {
+                            window.location.href = `product.html?id=${product.id}`;
+                        });
+                        
+                        // Append to container
+                        container.appendChild(productDiv);
+                        
+                        // Add border and box shadow to make images pop more on dark background
+                        productDiv.style.border = '1px solid rgba(168, 85, 247, 0.2)';
+                        productDiv.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                        
+                    } catch (error) {
+                        console.error(`Error creating related product element for ${product.title}:`, error);
+                    }
+                });
+            } else {
+                // Add a styled "No products found" message
+                container.innerHTML = `
+                    <div class="no-products" style="color: white; text-align: center; padding: 30px;
+                        background-color: rgba(24, 24, 48, 0.5); border-radius: 8px;
+                        margin: 20px auto; max-width: 600px; grid-column: 1 / -1;
+                        position: relative; z-index: 2; border: 1px solid rgba(168, 85, 247, 0.2);">
+                        <p>No recommended products available. Start browsing our collection!</p>
+                        <a href="products.html" style="display: inline-block; margin-top: 15px; padding: 8px 16px;
+                            background: linear-gradient(45deg, #a855f7, #6366f1); color: white; text-decoration: none;
+                            border-radius: 4px; font-weight: bold; transition: all 0.3s ease;">
+                            Browse Products
+                        </a>
+                    </div>`;
+            }
+        });
+    }
+    
+    // Fetch recommended products based on current product category or random selection
+    async fetchRecommendedProducts() {
+        try {
+            // If we already have product data from Shopify, use it to get recommendations
+            let recommendedProducts = [];
+            
+            // Try to get products from Shopify API
+            const response = await fetch('/.netlify/functions/get-products');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            let allProducts = [];
+            
+            // Extract products from API response
+            if (data.products && Array.isArray(data.products)) {
+                allProducts = data.products.map(product =>
+                    this.transformShopifyProduct(product.node || product));
+            } else if (Array.isArray(data)) {
+                allProducts = data.map(product =>
+                    this.transformShopifyProduct(product.node || product));
+            }
+            
+            if (allProducts.length === 0) {
+                return [];
+            }
+            
+            // Get the category of the current product to find similar items
+            const currentProductCategory = this.currentProduct?.category || '';
+            
+            // Filter out the current product and any recently viewed products
+            const recentlyViewedIds = this.recentlyViewed.map(p => p.id);
+            let filteredProducts = allProducts.filter(product => {
+                return product.id !== this.currentProduct?.id &&
+                       !recentlyViewedIds.includes(product.id);
+            });
+            
+            // If we have a category, prioritize products from the same category
+            if (currentProductCategory) {
+                const sameCategory = filteredProducts.filter(p =>
+                    p.category && p.category.toLowerCase() === currentProductCategory.toLowerCase());
+                
+                // If we have enough same-category products, use those
+                if (sameCategory.length >= 4) {
+                    // Shuffle the array to get random products from the same category
+                    recommendedProducts = this.shuffleArray(sameCategory).slice(0, 4);
+                } else {
+                    // Not enough same-category products, add some from other categories
+                    recommendedProducts = [
+                        ...sameCategory,
+                        ...this.shuffleArray(filteredProducts.filter(p =>
+                            !sameCategory.includes(p))).slice(0, 4 - sameCategory.length)
+                    ];
+                }
+            } else {
+                // No category info, just get random products
+                recommendedProducts = this.shuffleArray(filteredProducts).slice(0, 4);
+            }
+            
+            return recommendedProducts;
+        } catch (error) {
+            console.error('Error fetching recommended products:', error);
+            return [];
+        }
+    }
+    
+    // Utility function to shuffle an array (Fisher-Yates algorithm)
+    shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
     }
     
     renderProductsToContainer(container) {
