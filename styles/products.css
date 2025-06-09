@@ -239,7 +239,7 @@
     background-image:
         linear-gradient(0deg, rgba(139, 92, 246, 0.12) 1px, transparent 1px),
         linear-gradient(90deg, rgba(139, 92, 246, 0.12) 1px, transparent 1px);
-    background-size: 100px 100px;
+    background-size: 60px 60px;
     background-color: #0a0a0f;
     position: relative;
 }
