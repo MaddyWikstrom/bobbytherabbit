@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles/loading.css">
     <link rel="stylesheet" href="styles/cart-styles.css">
     <link rel="stylesheet" href="styles/quick-view.css">
+    <link rel="stylesheet" href="styles/image-zoom-modal.css">
     <link rel="stylesheet" href="styles/size-guide.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,6 +267,21 @@
     <div class="cart-overlay" id="cart-overlay" style="background-color: rgba(0, 0, 0, 0.5); z-index: 9999;"></div>
     <div class="wishlist-overlay" id="wishlist-overlay"></div>
     
+    <!-- Image Zoom Modal -->
+    <div class="image-zoom-modal" id="image-zoom-modal">
+        <div class="zoom-container">
+            <img src="" alt="Zoomed product image" class="zoom-image" id="zoom-image">
+            <div class="zoom-instructions">Click to zoom in, drag to move around</div>
+        </div>
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-out">−</button>
+            <div class="zoom-level">100%</div>
+            <button class="zoom-btn" id="zoom-in">+</button>
+            <button class="zoom-btn" id="zoom-reset">Reset</button>
+        </div>
+        <button class="close-zoom" id="close-zoom">×</button>
+    </div>
+    
     <!-- Cart styles -->
     <style>
         /* Ensure cart sidebar is properly visible */
@@ -331,6 +347,7 @@
 
     <!-- Scripts -->
     <script src="scripts/product-detail.js"></script>
+    <script src="scripts/image-zoom.js"></script>
     <script src="scripts/loading.js"></script>
     <script src="scripts/animations.js"></script>
     <script src="scripts/wishlist.js"></script>
