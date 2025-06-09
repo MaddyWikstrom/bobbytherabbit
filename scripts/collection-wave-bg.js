@@ -186,6 +186,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 margin-left: -50vw !important;
                 margin-right: -50vw !important;
                 background-color: var(--secondary-bg) !important;
+                padding-bottom: 60px !important; /* Added bottom padding for View All button */
+                min-height: 600px !important; /* Ensure minimum height */
             }
             
             .product-scroll-container {
@@ -211,6 +213,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 margin: 0 auto !important;
                 scroll-behavior: smooth !important;
                 gap: 2rem !important;
+                min-height: 450px !important; /* Ensure enough height for products */
+            }
+            
+            /* Fix product card display */
+            .product-card {
+                max-width: 320px !important;
+                height: auto !important;
+                min-height: 400px !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .product-image {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 300px !important;
+                max-height: 400px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                overflow: hidden !important;
+                background: #fff !important;
+            }
+            
+            .product-image img {
+                width: auto !important;
+                height: auto !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+                object-position: center !important;
             }
             
             .product-grid-scroll::-webkit-scrollbar {
