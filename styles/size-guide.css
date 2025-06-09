@@ -76,12 +76,13 @@
 /* Size Table Styles */
 .size-table-container {
     width: 100%;
+    color: #000000; /* Ensure all content has black text by default */
 }
 
 .size-table-container h4 {
     margin-top: 0;
     margin-bottom: 15px;
-    color: #333;
+    color: #000000;
     font-weight: 600;
 }
 
@@ -96,6 +97,7 @@
     border: 1px solid #ddd;
     padding: 10px;
     text-align: center;
+    color: #000000; /* Ensure text is black */
 }
 
 .size-table th {
@@ -114,7 +116,7 @@
 
 .size-note {
     font-size: 14px;
-    color: #666;
+    color: #000000;
     font-style: italic;
     margin-top: 15px;
 }
