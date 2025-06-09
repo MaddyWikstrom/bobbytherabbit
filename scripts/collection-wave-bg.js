@@ -226,27 +226,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
+                position: relative !important;
+                padding: 0 !important;
+                box-sizing: border-box !important;
             }
             
             .product-image {
                 width: 100% !important;
-                height: auto !important;
-                min-height: 300px !important;
-                max-height: 400px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+                height: 0 !important; /* Use padding-bottom for aspect ratio */
+                padding-bottom: 100% !important; /* 1:1 aspect ratio */
+                position: relative !important;
                 overflow: hidden !important;
                 background: #fff !important;
+                display: block !important;
             }
             
             .product-image img {
-                width: auto !important;
-                height: auto !important;
-                max-width: 100% !important;
-                max-height: 100% !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
                 object-fit: contain !important;
                 object-position: center !important;
+                padding: 10px !important;
+                box-sizing: border-box !important;
             }
             
             .product-grid-scroll::-webkit-scrollbar {
@@ -255,6 +259,41 @@ document.addEventListener('DOMContentLoaded', function() {
             
             .product-grid-scroll > * {
                 flex: 0 0 auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                transform: translateZ(0) !important; /* Fix for Safari rendering */
+            }
+            
+            /* Fix for mobile sizing */
+            @media (max-width: 768px) {
+                .product-card {
+                    width: 280px !important;
+                    max-width: 85vw !important;
+                    min-height: 350px !important;
+                }
+                
+                .product-image {
+                    height: 250px !important;
+                    min-height: 250px !important;
+                }
+                
+                .product-image img {
+                    max-height: 230px !important;
+                }
+            }
+            
+            /* Fix for very small screens */
+            @media (max-width: 480px) {
+                .product-card {
+                    width: 220px !important;
+                    max-width: 80vw !important;
+                    min-height: 300px !important;
+                }
+                
+                .product-image {
+                    height: 200px !important;
+                    min-height: 200px !important;
+                }
             }
             
             @media screen and (max-width: 768px) {
