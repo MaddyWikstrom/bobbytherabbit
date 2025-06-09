@@ -144,6 +144,32 @@ document.addEventListener('DOMContentLoaded', function() {
             rightArrow.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5)';
             rightArrow.style.pointerEvents = 'auto'; // Restore pointer events
         }
+        
+        // Add scrolling functionality to arrows
+        const scrollGrid = collectionSection.querySelector('.product-grid-scroll');
+        
+        // Add click handlers to the already styled arrows
+        if (leftArrow && scrollGrid) {
+            leftArrow.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Scroll left by one product width (300px) plus gap (32px)
+                scrollGrid.scrollBy({
+                    left: -332,
+                    behavior: 'smooth'
+                });
+            });
+        }
+        
+        if (rightArrow && scrollGrid) {
+            rightArrow.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Scroll right by one product width (300px) plus gap (32px)
+                scrollGrid.scrollBy({
+                    left: 332,
+                    behavior: 'smooth'
+                });
+            });
+        }
     }
     
     // Add animation keyframes and additional styles if they don't exist yet
@@ -195,33 +221,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 display: flex !important;
                 justify-content: center !important;
                 align-items: center !important;
-                overflow: hidden !important;
+                overflow-x: auto !important; /* Changed from hidden to auto */
                 position: relative !important;
+                padding: 0 !important;
+                margin: 0 !important;
             }
             
             .product-grid-scroll {
                 display: flex !important;
                 flex-wrap: nowrap !important;
-                overflow-x: auto !important;
-                padding: 1rem 0 !important;
+                overflow-x: visible !important; /* Changed from auto to visible */
+                padding: 2rem !important; /* Increased padding */
                 -ms-overflow-style: none !important;  /* IE and Edge */
                 scrollbar-width: none !important;  /* Firefox */
-                justify-content: center !important;
+                justify-content: flex-start !important; /* Changed from center to flex-start */
                 align-items: center !important;
-                width: 100% !important;
-                max-width: 100% !important;
+                min-width: max-content !important; /* Added to prevent children from getting cut off */
                 margin: 0 auto !important;
                 scroll-behavior: smooth !important;
                 gap: 2rem !important;
                 min-height: 450px !important; /* Ensure enough height for products */
+                box-sizing: border-box !important;
             }
             
             /* Fix product card display */
             .product-card {
-                max-width: 320px !important;
+                flex: 0 0 auto !important; /* Prevent shrinking */
+                width: 300px !important; /* Fixed width as recommended */
                 height: auto !important;
                 min-height: 400px !important;
-                overflow: hidden !important;
+                overflow: visible !important; /* Changed from hidden to visible */
                 display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
@@ -229,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 position: relative !important;
                 padding: 0 !important;
                 box-sizing: border-box !important;
+                margin: 0 !important;
             }
             
             .product-image {
