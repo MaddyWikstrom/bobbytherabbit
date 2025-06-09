@@ -5,24 +5,124 @@
 (function() {
     console.log("Enhanced color image selection installed");
 
-    // Wait for the product detail manager to be initialized
-    document.addEventListener('productDetailInitialized', function() {
+    // Function to strictly filter images for a specific color
+    function strictColorFiltering(manager, color) {
+        try {
+            if (!color || !manager.currentProduct) {
+                return false; // Can't filter without color or product
+            }
+
+            console.log(`Applying strict filtering for color: ${color}`);
+
+            // Get product images
+            const allImages = manager.currentProduct.images || [];
+            console.log(`Total product images: ${allImages.length}`);
+
+            // Create exact matching pattern for the selected color
+            const normalizedColor = color.toLowerCase().trim();
+            
+            // Define more strict rules for pattern matching to avoid "Black" matching "Vintage Black"
+            const getExactPatterns = (colorName) => {
+                const patterns = [];
+                
+                // Convert spaces to different separators
+                const colorWithDash = colorName.replace(/\s+/g, '-');
+                const colorWithUnderscore = colorName.replace(/\s+/g, '_');
+                
+                // Generate strict boundary patterns
+                patterns.push(
+                    // Boundaries with slashes and separators
+                    `/${colorName}/`,
+                    `/${colorWithDash}/`,
+                    `/${colorWithUnderscore}/`,
+                    // With file extension boundaries
+                    `-${colorName}.`,
+                    `-${colorWithDash}.`,
+                    `-${colorWithUnderscore}.`,
+                    // Other common boundaries in image URLs
+                    `-${colorName}-`,
+                    `-${colorWithDash}-`,
+                    `-${colorWithUnderscore}-`
+                );
+                
+                return patterns;
+            };
+            
+            // Get strict patterns for exact matching
+            const strictPatterns = getExactPatterns(normalizedColor);
+            
+            // Special handling for black vs vintage black to ensure they don't mix
+            const isBlackVariant = normalizedColor === 'black' || normalizedColor.includes('black');
+            let blackExclusionCheck = null;
+            
+            if (isBlackVariant) {
+                // If we're dealing with a variant of black, set up exclusion rules
+                if (normalizedColor === 'black') {
+                    // For plain "black", exclude images with "vintage-black"
+                    blackExclusionCheck = (url) => !url.toLowerCase().includes('vintage-black');
+                } else if (normalizedColor === 'vintage black') {
+                    // For "vintage black", only include images specifically with vintage black
+                    blackExclusionCheck = (url) => {
+                        const lowerUrl = url.toLowerCase();
+                        return lowerUrl.includes('vintage-black') || lowerUrl.includes('vintage_black');
+                    };
+                }
+            }
+            
+            // Filter images based on strict color matching
+            const strictlyFilteredImages = allImages.filter(imgUrl => {
+                const imgUrlLower = imgUrl.toLowerCase();
+                
+                // Special handling for black variants
+                if (blackExclusionCheck && !blackExclusionCheck(imgUrlLower)) {
+                    return false;
+                }
+                
+                // Check against strict patterns
+                return strictPatterns.some(pattern => imgUrlLower.includes(pattern));
+            });
+            
+            console.log(`Found ${strictlyFilteredImages.length} strictly matched images for color ${color}`);
+            
+            if (strictlyFilteredImages.length > 0) {
+                // Use strictly filtered images if available
+                manager.filteredImages = strictlyFilteredImages;
+                manager.currentImageIndex = 0;
+                manager.updateMainImage();
+                manager.updateThumbnailGrid();
+                return true; // Indicate successful filtering
+            }
+            
+            return false; // Indicate filtering didn't find any images
+        } catch (error) {
+            console.error('Error in strict color filtering:', error);
+            return false;
+        }
+    }
+
+    // Function to handle both initialization and color selection
+    function enhanceProductManager() {
         if (!window.productDetailManager) {
-            console.warn("Product detail manager not found");
+            console.warn("Product detail manager not found, will retry");
+            setTimeout(enhanceProductManager, 100);
             return;
         }
 
-        const originalSelectColor = window.productDetailManager.selectColor;
+        const manager = window.productDetailManager;
+        console.log("Found product detail manager, enhancing color selection");
+
+        // Store the original selectColor method
+        const originalSelectColor = manager.selectColor;
 
         // Override the selectColor method with improved filtering
-        window.productDetailManager.selectColor = function(color) {
+        manager.selectColor = function(color) {
             try {
                 if (!color) {
                     console.warn('No color provided to selectColor');
                     return;
                 }
 
-                console.log(`Selecting color: ${color}`);
+                console.log(`Enhanced selectColor called for: ${color}`);
 
                 // Store the color name in selectedVariant
                 this.selectedVariant.color = color;
@@ -43,96 +143,14 @@
                     console.log(`No matching color option found in DOM for: ${color}`);
                 }
 
-                // STRICT COLOR FILTERING LOGIC
-                // This is the enhanced part that ensures strict color matching
+                // Apply strict filtering first
+                const filterSuccess = strictColorFiltering(this, color);
                 
-                // Special handling for multi-word colors with spaces like "forest green" or "heather gray"
-                const isMultiWordColor = color.includes(' ');
-                console.log(`Color "${color}" is multi-word: ${isMultiWordColor}`);
-
-                // Get product images
-                const allImages = this.currentProduct.images || [];
-                console.log(`Total product images: ${allImages.length}`);
-
-                // Create exact matching pattern for the selected color
-                const normalizedColor = color.toLowerCase().trim();
-                
-                // Define more strict rules for pattern matching to avoid "Black" matching "Vintage Black"
-                const getExactPatterns = (colorName) => {
-                    const patterns = [];
-                    
-                    // Convert spaces to different separators
-                    const colorWithDash = colorName.replace(/\s+/g, '-');
-                    const colorWithUnderscore = colorName.replace(/\s+/g, '_');
-                    
-                    // Generate strict boundary patterns
-                    patterns.push(
-                        // Boundaries with slashes and separators
-                        `/${colorName}/`,
-                        `/${colorWithDash}/`,
-                        `/${colorWithUnderscore}/`,
-                        // With file extension boundaries
-                        `-${colorName}.`,
-                        `-${colorWithDash}.`,
-                        `-${colorWithUnderscore}.`,
-                        // Other common boundaries in image URLs
-                        `-${colorName}-`,
-                        `-${colorWithDash}-`,
-                        `-${colorWithUnderscore}-`
-                    );
-                    
-                    return patterns;
-                };
-                
-                // Get strict patterns for exact matching
-                const strictPatterns = getExactPatterns(normalizedColor);
-                
-                // Special handling for black vs vintage black to ensure they don't mix
-                const isBlackVariant = normalizedColor === 'black' || normalizedColor.includes('black');
-                let blackExclusionCheck = null;
-                
-                if (isBlackVariant) {
-                    // If we're dealing with a variant of black, set up exclusion rules
-                    if (normalizedColor === 'black') {
-                        // For plain "black", exclude images with "vintage-black"
-                        blackExclusionCheck = (url) => !url.toLowerCase().includes('vintage-black');
-                    } else if (normalizedColor === 'vintage black') {
-                        // For "vintage black", only include images specifically with vintage black
-                        blackExclusionCheck = (url) => {
-                            const lowerUrl = url.toLowerCase();
-                            return lowerUrl.includes('vintage-black') || lowerUrl.includes('vintage_black');
-                        };
-                    }
+                // If strict filtering didn't work, fall back to original method
+                if (!filterSuccess) {
+                    console.log(`No strict matches found for ${color}, falling back to original filtering method`);
+                    originalSelectColor.call(this, color);
                 }
-                
-                // Filter images based on strict color matching
-                const strictlyFilteredImages = allImages.filter(imgUrl => {
-                    const imgUrlLower = imgUrl.toLowerCase();
-                    
-                    // Special handling for black variants
-                    if (blackExclusionCheck && !blackExclusionCheck(imgUrlLower)) {
-                        return false;
-                    }
-                    
-                    // Check against strict patterns
-                    return strictPatterns.some(pattern => imgUrlLower.includes(pattern));
-                });
-                
-                console.log(`Found ${strictlyFilteredImages.length} strictly matched images for color ${color}`);
-                
-                if (strictlyFilteredImages.length > 0) {
-                    // Use strictly filtered images if available
-                    this.filteredImages = strictlyFilteredImages;
-                    this.currentImageIndex = 0;
-                    this.updateMainImage();
-                    this.updateThumbnailGrid();
-                    return; // Exit early with strict matches
-                }
-                
-                // If strict filtering found no images, fall back to original method for backward compatibility
-                console.log(`No strict matches found for ${color}, falling back to original filtering method`);
-                originalSelectColor.call(this, color);
-                
             } catch (error) {
                 console.error('Error in enhanced selectColor:', error);
                 // Fallback to original method
@@ -140,6 +158,45 @@
             }
         };
         
+        // Fix for initial page load selection
+        // If a color is already selected, re-apply selection with our enhanced method
+        if (manager.selectedVariant && manager.selectedVariant.color) {
+            const currentColor = manager.selectedVariant.color;
+            console.log(`Reapplying color selection for initial color: ${currentColor}`);
+            manager.selectColor(currentColor);
+        } 
+        // If no color is selected yet but product is loaded, handle the default selection
+        else if (manager.currentProduct) {
+            console.log("Applying strict filtering for default color");
+            
+            // Default to first variant color if available
+            if (manager.currentProduct.variants && manager.currentProduct.variants.length > 0) {
+                const firstVariant = manager.currentProduct.variants[0];
+                if (firstVariant && firstVariant.color) {
+                    console.log(`Selecting default color from first variant: ${firstVariant.color}`);
+                    manager.selectColor(firstVariant.color);
+                }
+            }
+        }
+        
         console.log("Color selection method enhanced with strict filtering");
+    }
+
+    // Apply enhancement immediately and also listen for product detail initialization
+    enhanceProductManager();
+    
+    // Also listen for the initialization event in case our script runs before product detail manager
+    document.addEventListener('productDetailInitialized', enhanceProductManager);
+    
+    // Additional handler for when product is rendered
+    document.addEventListener('productDetailRendered', function() {
+        console.log("Product detail rendered, checking color selection");
+        if (window.productDetailManager && window.productDetailManager.selectedVariant) {
+            const currentColor = window.productDetailManager.selectedVariant.color;
+            if (currentColor) {
+                console.log(`Re-applying color selection after render: ${currentColor}`);
+                window.productDetailManager.selectColor(currentColor);
+            }
+        }
     });
 })();
