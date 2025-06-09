@@ -332,10 +332,10 @@ class HomepageProductLoader {
             
             console.log(`Product category: ${product.category}, isOneSize: ${isOneSize}`);
             
-            // For multiple sizes, just redirect to product page
+            // Check if we should use quick view instead of redirecting
             if (!isOneSize) {
-                console.log('Not a one-size product, redirecting to product page');
-                this.viewProduct(productId);
+                console.log('Multiple size product, opening quick view for selection');
+                this.showQuickView(productId);
                 return;
             }
             

@@ -786,7 +786,8 @@ class QuickViewManager {
                         </div>
                     </div>
                     <div class="quick-view-actions">
-                        <button class="quick-view-btn" id="quick-view-full-btn" style="width: 100%;">View Details</button>
+                        <button class="quick-add-btn" id="quick-view-add-btn">Add to Cart</button>
+                        <button class="quick-view-btn" id="quick-view-full-btn">View Details</button>
                     </div>
                 </div>
             </div>
@@ -905,7 +906,12 @@ class QuickViewManager {
                 }
             }
             
-            // Add to cart button in modal was removed
+            // Add to cart button in modal
+            if (e.target.matches('#quick-view-add-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.addToCart();
+            }
             
             // View full details button
             if (e.target.matches('#quick-view-full-btn')) {
