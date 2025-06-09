@@ -36,37 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
       // Get all images for this product from the API response
       const allImages = this.currentProduct?.images || [];
       
-      // Get color-specific images directly from API response without filtering
-      if (this.currentProduct?.colorImages && this.currentProduct.colorImages[color]) {
-        // Use the images directly from the API response for this color
-        this.filteredImages = [...this.currentProduct.colorImages[color]];
-        console.log(`Using ${this.filteredImages.length} images for color ${color} directly from API response`);
-      }
-      // Try case-insensitive match if direct match fails
-      else if (this.currentProduct?.colorImages) {
-        let found = false;
-        
-        // Check for case-insensitive match
-        for (const [key, images] of Object.entries(this.currentProduct.colorImages)) {
-          if (key.toLowerCase() === color.toLowerCase()) {
-            this.filteredImages = [...images];
-            found = true;
-            console.log(`Found color ${color} using case-insensitive match with ${images.length} images`);
-            break;
-          }
-        }
-        
-        // If still not found, use all product images
-        if (!found) {
-          this.filteredImages = [...allImages];
-          console.log(`No specific images found for color ${color}, using all ${allImages.length} product images`);
-        }
-      }
-      else {
-        // If no color images map exists, use all product images
-        this.filteredImages = [...allImages];
-        console.log(`No color images map available, using all ${allImages.length} product images`);
-      }
+      // The key change: ALWAYS use all images from the API response
+      // but deduplicate them to avoid showing duplicates
+      this.filteredImages = [...new Set(allImages)];
+      
+      console.log(`Showing all ${this.filteredImages.length} unique images from API response for color ${color}`);
       
       // Reset to first image when color changes
       this.currentImageIndex = 0;
