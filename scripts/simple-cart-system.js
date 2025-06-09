@@ -464,7 +464,7 @@ const BobbyCart = (function() {
     }));
     
     // Call Netlify function to create checkout
-    fetch('/.netlify/functions/create-checkout-fixed', {
+    fetch('/.netlify/functions/create-checkout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

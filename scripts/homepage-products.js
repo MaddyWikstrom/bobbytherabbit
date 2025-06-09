@@ -346,7 +346,8 @@ class HomepageProductLoader {
                 price: typeof product.price === 'number' ? product.price : 0,
                 image: product.mainImage || '',
                 quantity: 1,
-                variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
+                variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
+                selectedSize: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
             };
             
             console.log('Prepared cart product:', cartProduct);
