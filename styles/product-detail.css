@@ -544,6 +544,19 @@ body {
     font-size: 0.9rem;
 }
 
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+}
+
+.quantity-btn-group {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
 .quantity-btn {
     width: 44px;
     height: 44px;
@@ -575,6 +588,32 @@ body {
     font-size: 16px;
     background: #181830;
     color: white;
+    padding: 0;
+    font-weight: 500;
+}
+
+.quantity-controls span {
+    margin-right: 15px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.9rem;
+}
+
+.quantity-btn-group {
+    display: flex;
+    align-items: center;
+}
+
+/* Fix for Firefox and other browsers that render number inputs differently */
+#quantity::-webkit-inner-spin-button,
+#quantity::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#quantity {
+    -moz-appearance: textfield; /* Firefox */
 }
 
 /* Add to cart button */

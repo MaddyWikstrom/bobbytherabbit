@@ -1488,11 +1488,13 @@ class ProductDetailManager {
                         </div>
                     ` : '<div id="size-options"></div>'}
                     
-                    <div class="quantity-controls" style="display:flex; align-items:center; margin-top:20px; margin-bottom:20px;">
-                        <span style="margin-right:10px;">Quantity: </span>
-                        <button id="decrement" class="quantity-btn" style="padding:5px 10px;">-</button>
-                        <input type="number" id="quantity" min="1" max="10" value="1" style="width:50px; text-align:center; margin:0 5px;">
-                        <button id="increment" class="quantity-btn" style="padding:5px 10px;">+</button>
+                    <div class="quantity-controls">
+                        <span>Quantity: </span>
+                        <div class="quantity-btn-group">
+                            <button id="decrement" class="quantity-btn">-</button>
+                            <input type="number" id="quantity" min="1" max="10" value="1">
+                            <button id="increment" class="quantity-btn">+</button>
+                        </div>
                     </div>
                     
                     <button id="add-to-cart" class="add-to-cart-btn" style="padding:10px 20px; background-color:#4CAF50; color:white; border:none; cursor:pointer; border-radius:4px; font-size:16px;">
