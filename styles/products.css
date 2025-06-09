@@ -228,8 +228,50 @@
 /* Product Collection */
 .product-collection {
     padding: 4rem 0;
-    background: #0a0a0f;
     min-height: 60vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Cyber grid background for product collection */
+.product-collection::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: -1;
+    background:
+        /* Checkerboard mask */
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 600px,
+            #0a0a0a 600px,
+            #0a0a0a 1200px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 600px,
+            #0a0a0a 600px,
+            #0a0a0a 1200px
+        ),
+        /* Pattern image */
+        url('../assets/bg-pattern.png');
+    background-size:
+        1200px 1200px,
+        1200px 1200px,
+        600px 600px;
+    background-position:
+        0 0,
+        0 0,
+        0 0;
+    background-repeat: repeat;
+    background-blend-mode: multiply, multiply, normal;
+    animation: pattern-scroll 120s linear infinite;
+    pointer-events: none;
 }
 
 .products-grid {
