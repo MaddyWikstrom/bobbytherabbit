@@ -246,7 +246,6 @@
         linear-gradient(0deg, rgba(139, 92, 246, 0.02) 1px, transparent 1px),
         linear-gradient(90deg, rgba(139, 92, 246, 0.02) 1px, transparent 1px);
     background-size: 100px 100px;
-    animation: grid-drift 120s linear infinite;
     z-index: -1;
     pointer-events: none;
 }
