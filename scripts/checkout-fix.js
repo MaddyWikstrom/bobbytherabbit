@@ -79,7 +79,7 @@ class SilentCheckoutSystem {
                         
                         // Call Netlify function to create checkout - with improved error handling
                         // Create checkout with prepared items
-                        const response = await fetch('/.netlify/functions/create-checkout', {
+                        const response = await fetch('/.netlify/functions/create-checkout-fixed', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -155,59 +155,123 @@ class SilentCheckoutSystem {
                 };
                 
                 // Enhance the prepareCheckoutItems method to handle more cases
-                const originalPrepareCheckoutItems = window.cartManager.prepareCheckoutItems;
-                window.cartManager.prepareCheckoutItems = async function() {
-                    try {
-                        // Start with basic preparation using the original method
-                        let checkoutItems = await originalPrepareCheckoutItems.call(this);
-                        
-                        // If we couldn't prepare items, try an alternative approach
-                        if (!checkoutItems || checkoutItems.length === 0) {
-                            // Try alternative checkout item preparation
-                            checkoutItems = [];
+                // Only override if it exists already
+                if (typeof window.cartManager.prepareCheckoutItems === 'function') {
+                    const originalPrepareCheckoutItems = window.cartManager.prepareCheckoutItems;
+                    window.cartManager.prepareCheckoutItems = async function() {
+                        try {
+                            // Start with basic preparation using the original method
+                            let checkoutItems = await originalPrepareCheckoutItems.call(this);
                             
-                            // Direct approach - construct variant IDs in Shopify format if missing
-                            for (const cartItem of this.items) {
-                                // If we already have a Shopify variant ID, use it
-                                if (cartItem.shopifyVariantId) {
-                                    // Make sure it's in the correct format for the Storefront API
-                                    let variantId = cartItem.shopifyVariantId;
+                            // If we couldn't prepare items, try an alternative approach
+                            if (!checkoutItems || checkoutItems.length === 0) {
+                                // Try alternative checkout item preparation
+                                checkoutItems = [];
+                                
+                                // Direct approach - construct variant IDs in Shopify format if missing
+                                for (const cartItem of this.items) {
+                                    // If we already have a Shopify variant ID, use it
+                                    if (cartItem.shopifyVariantId) {
+                                        // Make sure it's in the correct format for the Storefront API
+                                        let variantId = cartItem.shopifyVariantId;
+                                        
+                                        // Add the gid:// prefix if missing
+                                        if (!variantId.includes('gid://')) {
+                                            variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
+                                        }
+                                        
+                                        checkoutItems.push({
+                                            variantId: variantId,
+                                            quantity: cartItem.quantity
+                                        });
+                                    }
+                                    // Otherwise try to find or construct a variant ID
+                                    else {
+                                        // Use product ID + variant info to construct a valid ID
+                                        // This is a fallback approach
+                                        const fallbackId = `gid://shopify/ProductVariant/${cartItem.productId}-${cartItem.color}-${cartItem.size}`
+                                            .replace(/\s+/g, '-')
+                                            .toLowerCase();
+                                        
+                                        checkoutItems.push({
+                                            variantId: fallbackId,
+                                            quantity: cartItem.quantity
+                                        });
+                                        
+                                        // Using fallback variant ID
+                                    }
+                                }
+                            }
+                            
+                            return checkoutItems;
+                        } catch (error) {
+                            console.error('Checkout preparation error:', error);
+                            // Create basic checkout items as fallback
+                            try {
+                                const checkoutItems = [];
+                                
+                                // Direct approach - use whatever info we have
+                                for (const cartItem of this.items) {
+                                    // Try to construct some kind of ID
+                                    let variantId = cartItem.shopifyVariantId || cartItem.shopifyId || cartItem.id;
                                     
-                                    // Add the gid:// prefix if missing
-                                    if (!variantId.includes('gid://')) {
-                                        variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
+                                    // Try to make it a proper Shopify variant ID format
+                                    if (variantId && !variantId.includes('gid://')) {
+                                        // If it might be a product ID rather than variant ID
+                                        if (variantId.includes('Product/')) {
+                                            variantId = `gid://shopify/ProductVariant/${variantId.split('Product/')[1]}`;
+                                        } else {
+                                            variantId = `gid://shopify/ProductVariant/${variantId}`;
+                                        }
                                     }
                                     
                                     checkoutItems.push({
                                         variantId: variantId,
-                                        quantity: cartItem.quantity
+                                        quantity: cartItem.quantity || 1
                                     });
                                 }
-                                // Otherwise try to find or construct a variant ID
-                                else {
-                                    // Use product ID + variant info to construct a valid ID
-                                    // This is a fallback approach
-                                    const fallbackId = `gid://shopify/ProductVariant/${cartItem.productId}-${cartItem.color}-${cartItem.size}`
-                                        .replace(/\s+/g, '-')
-                                        .toLowerCase();
-                                    
-                                    checkoutItems.push({
-                                        variantId: fallbackId,
-                                        quantity: cartItem.quantity
-                                    });
-                                    
-                                    // Using fallback variant ID
-                                }
+                                
+                                return checkoutItems;
+                            } catch (fallbackError) {
+                                console.error('All checkout preparation methods failed:', fallbackError);
+                                return [];
                             }
                         }
-                        
-                        return checkoutItems;
-                    } catch (error) {
-                        console.error('Checkout preparation error:', error);
-                        // Return whatever we had from the original method
-                        return await originalPrepareCheckoutItems.call(this);
-                    }
-                };
+                    };
+                } else {
+                    // Add the method if it doesn't exist
+                    window.cartManager.prepareCheckoutItems = async function() {
+                        try {
+                            const checkoutItems = [];
+                            
+                            // Create checkout items from cart items
+                            for (const cartItem of this.items) {
+                                // Try to get or construct a variant ID
+                                let variantId = cartItem.shopifyVariantId || cartItem.shopifyId || cartItem.id;
+                                
+                                // Try to format it properly
+                                if (variantId && !variantId.includes('gid://')) {
+                                    // If it might be a product ID rather than variant ID
+                                    if (variantId.includes('Product/')) {
+                                        variantId = `gid://shopify/ProductVariant/${variantId.split('Product/')[1]}`;
+                                    } else {
+                                        variantId = `gid://shopify/ProductVariant/${variantId}`;
+                                    }
+                                }
+                                
+                                checkoutItems.push({
+                                    variantId: variantId,
+                                    quantity: cartItem.quantity || 1
+                                });
+                            }
+                            
+                            return checkoutItems;
+                        } catch (error) {
+                            console.error('Error preparing checkout items:', error);
+                            return [];
+                        }
+                    };
+                }
             }
         }, 100);
     }

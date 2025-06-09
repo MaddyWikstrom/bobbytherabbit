@@ -833,7 +833,17 @@ class ProductDetailManager {
             if (data.products && Array.isArray(data.products)) {
                 products = data.products.map(p => this.transformShopifyProduct(p.node || p));
             } else if (Array.isArray(data)) {
-                products = data.map(p => this.convertShopifyProduct(p.node || p));
+                // Use the method that exists in this class
+                products = data.map(p => {
+                    const productNode = p.node || p;
+                    return {
+                        id: productNode.handle || productNode.id,
+                        title: productNode.title || 'Unknown Product',
+                        price: parseFloat(productNode.priceRange?.minVariantPrice?.amount || productNode.price || 0),
+                        image: productNode.images?.edges?.[0]?.node?.url || productNode.image || '/assets/product-placeholder.png',
+                        mainImage: productNode.images?.edges?.[0]?.node?.url || productNode.image || '/assets/product-placeholder.png'
+                    };
+                });
             }
             
             // No products found

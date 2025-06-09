@@ -1210,44 +1210,46 @@ const BobbyCarts = {
             }
         });
         
-        // Remove buttons
-        const removeButtons = document.querySelectorAll('.remove-item-btn');
-        if (removeButtons.length === 0) {
-            console.log('No remove buttons found in the cart, skipping setup');
-        }
-        
-        removeButtons.forEach(btn => {
-            try {
-                const cartItemEl = btn.closest('.cart-item');
-                if (!cartItemEl) {
-                    console.warn('Cart item element not found for remove button');
-                    return;
-                }
-                
-                const itemId = cartItemEl.dataset.itemId;
-                if (!itemId) {
-                    console.warn('No item ID found for cart item');
-                    return;
-                }
-                
-                // Remove existing listener to prevent duplicates
-                if (typeof self._removeItemHandler === 'function') {
-                    btn.removeEventListener('click', self._removeItemHandler);
-                }
-                
-                // Create a new handler specifically for this button
-                const removeHandler = function() {
-                    self.removeItem(itemId);
-                };
-                
-                // Store the handler and add it
-                self._removeItemHandler = removeHandler;
-                btn.addEventListener('click', removeHandler);
-                
-            } catch (error) {
-                console.error('Error setting up remove button:', error);
+        // Set up delegated event handler for remove buttons
+        // This is more reliable than attaching to each button individually
+        const cartItemsContainer = document.querySelector('#cart-items');
+        if (cartItemsContainer) {
+            // Remove any existing listeners to prevent duplicates
+            if (typeof self._removeButtonDelegateHandler === 'function') {
+                cartItemsContainer.removeEventListener('click', self._removeButtonDelegateHandler);
             }
-        });
+            
+            // Create a new delegate handler for all remove buttons
+            self._removeButtonDelegateHandler = function(event) {
+                const removeButton = event.target.closest('.remove-item-btn');
+                if (!removeButton) return; // Not a remove button click
+                
+                try {
+                    const cartItemEl = removeButton.closest('.cart-item');
+                    if (!cartItemEl) {
+                        console.warn('Cart item element not found for remove button');
+                        return;
+                    }
+                    
+                    const itemId = cartItemEl.dataset.itemId;
+                    if (!itemId) {
+                        console.warn('No item ID found for cart item');
+                        return;
+                    }
+                    
+                    // Remove the item
+                    self.removeItem(itemId);
+                } catch (error) {
+                    console.error('Error removing item:', error);
+                }
+            };
+            
+            // Add the delegate handler to the container
+            cartItemsContainer.addEventListener('click', self._removeButtonDelegateHandler);
+            console.log('Set up cart remove button delegate handler');
+        } else {
+            console.log('Cart items container not found, could not set up remove button handlers');
+        }
     },
     
     // Simple image error handler - no alternative sources
