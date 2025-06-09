@@ -109,39 +109,32 @@ class ProductDetailManager {
                 console.warn('Error setting up size option listeners:', error.message);
             }
             
-            // Quantity controls
+            // Quantity controls - using a simpler, more reliable approach
             const quantityInput = document.getElementById('quantity');
             const incrementBtn = document.getElementById('increment');
             const decrementBtn = document.getElementById('decrement');
             
             if (quantityInput && incrementBtn && decrementBtn) {
-                // Remove any existing event listeners by cloning and replacing the element
-                const newIncrementBtn = incrementBtn.cloneNode(true);
-                incrementBtn.parentNode.replaceChild(newIncrementBtn, incrementBtn);
-                incrementBtn = newIncrementBtn;
-
-                incrementBtn.addEventListener('click', (e) => {
-                    // Use current value to avoid accumulation issues
+                // Instead of replacing elements, we'll use function references to ensure clean handling
+                const handleIncrement = () => {
                     const currentVal = parseInt(quantityInput.value) || 1;
                     const newValue = Math.min(currentVal + 1, 10);
                     console.log(`Incrementing quantity from ${currentVal} to ${newValue}`);
                     quantityInput.value = newValue;
                     this.selectedVariant.quantity = newValue;
-                });
+                };
                 
-                // Remove any existing event listeners by cloning and replacing the element
-                const newDecrementBtn = decrementBtn.cloneNode(true);
-                decrementBtn.parentNode.replaceChild(newDecrementBtn, decrementBtn);
-                decrementBtn = newDecrementBtn;
-
-                decrementBtn.addEventListener('click', (e) => {
-                    // Use current value to avoid accumulation issues
+                const handleDecrement = () => {
                     const currentVal = parseInt(quantityInput.value) || 1;
                     const newValue = Math.max(currentVal - 1, 1);
                     console.log(`Decrementing quantity from ${currentVal} to ${newValue}`);
                     quantityInput.value = newValue;
                     this.selectedVariant.quantity = newValue;
-                });
+                };
+                
+                // Clear existing listeners by using an onclick property instead of addEventListener
+                incrementBtn.onclick = handleIncrement;
+                decrementBtn.onclick = handleDecrement;
                 
                 quantityInput.addEventListener('change', () => {
                     let value = parseInt(quantityInput.value);
