@@ -1186,7 +1186,7 @@ class QuickViewManager {
                 }
             }
             
-            // Create cart item
+            // Create cart item with all needed properties for consistent variant identification
             const cartItem = {
                 ...product,
                 selectedSize: size,

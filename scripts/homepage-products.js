@@ -339,6 +339,9 @@ class HomepageProductLoader {
                 return;
             }
             
+            // Get the first available color for the product (needed for cart variant identification)
+            const selectedColor = product.colors && product.colors.length > 0 ? product.colors[0] : '';
+            
             // Create cart product with one-size - with additional validation
             const cartProduct = {
                 id: product.id || productId || 'unknown-product', // Better fallback chain
@@ -347,7 +350,8 @@ class HomepageProductLoader {
                 image: product.mainImage || '',
                 quantity: 1,
                 variant: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
-                selectedSize: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size'
+                selectedSize: (product.sizes && product.sizes.length === 1) ? product.sizes[0] : 'One Size',
+                selectedColor: selectedColor // Add color information for proper variant identification
             };
             
             console.log('Prepared cart product:', cartProduct);
