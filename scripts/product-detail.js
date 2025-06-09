@@ -831,7 +831,7 @@ class ProductDetailManager {
             
             // Parse products from the response
             if (data.products && Array.isArray(data.products)) {
-                products = data.products.map(p => this.transformShopifyProduct(p.node || p));
+                products = data.products.map(p => this.convertShopifyProduct(p.node || p));
             } else if (Array.isArray(data)) {
                 // Use the method that exists in this class
                 products = data.map(p => {

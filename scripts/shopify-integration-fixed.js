@@ -175,14 +175,29 @@ function initializeShopifyClient() {
 
     // Use the Cart API instead of deprecated Checkout API
     const cartId = localStorage.getItem('shopifyCartId');
+    
+    // Check if shopifyClient.cart exists before trying to use it
+    if (!shopifyClient.cart || typeof shopifyClient.cart.fetch !== 'function') {
+      console.warn('Shopify cart API not available');
+      createFallbackCart();
+      return;
+    }
+    
     if (cartId) {
-      shopifyClient.cart.fetch(cartId).then((cart) => {
-        shopifyCheckout = cart;
-        // Existing cart retrieved
-      }).catch((error) => {
-        console.warn('Failed to fetch existing cart');
-        createNewCart();
-      });
+      try {
+        shopifyClient.cart.fetch(cartId)
+          .then((cart) => {
+            shopifyCheckout = cart;
+            console.log('Existing cart retrieved successfully');
+          })
+          .catch((error) => {
+            console.warn('Failed to fetch existing cart:', error);
+            createNewCart();
+          });
+      } catch (error) {
+        console.error('Error accessing cart.fetch:', error);
+        createFallbackCart();
+      }
     } else {
       createNewCart();
     }
