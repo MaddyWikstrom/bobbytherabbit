@@ -690,7 +690,45 @@ const BobbyCarts = {
             if (addToCartBtn) {
                 e.preventDefault();
                 
-                // Find product container
+                // Get data directly from button attributes if available (for direct cart adds)
+                if (addToCartBtn.dataset.productId || addToCartBtn.dataset.product) {
+                    let product;
+                    
+                    // First try JSON data if available
+                    if (addToCartBtn.dataset.product) {
+                        try {
+                            product = JSON.parse(addToCartBtn.dataset.product);
+                        } catch (e) {
+                            console.warn('Failed to parse product data from button', e);
+                        }
+                    }
+                    
+                    // If we don't have product data yet, try the ID-based approach
+                    if (!product && addToCartBtn.dataset.productId) {
+                        // Simple product with minimal data
+                        product = {
+                            id: addToCartBtn.dataset.productId,
+                            title: addToCartBtn.dataset.title || 'Product',
+                            price: parseFloat(addToCartBtn.dataset.price || '0'),
+                            image: addToCartBtn.dataset.image || '',
+                            variants: {
+                                size: addToCartBtn.dataset.size,
+                                color: addToCartBtn.dataset.color
+                            }
+                        };
+                    }
+                    
+                    if (product) {
+                        // Add to cart
+                        self.addToCart(product);
+                        
+                        // Visual feedback
+                        self.showAddedFeedback(addToCartBtn);
+                        return;
+                    }
+                }
+                
+                // Traditional approach with product container
                 const productContainer = addToCartBtn.closest('.product-card, .product-item, [data-product-id]');
                 
                 if (productContainer) {
@@ -882,8 +920,8 @@ const BobbyCarts = {
             return false;
         }
         
-        // Check for size selection
-        if (!product.variants || !product.variants.size) {
+        // Check for size selection - allow both variants.size and selectedSize
+        if ((!product.variants || !product.variants.size) && !product.selectedSize) {
             console.error('Size not selected for product:', product);
             this.showNotification('Please select a size before adding to cart', 'error');
             return false;

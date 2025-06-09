@@ -833,7 +833,7 @@ class ProductDetailManager {
             if (data.products && Array.isArray(data.products)) {
                 products = data.products.map(p => this.transformShopifyProduct(p.node || p));
             } else if (Array.isArray(data)) {
-                products = data.map(p => this.transformShopifyProduct(p.node || p));
+                products = data.map(p => this.convertShopifyProduct(p.node || p));
             }
             
             // No products found
@@ -2387,11 +2387,22 @@ class ProductDetailManager {
                 return;
             }
             
+            // Create a properly formatted product object for cart system
             const cartProduct = {
-                ...this.currentProduct,
+                id: this.currentProduct.id,
+                title: this.currentProduct.title,
+                price: this.currentProduct.price,
+                image: this.currentProduct.mainImage,
+                shopifyId: this.currentProduct.shopifyId,
+                // Provide both formats for maximum compatibility
                 selectedColor: this.selectedVariant.color,
                 selectedSize: this.selectedVariant.size,
-                quantity: this.selectedVariant.quantity || 1
+                quantity: this.selectedVariant.quantity || 1,
+                // Add variants object for cart-checkout-system compatibility
+                variants: {
+                    color: this.selectedVariant.color,
+                    size: this.selectedVariant.size
+                }
             };
             
             // Try to use any available cart system
