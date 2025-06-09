@@ -21,10 +21,27 @@ class ProductDetailManager {
         this.startLoadingSequence();
         // Load saved data
         this.loadRecentlyViewed();
+        
+        // Check for color in URL parameters before loading product
+        const urlParams = new URLSearchParams(window.location.search);
+        const colorFromUrl = urlParams.get('color');
+        if (colorFromUrl) {
+            console.log(`Found color parameter in URL: ${colorFromUrl}`);
+        }
+        
         // Load product data
         await this.loadProduct();
+        
         // Setup event listeners last, after all data is loaded
         this.setupEventListeners();
+        
+        // Dispatch an event that product detail page is fully initialized
+        document.dispatchEvent(new CustomEvent('productDetailInitialized', {
+            detail: {
+                productId: urlParams.get('id'),
+                color: colorFromUrl
+            }
+        }));
     }
     
     // Load animation styles
@@ -1500,22 +1517,43 @@ class ProductDetailManager {
                     if (selectedColor) {
                         let foundMatchingColor = false;
                         
+                        console.log(`Attempting to match URL color parameter: ${selectedColor}`);
+                        
                         // Simple loop to find matching color (more robust than some())
                         for (const color of this.currentProduct.colors) {
                             const colorName = typeof color === 'object' ? color.name : color;
                             
                             // Case insensitive comparison
                             if (colorName.toLowerCase() === selectedColor.toLowerCase()) {
-                                console.log(`Setting selected color from URL: ${colorName}`);
+                                console.log(`Found exact match for color: ${colorName}`);
                                 this.selectColor(colorName);
                                 foundMatchingColor = true;
                                 break;
                             }
                         }
                         
-                        // If no match found, use the default first color
+                        // If no exact match, try a more lenient matching approach
                         if (!foundMatchingColor) {
-                            console.log(`Color from URL not found, defaulting to: ${defaultColorName}`);
+                            console.log(`No exact match found for ${selectedColor}, trying partial matches`);
+                            
+                            // Try partial matching (useful for multi-word colors or alternate formats)
+                            for (const color of this.currentProduct.colors) {
+                                const colorName = typeof color === 'object' ? color.name : color;
+                                
+                                // Check if selected color is a substring of a color or vice versa
+                                if (colorName.toLowerCase().includes(selectedColor.toLowerCase()) ||
+                                    selectedColor.toLowerCase().includes(colorName.toLowerCase())) {
+                                    console.log(`Found partial match: ${colorName} for requested ${selectedColor}`);
+                                    this.selectColor(colorName);
+                                    foundMatchingColor = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // If still no match, use the default first color
+                        if (!foundMatchingColor) {
+                            console.log(`No match found for color: ${selectedColor}, defaulting to: ${defaultColorName}`);
                             this.selectColor(defaultColorName);
                         }
                     } else {
