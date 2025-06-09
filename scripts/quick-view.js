@@ -1001,6 +1001,40 @@ class QuickViewManager {
             const colorsContainer = overlay.querySelector('.quick-add-colors');
             const sizesContainer = overlay.querySelector('.quick-add-sizes');
             
+            // Check if it's a beanie or hat (always one-size) - Do this first for any product
+            const isBeanie = product.category &&
+                (product.category.toLowerCase().includes('beanie') ||
+                 product.category.toLowerCase().includes('hat'));
+                
+            console.log(`Product category: ${product.category}, isBeanie: ${isBeanie}`);
+            
+            // For beanies and hats, show one-size button but still display color options
+            if (isBeanie) {
+                sizesContainer.innerHTML = `<button class="quick-add-size-btn" data-size="One Size">OS</button>`;
+                
+                // Add event listener for the One Size button
+                setTimeout(() => {
+                    const sizeBtn = sizesContainer.querySelector('.quick-add-size-btn');
+                    if (sizeBtn) {
+                        sizeBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            // Get selected color (if any)
+                            let selectedColor = '';
+                            const selectedColorBtn = colorsContainer.querySelector('.quick-add-color-btn.selected');
+                            if (selectedColorBtn) {
+                                selectedColor = selectedColorBtn.getAttribute('data-color');
+                            } else if (product.colors && product.colors.length > 0) {
+                                selectedColor = product.colors[0].name;
+                            }
+                            
+                            this.quickAddToCart(productId, "One Size", selectedColor);
+                        });
+                    }
+                }, 100);
+            }
+            
             // Product with colors
             if (product.colors && product.colors.length > 0) {
                 // Show and populate colors container
@@ -1018,8 +1052,10 @@ class QuickViewManager {
                 // Initially selected color
                 const selectedColor = product.colors[0].name;
                 
-                // Populate sizes for the initially selected color
-                this.updateSizesForColor(product, selectedColor, sizesContainer, productId);
+                // Only update sizes for non-beanie products (beanies already have OS button)
+                if (!isBeanie) {
+                    this.updateSizesForColor(product, selectedColor, sizesContainer, productId);
+                }
                 
                 // Add event listeners to color buttons
                 const colorButtons = colorsContainer.querySelectorAll('.quick-add-color-btn');
@@ -1038,24 +1074,19 @@ class QuickViewManager {
                         // Update product card image if possible
                         this.updateProductCardImage(color, overlay.closest('.product-card'));
                         
-                        // Update sizes based on the selected color
-                        this.updateSizesForColor(product, color, sizesContainer, productId);
+                        // Only update sizes for non-beanie products
+                        if (!isBeanie) {
+                            this.updateSizesForColor(product, color, sizesContainer, productId);
+                        }
                     });
                 });
             } else {
                 // Product without colors - just show sizes
                 colorsContainer.style.display = 'none';
                 
-                if (!product.sizes || product.sizes.length === 0) {
-                    // Check if it's a beanie or hat (typically one size)
-                    if (product.category && (product.category.toLowerCase().includes('beanie') ||
-                                            product.category.toLowerCase().includes('hat'))) {
-                        // Add "One Size" for beanies and hats
-                        sizesContainer.innerHTML = `<button class="quick-add-size-btn" data-size="One Size">OS</button>`;
-                    } else {
-                        sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
-                        return;
-                    }
+                if (!isBeanie && (!product.sizes || product.sizes.length === 0)) {
+                    sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+                    return;
                 }
                 
                 // Render size buttons with simplified display
