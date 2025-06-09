@@ -915,6 +915,7 @@ class ProductManager {
                 const productCard = colorOption.closest('.product-card');
                 const productImage = productCard.querySelector('.product-image');
                 const colorImage = colorOption.dataset.colorImage;
+                const colorName = colorOption.dataset.color;
                 
                 // Remove active class from all options in this card
                 productCard.querySelectorAll('.variant-option').forEach(opt => {
@@ -929,6 +930,9 @@ class ProductManager {
                     productImage.src = colorImage;
                     productImage.dataset.originalSrc = colorImage;
                 }
+                
+                // Update the product card with the selected color
+                this.updateProductCardImage(productCard, colorName);
             });
         });
 
@@ -937,7 +941,12 @@ class ProductManager {
             card.addEventListener('click', (e) => {
                 if (!e.target.closest('button') && !e.target.closest('.variant-option')) {
                     const productId = card.dataset.productId;
-                    this.viewProduct(productId);
+                    
+                    // Get the selected color if any
+                    const activeColorOption = card.querySelector('.variant-option.active');
+                    const selectedColor = activeColorOption ? activeColorOption.dataset.color : null;
+                    
+                    this.viewProduct(productId, selectedColor);
                 }
             });
         });
@@ -1445,7 +1454,7 @@ class ProductManager {
         }
     }
 
-    viewProduct(productId) {
+    viewProduct(productId, selectedColor = null) {
         // Basic error check
         if (!productId) {
             console.error('Cannot view product: Product ID is missing');
@@ -1463,14 +1472,15 @@ class ProductManager {
             // Build the URL with just the product ID - more reliable
             let url = `product.html?id=${encodeURIComponent(productId)}`;
             
-            // Try to get a color only if it's a basic string
-            let selectedColor = '';
-            const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
-            
-            if (productCard) {
-                const activeColorOption = productCard.querySelector('.variant-option.active');
-                if (activeColorOption && activeColorOption.dataset && activeColorOption.dataset.color) {
-                    selectedColor = activeColorOption.dataset.color;
+            // Use provided selectedColor if available, otherwise try to find it from the DOM
+            if (!selectedColor) {
+                const productCard = document.querySelector(`.product-card[data-product-id="${productId}"]`);
+                
+                if (productCard) {
+                    const activeColorOption = productCard.querySelector('.variant-option.active');
+                    if (activeColorOption && activeColorOption.dataset && activeColorOption.dataset.color) {
+                        selectedColor = activeColorOption.dataset.color;
+                    }
                 }
             }
             
@@ -1482,7 +1492,7 @@ class ProductManager {
             }
             
             // Navigate to the product page
-            console.log(`Navigating to product: ${url}`);
+            console.log(`Navigating to product: ${url} with color: ${selectedColor || 'none'}`);
             window.location.href = url;
             
         } catch (error) {
@@ -1520,6 +1530,59 @@ class ProductManager {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 300);
         });
+    }
+    
+    // New method to update product card images based on selected color
+    updateProductCardImage(productCard, colorName) {
+        if (!productCard || !colorName) return;
+        
+        try {
+            // Get product ID
+            const productId = productCard.dataset.productId;
+            if (!productId) return;
+            
+            // Find product in our data
+            const product = this.products.find(p => p.id === productId);
+            if (!product) return;
+            
+            // Get product image element
+            const productImage = productCard.querySelector('.product-image');
+            if (!productImage) return;
+            
+            // Get color-specific images if available
+            let colorImages = [];
+            
+            // Try to get from colorImages in product data
+            if (product.colorImages && product.colorImages[colorName] &&
+                Array.isArray(product.colorImages[colorName]) &&
+                product.colorImages[colorName].length > 0) {
+                colorImages = product.colorImages[colorName];
+            }
+            // Try to get from colorToImagesMap stored in data attribute (fallback)
+            else if (productCard.dataset.colorImages) {
+                try {
+                    const colorImagesMap = JSON.parse(productCard.dataset.colorImages);
+                    if (colorImagesMap[colorName] && Array.isArray(colorImagesMap[colorName])) {
+                        colorImages = colorImagesMap[colorName];
+                    }
+                } catch (e) {
+                    console.warn('Error parsing color images from data attribute:', e);
+                }
+            }
+            
+            // If we found color-specific images, update the product image
+            if (colorImages.length > 0) {
+                // Use the first image for this color
+                productImage.src = colorImages[0];
+                // Update the original source to keep this color selected
+                productImage.dataset.originalSrc = colorImages[0];
+                console.log(`Updated product card image for ${product.title} to color: ${colorName}`);
+            } else {
+                console.warn(`No specific images found for color: ${colorName} on product: ${product.title}`);
+            }
+        } catch (error) {
+            console.error('Error updating product card image:', error);
+        }
     }
 }
 
