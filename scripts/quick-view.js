@@ -1041,8 +1041,15 @@ class QuickViewManager {
                 colorsContainer.style.display = 'none';
                 
                 if (!product.sizes || product.sizes.length === 0) {
-                    sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
-                    return;
+                    // Check if it's a beanie or hat (typically one size)
+                    if (product.category && (product.category.toLowerCase().includes('beanie') ||
+                                            product.category.toLowerCase().includes('hat'))) {
+                        // Add "One Size" for beanies and hats
+                        sizesContainer.innerHTML = `<button class="quick-add-size-btn" data-size="One Size">OS</button>`;
+                    } else {
+                        sizesContainer.innerHTML = '<div class="quick-add-error">No sizes available</div>';
+                        return;
+                    }
                 }
                 
                 // Render size buttons with simplified display
