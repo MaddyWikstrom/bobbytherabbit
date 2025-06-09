@@ -1518,6 +1518,12 @@ class ProductDetailManager {
                 // Render the product to the DOM
                 await this.renderProduct();
                 
+                // Set default size for products without size options
+                if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
+                    console.log('Product has no size options, automatically selecting "One Size"');
+                    this.selectedVariant.size = "One Size";
+                }
+                
                 // Always select the first color by default
                 if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
                     const firstColor = this.currentProduct.colors[0];
@@ -1832,7 +1838,14 @@ class ProductDetailManager {
                                 <div class="size-option" data-size="${size}">${size}</div>
                             `).join('')}
                         </div>
-                    ` : '<div id="size-options"></div>'}
+                    ` : `
+                        <div class="sizes-header">
+                            <h3>Size:</h3>
+                        </div>
+                        <div id="size-options" class="options-container">
+                            <div class="size-option active" data-size="One Size">One Size</div>
+                        </div>
+                    `}
                     
                     <div class="quantity-controls">
                         <span>Quantity: </span>
@@ -2385,10 +2398,18 @@ class ProductDetailManager {
                 return;
             }
             
-            if (!this.selectedVariant.size) {
+            // Check if product has sizes available
+            const hasSizes = this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
+            
+            // If product has sizes but none selected, show error
+            if (hasSizes && !this.selectedVariant.size) {
                 console.warn('Cannot add to cart: Size not selected');
                 this.showNotification('Please select a size', 'error');
                 return;
+            } else if (!this.selectedVariant.size) {
+                // For products without size options (like beanies), set a default size
+                console.log('Product has no size options, using default "One Size"');
+                this.selectedVariant.size = "One Size";
             }
             
             if (!this.selectedVariant.color) {
