@@ -28,18 +28,23 @@ exports.handler = async (event, context) => {
   try {
     console.log('Enhanced checkout process started');
     
+    // Log the raw request for debugging
+    console.log('Raw request body:', event.body);
+    
     // Parse the cart items from the request
     let requestBody;
     try {
       requestBody = JSON.parse(event.body);
+      console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'Invalid request format',
-          details: 'Request body could not be parsed as JSON'
+          details: 'Request body could not be parsed as JSON',
+          rawBody: event.body
         })
       };
     }
@@ -87,8 +92,8 @@ exports.handler = async (event, context) => {
     console.log('Raw checkout items received:', JSON.stringify(items));
 
     // Get Shopify credentials from environment variables
-    const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
-    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
     if (!SHOPIFY_DOMAIN || !SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
       console.error('Missing Shopify credentials in environment variables');
@@ -132,15 +137,41 @@ exports.handler = async (event, context) => {
       // Normalize Shopify ID format if needed
       let variantId = item.variantId;
       
+      console.log(`Processing variant ID: ${variantId} (type: ${typeof variantId})`);
+      
+      // Handle undefined or null
+      if (!variantId) {
+        hasErrors = true;
+        errorDetails.push(`Missing variantId for item at index ${i}: ${JSON.stringify(item)}`);
+        continue;
+      }
+      
       // Fix common variant ID format issues
       if (typeof variantId === 'number') {
+        console.log(`Converting numeric variant ID ${variantId} to string`);
         variantId = variantId.toString();
+      }
+      
+      // Handle cases where variantId might be an object
+      if (typeof variantId === 'object') {
+        console.log(`variantId is an object:`, variantId);
+        if (variantId.id) {
+          console.log(`Using variantId.id: ${variantId.id}`);
+          variantId = variantId.id.toString();
+        } else {
+          hasErrors = true;
+          errorDetails.push(`Invalid variantId object for item at index ${i}: ${JSON.stringify(item)}`);
+          continue;
+        }
       }
       
       // Ensure proper Shopify GraphQL ID format
       if (!variantId.includes('gid://')) {
+        console.log(`Converting to GraphQL ID format: ${variantId}`);
+        
         // Check if it's already in a legacy format with slashes
         if (variantId.includes('/')) {
+          console.log(`Handling legacy format with slashes: ${variantId}`);
           // Convert from admin API format to storefront format if needed
           if (variantId.includes('Product/') && !variantId.includes('ProductVariant/')) {
             const productId = variantId.split('Product/')[1];
@@ -150,9 +181,13 @@ exports.handler = async (event, context) => {
           }
         } else {
           // Plain ID - convert to Storefront API expected format
-          variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
+          console.log(`Converting plain ID to GraphQL format: ${variantId}`);
+          // Preserve any letters that might be part of a custom ID
+          variantId = `gid://shopify/ProductVariant/${variantId}`;
         }
       }
+      
+      console.log(`Final variant ID: ${variantId}`);
       
       // Verify the ID has the right format after normalization
       if (!variantId.includes('gid://shopify/ProductVariant/')) {
@@ -238,28 +273,44 @@ exports.handler = async (event, context) => {
       quantity: item.quantity
     }))));
 
+    // Log environment variables (without sensitive values)
+    console.log(`SHOPIFY_DOMAIN is ${SHOPIFY_DOMAIN ? 'set' : 'NOT SET'}`);
+    console.log(`SHOPIFY_STOREFRONT_ACCESS_TOKEN is ${SHOPIFY_STOREFRONT_ACCESS_TOKEN ? 'set' : 'NOT SET'}`);
+    
+    // Prepare the request body
+    const graphqlRequestBody = {
+      query: mutation,
+      variables: {
+        input: {
+          lines: lineItems.map(item => ({
+            merchandiseId: item.variantId,
+            quantity: item.quantity
+          }))
+        }
+      }
+    };
+    
+    console.log('Shopify GraphQL request prepared:', JSON.stringify(graphqlRequestBody, null, 2));
+    
+    // Build the full API URL - use the version from the .env file
+    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-01';
+    const apiUrl = `https://${SHOPIFY_DOMAIN}/api/${apiVersion}/graphql.json`;
+    console.log(`Making request to Shopify API: ${apiUrl}`);
+    
     // Make the request to Shopify Storefront API
     let response;
     try {
-      response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-04/graphql.json`, {
+      response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_ACCESS_TOKEN,
           'User-Agent': 'Bobby-Streetwear-Checkout/2.0'
         },
-        body: JSON.stringify({
-          query: mutation,
-          variables: {
-            input: {
-              lines: lineItems.map(item => ({
-                merchandiseId: item.variantId,
-                quantity: item.quantity
-              }))
-            }
-          }
-        })
+        body: JSON.stringify(graphqlRequestBody)
       });
+      
+      console.log(`Shopify API response status: ${response.status} ${response.statusText}`);
     } catch (fetchError) {
       console.error('Network error when contacting Shopify:', fetchError);
       return {

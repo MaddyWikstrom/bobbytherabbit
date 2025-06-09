@@ -1693,10 +1693,30 @@ const BobbyCarts = {
                 console.log('Checkout response status:', response.status);
             }
             
+            // Log the response status for debugging
+            console.log('Checkout response status:', response.status);
+            
             if (!response.ok) {
                 return response.json().then(err => {
                     console.error('Checkout error details:', err);
-                    throw new Error(err.error || 'Error creating checkout');
+                    // Extract more detailed error information if available
+                    const errorMessage = err.error || 'Error creating checkout';
+                    const errorDetails = err.details || err.message || '';
+                    
+                    // Log full error object for debugging
+                    console.error('Full error object:', JSON.stringify(err, null, 2));
+                    
+                    // Throw a more informative error
+                    throw new Error(`${errorMessage}${errorDetails ? ': ' + errorDetails : ''}`);
+                }).catch(jsonError => {
+                    // If we can't parse JSON, try to get the raw text
+                    return response.text().then(text => {
+                        console.error('Raw error response:', text);
+                        throw new Error(`Error creating checkout (Status ${response.status})`);
+                    }).catch(() => {
+                        // If we can't even get the text, throw a generic error
+                        throw new Error(`Error creating checkout (Status ${response.status})`);
+                    });
                 });
             }
             return response.json();
