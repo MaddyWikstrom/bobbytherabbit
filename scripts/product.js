@@ -78,15 +78,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const product = PRODUCT_MAPPING[productHandle];
 
         if (product) {
-            document.getElementById('product-name').textContent = product.shopifyProductId;
-            document.getElementById('product-image').src = product.variants[0].image;
-            document.getElementById('product-image').alt = product.shopifyProductId;
-            document.getElementById('product-price').textContent = '$' + product.variants[0].price;
+            // Safely update DOM elements if they exist
+            const nameEl = document.getElementById('product-name');
+            const imageEl = document.getElementById('product-image');
+            const priceEl = document.getElementById('product-price');
+            
+            if (nameEl) nameEl.textContent = product.shopifyProductId;
+            if (imageEl) {
+                imageEl.src = product.variants[0].image;
+                imageEl.alt = product.shopifyProductId;
+            }
+            if (priceEl) priceEl.textContent = '$' + product.variants[0].price;
         } else {
-            document.getElementById('product-name').textContent = 'Product not found';
+            const nameEl = document.getElementById('product-name');
+            if (nameEl) nameEl.textContent = 'Product not found';
         }
     } else {
-        document.getElementById('product-name').textContent = 'Product not found';
+        const nameEl = document.getElementById('product-name');
+        if (nameEl) nameEl.textContent = 'Product not found';
     }
 });
 // JavaScript for horizontal scrolling
@@ -94,18 +103,21 @@ const leftArrow = document.querySelector('.left-arrow');
 const rightArrow = document.querySelector('.right-arrow');
 const productGrid = document.querySelector('.product-grid');
 
-leftArrow.addEventListener('click', () => {
-    productGrid.scrollBy({
-        top: 0,
-        left: -300, // Adjust the scroll amount as needed
-        behavior: 'smooth'
+// Only set up scroll events if elements exist
+if (leftArrow && rightArrow && productGrid) {
+    leftArrow.addEventListener('click', () => {
+        productGrid.scrollBy({
+            top: 0,
+            left: -300, // Adjust the scroll amount as needed
+            behavior: 'smooth'
+        });
     });
-});
-
-rightArrow.addEventListener('click', () => {
-    productGrid.scrollBy({
-        top: 0,
-        left: 300, // Adjust the scroll amount as needed
-        behavior: 'smooth'
+    
+    rightArrow.addEventListener('click', () => {
+        productGrid.scrollBy({
+            top: 0,
+            left: 300, // Adjust the scroll amount as needed
+            behavior: 'smooth'
+        });
     });
-});
+}

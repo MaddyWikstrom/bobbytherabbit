@@ -46,23 +46,29 @@ const CartBridgeFix = {
         
         console.log(`📊 Detected cart systems: BobbyCarts: ${hasBobbyCarts}, CartManager: ${hasCartManager}`);
         
-        // Create missing cart system if needed
+        // Ensure we always have both cart systems, regardless of which one was loaded
         if (hasBobbyCarts && !hasCartManager) {
             this.createCartManagerFromBobbyCarts();
         } else if (hasCartManager && !hasBobbyCarts) {
             this.createBobbyCartsFromCartManager();
+        } else if (hasBobbyCarts && hasCartManager) {
+            // Both systems exist, but might need synchronizing
+            this.syncCartSystems();
         } else if (!hasBobbyCarts && !hasCartManager) {
             console.error('❌ No cart system available to bridge!');
             this.injectEmergencyCartSystem();
         }
         
-        // Fix cart UI elements
-        this.fixCartUI();
-        
-        // Add global event handlers for cart buttons
-        this.setupGlobalCartEvents();
-        
-        console.log('✅ Cart Bridge Fix initialized successfully');
+        // Wait a moment for cart systems to fully initialize
+        setTimeout(() => {
+            // Fix cart UI elements
+            this.fixCartUI();
+            
+            // Add global event handlers for cart buttons
+            this.setupGlobalCartEvents();
+            
+            console.log('✅ Cart Bridge Fix initialized successfully');
+        }, 100);
     },
     
     // Create CartManager interface from BobbyCarts
@@ -566,48 +572,134 @@ const CartBridgeFix = {
         this.createBobbyCartsFromCartManager();
     },
     
+    // Synchronize cart systems when both exist
+    syncCartSystems: function() {
+        console.log('🔄 Synchronizing cart systems...');
+        
+        // Determine which has more items to use as source of truth
+        let primarySystem;
+        let secondarySystem;
+        
+        if (window.BobbyCarts && window.BobbyCarts.state &&
+            window.cartManager && window.cartManager.items) {
+            
+            if (window.BobbyCarts.state.items.length >= window.cartManager.items.length) {
+                primarySystem = 'BobbyCarts';
+                secondarySystem = 'CartManager';
+            } else {
+                primarySystem = 'CartManager';
+                secondarySystem = 'BobbyCarts';
+            }
+            
+            console.log(`Using ${primarySystem} as source of truth`);
+            
+            // Sync from primary to secondary
+            if (primarySystem === 'BobbyCarts') {
+                window.cartManager.items = window.BobbyCarts.state.items;
+                window.cartManager.isOpen = window.BobbyCarts.state.isOpen;
+                window.cartManager.total = window.BobbyCarts.state.total;
+                window.cartManager.itemCount = window.BobbyCarts.state.itemCount;
+            } else {
+                window.BobbyCarts.state.items = window.cartManager.items;
+                window.BobbyCarts.state.isOpen = window.cartManager.isOpen;
+                window.BobbyCarts.state.total = window.cartManager.total;
+                window.BobbyCarts.state.itemCount = window.cartManager.itemCount;
+            }
+        }
+    },
+
     // Fix cart UI elements
     fixCartUI: function() {
         console.log('🛠️ Fixing cart UI elements...');
         
-        // Fix cart sidebar styling
-        const cartSidebar = document.getElementById('cart-sidebar');
-        if (cartSidebar) {
-            // Ensure cart-sidebar has proper styling for visibility
-            cartSidebar.style.position = 'fixed';
-            cartSidebar.style.top = '0';
-            cartSidebar.style.right = '0';
-            cartSidebar.style.width = '380px';
-            cartSidebar.style.maxWidth = '90vw';
-            cartSidebar.style.height = '100vh';
-            cartSidebar.style.zIndex = '10000';
-            cartSidebar.style.background = 'rgba(20, 20, 35, 0.95)';
-            cartSidebar.style.display = 'flex';
-            cartSidebar.style.flexDirection = 'column';
-            cartSidebar.style.transform = 'translateX(100%)';
-            cartSidebar.style.transition = 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease';
-            cartSidebar.style.opacity = '0';
-            cartSidebar.style.visibility = 'hidden';
+        try {
+            // Fix cart sidebar styling
+            const cartSidebar = document.getElementById('cart-sidebar');
+            if (cartSidebar) {
+                // Ensure cart-sidebar has proper styling for visibility
+                cartSidebar.style.position = 'fixed';
+                cartSidebar.style.top = '0';
+                cartSidebar.style.right = '0';
+                cartSidebar.style.width = '380px';
+                cartSidebar.style.maxWidth = '90vw';
+                cartSidebar.style.height = '100vh';
+                cartSidebar.style.zIndex = '10000';
+                cartSidebar.style.background = 'rgba(20, 20, 35, 0.95)';
+                cartSidebar.style.display = 'flex';
+                cartSidebar.style.flexDirection = 'column';
+                cartSidebar.style.transform = 'translateX(100%)';
+                cartSidebar.style.transition = 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease';
+                cartSidebar.style.opacity = '0';
+                cartSidebar.style.visibility = 'hidden';
+            }
+            
+            // Fix cart overlay styling
+            const cartOverlay = document.getElementById('cart-overlay');
+            if (cartOverlay) {
+                cartOverlay.style.position = 'fixed';
+                cartOverlay.style.top = '0';
+                cartOverlay.style.left = '0';
+                cartOverlay.style.right = '0';
+                cartOverlay.style.bottom = '0';
+                cartOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+                cartOverlay.style.zIndex = '9999';
+                cartOverlay.style.display = 'none';
+            }
+            
+            // Create elements if they don't exist
+            if (!cartSidebar) {
+                console.log('Creating missing cart sidebar');
+                this.createCartElements();
+            }
+            
+            // Ensure cart count elements are visible and up to date
+            const cartCount = window.BobbyCarts?.state?.itemCount ||
+                              window.cartManager?.itemCount || 0;
+                              
+            document.querySelectorAll('.cart-count').forEach(el => {
+                el.textContent = cartCount.toString();
+                el.style.display = cartCount > 0 ? 'flex' : 'none';
+            });
+        } catch (error) {
+            console.error('Error fixing cart UI:', error);
+        }
+    },
+    
+    // Create cart elements if they don't exist
+    createCartElements: function() {
+        // Create cart sidebar if it doesn't exist
+        if (!document.getElementById('cart-sidebar')) {
+            const cartSidebar = document.createElement('div');
+            cartSidebar.id = 'cart-sidebar';
+            cartSidebar.className = 'cart-sidebar';
+            cartSidebar.innerHTML = `
+                <div class="cart-header">
+                    <h3>Your Cart</h3>
+                    <button class="cart-close">&times;</button>
+                </div>
+                <div class="cart-items-container">
+                    <div id="cart-items" class="cart-items"></div>
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        <span>Total:</span>
+                        <span>$<span id="cart-total">0.00</span></span>
+                    </div>
+                    <button class="checkout-btn">
+                        <span>Checkout</span>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(cartSidebar);
         }
         
-        // Fix cart overlay styling
-        const cartOverlay = document.getElementById('cart-overlay');
-        if (cartOverlay) {
-            cartOverlay.style.position = 'fixed';
-            cartOverlay.style.top = '0';
-            cartOverlay.style.left = '0';
-            cartOverlay.style.right = '0';
-            cartOverlay.style.bottom = '0';
-            cartOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            cartOverlay.style.zIndex = '9999';
-            cartOverlay.style.display = 'none';
+        // Create cart overlay if it doesn't exist
+        if (!document.getElementById('cart-overlay')) {
+            const cartOverlay = document.createElement('div');
+            cartOverlay.id = 'cart-overlay';
+            cartOverlay.className = 'cart-overlay';
+            document.body.appendChild(cartOverlay);
         }
-        
-        // Ensure cart count elements are visible
-        document.querySelectorAll('.cart-count').forEach(el => {
-            const count = parseInt(el.textContent || '0');
-            el.style.display = count > 0 ? 'flex' : 'none';
-        });
     },
     
     // Set up global cart event handlers

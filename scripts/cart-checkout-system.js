@@ -1126,12 +1126,11 @@ const BobbyCarts = {
         // Update total display
         this.updateTotalDisplay();
         
-        // Set up item event handlers
-        // Set up item event handlers
-        // Defer this to ensure elements are in DOM
+        // Set up item event handlers with a longer delay
+        // to ensure elements are properly in DOM
         setTimeout(() => {
             this.setupCartItemEvents();
-        }, 0);
+        }, 50); // Increased from 0 to 50ms for better DOM rendering
     },
     
     // Set up event handlers for cart items
@@ -1174,18 +1173,42 @@ const BobbyCarts = {
         });
         
         // Remove buttons
-        document.querySelectorAll('.remove-item-btn').forEach(btn => {
-            const cartItemEl = btn.closest('.cart-item');
-            if (!cartItemEl) {
-                console.warn('Cart item element not found for remove button');
-                return;
+        const removeButtons = document.querySelectorAll('.remove-item-btn');
+        if (removeButtons.length === 0) {
+            console.log('No remove buttons found in the cart, skipping setup');
+        }
+        
+        removeButtons.forEach(btn => {
+            try {
+                const cartItemEl = btn.closest('.cart-item');
+                if (!cartItemEl) {
+                    console.warn('Cart item element not found for remove button');
+                    return;
+                }
+                
+                const itemId = cartItemEl.dataset.itemId;
+                if (!itemId) {
+                    console.warn('No item ID found for cart item');
+                    return;
+                }
+                
+                // Remove existing listener to prevent duplicates
+                if (typeof self._removeItemHandler === 'function') {
+                    btn.removeEventListener('click', self._removeItemHandler);
+                }
+                
+                // Create a new handler specifically for this button
+                const removeHandler = function() {
+                    self.removeItem(itemId);
+                };
+                
+                // Store the handler and add it
+                self._removeItemHandler = removeHandler;
+                btn.addEventListener('click', removeHandler);
+                
+            } catch (error) {
+                console.error('Error setting up remove button:', error);
             }
-            const itemId = cartItemEl.dataset.itemId;
-            
-            // Remove existing listener to prevent duplicates
-            btn.removeEventListener('click', self._removeItemHandler);
-            self._removeItemHandler = () => self.removeItem(itemId);
-            btn.addEventListener('click', self._removeItemHandler);
         });
     },
     

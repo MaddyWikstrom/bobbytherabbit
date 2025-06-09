@@ -200,25 +200,43 @@ function initializeShopifyClient() {
 function createNewCart() {
   if (!shopifyClient) {
     console.error('No Shopify client available for cart creation');
+    createFallbackCart();
     return;
   }
 
+  // Check if cart API is available
+  if (!shopifyClient.cart || typeof shopifyClient.cart.create !== 'function') {
+    console.error('Shopify cart API not available, using fallback');
+    createFallbackCart();
+    return;
+  }
+
+  // Try to create the cart
   shopifyClient.cart.create().then((cart) => {
     shopifyCheckout = cart;
     localStorage.setItem('shopifyCartId', cart.id);
-    // New cart created
+    console.log('New Shopify cart created successfully');
   }).catch((error) => {
     console.error('Failed to create cart:', error);
-    // Attempting fallback cart creation
-    try {
-      // Direct API call if needed
-      shopifyCheckout = { id: 'temp-cart-' + Date.now() };
-      localStorage.setItem('shopifyCartId', shopifyCheckout.id);
-      // Created temporary cart ID
-    } catch (fallbackError) {
-      console.error('All cart creation methods failed');
-    }
+    createFallbackCart();
   });
+}
+
+// Create a fallback cart when Shopify cart creation fails
+function createFallbackCart() {
+  try {
+    console.log('Creating fallback cart');
+    // Create a temporary cart ID for local storage
+    shopifyCheckout = {
+      id: 'temp-cart-' + Date.now(),
+      webUrl: null,
+      checkoutUrl: null
+    };
+    localStorage.setItem('shopifyCartId', shopifyCheckout.id);
+    console.log('Created temporary cart ID');
+  } catch (fallbackError) {
+    console.error('All cart creation methods failed', fallbackError);
+  }
 }
 
 // Redirect to Shopify checkout using cart URL
