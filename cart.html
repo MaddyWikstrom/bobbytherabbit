@@ -11,7 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="scripts/bobby-checkout-master.js"></script>
+    <!-- Simple Cart System - Clean, reliable implementation -->
+    <script src="/scripts/simple-cart-system.js"></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -215,12 +216,10 @@
         </footer>
     </div>
 
-    <!-- Scripts -->
-    <script src="scripts/cart.js"></script>
-    <script src="scripts/checkout-fix.js"></script>
+    <!-- Scripts (simple-cart-system.js replaces cart.js and checkout-fix.js) -->
     <script src="scripts/loading.js"></script>
     <script>
-        // Cart page specific script
+        // Cart page specific script using simple cart system
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize loading screen
             const loadingScreen = document.getElementById('loading-screen');
@@ -246,7 +245,7 @@
                         mainContent.style.display = 'block';
                         document.body.classList.add('loaded');
                         
-                        // Initialize cart page
+                        // Initialize cart page with new simple cart system
                         initCartPage();
                     }, 500);
                 } else {
@@ -256,16 +255,16 @@
             
             updateProgress();
             
-            // Function to initialize the cart page
+            // Function to initialize the cart page with BobbyCart
             function initCartPage() {
-                if (!window.cartManager) {
-                    console.error('Cart manager not available');
+                if (!window.BobbyCart) {
+                    console.error('Cart system not available');
                     showEmptyCart();
                     return;
                 }
                 
                 // Populate cart items
-                const cartItems = window.cartManager.items;
+                const cartItems = window.BobbyCart.getItems();
                 
                 if (!cartItems || cartItems.length === 0) {
                     showEmptyCart();
@@ -287,33 +286,30 @@
                             <div class="cart-item-details">
                                 <div class="cart-item-title">${item.title}</div>
                                 <div class="cart-item-variant">
-                                    ${item.color !== 'Default' ? `<span>Color: ${item.color}</span>` : ''}
-                                    ${item.size !== 'One Size' ? `<span>Size: ${item.size}</span>` : ''}
+                                    ${item.variant || ''}
                                 </div>
                                 <div class="cart-item-price">$${item.price.toFixed(2)}</div>
                                 <div class="cart-item-controls">
-                                    <button class="quantity-btn decrease" onclick="cartManager.updateQuantity('${item.id}', ${item.quantity - 1})">−</button>
+                                    <button class="quantity-btn decrease" onclick="BobbyCart.updateQuantity('${item.id}', ${item.quantity - 1})">−</button>
                                     <span class="quantity-display">${item.quantity}</span>
-                                    <button class="quantity-btn increase" onclick="cartManager.updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
+                                    <button class="quantity-btn increase" onclick="BobbyCart.updateQuantity('${item.id}', ${item.quantity + 1})">+</button>
                                 </div>
                             </div>
                             <div class="cart-item-subtotal">
                                 <div class="subtotal-label">Subtotal</div>
                                 <div class="subtotal-amount">$${(item.price * item.quantity).toFixed(2)}</div>
                             </div>
-                            <button class="remove-item-btn" onclick="cartManager.removeItem('${item.id}'); refreshCartPage();" title="Remove item">×</button>
+                            <button class="remove-item-btn" onclick="BobbyCart.removeItem('${item.id}'); refreshCartPage();" title="Remove item">×</button>
                         </div>
                     `;
                 }).join('');
                 
-                // Update summary
+                // Update cart summary
                 updateCartSummary();
                 
                 // Set up checkout button
                 document.getElementById('proceed-to-checkout').addEventListener('click', () => {
-                    if (window.cartManager) {
-                        window.cartManager.initiateShopifyCheckout();
-                    }
+                    window.BobbyCart.proceedToCheckout();
                 });
             }
             
@@ -321,39 +317,26 @@
             function showEmptyCart() {
                 document.querySelector('.cart-grid').style.display = 'none';
                 document.getElementById('empty-cart').style.display = 'flex';
-                updateCartCount();
             }
             
             // Function to update cart summary
             function updateCartSummary() {
-                if (!window.cartManager) return;
+                const items = window.BobbyCart.getItems();
+                const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const shipping = 0; // Free shipping
+                const tax = subtotal * 0.07; // 7% tax rate
+                const total = subtotal + shipping + tax;
                 
-                const summary = window.cartManager.getCartSummary();
-                
-                document.getElementById('cart-subtotal').textContent = `$${summary.subtotal.toFixed(2)}`;
-                document.getElementById('cart-shipping').textContent = summary.shipping === 0 ? 'FREE' : `$${summary.shipping.toFixed(2)}`;
-                document.getElementById('cart-tax').textContent = `$${summary.tax.toFixed(2)}`;
-                document.getElementById('cart-total-amount').textContent = `$${summary.total.toFixed(2)}`;
-                
-                updateCartCount();
-            }
-            
-            // Function to update cart count
-            function updateCartCount() {
-                if (!window.cartManager) return;
-                
-                const count = window.cartManager.itemCount;
-                const cartCount = document.querySelector('.cart-count');
-                
-                if (cartCount) {
-                    cartCount.textContent = count;
-                    cartCount.style.display = count > 0 ? 'flex' : 'none';
-                }
+                document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                document.getElementById('cart-shipping').textContent = 'FREE';
+                document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+                document.getElementById('cart-total-amount').textContent = `$${total.toFixed(2)}`;
             }
             
             // Function to refresh the cart page after changes
             window.refreshCartPage = function() {
-                if (window.cartManager && window.cartManager.items.length === 0) {
+                const items = window.BobbyCart.getItems();
+                if (!items || items.length === 0) {
                     showEmptyCart();
                 } else {
                     initCartPage();

@@ -13,7 +13,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="scripts/bobby-checkout-master.js"></script>
+    <!-- Simple Cart System - Clean, reliable implementation -->
+    <script src="/scripts/simple-cart-system.js"></script>
 </head>
 <body>
     <!-- Main Content -->
@@ -153,22 +154,7 @@
             </div>
         </section>
 
-        <!-- Shopping Cart Sidebar -->
-        <div class="cart-sidebar" id="cart-sidebar">
-            <div class="cart-header">
-                <h3>Shopping Cart</h3>
-                <button class="cart-close" id="cart-close">×</button>
-            </div>
-            <div class="cart-items" id="cart-items">
-                <!-- Cart items will be populated here -->
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total: $<span id="cart-total">0.00</span></span>
-                </div>
-                <button class="checkout-btn" id="checkout-btn">Checkout</button>
-            </div>
-        </div>
+        <!-- Cart elements are now dynamically created by simple-cart-system.js -->
 
         <!-- Wishlist Sidebar -->
         <div class="wishlist-sidebar" id="wishlist-sidebar">
@@ -242,8 +228,7 @@
         </footer>
     </div>
 
-    <!-- Cart Overlay -->
-    <div class="cart-overlay" id="cart-overlay"></div>
+    <!-- Cart overlay is now handled by simple-cart-system.js -->
     <div class="wishlist-overlay" id="wishlist-overlay"></div>
 
     <!-- Scripts -->
@@ -256,17 +241,7 @@
     <script src="scripts/mobile-navigation.js"></script>
     <script src="scripts/image-loader-fix.js"></script>
     
-    <!-- Emergency cart image fix -->
-    <script src="scripts/cart-image-emergency-fix.js"></script>
-    
-    <!-- New cart system to replace the old one -->
-    <script src="scripts/cart-checkout-system.js"></script>
-    
-    <!-- Checkout fix to remove intrusive notifications -->
-    <script src="scripts/checkout-fix.js"></script>
-    
-    <!-- Cart bridge to ensure consistent cart functionality across pages -->
-    <script src="scripts/cart-bridge-fix.js"></script>
+    <!-- All cart functionality is now handled by simple-cart-system.js -->
     
     <!-- Quick View functionality -->
     <script src="scripts/quick-view.js"></script>

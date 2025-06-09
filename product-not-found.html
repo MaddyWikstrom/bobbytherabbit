@@ -6,7 +6,8 @@
     <title>Product Not Found - Bobby Streetwear</title>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/product-detail.css">
-    <script src="scripts/bobby-checkout-master.js"></script>
+    <!-- Simple Cart System - Clean, reliable implementation -->
+    <script src="/scripts/simple-cart-system.js"></script>
     <style>
         .product-not-found-container {
             display: flex;
@@ -218,38 +219,13 @@
         </div>
     </footer>
 
-    <!-- Cart Modal -->
-    <div id="cart-overlay" class="cart-overlay"></div>
-    <div id="cart-sidebar" class="cart-sidebar">
-        <div class="cart-header">
-            <h3>Your Cart</h3>
-            <button class="cart-close">&times;</button>
-        </div>
-        <div class="cart-items-container">
-            <div id="cart-items" class="cart-items"></div>
-        </div>
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total:</span>
-                <span>$<span id="cart-total">0.00</span></span>
-            </div>
-            <button class="checkout-btn">
-                <span>Checkout</span>
-            </button>
-        </div>
-    </div>
+    <!-- Cart elements are now dynamically created by simple-cart-system.js -->
 
     <!-- Scripts -->
-    <script src="scripts/cart-checkout-system.js"></script>
     <script>
-        // Initialize the cart
+        // Initialize the cart using new simple cart system
         document.addEventListener('DOMContentLoaded', function() {
-            // Force cart to update
-            if (window.BobbyCarts) {
-                window.BobbyCarts.init();
-                window.BobbyCarts.updateCartDisplay();
-                window.BobbyCarts.updateCartCount();
-            }
+            // BobbyCart is auto-initialized by simple-cart-system.js
 
             // Check URL for parameters
             const urlParams = new URLSearchParams(window.location.search);
