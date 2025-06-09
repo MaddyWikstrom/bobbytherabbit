@@ -2650,17 +2650,8 @@ class QuickViewManager {
                 // Use more robust URL pattern matching for color
                 let matched = false;
                 
-                // Standard pattern matching
-                if (imgUrl.includes(`/${colorNameLower}_`) ||
-                    imgUrl.includes(`/${colorNameLower}-`) ||
-                    imgUrl.includes(`_${colorNameLower}_`) ||
-                    imgUrl.includes(`-${colorNameLower}-`) ||
-                    imgUrl.includes(`_${colorNameLower}.`) ||
-                    imgUrl.includes(`-${colorNameLower}.`) ||
-                    imgUrl.includes(`color=${colorNameLower}`) ||
-                    imgUrl.includes(`color-${colorNameLower}`) ||
-                    imgUrl.includes(colorNameLower)) {
-                    
+                // Standard pattern matching - broader to include color mentions anywhere in URL
+                if (imgUrl.includes(colorNameLower)) {
                     colorImages.push(image);
                     matched = true;
                 }
