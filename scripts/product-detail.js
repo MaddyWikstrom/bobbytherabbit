@@ -1521,54 +1521,82 @@ class ProductDetailManager {
                 console.log(`No matching color option found in DOM for: ${color}`);
             }
             
-            // Helper function to deduplicate image URLs with improved accuracy
+            // Helper function to deduplicate image URLs with strict color-based grouping
             const deduplicateImages = (images) => {
                 // Create a map to track image URLs we've seen
                 const uniqueImagesMap = new Map();
                 const uniqueImages = [];
                 
-                images.forEach(imgUrl => {
+                // Extract color from URL for classification
+                const getColorFromUrl = (url) => {
+                    const lowerUrl = url.toLowerCase();
+                    // Common color names we might find in URLs
+                    const colorNames = ['forest green', 'navy blue', 'olive green', 'black', 'white', 'red', 'blue', 'green'];
+                    
+                    for (const colorName of colorNames) {
+                        // Check for color name in various formats
+                        if (lowerUrl.includes(colorName) ||
+                            lowerUrl.includes(colorName.replace(' ', '-')) ||
+                            lowerUrl.includes(colorName.replace(' ', '_'))) {
+                            return colorName;
+                        }
+                    }
+                    return null;
+                };
+                
+                // Pre-process: Sort images by color for more consistent selection
+                const sortedImages = [...images].sort((a, b) => {
+                    const colorA = getColorFromUrl(a) || '';
+                    const colorB = getColorFromUrl(b) || '';
+                    return colorA.localeCompare(colorB);
+                });
+                
+                // First pass: Group by color to ensure we keep one image per distinct view
+                const colorGroups = new Map();
+                
+                sortedImages.forEach(imgUrl => {
                     try {
-                        // Generate a more comprehensive key using both path and query parameters
+                        // Generate a simpler but effective key based on filename
                         const urlObj = new URL(imgUrl, window.location.origin);
-                        const pathname = urlObj.pathname;
+                        const filename = urlObj.pathname.split('/').pop();
                         
-                        // Get the last two path segments if available (more precise than just filename)
-                        const pathParts = pathname.split('/').filter(part => part.trim() !== '');
-                        const lastSegments = pathParts.slice(-Math.min(2, pathParts.length)).join('/');
+                        // Extract color from URL
+                        const detectedColor = getColorFromUrl(imgUrl);
                         
-                        // Include any 'variant' or 'id' query params if they exist
-                        const variantId = urlObj.searchParams.get('variant') || '';
-                        const productId = urlObj.searchParams.get('id') || '';
+                        // Create a key that combines detected color and filename pattern
+                        // This makes deduplication more aggressive for multi-word colors
+                        let groupKey;
                         
-                        // Create a composite key that includes important URL components
-                        const key = `${lastSegments}${variantId}${productId}`;
+                        if (detectedColor && detectedColor.includes(' ')) {
+                            // For multi-word colors, create a stricter key to avoid duplicates
+                            groupKey = `${detectedColor}-${filename.split('.')[0].substring(0, 8)}`;
+                        } else {
+                            // For single-word colors, be less strict
+                            groupKey = filename;
+                        }
                         
-                        // Use the full URL as a fallback if key generation fails
-                        const dedupeKey = key || imgUrl;
-                        
-                        // Only add if we haven't seen this key before
-                        if (!uniqueImagesMap.has(dedupeKey)) {
-                            uniqueImagesMap.set(dedupeKey, true);
-                            uniqueImages.push(imgUrl);
+                        // Only save the first image we see for each group key
+                        if (!colorGroups.has(groupKey)) {
+                            colorGroups.set(groupKey, imgUrl);
                         }
                     } catch (e) {
                         // If URL parsing fails, use the full URL as the key
-                        if (!uniqueImagesMap.has(imgUrl)) {
-                            uniqueImagesMap.set(imgUrl, true);
-                            uniqueImages.push(imgUrl);
-                        }
+                        colorGroups.set(imgUrl, imgUrl);
                     }
                 });
                 
-                // If deduplication reduced the images too much, revert to original set
-                if (uniqueImages.length < Math.max(2, images.length / 3)) {
-                    console.log(`Deduplication was too aggressive (${images.length} → ${uniqueImages.length}), using all images`);
-                    return images;
+                // Convert the map values back to an array
+                const dedupedImages = Array.from(colorGroups.values());
+                
+                console.log(`Deduplicated from ${images.length} to ${dedupedImages.length} images using strict color-based grouping`);
+                
+                // If we have too few images, ensure at least one per color for better representation
+                if (dedupedImages.length < 2 && images.length > 2) {
+                    console.log(`Too few images after deduplication, ensuring minimum representation`);
+                    return images.slice(0, Math.min(5, images.length));
                 }
                 
-                console.log(`Deduplicated from ${images.length} to ${uniqueImages.length} images`);
-                return uniqueImages;
+                return dedupedImages;
             };
             
             // Try to find color images
@@ -1632,19 +1660,54 @@ class ProductDetailManager {
             if (!colorImagesFound && this.currentProduct.images && this.currentProduct.images.length > 0) {
                 console.log(`Using URL filtering for color ${color}`);
                 
-                // Filter images based on URL patterns containing the color name
+                // Filter images based on enhanced URL patterns with multi-word color support
                 const colorLower = color.toLowerCase();
                 const matchingImages = this.currentProduct.images.filter(imgUrl => {
                     const imgUrlLower = imgUrl.toLowerCase();
-                    return (
-                        imgUrlLower.includes(`/${colorLower}`) ||
+                    
+                    // Standard pattern matching
+                    if (imgUrlLower.includes(`/${colorLower}`) ||
                         imgUrlLower.includes(`_${colorLower}`) ||
                         imgUrlLower.includes(`-${colorLower}`) ||
                         imgUrlLower.includes(`${colorLower}_`) ||
                         imgUrlLower.includes(`${colorLower}-`) ||
                         imgUrlLower.includes(`color=${colorLower}`) ||
-                        imgUrlLower.includes(colorLower)
-                    );
+                        imgUrlLower.includes(colorLower)) {
+                        return true;
+                    }
+                    
+                    // Handle multi-word color names (e.g., "Forest Green")
+                    const colorParts = colorLower.split(/\s+/);
+                    if (colorParts.length > 1) {
+                        // Check if all parts of the color name appear in the URL
+                        const allPartsPresent = colorParts.every(part =>
+                            imgUrlLower.includes(part) && part.length > 2  // Only consider parts with 3+ chars
+                        );
+                        
+                        if (allPartsPresent) {
+                            return true;
+                        }
+                        
+                        // Check for color initials (e.g., "fg" for "forest green")
+                        const colorInitials = colorParts.map(part => part[0]).join('');
+                        if (colorInitials.length > 1 && imgUrlLower.includes(colorInitials)) {
+                            return true;
+                        }
+                        
+                        // Check for hyphenated version of the color (e.g., "forest-green")
+                        const hyphenatedColor = colorParts.join('-');
+                        if (imgUrlLower.includes(hyphenatedColor)) {
+                            return true;
+                        }
+                        
+                        // Check for underscore version of the color (e.g., "forest_green")
+                        const underscoreColor = colorParts.join('_');
+                        if (imgUrlLower.includes(underscoreColor)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
                 });
                 
                 if (matchingImages.length > 0) {
