@@ -263,9 +263,9 @@ const BobbyCart = (function() {
       console.log(`Item already exists in cart, updating quantity from ${items[existingItemIndex].quantity} to ${product.quantity || 1}`);
       items[existingItemIndex].quantity = product.quantity || 1;
     } else {
-      // Add new item with default quantity of 1
+      // Add new item with default quantity of 1 at the top of the cart
       console.log(`Adding new item to cart: ${product.title}`);
-      items.push({
+      items.unshift({
         id: product.id,
         productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
