@@ -940,8 +940,19 @@ class ProductManager {
                 // Log for debugging
                 console.log(`Color selected: ${colorName}, updating image for product card`);
                 
+                // IMPORTANT: Get the color-specific image directly from the clicked color option
+                const colorSpecificImage = colorOption.dataset.colorImage;
+                console.log(`Color ${colorName} has specific image: ${colorSpecificImage}`);
+                
+                // Update the product image with the color-specific image from the option's data attribute
+                if (colorSpecificImage && productImage) {
+                    productImage.src = colorSpecificImage;
+                    productImage.dataset.originalSrc = colorSpecificImage;
+                    console.log(`Updated product image to: ${colorSpecificImage}`);
+                }
+                
                 // Use a direct approach that doesn't rely on 'this' context
-                updateProductCardImage(colorName, productCard);
+                updateProductCardImage(colorName, productCard, colorSpecificImage);
                 
                 // Also try the instance method approach using stored reference
                 if (typeof productManager.updateProductCardImage === 'function') {
@@ -954,7 +965,7 @@ class ProductManager {
             });
             
             // Direct function to update product card image that doesn't rely on 'this' context
-            function updateProductCardImage(colorName, productCard) {
+            function updateProductCardImage(colorName, productCard, colorSpecificImage) {
                 if (!productCard || !colorName) return;
                 
                 // Get product ID
@@ -963,8 +974,33 @@ class ProductManager {
                 
                 console.log(`Direct updateProductCardImage called for ${colorName} on product ${productId}`);
                 
-                // Try to get color images from data attribute
+                // If we already have a specific image from the color option, use it directly
+                if (colorSpecificImage) {
+                    const productImage = productCard.querySelector('.product-image');
+                    if (productImage) {
+                        productImage.src = colorSpecificImage;
+                        productImage.dataset.originalSrc = colorSpecificImage;
+                        console.log(`Used direct color image: ${colorSpecificImage}`);
+                        return; // Exit early if we used the direct image
+                    }
+                }
+                
+                // Fallback method: Try to get color images from data attribute
                 try {
+                    // First, check if the card has color-specific variant options
+                    const matchingColorOption = productCard.querySelector(`.variant-option[data-color="${colorName}"]`);
+                    if (matchingColorOption && matchingColorOption.dataset.colorImage) {
+                        const colorImage = matchingColorOption.dataset.colorImage;
+                        const productImage = productCard.querySelector('.product-image');
+                        if (productImage) {
+                            productImage.src = colorImage;
+                            productImage.dataset.originalSrc = colorImage;
+                            console.log(`Updated image from variant option: ${colorImage}`);
+                            return; // Exit if successful
+                        }
+                    }
+                    
+                    // Second, try to parse the JSON color images map
                     if (productCard.dataset.colorImages) {
                         const colorImagesMap = JSON.parse(productCard.dataset.colorImages);
                         if (colorImagesMap[colorName] && Array.isArray(colorImagesMap[colorName]) &&
@@ -978,7 +1014,7 @@ class ProductManager {
                             if (productImage) {
                                 productImage.src = colorImage;
                                 productImage.dataset.originalSrc = colorImage;
-                                console.log(`Updated image to ${colorImage} for color ${colorName}`);
+                                console.log(`Updated image from colorImages map: ${colorImage}`);
                             }
                         }
                     }
