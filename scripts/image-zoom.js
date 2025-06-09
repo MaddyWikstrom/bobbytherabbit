@@ -20,15 +20,16 @@ class ImageZoom {
         // State variables
         this.currentZoom = 1;
         this.minZoom = 1;
-        this.maxZoom = 4;
-        this.zoomStep = 0.5;
+        this.maxZoom = 3; // Reduced max zoom for better stability
+        this.zoomStep = 0.25; // Smaller zoom steps for more gradual zooming
         this.isDragging = false;
         this.startX = 0;
         this.startY = 0;
         this.translateX = 0;
         this.translateY = 0;
-        this.dragThreshold = 5; // Pixels to move before a click becomes a drag
+        this.dragThreshold = 3; // Lower threshold for more responsive dragging
         this.hasMoved = false; // Track if user has moved during mousedown
+        this.lastInteractionTime = 0; // Track last interaction time to prevent accidental double actions
         
         this.init();
     }
@@ -171,12 +172,18 @@ class ImageZoom {
         
         // Dragging functionality with improved click detection
         this.image.addEventListener('mousedown', (e) => {
+            // Prevent rapid sequential clicks/drags
+            const now = Date.now();
+            if (now - this.lastInteractionTime < 100) return;
+            this.lastInteractionTime = now;
+            
             // Store initial position to detect if this is a click or drag
             this.hasMoved = false;
             this.initialClickX = e.clientX;
             this.initialClickY = e.clientY;
             
             if (this.currentZoom > 1) {
+                e.preventDefault(); // Prevent any default behavior
                 this.startDrag(e.clientX, e.clientY);
             }
         });
@@ -240,12 +247,26 @@ class ImageZoom {
             }
         });
         
-        // Touch move - for dragging and pinch zoom
+        // Touch move - for dragging and pinch zoom with improved handling
         this.image.addEventListener('touchmove', (e) => {
+            // Prevent rapid sequential events
+            const now = Date.now();
+            if (now - this.lastInteractionTime < 50) return;
+            this.lastInteractionTime = now;
+            
             if (e.touches.length === 1 && this.isDragging) {
                 // Single touch - drag
                 e.preventDefault();
                 const touch = e.touches[0];
+                
+                // Mark as moved for touch detection
+                const deltaX = Math.abs(touch.clientX - this.initialClickX);
+                const deltaY = Math.abs(touch.clientY - this.initialClickY);
+                
+                if (deltaX > this.dragThreshold || deltaY > this.dragThreshold) {
+                    this.hasMoved = true;
+                }
+                
                 this.drag(touch.clientX, touch.clientY);
             } else if (e.touches.length === 2) {
                 // Double touch - pinch zoom
@@ -260,22 +281,30 @@ class ImageZoom {
                 // Calculate how much the distance has changed
                 const deltaDistance = newDistance - lastTouchDistance;
                 
-                // Apply zoom based on pinch
+                // Apply zoom based on pinch with smaller increments for smoother zooming
                 if (Math.abs(deltaDistance) > 5) { // Threshold to avoid small movements
                     if (deltaDistance > 0) {
                         // Pinch out - zoom in
-                        this.zoomIn(0.05);
+                        this.zoomIn(0.03); // Smaller increment for smoother pinch zoom
                     } else {
                         // Pinch in - zoom out
-                        this.zoomOut(0.05);
+                        this.zoomOut(0.03); // Smaller increment for smoother pinch zoom
                     }
                     lastTouchDistance = newDistance;
                 }
             }
         });
         
-        // Touch end - stop dragging
-        this.image.addEventListener('touchend', () => {
+        // Touch end with improved click/drag detection
+        this.image.addEventListener('touchend', (e) => {
+            // Handle touch end as a click if no movement occurred
+            if (!this.hasMoved && this.currentZoom === this.minZoom && e.changedTouches.length === 1) {
+                const touch = e.changedTouches[0];
+                this.zoomToPoint(touch.clientX, touch.clientY);
+            } else if (!this.hasMoved && this.currentZoom === this.maxZoom) {
+                this.resetZoom();
+            }
+            
             this.stopDrag();
         });
         
@@ -385,22 +414,38 @@ class ImageZoom {
     
     zoomIn(step = this.zoomStep) {
         if (this.currentZoom < this.maxZoom) {
+            // Add a slight delay to animation for better visual feedback
+            this.image.style.transition = 'transform 0.15s ease-out';
+            
             this.currentZoom = Math.min(this.currentZoom + step, this.maxZoom);
             this.updateZoom();
+            
+            // Clear the transition after it completes
+            setTimeout(() => {
+                this.image.style.transition = '';
+            }, 150);
         }
     }
     
     zoomOut(step = this.zoomStep) {
         if (this.currentZoom > this.minZoom) {
+            // Add a slight delay to animation for better visual feedback
+            this.image.style.transition = 'transform 0.15s ease-out';
+            
             this.currentZoom = Math.max(this.currentZoom - step, this.minZoom);
             this.updateZoom();
             
-            // If we're back to minimum zoom, reset position
+            // If we're back to minimum zoom, reset position with animation
             if (this.currentZoom === this.minZoom) {
                 this.translateX = 0;
                 this.translateY = 0;
                 this.updatePosition();
             }
+            
+            // Clear the transition after it completes
+            setTimeout(() => {
+                this.image.style.transition = '';
+            }, 150);
         }
     }
     
@@ -433,7 +478,7 @@ class ImageZoom {
         // Apply zoom
         this.zoomIn();
         
-        // If we're zoomed in, calculate new position
+        // If we're zoomed in, calculate new position with improved centering
         if (this.currentZoom > 1) {
             // Calculate new dimensions after zoom
             const newWidth = originalWidth * this.currentZoom;
@@ -444,14 +489,33 @@ class ImageZoom {
             const heightDifference = newHeight - originalHeight;
             
             // Calculate how much to translate to keep the clicked point fixed
-            this.translateX = -widthDifference * relativeX;
-            this.translateY = -heightDifference * relativeY;
+            // Add a slight offset factor for better centering on smaller screens
+            const centeringFactor = 1.05;
+            this.translateX = -widthDifference * relativeX * centeringFactor;
+            this.translateY = -heightDifference * relativeY * centeringFactor;
+            
+            // Apply bounds to ensure we don't translate too far
+            const containerRect = this.modal.getBoundingClientRect();
+            const maxTranslateX = Math.max(0, (newWidth - containerRect.width) / 2);
+            const maxTranslateY = Math.max(0, (newHeight - containerRect.height) / 2);
+            
+            this.translateX = Math.min(Math.max(this.translateX, -maxTranslateX), maxTranslateX);
+            this.translateY = Math.min(Math.max(this.translateY, -maxTranslateY), maxTranslateY);
             
             // Apply the new position
             this.updatePosition();
             
             // Add zoomed class for cursor change
             this.image.classList.add('zoomed');
+            
+            // Show a helpful instruction
+            if (this.instructions) {
+                this.instructions.textContent = 'Drag to move, double-click to reset';
+                this.instructions.classList.remove('fade');
+                setTimeout(() => {
+                    this.instructions.classList.add('fade');
+                }, 2000);
+            }
         }
     }
     

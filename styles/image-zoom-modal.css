@@ -33,8 +33,10 @@
   object-fit: contain;
   transform-origin: center;
   cursor: zoom-in;
-  transition: transform 0.1s ease-out;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0.3, 1);
   will-change: transform; /* Performance optimization */
+  -webkit-backface-visibility: hidden; /* Prevent pixelation during transitions */
+  backface-visibility: hidden;
 }
 
 .zoom-image.zoomed {
@@ -138,9 +140,15 @@
   transition: opacity 0.3s ease;
 }
 
+.zoom-instructions {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(0);
+}
+
 .zoom-instructions.fade {
   opacity: 0;
   pointer-events: none;
+  transform: translateY(-10px);
 }
 
 /* Progress indicators for boundaries */
