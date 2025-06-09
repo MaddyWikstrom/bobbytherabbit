@@ -145,16 +145,36 @@ document.addEventListener('DOMContentLoaded', function() {
             rightArrow.style.pointerEvents = 'auto'; // Restore pointer events
         }
         
-        // Add scrolling functionality to arrows
+        // Add improved scrolling functionality to arrows with bounds checking
         const scrollGrid = collectionSection.querySelector('.product-grid-scroll');
         
-        // Add click handlers to the already styled arrows
+        // Function to update arrow visibility based on scroll position
+        const updateArrowVisibility = function() {
+            if (!scrollGrid || !leftArrow || !rightArrow) return;
+            
+            const maxScrollLeft = scrollGrid.scrollWidth - scrollGrid.clientWidth;
+            
+            // Fade out left arrow when at the beginning
+            leftArrow.style.opacity = scrollGrid.scrollLeft <= 0 ? '0.3' : '1';
+            leftArrow.style.cursor = scrollGrid.scrollLeft <= 0 ? 'default' : 'pointer';
+            
+            // Fade out right arrow when at the end
+            rightArrow.style.opacity = scrollGrid.scrollLeft >= maxScrollLeft ? '0.3' : '1';
+            rightArrow.style.cursor = scrollGrid.scrollLeft >= maxScrollLeft ? 'default' : 'pointer';
+        };
+        
+        // Add click handlers to the already styled arrows with improved logic
         if (leftArrow && scrollGrid) {
             leftArrow.addEventListener('click', function(e) {
                 e.preventDefault();
-                // Scroll left by one product width (300px) plus gap (32px)
-                scrollGrid.scrollBy({
-                    left: -332,
+                
+                // Calculate how much to scroll (with bounds checking)
+                const scrollAmount = 332; // product width (300px) + gap (32px)
+                const newScrollLeft = Math.max(scrollGrid.scrollLeft - scrollAmount, 0);
+                
+                // Scroll with smooth behavior
+                scrollGrid.scrollTo({
+                    left: newScrollLeft,
                     behavior: 'smooth'
                 });
             });
@@ -163,12 +183,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (rightArrow && scrollGrid) {
             rightArrow.addEventListener('click', function(e) {
                 e.preventDefault();
-                // Scroll right by one product width (300px) plus gap (32px)
-                scrollGrid.scrollBy({
-                    left: 332,
+                
+                // Calculate how much to scroll (with bounds checking)
+                const scrollAmount = 332; // product width (300px) + gap (32px)
+                const maxScrollLeft = scrollGrid.scrollWidth - scrollGrid.clientWidth;
+                const newScrollLeft = Math.min(scrollGrid.scrollLeft + scrollAmount, maxScrollLeft);
+                
+                // Scroll with smooth behavior
+                scrollGrid.scrollTo({
+                    left: newScrollLeft,
                     behavior: 'smooth'
                 });
             });
+        }
+        
+        // Add scroll event listener to update arrow visibility
+        if (scrollGrid) {
+            scrollGrid.addEventListener('scroll', updateArrowVisibility);
+            
+            // Call initially to set correct starting state
+            // Use setTimeout to ensure DOM is fully rendered
+            setTimeout(updateArrowVisibility, 100);
         }
     }
     
