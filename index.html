@@ -433,7 +433,7 @@
     <!-- Note: Cart elements are now dynamically created by simple-cart-system.js -->
 
     <script>
-        // Password validation functionality
+        // Password validation functionality - improved to prevent input issues
         document.addEventListener('DOMContentLoaded', function() {
             const correctPassword = "bajablastrabbit47";
             const submitButton = document.getElementById("submit-password");
@@ -442,28 +442,47 @@
             const passwordScreen = document.getElementById("password-screen");
             const loadingScreen = document.getElementById("loading-screen");
 
-            // Add event listener for submit button
-            submitButton.addEventListener("click", function() {
+            // Ensure password input is enabled and ready
+            passwordInput.disabled = false;
+            passwordInput.focus();
+
+            // Simplified submit handler with debounce protection
+            let isProcessing = false;
+            
+            function handleSubmit() {
+                if (isProcessing) return;
+                
+                isProcessing = true;
                 const enteredPassword = passwordInput.value;
-                console.log("Password submitted:", enteredPassword);
                 
                 if (enteredPassword === correctPassword) {
-                    console.log("Password correct, proceeding to loading screen");
                     passwordScreen.style.display = "none";
                     loadingScreen.style.display = "flex";
                     // Initialize loading screen after password is correct
-                    initializeLoadingScreen();
+                    setTimeout(function() {
+                        initializeLoadingScreen();
+                    }, 100);
                 } else {
-                    console.log("Incorrect password");
                     errorMessage.style.display = "block";
                     passwordInput.value = ""; // Clear the input
+                    setTimeout(function() {
+                        isProcessing = false;
+                        passwordInput.focus();
+                    }, 100);
                 }
+            }
+
+            // Add event listener for submit button with error handling
+            submitButton.addEventListener("click", function(e) {
+                e.preventDefault();
+                handleSubmit();
             });
 
             // Allow Enter key to submit password
-            passwordInput.addEventListener("keypress", function(event) {
+            passwordInput.addEventListener("keydown", function(event) {
                 if (event.key === "Enter") {
-                    submitButton.click();
+                    event.preventDefault();
+                    handleSubmit();
                 }
             });
         });
