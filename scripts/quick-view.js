@@ -2187,6 +2187,17 @@ class QuickViewManager {
     // Filter images by color using a direct approach with data-color attributes
     // This method is used by both quick-view and product-detail pages
     filterImagesByColor(colorName) {
+        // Add anti-flicker protection - tracking in-progress filtering
+        const filterKey = `filtering-${colorName}`;
+        if (window[filterKey]) return; // Already filtering this color
+        
+        // Set flag that we're filtering this color
+        window[filterKey] = true;
+        
+        // Auto-clear flag after 500ms to prevent stuck state
+        setTimeout(() => {
+            window[filterKey] = false;
+        }, 500);
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             // No images to filter
             return;
@@ -2487,17 +2498,28 @@ class QuickViewManager {
             
             // Show matching images, hide non-matching ones
             if (uniqueMatchingImages.includes(imgUrl)) {
+                // Smooth display transitions
                 if (thumbnailParent) {
                     thumbnailParent.style.display = 'block';
+                    thumbnailParent.style.opacity = '1';
                 }
                 thumbnail.style.display = 'block';
+                thumbnail.style.opacity = '1';
                 // Also set data-color attribute for future reference
                 thumbnail.setAttribute('data-color', colorName);
             } else {
+                // Hide with opacity transition first, then display:none
                 if (thumbnailParent) {
-                    thumbnailParent.style.display = 'none';
+                    thumbnailParent.style.opacity = '0';
+                    // Use setTimeout to ensure smooth transitions
+                    setTimeout(() => {
+                        if (thumbnailParent) thumbnailParent.style.display = 'none';
+                    }, 50);
                 }
-                thumbnail.style.display = 'none';
+                thumbnail.style.opacity = '0';
+                setTimeout(() => {
+                    thumbnail.style.display = 'none';
+                }, 50);
             }
         });
         
@@ -3082,14 +3104,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
-        // Try to apply immediately if productDetailManager is already available
-        applyColorFromURL();
+        // Only apply once with a small delay to prevent flickering
+        let hasApplied = false;
         
-        // And also after a delay to ensure everything is loaded
-        setTimeout(applyColorFromURL, 500);
+        // Create a debounced function to prevent multiple rapid executions
+        const applyColorOnce = () => {
+            if (hasApplied) return;
+            
+            if (window.productDetailManager && window.productDetailManager.currentProduct) {
+                hasApplied = true;
+                applyColorFromURL();
+            } else {
+                // If not ready yet, try once more with a delay
+                setTimeout(() => {
+                    if (!hasApplied && window.productDetailManager && window.productDetailManager.currentProduct) {
+                        hasApplied = true;
+                        applyColorFromURL();
+                    }
+                }, 300);
+            }
+        };
         
-        // Apply again after a longer delay as a final fallback
-        setTimeout(applyColorFromURL, 1500);
+        // Wait for DOMContentLoaded or apply immediately if already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyColorOnce);
+        } else {
+            setTimeout(applyColorOnce, 100);
+        }
     }
     
     // Patch the product detail manager to use our simplified size display
@@ -3098,15 +3139,32 @@ document.addEventListener('DOMContentLoaded', () => {
         window.productDetailManager.simplifySize = window.quickViewManager.simplifySize;
         
         // Enhance product detail selectColor method to use our better filtering
+        // Add stable debounce to color selection to prevent flickering
         const originalSelectColor = window.productDetailManager.selectColor;
         window.productDetailManager.selectColor = function(colorName) {
+            if (!colorName) return;
+            
+            // Store the requested color
+            const requestedColor = colorName;
+            
             // Call original method first
             if (originalSelectColor) {
                 originalSelectColor.call(window.productDetailManager, colorName);
             }
             
-            // Then apply our enhanced filtering
-            window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorName);
+            // Prevent multiple rapid calls
+            if (window.selectColorDebounceTimer) {
+                clearTimeout(window.selectColorDebounceTimer);
+            }
+            
+            // Apply enhanced filtering with a slight delay
+            window.selectColorDebounceTimer = setTimeout(() => {
+                // Only if we're still on the same color (prevents race conditions)
+                if (window.productDetailManager.selectedVariant &&
+                    window.productDetailManager.selectedVariant.color === requestedColor) {
+                    window.quickViewManager.filterImagesByColor.call(window.productDetailManager, requestedColor);
+                }
+            }, 100);
         };
         
         // Replace filterImagesByColor with our improved version
@@ -3188,16 +3246,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            // If new thumbnails were added and we have a color parameter, apply filtering again
+            // Add a stable debounce mechanism for thumbnail filtering
             if (thumbnailsAdded && colorParam && window.productDetailManager) {
-                // Use a timeout and a flag to prevent multiple calls
-                if (!window.isFilteringInProgress) {
-                    window.isFilteringInProgress = true;
-                    setTimeout(() => {
-                        window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
-                        window.isFilteringInProgress = false;
-                    }, 100);
+                // Clear any existing filter timer
+                if (window.filterDebounceTimer) {
+                    clearTimeout(window.filterDebounceTimer);
                 }
+                
+                // Set a new timer with longer delay
+                window.filterDebounceTimer = setTimeout(() => {
+                    // Only proceed if we have a product and thumbnails
+                    if (window.productDetailManager.currentProduct &&
+                        document.querySelectorAll('.thumbnail, .thumbnail img, .gallery-item img').length > 0) {
+                        window.quickViewManager.filterImagesByColor.call(window.productDetailManager, colorParam);
+                    }
+                }, 300); // Longer delay helps prevent flickering
             }
             
             // If new size elements were added, apply size simplification
