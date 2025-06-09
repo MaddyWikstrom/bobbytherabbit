@@ -226,6 +226,13 @@ class HomepageProductLoader {
                                 <circle cx="12" cy="12" r="3"></circle>
                             </svg>
                         </button>
+                        <button class="product-action-btn quick-add-btn" title="Add to Cart">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                        </button>
                     </div>
                     ${product.new ? '<div class="product-badge new">New</div>' : ''}
                     ${product.sale ? `<div class="product-badge sale">-${discount}%</div>` : ''}
@@ -283,6 +290,156 @@ class HomepageProductLoader {
                     this.showQuickView(productId);
                 });
             }
+            
+            // Add quick add button handler
+            const quickAddBtn = card.querySelector('.quick-add-btn');
+            if (quickAddBtn) {
+                quickAddBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.quickAddToCart(productId);
+                });
+            }
+        });
+    }
+    
+    // Quick add to cart functionality
+    quickAddToCart(productId) {
+        // Find the product
+        const product = this.products.find(p => p.id === productId || p.shopifyId === productId);
+        if (!product) return;
+        
+        try {
+            // First check if BobbyCart (new system) is available
+            if (window.BobbyCart) {
+                // For one-size products like beanies, add directly
+                if (product.category === 'beanie' || product.category === 'hat' || product.sizes.length === 1) {
+                    const cartProduct = {
+                        id: product.id || 'unknown-product',
+                        title: product.title || 'Product',
+                        price: product.price || 0,
+                        image: product.mainImage || '',
+                        quantity: 1,
+                        variant: product.sizes.length === 1 ? product.sizes[0] : 'One Size'
+                    };
+                    
+                    window.BobbyCart.addItem(cartProduct);
+                    console.log('Added to cart via BobbyCart:', cartProduct);
+                    this.showNotification('Product added to cart!', 'success');
+                } else {
+                    // For products with multiple sizes, redirect to product page
+                    this.viewProduct(productId);
+                }
+            } else {
+                // Fallback to check other cart systems
+                if (window.cartManager) {
+                    // For one-size products like beanies, add directly
+                    if (product.category === 'beanie' || product.category === 'hat' || product.sizes.length === 1) {
+                        const cartProduct = {
+                            id: product.id || 'unknown-product',
+                            title: product.title || 'Product',
+                            price: product.price || 0,
+                            image: product.mainImage || '',
+                            quantity: 1,
+                            variant: product.sizes.length === 1 ? product.sizes[0] : 'One Size'
+                        };
+                        
+                        window.cartManager.addItem(cartProduct);
+                        console.log('Added to cart via cartManager:', cartProduct);
+                        this.showNotification('Product added to cart!', 'success');
+                    } else {
+                        // For products with multiple sizes, redirect to product page
+                        this.viewProduct(productId);
+                    }
+                } else {
+                    // No cart system available
+                    console.error('Cart system is not available');
+                    this.showNotification('Cart system is not available', 'error');
+                }
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            this.showNotification('Error adding to cart', 'error');
+        }
+    }
+    
+    // Show notification
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close">×</button>
+            </div>
+        `;
+
+        // Add styles for notification if they don't exist
+        if (!document.getElementById('notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    max-width: 350px;
+                    background: white;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    border-radius: 4px;
+                    overflow: hidden;
+                    transform: translateX(420px);
+                    transition: transform 0.3s ease;
+                    z-index: 9999;
+                }
+                .notification.show {
+                    transform: translateX(0);
+                }
+                .notification-content {
+                    display: flex;
+                    align-items: center;
+                    padding: 12px 15px;
+                }
+                .notification-success {
+                    border-left: 4px solid #10B981;
+                }
+                .notification-error {
+                    border-left: 4px solid #EF4444;
+                }
+                .notification-info {
+                    border-left: 4px solid #3B82F6;
+                }
+                .notification-message {
+                    flex: 1;
+                    margin-right: 10px;
+                }
+                .notification-close {
+                    background: none;
+                    border: none;
+                    font-size: 20px;
+                    cursor: pointer;
+                    color: #9CA3AF;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Add to page
+        document.body.appendChild(notification);
+
+        // Show notification
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        // Auto hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+
+        // Manual close
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
         });
     }
 

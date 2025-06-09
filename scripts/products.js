@@ -1393,6 +1393,35 @@ class ProductManager {
             });
         });
         
+        // Auto-select size for one-size items (like beanies)
+        if (sizeOptionElements.length === 1) {
+            // Only one size available, automatically select it
+            sizeOptionElements[0].classList.add('active');
+            selectedSize = sizeOptionElements[0].dataset.size;
+            confirmBtn.disabled = false; // Enable the button
+        } else if (product.category === 'beanie' || product.category === 'hat') {
+            // It's a beanie or hat which typically has one size
+            // Find "One Size" option or just select the first size
+            const oneSizeOption = Array.from(sizeOptionElements).find(opt =>
+                opt.dataset.size.toLowerCase().includes('one size') ||
+                opt.dataset.size.toLowerCase() === 'os' ||
+                opt.dataset.size.toLowerCase() === 'one' ||
+                opt.dataset.size.toLowerCase() === 'unique' ||
+                opt.dataset.size.toLowerCase() === 'universal'
+            );
+            
+            if (oneSizeOption) {
+                oneSizeOption.classList.add('active');
+                selectedSize = oneSizeOption.dataset.size;
+            } else if (sizeOptionElements.length > 0) {
+                // If no "one size" option found, select the first one
+                sizeOptionElements[0].classList.add('active');
+                selectedSize = sizeOptionElements[0].dataset.size;
+            }
+            
+            confirmBtn.disabled = !selectedSize; // Enable button if we found a size
+        }
+        
         // Add to cart confirmation
         confirmBtn.addEventListener('click', () => {
             if (!selectedSize) {
