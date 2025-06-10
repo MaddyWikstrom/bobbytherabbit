@@ -2,6 +2,8 @@
 
 This document explains how the Shopify Storefront API checkout has been integrated with your existing cart system.
 
+> **IMPORTANT UPDATE:** For a more reliable implementation that works without Netlify functions, see the `direct-storefront-checkout.html` example. This demonstrates client-side integration that works consistently in all environments.
+
 ## Overview
 
 The integration preserves your existing cart functionality while adding Shopify's Storefront API checkout capabilities. This allows you to:

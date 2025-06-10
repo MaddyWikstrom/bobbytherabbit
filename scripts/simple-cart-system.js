@@ -2,11 +2,15 @@
  * Simple Cart System
  * A clean, reliable cart implementation for Bobby Streetwear
  *
- * Version: 1.2.0 - Fixed global naming and initialization issues
+ * Version: 1.3.0 - Added Shopify Storefront API integration and fixed initialization issues
  */
 
-// Create cart system with safer initialization
-const BobbyCartSystem = (function() {
+// Prevent duplicate declarations
+if (window.BobbyCartSystem) {
+  console.log('BobbyCartSystem already initialized, using existing instance');
+} else {
+  // Create cart system with safer initialization
+  const BobbyCartSystem = (function() {
   // Cart state
   let items = [];
   let isCartOpen = false;
@@ -950,3 +954,4 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Log successful initialization
 console.log('BobbyCart system initialized successfully');
+}

@@ -5,6 +5,7 @@
  * while maintaining compatibility with the existing cart system.
  */
 
+// Use IIFE pattern to avoid global namespace conflicts
 const BobbyCheckoutStorefront = (function() {
   // Configuration
   const SHOPIFY_CONFIG = {
@@ -12,6 +13,12 @@ const BobbyCheckoutStorefront = (function() {
     storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
     apiVersion: '2023-07'
   };
+
+  // Check if already initialized to prevent duplicate declaration
+  if (window.BobbyCheckoutStorefront) {
+    console.log('BobbyCheckoutStorefront already initialized, using existing instance');
+    return window.BobbyCheckoutStorefront;
+  }
 
   // Cache for product variant mapping
   let variantCache = {};
