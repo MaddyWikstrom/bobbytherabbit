@@ -467,6 +467,7 @@ class SearchManager {
     // Quick add functionality removed
     quickAdd(productId) {
         console.log('Quick add functionality has been removed');
+        // No notification needed
         
         // Redirect to product page instead
         if (window.productManager) {

@@ -1217,7 +1217,7 @@ class QuickViewManager {
     async quickAddToCart(productId, productHandle, color, size) {
         // Function disabled - quick add functionality removed
         console.log('Quick add functionality has been removed');
-        this.showNotification('Quick add functionality has been removed', 'info');
+        // Notification removed
         return false;
     }
     
@@ -1905,9 +1905,7 @@ class QuickViewManager {
                 // Close quick view modal
                 this.closeQuickView();
                 
-                // Show confirmation notification
-                const sizeText = this.selectedVariant.size ? ` (${this.simplifySize(this.selectedVariant.size)})` : '';
-                this.showNotification(`Added ${this.currentProduct.title}${sizeText} to cart`, 'success');
+                // Cart success handling - notification removed
             }
             
         } catch (error) {

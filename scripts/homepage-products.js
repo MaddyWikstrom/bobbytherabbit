@@ -322,7 +322,7 @@ class HomepageProductLoader {
     // Quick add to cart functionality removed
     quickAddToCart(productId) {
         console.log('Quick add functionality has been removed');
-        this.showNotification('Quick add functionality has been removed', 'info');
+        // Notification removed
         
         // Redirect to product page instead
         this.viewProduct(productId);
