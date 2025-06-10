@@ -1,10 +1,12 @@
 /**
  * Simple Cart System
  * A clean, reliable cart implementation for Bobby Streetwear
+ *
+ * Version: 1.2.0 - Fixed global naming and initialization issues
  */
 
 // Create cart system with safer initialization
-const BobbyCart = (function() {
+const BobbyCartSystem = (function() {
   // Cart state
   let items = [];
   let isCartOpen = false;
@@ -893,13 +895,21 @@ const BobbyCart = (function() {
   };
 })();
 
-// Make cart globally available
-window.BobbyCart = BobbyCart;
+// Make cart globally available with correct naming
+window.BobbyCart = BobbyCartSystem;
 
-// Make cart compatible with existing code
-window.cartManager = window.BobbyCart;
+// Make cart compatible with existing code (but don't overwrite existing cart manager)
+if (!window.cartManager) {
+  console.log('Setting up cartManager compatibility reference to BobbyCart');
+  window.cartManager = window.BobbyCart;
+} else {
+  console.log('cartManager already exists, not overwriting');
+}
 
 // Export the cart for module compatibility
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = BobbyCart;
+  module.exports = BobbyCartSystem;
 }
+
+// Log successful initialization
+console.log('BobbyCart system initialized successfully');

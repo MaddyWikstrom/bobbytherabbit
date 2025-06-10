@@ -1,6 +1,6 @@
 /**
  * Cart Bridge Fix for Bobby Streetwear
- * This script bridges the gap between the new BobbyCarts system and the older CartManager
+ * This script bridges the gap between the new BobbyCart system and the older CartManager
  * to ensure consistent cart functionality across all pages.
  */
 
@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Wait for either cart system to be available
     const initBridge = setInterval(() => {
-        // Check if either cart system is available
-        if (window.BobbyCarts || window.cartManager) {
+        // Check if either cart system is available - NOTE: Fixed BobbyCart vs BobbyCarts naming
+        if (window.BobbyCart || window.cartManager) {
             clearInterval(initBridge);
             CartBridgeFix.init();
         }
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         clearInterval(initBridge);
         // If no cart system is available after 5 seconds, try to initialize the bridge anyway
-        if (!window.BobbyCarts && !window.cartManager) {
+        if (!window.BobbyCart && !window.cartManager) {
             console.warn('⚠️ No cart system detected after timeout, attempting to initialize bridge...');
             CartBridgeFix.init();
         }
@@ -41,20 +41,20 @@ const CartBridgeFix = {
         console.log('🛠️ Setting up Cart Bridge Fix...');
         
         // Determine which cart system is active
-        const hasBobbyCarts = !!window.BobbyCarts;
+        const hasBobbyCart = !!window.BobbyCart;  // FIXED: Changed from BobbyCarts to BobbyCart
         const hasCartManager = !!window.cartManager;
         
-        console.log(`📊 Detected cart systems: BobbyCarts: ${hasBobbyCarts}, CartManager: ${hasCartManager}`);
+        console.log(`📊 Detected cart systems: BobbyCart: ${hasBobbyCart}, CartManager: ${hasCartManager}`);
         
         // Ensure we always have both cart systems, regardless of which one was loaded
-        if (hasBobbyCarts && !hasCartManager) {
-            this.createCartManagerFromBobbyCarts();
-        } else if (hasCartManager && !hasBobbyCarts) {
-            this.createBobbyCartsFromCartManager();
-        } else if (hasBobbyCarts && hasCartManager) {
+        if (hasBobbyCart && !hasCartManager) {
+            this.createCartManagerFromBobbyCart();  // FIXED: Updated method name
+        } else if (hasCartManager && !hasBobbyCart) {
+            this.createBobbyCartFromCartManager();  // FIXED: Updated method name
+        } else if (hasBobbyCart && hasCartManager) {
             // Both systems exist, but might need synchronizing
             this.syncCartSystems();
-        } else if (!hasBobbyCarts && !hasCartManager) {
+        } else if (!hasBobbyCart && !hasCartManager) {
             console.error('❌ No cart system available to bridge!');
             this.injectEmergencyCartSystem();
         }
@@ -71,11 +71,11 @@ const CartBridgeFix = {
         }, 100);
     },
     
-    // Create CartManager interface from BobbyCarts
-    createCartManagerFromBobbyCarts: function() {
-        console.log('🔄 Creating CartManager interface from BobbyCarts...');
+    // Create CartManager interface from BobbyCart
+    createCartManagerFromBobbyCart: function() {  // FIXED: Changed from BobbyCarts to BobbyCart
+        console.log('🔄 Creating CartManager interface from BobbyCart...');  // FIXED: Name
         
-        // Create a CartManager proxy that delegates to BobbyCarts
+        // Create a CartManager proxy that delegates to BobbyCart
         window.cartManager = {
             items: [],
             isOpen: false,
@@ -84,135 +84,122 @@ const CartBridgeFix = {
             
             // Core cart methods
             addItem: function(product, variant) {
-                console.log('CartManager.addItem -> BobbyCarts', product, variant);
+                console.log('CartManager.addItem -> BobbyCart', product, variant);  // FIXED: Name
                 
-                // Format color and size info to match what BobbyCarts expects
+                // Format color and size info to match what BobbyCart expects
                 const formattedProduct = {
                     ...product,
                     id: product.id || product.productId || `product_${Date.now()}`,
                     title: product.title,
                     price: product.price || 0,
-                    image: product.image || product.mainImage
+                    image: product.image || product.mainImage,
+                    selectedColor: variant?.color || product.selectedColor || product.color || 'Default',
+                    selectedSize: variant?.size || product.selectedSize || product.size || 'One Size'
                 };
                 
-                // Map variant info
-                const variantData = variant || {
-                    color: product.selectedColor || product.color || 'Default',
-                    size: product.selectedSize || product.size || 'One Size',
-                    quantity: product.quantity || 1,
-                    price: product.price || 0,
-                    shopifyVariantId: product.shopifyVariantId || null
-                };
+                console.log('Formatted product for BobbyCart:', formattedProduct);
                 
-                const result = window.BobbyCarts.addToCart(formattedProduct);
+                // Use the correct BobbyCart addItem method
+                window.BobbyCart.addItem(formattedProduct);  // FIXED: Method name & object name
                 
                 // Ensure cart opens
-                if (result && !window.BobbyCarts.state.isOpen) {
-                    setTimeout(() => window.BobbyCarts.openCart(), 100);
-                }
+                setTimeout(() => window.BobbyCart.openCart(), 100);  // FIXED: Name
                 
-                return result;
+                return true;
             },
             
             removeItem: function(itemId) {
-                return window.BobbyCarts.removeItem(itemId);
+                return window.BobbyCart.removeItem(itemId);  // FIXED: Name
             },
             
             updateQuantity: function(itemId, quantity) {
-                return window.BobbyCarts.updateQuantity(itemId, quantity);
+                return window.BobbyCart.updateQuantity(itemId, quantity);  // FIXED: Name
             },
             
             clearCart: function() {
-                return window.BobbyCarts.clearCart();
+                return window.BobbyCart.clearCart();  // FIXED: Name
             },
             
             // Cart open/close methods
             toggleCart: function() {
-                console.log('CartManager.toggleCart -> BobbyCarts');
-                return window.BobbyCarts.toggleCart();
+                console.log('CartManager.toggleCart -> BobbyCart');  // FIXED: Name
+                window.BobbyCart.openCart();  // FIXED: Name
+                return true;
             },
             
             openCart: function() {
-                console.log('CartManager.openCart -> BobbyCarts');
-                return window.BobbyCarts.openCart();
+                console.log('CartManager.openCart -> BobbyCart');  // FIXED: Name
+                return window.BobbyCart.openCart();  // FIXED: Name
             },
             
             closeCart: function() {
-                return window.BobbyCarts.closeCart();
+                return window.BobbyCart.closeCart();  // FIXED: Name
             },
             
             // Checkout methods
             proceedToCheckout: function() {
-                return window.BobbyCarts.proceedToCheckout();
+                if (typeof window.BobbyCart.proceedToCheckout === 'function') {
+                    return window.BobbyCart.proceedToCheckout();  // FIXED: Name
+                } else {
+                    console.log('Checkout not implemented in BobbyCart, using fallback');
+                    this.checkoutFallback();
+                }
             },
             
-            initiateShopifyCheckout: async function() {
-                console.log('CartManager.initiateShopifyCheckout -> BobbyCarts');
-                return window.BobbyCarts.proceedToCheckout();
+            checkoutFallback: function() {
+                alert('Checkout is not available in the demo. In the full version, this would redirect to Shopify checkout.');
             },
             
             // Display methods
             updateCartDisplay: function() {
-                this.updateFromBobbyCarts();
-                return window.BobbyCarts.updateCartDisplay();
+                this.updateFromBobbyCart();  // FIXED: Name
+                return true;
             },
             
             updateCartCount: function() {
-                this.updateFromBobbyCarts();
-                return window.BobbyCarts.updateCartCount();
+                this.updateFromBobbyCart();  // FIXED: Name
+                return true;
             },
             
             showNotification: function(message, type) {
-                return window.BobbyCarts.showNotification(message, type);
+                console.log(`${type.toUpperCase()}: ${message}`);
+                return true;
             },
             
-            showSilentNotification: function(message, type) {
-                return window.BobbyCarts.showNotification(message, type);
-            },
-            
-            // Helper to update CartManager state from BobbyCarts
-            updateFromBobbyCarts: function() {
-                this.items = window.BobbyCarts.state.items;
-                this.isOpen = window.BobbyCarts.state.isOpen;
-                this.total = window.BobbyCarts.state.total;
-                this.itemCount = window.BobbyCarts.state.itemCount;
+            // Helper to update CartManager state from BobbyCart
+            updateFromBobbyCart: function() {  // FIXED: Name
+                if (window.BobbyCart) {  // FIXED: Name
+                    this.items = window.BobbyCart.getItems();  // FIXED: Name
+                    this.isOpen = false; // Can't directly access BobbyCart's isOpen state
+                    this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    this.itemCount = window.BobbyCart.getItemCount();  // FIXED: Name
+                }
             }
         };
         
         // Initial state update
-        window.cartManager.updateFromBobbyCarts();
+        window.cartManager.updateFromBobbyCart();  // FIXED: Name
     },
     
-    // Create BobbyCarts interface from CartManager
-    createBobbyCartsFromCartManager: function() {
-        console.log('🔄 Creating BobbyCarts interface from CartManager...');
+    // Create BobbyCart interface from CartManager
+    createBobbyCartFromCartManager: function() {  // FIXED: Updated method name
+        console.log('🔄 Creating BobbyCart interface from CartManager...');  // FIXED: Name
         
-        // Create a simplified BobbyCarts object that delegates to CartManager
-        window.BobbyCarts = {
-            // State object that mirrors CartManager
-            state: {
-                items: window.cartManager.items || [],
-                isOpen: window.cartManager.isOpen || false,
-                total: window.cartManager.total || 0,
-                itemCount: window.cartManager.itemCount || 0
-            },
-            
+        // Create a simplified BobbyCart object that delegates to CartManager
+        window.BobbyCart = {  // FIXED: Name
             // Core methods
             init: function() {
                 // Already initialized via CartManager
-                console.log('BobbyCarts.init -> CartManager already initialized');
-                this.updateFromCartManager();
+                console.log('BobbyCart.init -> CartManager already initialized');  // FIXED: Name
             },
             
-            addToCart: function(product) {
-                console.log('BobbyCarts.addToCart -> CartManager', product);
+            addItem: function(product) {
+                console.log('BobbyCart.addItem -> CartManager', product);  // FIXED: Name
                 
                 // Check for size selection
                 if ((!product.variants || !product.variants.size) && !product.selectedSize) {
                     console.error('Size not selected for product:', product);
-                    if (this.showNotification) {
-                        this.showNotification('Please select a size before adding to cart', 'error');
-                    } else if (window.cartManager && window.cartManager.showNotification) {
+                    if (window.cartManager && window.cartManager.showNotification) {
                         window.cartManager.showNotification('Please select a size before adding to cart', 'error');
                     }
                     return false;
@@ -227,36 +214,29 @@ const CartBridgeFix = {
                 };
                 
                 const result = window.cartManager.addItem(product, variant);
-                this.updateFromCartManager();
                 return result;
             },
             
             removeItem: function(itemId) {
-                const result = window.cartManager.removeItem(itemId);
-                this.updateFromCartManager();
-                return result;
+                return window.cartManager.removeItem(itemId);
             },
             
             updateQuantity: function(itemId, quantity) {
-                const result = window.cartManager.updateQuantity(itemId, quantity);
-                this.updateFromCartManager();
-                return result;
+                return window.cartManager.updateQuantity(itemId, quantity);
             },
             
             clearCart: function() {
-                const result = window.cartManager.clearCart();
-                this.updateFromCartManager();
-                return result;
+                return window.cartManager.clearCart();
             },
             
             // Cart visibility methods
             toggleCart: function() {
-                console.log('BobbyCarts.toggleCart -> CartManager');
+                console.log('BobbyCart.toggleCart -> CartManager');  // FIXED: Name
                 return window.cartManager.toggleCart();
             },
             
             openCart: function() {
-                console.log('BobbyCarts.openCart -> CartManager');
+                console.log('BobbyCart.openCart -> CartManager');  // FIXED: Name
                 return window.cartManager.openCart();
             },
             
@@ -269,27 +249,13 @@ const CartBridgeFix = {
                 return window.cartManager.proceedToCheckout();
             },
             
-            // Display methods
-            updateCartDisplay: function() {
-                this.updateFromCartManager();
-                return window.cartManager.updateCartDisplay();
+            // Item access methods
+            getItems: function() {
+                return window.cartManager.items.slice();  // Return a copy
             },
             
-            updateCartCount: function() {
-                this.updateFromCartManager();
-                return window.cartManager.updateCartCount();
-            },
-            
-            showNotification: function(message, type) {
-                return window.cartManager.showNotification(message, type);
-            },
-            
-            // Helper to update BobbyCarts state from CartManager
-            updateFromCartManager: function() {
-                this.state.items = window.cartManager.items;
-                this.state.isOpen = window.cartManager.isOpen;
-                this.state.total = window.cartManager.total;
-                this.state.itemCount = window.cartManager.itemCount;
+            getItemCount: function() {
+                return window.cartManager.items.reduce((sum, item) => sum + item.quantity, 0);
             }
         };
     },
@@ -302,7 +268,7 @@ const CartBridgeFix = {
         if (typeof CartManager === 'function') {
             console.log('Found CartManager class, instantiating...');
             window.cartManager = new CartManager();
-            setTimeout(() => this.createBobbyCartsFromCartManager(), 100);
+            setTimeout(() => this.createBobbyCartFromCartManager(), 100);  // FIXED: Method name
             return;
         }
         
@@ -343,7 +309,7 @@ const CartBridgeFix = {
                 this.saveCartToStorage();
                 this.openCart();
                 
-                this.showNotification(`Added ${product.title} to cart`, 'success');
+                alert(`Added ${product.title} to cart`);
                 return true;
             },
             
@@ -428,7 +394,7 @@ const CartBridgeFix = {
                         cartItems.innerHTML = this.items.map(item => `
                             <div class="cart-item" data-item-id="${item.id}">
                                 <div class="cart-item-image-container">
-                                    <img src="${item.image}" alt="${item.title}" class="cart-item-image">
+                                    <img src="${item.image}" alt="${item.title}" class="cart-item-image" onerror="this.src='assets/product-placeholder.png'">
                                 </div>
                                 <div class="cart-item-info">
                                     <div class="cart-item-title">${item.title}</div>
@@ -521,55 +487,27 @@ const CartBridgeFix = {
             
             proceedToCheckout: function() {
                 if (this.items.length === 0) {
-                    this.showNotification('Your cart is empty', 'error');
+                    alert('Your cart is empty');
                     return;
                 }
                 
-                this.showNotification('Redirecting to checkout...', 'info');
-                
-                // Simple checkout redirect
-                setTimeout(() => {
-                    window.location.href = '/cart';
-                }, 1000);
+                alert('Checkout functionality requires deployment to Netlify');
             },
             
-            initiateShopifyCheckout: function() {
-                return this.proceedToCheckout();
+            getItems: function() {
+                return this.items.slice(); // Return a copy
             },
             
-            showNotification: function(message, type = 'info') {
-                console.log(`${type.toUpperCase()}: ${message}`);
-                
-                const notification = document.createElement('div');
-                notification.className = `notification notification-${type}`;
-                notification.innerHTML = `
-                    <div class="notification-content">
-                        <span class="notification-message">${message}</span>
-                        <button class="notification-close">×</button>
-                    </div>
-                `;
-                
-                document.body.appendChild(notification);
-                
-                setTimeout(() => notification.classList.add('show'), 10);
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                    setTimeout(() => notification.remove(), 300);
-                }, 3000);
-                
-                notification.querySelector('.notification-close').addEventListener('click', () => {
-                    notification.classList.remove('show');
-                    setTimeout(() => notification.remove(), 300);
-                });
+            getItemCount: function() {
+                return this.itemCount;
             }
         };
         
         // Load any saved cart items
         window.cartManager.loadCartFromStorage();
         
-        // Create BobbyCarts reference
-        this.createBobbyCartsFromCartManager();
+        // Create BobbyCart reference
+        this.createBobbyCartFromCartManager();  // FIXED: Method name
     },
     
     // Synchronize cart systems when both exist
@@ -580,30 +518,45 @@ const CartBridgeFix = {
         let primarySystem;
         let secondarySystem;
         
-        if (window.BobbyCarts && window.BobbyCarts.state &&
-            window.cartManager && window.cartManager.items) {
+        if (window.BobbyCart && window.cartManager) {  // FIXED: Name
             
-            if (window.BobbyCarts.state.items.length >= window.cartManager.items.length) {
-                primarySystem = 'BobbyCarts';
+            const bobbyCartItems = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];  // FIXED: Name
+            
+            if (bobbyCartItems.length >= window.cartManager.items.length) {  // FIXED: Logic to get items
+                primarySystem = 'BobbyCart';  // FIXED: Name
                 secondarySystem = 'CartManager';
             } else {
                 primarySystem = 'CartManager';
-                secondarySystem = 'BobbyCarts';
+                secondarySystem = 'BobbyCart';  // FIXED: Name
             }
             
             console.log(`Using ${primarySystem} as source of truth`);
             
             // Sync from primary to secondary
-            if (primarySystem === 'BobbyCarts') {
-                window.cartManager.items = window.BobbyCarts.state.items;
-                window.cartManager.isOpen = window.BobbyCarts.state.isOpen;
-                window.cartManager.total = window.BobbyCarts.state.total;
-                window.cartManager.itemCount = window.BobbyCarts.state.itemCount;
+            if (primarySystem === 'BobbyCart') {  // FIXED: Name
+                window.cartManager.items = bobbyCartItems;
+                window.cartManager.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : bobbyCartItems.reduce((sum, item) => sum + item.quantity, 0);  // FIXED: Name
+                window.cartManager.total = bobbyCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             } else {
-                window.BobbyCarts.state.items = window.cartManager.items;
-                window.BobbyCarts.state.isOpen = window.cartManager.isOpen;
-                window.BobbyCarts.state.total = window.cartManager.total;
-                window.BobbyCarts.state.itemCount = window.cartManager.itemCount;
+                // If CartManager is primary, we need to clear BobbyCart and add each item
+                if (window.BobbyCart.clearCart) {  // FIXED: Name
+                    window.BobbyCart.clearCart();  // FIXED: Name
+                    
+                    // Add each item from CartManager to BobbyCart
+                    window.cartManager.items.forEach(item => {
+                        const productFormat = {
+                            id: item.productId || item.id,
+                            title: item.title,
+                            price: item.price,
+                            image: item.image,
+                            selectedColor: item.color,
+                            selectedSize: item.size,
+                            quantity: item.quantity
+                        };
+                        
+                        window.BobbyCart.addItem(productFormat);  // FIXED: Name
+                    });
+                }
             }
         }
     },
@@ -653,8 +606,9 @@ const CartBridgeFix = {
             }
             
             // Ensure cart count elements are visible and up to date
-            const cartCount = window.BobbyCarts?.state?.itemCount ||
-                              window.cartManager?.itemCount || 0;
+            const cartCount = (window.BobbyCart && window.BobbyCart.getItemCount) ?   // FIXED: Name and method
+                              window.BobbyCart.getItemCount() :  // FIXED: Name
+                              (window.cartManager?.itemCount || 0);
                               
             document.querySelectorAll('.cart-count').forEach(el => {
                 el.textContent = cartCount.toString();
@@ -716,8 +670,8 @@ const CartBridgeFix = {
                 console.log('🛒 Cart button clicked via global bridge handler');
                 
                 // Call the appropriate cart toggle method
-                if (window.BobbyCarts) {
-                    window.BobbyCarts.toggleCart();
+                if (window.BobbyCart) {  // FIXED: Name
+                    window.BobbyCart.toggleCart();  // FIXED: Name
                 } else if (window.cartManager) {
                     window.cartManager.toggleCart();
                 }
@@ -729,8 +683,8 @@ const CartBridgeFix = {
                 e.preventDefault();
                 
                 // Call the appropriate cart close method
-                if (window.BobbyCarts) {
-                    window.BobbyCarts.closeCart();
+                if (window.BobbyCart) {  // FIXED: Name
+                    window.BobbyCart.closeCart();  // FIXED: Name
                 } else if (window.cartManager) {
                     window.cartManager.closeCart();
                 }
@@ -739,8 +693,8 @@ const CartBridgeFix = {
             // Handle overlay click to close
             const overlay = e.target.closest('#cart-overlay, .cart-overlay');
             if (overlay && overlay === e.target) {
-                if (window.BobbyCarts) {
-                    window.BobbyCarts.closeCart();
+                if (window.BobbyCart) {  // FIXED: Name
+                    window.BobbyCart.closeCart();  // FIXED: Name
                 } else if (window.cartManager) {
                     window.cartManager.closeCart();
                 }
@@ -750,12 +704,12 @@ const CartBridgeFix = {
         // Handle escape key to close cart
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                const isCartOpen = (window.BobbyCarts && window.BobbyCarts.state.isOpen) || 
-                                   (window.cartManager && window.cartManager.isOpen);
+                // FIXED: Check if cart is open using correct method
+                const isCartOpen = (window.cartManager && window.cartManager.isOpen);
                 
                 if (isCartOpen) {
-                    if (window.BobbyCarts) {
-                        window.BobbyCarts.closeCart();
+                    if (window.BobbyCart) {  // FIXED: Name
+                        window.BobbyCart.closeCart();  // FIXED: Name
                     } else if (window.cartManager) {
                         window.cartManager.closeCart();
                     }

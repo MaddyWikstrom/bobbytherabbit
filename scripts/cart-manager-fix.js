@@ -13,19 +13,34 @@ document.addEventListener('DOMContentLoaded', function() {
 function initEnhancedCartManager() {
     console.log("🛒 Initializing enhanced cart manager...");
     
+    // Check for any existing cart system
+    const hasBobbyCart = !!window.BobbyCart;
+    const hasCartManager = !!window.cartManager;
+    
+    console.log(`Cart systems detected: BobbyCart: ${hasBobbyCart}, cartManager: ${hasCartManager}`);
+    
     // If the original cart manager exists, enhance it
-    if (window.cartManager) {
+    if (hasCartManager) {
         enhanceExistingCartManager();
+    } else if (hasBobbyCart) {
+        // If only BobbyCart exists, create a cartManager that uses it
+        console.log("Only BobbyCart detected, creating compatible cartManager");
+        createCartManagerFromBobbyCart();
     } else {
         // Wait a bit longer in case it's being initialized async
         setTimeout(() => {
-            if (window.cartManager) {
+            const hasBobbyCartDelayed = !!window.BobbyCart;
+            const hasCartManagerDelayed = !!window.cartManager;
+            
+            if (hasCartManagerDelayed) {
                 enhanceExistingCartManager();
+            } else if (hasBobbyCartDelayed) {
+                createCartManagerFromBobbyCart();
             } else {
-                console.error("❌ Original cart manager not found, creating fallback cart manager");
+                console.error("❌ No cart system found, creating fallback cart manager");
                 createFallbackCartManager();
             }
-        }, 500);
+        }, 800);
     }
     
     // Add listeners for all "Add to Cart" buttons across the site
@@ -590,6 +605,187 @@ function validateCartContents() {
     
     // Re-save valid items
     window.cartManager.saveCartToStorage();
+}
+
+function createCartManagerFromBobbyCart() {
+    console.log("Creating cartManager that delegates to BobbyCart");
+    
+    // Create a cartManager interface that delegates to BobbyCart
+    window.cartManager = {
+        items: window.BobbyCart.getItems ? window.BobbyCart.getItems() : [],
+        isOpen: false,
+        total: 0,
+        itemCount: window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : 0,
+        
+        // Core cart methods
+        addItem: function(product, selectedVariant = null) {
+            console.log("Enhanced cartManager.addItem -> delegating to BobbyCart", product);
+            
+            try {
+                // Normalize product object
+                const normalizedProduct = normalizeProductObject(product);
+                
+                // Add variant info to product
+                if (selectedVariant) {
+                    normalizedProduct.selectedColor = selectedVariant.color;
+                    normalizedProduct.selectedSize = selectedVariant.size;
+                    normalizedProduct.quantity = selectedVariant.quantity || 1;
+                }
+                
+                // Call BobbyCart's addItem
+                window.BobbyCart.addItem(normalizedProduct);
+                
+                // Update local state
+                this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
+                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // Show success notification
+                showEnhancedNotification(`${normalizedProduct.title || 'Item'} added to cart!`, 'success');
+                
+                return true;
+            } catch (error) {
+                console.error("❌ Error in enhanced addItem:", error);
+                showEnhancedNotification("Couldn't add item to cart. Please try again.", 'error');
+                return false;
+            }
+        },
+        
+        removeItem: function(itemId) {
+            try {
+                window.BobbyCart.removeItem(itemId);
+                
+                // Update local state
+                this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
+                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                return true;
+            } catch (error) {
+                console.error("❌ Error in removeItem:", error);
+                return false;
+            }
+        },
+        
+        updateQuantity: function(itemId, newQuantity) {
+            try {
+                window.BobbyCart.updateQuantity(itemId, newQuantity);
+                
+                // Update local state
+                this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
+                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                return true;
+            } catch (error) {
+                console.error("❌ Error in updateQuantity:", error);
+                return false;
+            }
+        },
+        
+        clearCart: function() {
+            try {
+                window.BobbyCart.clearCart();
+                
+                // Update local state
+                this.items = [];
+                this.itemCount = 0;
+                this.total = 0;
+                
+                return true;
+            } catch (error) {
+                console.error("❌ Error in clearCart:", error);
+                return false;
+            }
+        },
+        
+        openCart: function() {
+            try {
+                window.BobbyCart.openCart();
+                this.isOpen = true;
+                return true;
+            } catch (error) {
+                console.error("❌ Error in openCart:", error);
+                return false;
+            }
+        },
+        
+        closeCart: function() {
+            try {
+                window.BobbyCart.closeCart();
+                this.isOpen = false;
+                return true;
+            } catch (error) {
+                console.error("❌ Error in closeCart:", error);
+                return false;
+            }
+        },
+        
+        toggleCart: function() {
+            if (this.isOpen) {
+                return this.closeCart();
+            } else {
+                return this.openCart();
+            }
+        },
+        
+        updateCartDisplay: function() {
+            // Update local state
+            this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
+            this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
+            this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Update cart count display
+            this.updateCartCount();
+            
+            return true;
+        },
+        
+        updateCartCount: function() {
+            // Calculate total
+            this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Update cart count elements
+            const cartCounts = document.querySelectorAll('.cart-count');
+            cartCounts.forEach(cartCount => {
+                cartCount.textContent = this.itemCount;
+                cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
+            });
+            
+            return true;
+        },
+        
+        proceedToCheckout: function() {
+            if (typeof window.BobbyCart.proceedToCheckout === 'function') {
+                return window.BobbyCart.proceedToCheckout();
+            } else {
+                console.log("Checkout not implemented in BobbyCart");
+                alert("Checkout functionality requires deployment to Netlify");
+                return false;
+            }
+        },
+        
+        saveCartToStorage: function() {
+            // BobbyCart handles storage, but we'll implement this for compatibility
+            try {
+                localStorage.setItem('bobby-streetwear-cart', JSON.stringify(this.items));
+                return true;
+            } catch (error) {
+                console.error("Error saving cart to storage:", error);
+                return false;
+            }
+        },
+        
+        showNotification: function(message, type) {
+            // Use our enhanced notification system
+            showEnhancedNotification(message, type);
+            return true;
+        }
+    };
+    
+    // Initial update
+    window.cartManager.updateCartDisplay();
+    console.log("✅ cartManager successfully created from BobbyCart");
 }
 
 function syncCartWithShopify(cartItems) {
