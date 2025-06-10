@@ -427,7 +427,7 @@ class QuickViewManager {
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                background-color: rgba(255, 255, 255, 0.95);
+                background-color: rgba(0, 0, 0, 0.9);
                 padding: 10px;
                 transform: translateY(100%);
                 transition: transform 0.3s ease, opacity 0.3s ease;
@@ -442,6 +442,7 @@ class QuickViewManager {
                 font-size: 14px;
                 margin-bottom: 8px;
                 text-align: center;
+                color: white;
             }
             
             .product-quick-add-sizes {
@@ -455,8 +456,9 @@ class QuickViewManager {
             .quick-add-size-btn {
                 min-width: 30px;
                 height: 30px;
-                border: 1px solid #ddd;
-                background: white;
+                border: 1px solid #999;
+                background: #333;
+                color: white;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -464,16 +466,18 @@ class QuickViewManager {
                 font-size: 12px;
                 padding: 0 8px;
                 border-radius: 3px;
+                margin: 0 2px;
             }
             
             .quick-add-size-btn:hover {
-                border-color: #000;
+                border-color: #fff;
+                background-color: #444;
             }
             
             .quick-add-size-btn.selected {
-                background-color: #000;
-                color: white;
-                border-color: #000;
+                background-color: white;
+                color: black;
+                border-color: white;
             }
             
             .product-quick-add-colors {
@@ -499,17 +503,24 @@ class QuickViewManager {
             
             .quick-add-to-cart-btn {
                 width: 100%;
-                background-color: #000;
-                color: white;
+                background-color: white;
+                color: black;
                 border: none;
                 padding: 8px;
                 cursor: pointer;
                 font-size: 13px;
                 border-radius: 3px;
+                font-weight: bold;
             }
             
             .quick-add-to-cart-btn:hover {
-                background-color: #333;
+                background-color: #f0f0f0;
+            }
+            
+            .quick-add-to-cart-btn:disabled {
+                background-color: #555;
+                color: #999;
+                cursor: not-allowed;
             }
             
             /* Notification */
@@ -694,6 +705,70 @@ class QuickViewManager {
                 this.openQuickViewById(productId, productHandle);
             }
         });
+        
+        // Fetch product data and populate options
+        this.fetchProductData(productId, productHandle)
+            .then(product => {
+                if (!product) return;
+                
+                // Populate sizes
+                if (product.sizes && product.sizes.length > 0) {
+                    product.sizes.forEach(size => {
+                        const sizeBtn = document.createElement('button');
+                        sizeBtn.className = 'quick-add-size-btn';
+                        sizeBtn.setAttribute('data-size', size);
+                        sizeBtn.textContent = this.simplifySize(size);
+                        
+                        sizeBtn.addEventListener('click', (e) => {
+                            // Deselect all other size buttons
+                            card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            
+                            // Select this size
+                            sizeBtn.classList.add('selected');
+                            
+                            // Enable add button if color is also selected
+                            const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
+                            addButton.disabled = !hasColorSelected;
+                        });
+                        
+                        sizesContainer.appendChild(sizeBtn);
+                    });
+                }
+                
+                // Populate colors
+                if (product.colors && product.colors.length > 0) {
+                    product.colors.forEach(color => {
+                        const colorBtn = document.createElement('div');
+                        colorBtn.className = 'quick-add-color-btn';
+                        colorBtn.setAttribute('data-color', color.name);
+                        colorBtn.style.backgroundColor = color.code;
+                        
+                        colorBtn.addEventListener('click', (e) => {
+                            // Deselect all other color buttons
+                            card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            
+                            // Select this color
+                            colorBtn.classList.add('selected');
+                            
+                            // Update product card image
+                            this.updateProductCardImage(color.name, card);
+                            
+                            // Enable add button if size is also selected
+                            const hasSizeSelected = card.querySelector('.quick-add-size-btn.selected');
+                            addButton.disabled = !hasSizeSelected;
+                        });
+                        
+                        colorsContainer.appendChild(colorBtn);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading product options for card:', error);
+            });
         
         // Click handler for the "Add to Bag" button in overlay
         addButton.addEventListener('click', (e) => {
