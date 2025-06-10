@@ -876,9 +876,7 @@ class ProductManager {
                         </div>
                     ` : ''}
                     ${this.currentView === 'list' ? '</div><div class="product-actions">' : ''}
-                    <button class="add-to-cart-btn" data-product-id="${product.id}">
-                        Add to Cart
-                    </button>
+                    <!-- Add to Cart button completely removed -->
                     ${this.currentView === 'list' ? '</div>' : ''}
                 </div>
             </div>
@@ -891,20 +889,7 @@ class ProductManager {
     attachProductEventListeners() {
         // Quick view buttons removed
 
-        // Add to cart buttons - removed quick add functionality
-        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const productCard = e.target.closest('.product-card');
-                const productId = productCard ? productCard.dataset.productId : e.target.dataset.productId;
-                
-                if (productId) {
-                    this.addToCart(productId);
-                } else {
-                    console.error('Product ID not found for add to cart button', e.target);
-                }
-            });
-        });
+        // Add to cart buttons completely removed
 
         // Wishlist buttons
         document.querySelectorAll('.wishlist-btn').forEach(btn => {
@@ -1084,20 +1069,7 @@ class ProductManager {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    addToCart(productId) {
-        const product = this.products.find(p => p.id === productId);
-        if (!product) {
-            console.error(`Product with ID ${productId} not found`);
-            this.showNotification('Product not found', 'error');
-            return;
-        }
-        
-        // Redirect to product detail page instead of opening the modal
-        this.showNotification('Please view the product details to add to cart', 'info');
-        setTimeout(() => {
-            this.viewProduct(productId);
-        }, 1000);
-    }
+    // Add to cart functionality completely removed from product listings
 
     toggleWishlist(productId) {
         const button = document.querySelector(`[data-product-id="${productId}"]`);
