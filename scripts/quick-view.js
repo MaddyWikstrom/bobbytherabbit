@@ -36,7 +36,19 @@ class QuickViewManager {
         // Hide all unwanted buttons in product cards
         this.addButtonHidingStyles();
         
+        // Set up browser history handling
+        this.setupHistoryHandling();
+        
         // QuickView system initialized
+    }
+    
+    // Handle browser history events to fix back button issues
+    setupHistoryHandling() {
+        // Listen for browser back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            // Close the quick view when back button is pressed
+            this.closeQuickView();
+        });
     }
     
     // Create the Quick View modal that will be displayed when a product is clicked
@@ -647,6 +659,11 @@ class QuickViewManager {
         // Setup click event on the card itself to show quick view
         card.addEventListener('click', (e) => {
             e.preventDefault();
+            
+            // Add a history entry before opening the quick view
+            // This allows the back button to work properly
+            window.history.pushState({quickView: true}, "", window.location.href);
+            
             this.openQuickViewById(productId, productHandle);
         });
     }
@@ -1938,18 +1955,9 @@ class QuickViewManager {
             return false;
         }
         
-        // Additional check: see if this item is already in the cart
-        if (window.BobbyCart && window.BobbyCart.items) {
-            const existingItem = window.BobbyCart.items.find(item => {
-                const existingKey = `${item.id}_${item.selectedColor || 'nocolor'}_${item.selectedSize || 'nosize'}`;
-                return existingKey === itemKey;
-            });
-            
-            if (existingItem) {
-                console.log('Item already exists in cart, preventing duplicate add');
-                return false;
-            }
-        }
+        // We no longer block items already in the cart
+        // Instead, the cart system will handle incrementing quantity for existing items
+        // The time-based debounce above prevents accidental double-clicks
         
         // Update the global tracking
         debounce.lastAddedItem = itemKey;
