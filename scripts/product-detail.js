@@ -2496,7 +2496,7 @@ class ProductDetailManager {
             
             // Check if we can add this item (prevent duplicates)
             if (!this.canAddToCart(variantId)) {
-                console.log('Prevented duplicate add to cart via global debounce');
+                console.log('Prevented rapid add to cart (global debounce active)');
                 return;
             }
             
@@ -2641,18 +2641,9 @@ class ProductDetailManager {
             return false;
         }
         
-        // Additional check: see if this item is already in the cart
-        if (window.BobbyCart && window.BobbyCart.items) {
-            const existingItem = window.BobbyCart.items.find(item => {
-                const itemKey = `${item.id}_${item.selectedColor || 'nocolor'}_${item.selectedSize || 'nosize'}`;
-                return itemKey === itemId;
-            });
-            
-            if (existingItem) {
-                console.log('Item already exists in cart, preventing duplicate add');
-                return false;
-            }
-        }
+        // We're no longer blocking items already in the cart
+        // Instead, the cart system will increment quantity for existing items
+        // We only keep the debounce check above to prevent rapid double-clicks
         
         // Update the global tracking
         debounce.lastAddedItem = itemId;
