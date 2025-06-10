@@ -976,69 +976,167 @@ class QuickViewManager {
     
     // Fetch product data from API
     async fetchProductData(productId, productHandle) {
+        // First, check if we already have product data on the page
+        // This is common on product detail pages where the data is already loaded
+        if (window.product) {
+            console.log("Using existing product data from page");
+            return this.processProductData(window.product);
+        }
+        
+        // Next, check if there's any global Shopify product data available
+        if (window.ShopifyProduct) {
+            console.log("Using ShopifyProduct global data");
+            return this.processProductData(window.ShopifyProduct);
+        }
+        
+        // Try to get the product from the current page's meta data
+        const metaProduct = this.getProductFromMeta();
+        if (metaProduct) {
+            console.log("Found product in page meta data");
+            return metaProduct;
+        }
+        
         try {
-            // Prioritize using our Netlify function
-            const netlifyUrl = `/.netlify/functions/get-products?id=${productId || ''}&handle=${productHandle || ''}`;
+            // Simplify what we're looking for - either ID or handle
+            const productIdentifier = productId || productHandle || '';
+            if (!productIdentifier) {
+                throw new Error('No product identifier provided');
+            }
             
-            console.log("Fetching product data from:", netlifyUrl);
+            // Try all potential API endpoints in sequence
+            const endpoints = [
+                `/.netlify/functions/get-products?${productId ? 'id=' + productId : 'handle=' + productHandle}`,
+                `/api/get-products?${productId ? 'id=' + productId : 'handle=' + productHandle}`,
+                `/products/${productHandle}.js`,
+                `/products/${productIdentifier}.js`
+            ];
             
-            try {
-                const response = await fetch(netlifyUrl);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch product data: ${response.status} ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                
-                if (!data || !data.product) {
-                    throw new Error('Invalid product data received');
-                }
-                
-                console.log("Successfully received product data:", data.product.title);
-                
-                // Process the product data
-                const product = this.processProductData(data.product);
-                return product;
-            } catch (fetchError) {
-                console.warn("Error with Netlify function, trying fallback path:", fetchError);
-                
-                // Try alternate URL pattern as fallback
+            // Try each endpoint until one works
+            for (const endpoint of endpoints) {
                 try {
-                    const fallbackUrl = `/api/get-products?id=${productId || ''}&handle=${productHandle || ''}`;
-                    const fallbackResponse = await fetch(fallbackUrl);
+                    console.log("Trying to fetch product data from:", endpoint);
+                    const response = await fetch(endpoint);
                     
-                    if (!fallbackResponse.ok) {
-                        throw new Error(`Fallback fetch failed: ${fallbackResponse.status}`);
+                    if (!response.ok) {
+                        console.warn(`Endpoint ${endpoint} returned ${response.status}`);
+                        continue; // Try next endpoint
                     }
                     
-                    const fallbackData = await fallbackResponse.json();
+                    const data = await response.json();
                     
-                    if (!fallbackData || !fallbackData.product) {
-                        throw new Error('Invalid product data from fallback');
+                    // Different endpoints return different data structures
+                    const productData = data.product || data;
+                    
+                    if (!productData || !productData.title) {
+                        console.warn("Invalid product data structure from", endpoint);
+                        continue; // Try next endpoint
                     }
                     
-                    console.log("Fallback successful for:", fallbackData.product.title);
-                    return this.processProductData(fallbackData.product);
-                } catch (fallbackError) {
-                    console.error("All fetch attempts failed:", fallbackError);
+                    console.log("Successfully fetched product:", productData.title);
+                    return this.processProductData(productData);
                     
-                    // Create mock data for development/testing
-                    // This ensures the UI works even if API fails
-                    return this.createMockProduct(productId, productHandle);
+                } catch (endpointError) {
+                    console.warn(`Error with endpoint ${endpoint}:`, endpointError);
+                    // Continue to next endpoint
                 }
+            }
+            
+            // If we get here, all endpoints failed
+            console.warn("All API endpoints failed for", productIdentifier);
+            
+            // As last resort, create mock product for UI testing
+            return this.createMockProduct(productIdentifier);
+            
+        } catch (error) {
+            console.error('Error in product data fetching process:', error);
+            return this.createMockProduct(productId || productHandle);
+        }
+    }
+    
+    // Try to get product data from page meta tags
+    getProductFromMeta() {
+        try {
+            // Look for JSON-LD structured data
+            const jsonLdElements = document.querySelectorAll('script[type="application/ld+json"]');
+            for (const element of jsonLdElements) {
+                try {
+                    const data = JSON.parse(element.textContent);
+                    
+                    if (data && data['@type'] === 'Product') {
+                        // Convert JSON-LD to our product format
+                        const product = {
+                            id: data.productID || data.sku || 'meta-product',
+                            title: data.name,
+                            description: data.description,
+                            price: parseFloat(data.offers?.price || 0),
+                            comparePrice: parseFloat(data.offers?.comparePrice || 0),
+                            images: data.image ? (Array.isArray(data.image) ? data.image : [data.image]) : [],
+                            colors: [],
+                            sizes: [],
+                            inventory: {},
+                            category: this.extractCategory(data.name)
+                        };
+                        
+                        // Extract variants if available
+                        if (data.offers && Array.isArray(data.offers)) {
+                            const colorSet = new Set();
+                            const sizeSet = new Set();
+                            
+                            data.offers.forEach(offer => {
+                                if (offer.itemOffered && offer.itemOffered.color) {
+                                    colorSet.add(offer.itemOffered.color);
+                                }
+                                if (offer.itemOffered && offer.itemOffered.size) {
+                                    sizeSet.add(offer.itemOffered.size);
+                                }
+                            });
+                            
+                            product.colors = Array.from(colorSet).map(colorName => ({
+                                name: colorName,
+                                code: this.getColorCode(colorName)
+                            }));
+                            
+                            product.sizes = Array.from(sizeSet);
+                        }
+                        
+                        return product;
+                    }
+                } catch (jsonError) {
+                    // Skip this element if JSON parsing fails
+                }
+            }
+            
+            // Look for Shopify meta tags as fallback
+            const metaTags = {
+                id: document.querySelector('meta[property="product:id"]')?.content,
+                title: document.querySelector('meta[property="og:title"]')?.content,
+                description: document.querySelector('meta[property="og:description"]')?.content,
+                image: document.querySelector('meta[property="og:image"]')?.content,
+                price: document.querySelector('meta[property="product:price:amount"]')?.content
+            };
+            
+            if (metaTags.title && metaTags.title.includes(' - ')) {
+                const product = {
+                    id: metaTags.id || 'meta-product',
+                    title: metaTags.title.split(' - ')[0].trim(),
+                    description: metaTags.description || '',
+                    price: parseFloat(metaTags.price || 0),
+                    comparePrice: 0,
+                    images: metaTags.image ? [metaTags.image] : [],
+                    colors: [],
+                    sizes: ['S', 'M', 'L', 'XL', '2XL'],
+                    inventory: {},
+                    category: this.extractCategory(metaTags.title)
+                };
+                
+                return product;
             }
             
         } catch (error) {
-            console.error('Error fetching product data:', error);
-            
-            // Fallback to window.product if available (for product pages)
-            if (window.product) {
-                return this.processProductData(window.product);
-            }
-            
-            // Return a mock product as a last resort
-            return this.createMockProduct(productId, productHandle);
+            console.warn("Error extracting product from meta:", error);
         }
+        
+        return null;
     }
     
     // Process raw product data into a standardized format
@@ -1109,16 +1207,104 @@ class QuickViewManager {
         return product;
     }
     
+    // Create mock product data when API calls fail
+    createMockProduct(idOrHandle) {
+        console.log("Creating mock product for UI testing:", idOrHandle);
+        
+        // Extract product name from ID or handle
+        let productName = idOrHandle || 'Sample Product';
+        
+        // Clean up the handle/id to make a readable name
+        if (productName.includes('-')) {
+            productName = productName
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+        
+        // Generate a mock product with realistic data
+        const mockProduct = {
+            id: idOrHandle || 'mock-product-' + Date.now(),
+            title: productName,
+            handle: idOrHandle || 'mock-product',
+            description: `This is a mock product for "${productName}" created for UI testing when API data is unavailable.`,
+            price: 29.99,
+            comparePrice: Math.random() > 0.5 ? 39.99 : 0, // 50% chance of having a sale price
+            images: [
+                'https://via.placeholder.com/800x800?text=' + encodeURIComponent(productName),
+                'https://via.placeholder.com/800x800?text=' + encodeURIComponent(productName + ' (Alt)'),
+            ],
+            colors: [
+                {name: 'Black', code: '#000000'},
+                {name: 'White', code: '#FFFFFF'},
+                {name: 'Red', code: '#ff0000'},
+            ],
+            sizes: ['S', 'M', 'L', 'XL', '2XL'],
+            inventory: {
+                'Black-S': 10,
+                'Black-M': 10,
+                'Black-L': 10,
+                'Black-XL': 10,
+                'Black-2XL': 10,
+                'White-S': 10,
+                'White-M': 10,
+                'White-L': 10,
+                'White-XL': 10,
+                'White-2XL': 10,
+                'Red-S': 10,
+                'Red-M': 10,
+                'Red-L': 10,
+                'Red-XL': 10,
+                'Red-2XL': 10,
+            },
+            category: this.extractCategory(productName),
+        };
+        
+        return mockProduct;
+    }
+    
     // Quick add to cart directly from the overlay
     async quickAddToCart(productId, productHandle, color, size) {
         try {
-            if (!this.currentProduct || this.currentProduct.id != productId) {
-                // Need to fetch product data first
-                const product = await this.fetchProductData(productId, productHandle);
-                if (!product) {
-                    throw new Error('Product not found');
+            console.log(`Quick adding to cart: ${color || 'N/A'} / ${size || 'N/A'}`);
+            
+            // Always re-fetch product data to ensure it's fresh
+            const product = await this.fetchProductData(productId, productHandle);
+            if (!product) {
+                throw new Error('Product not found');
+            }
+            
+            // Store as current product
+            this.currentProduct = product;
+            
+            // Validate that selections are valid for this product
+            let isValidSelection = true;
+            let errorMessage = '';
+            
+            // Validate color if product has colors
+            if (product.colors && product.colors.length > 0) {
+                if (!color) {
+                    isValidSelection = false;
+                    errorMessage = 'Please select a color';
+                } else if (!product.colors.some(c => c.name === color)) {
+                    isValidSelection = false;
+                    errorMessage = `Color "${color}" is not available for this product`;
                 }
-                this.currentProduct = product;
+            }
+            
+            // Validate size if product has sizes
+            if (isValidSelection && product.sizes && product.sizes.length > 0) {
+                if (!size) {
+                    isValidSelection = false;
+                    errorMessage = 'Please select a size';
+                } else if (!product.sizes.includes(size)) {
+                    isValidSelection = false;
+                    errorMessage = `Size "${size}" is not available for this product`;
+                }
+            }
+            
+            if (!isValidSelection) {
+                throw new Error(errorMessage);
             }
             
             // Set selected variant
@@ -1126,12 +1312,15 @@ class QuickViewManager {
             this.selectedVariant.size = size;
             this.selectedVariant.quantity = 1;
             
-            // Add to cart
+            // Add to cart with more detailed logging
+            console.log(`Adding to cart: ${product.title} - ${color || ''} ${size || ''}`);
             this.addToCart();
             
+            return true;
         } catch (error) {
             console.error('Quick add error:', error);
-            this.showNotification('Error adding to cart', 'error');
+            this.showNotification(error.message || 'Error adding to cart', 'error');
+            return false;
         }
     }
     
