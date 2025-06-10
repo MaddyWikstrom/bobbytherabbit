@@ -11,6 +11,7 @@
 
 (function() {
   // Ensure we have the global cart debounce object
+  // Ensure BobbyCartDebounce exists with all required properties
   if (!window.BobbyCartDebounce) {
     window.BobbyCartDebounce = {
       lastAddedTimestamp: 0,
@@ -18,6 +19,11 @@
       lastAddedItems: {},  // Track by item ID for more granular control
       debounceTime: 3000   // 3 second debounce
     };
+  } else {
+    // Ensure lastAddedItems exists if BobbyCartDebounce was created elsewhere
+    if (!window.BobbyCartDebounce.lastAddedItems) {
+      window.BobbyCartDebounce.lastAddedItems = {};
+    }
   }
   
   // Wait for the cart system to be available
@@ -61,6 +67,10 @@
       const now = Date.now();
       const debounce = window.BobbyCartDebounce;
       const itemSpecificKey = variantId;
+      // Ensure lastAddedItems exists
+      if (!debounce.lastAddedItems) {
+        debounce.lastAddedItems = {};
+      }
       const lastAddTime = debounce.lastAddedItems[itemSpecificKey] || 0;
       
       if ((now - lastAddTime) < debounce.debounceTime) {
