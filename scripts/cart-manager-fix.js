@@ -635,10 +635,20 @@ function createCartManagerFromBobbyCart() {
                 // Call BobbyCart's addItem
                 window.BobbyCart.addItem(normalizedProduct);
                 
-                // Update local state
+                // Update local state with safer property access
                 this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
-                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
-                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // Safely calculate item count with fallbacks for missing properties
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() :
+                    this.items.reduce((sum, item) => sum + (item && typeof item.quantity === 'number' ? item.quantity : 1), 0);
+                
+                // Safely calculate total with fallbacks for missing properties
+                this.total = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    const price = typeof item.price === 'number' ? item.price : 0;
+                    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                    return sum + (price * quantity);
+                }, 0);
                 
                 // Show success notification
                 showEnhancedNotification(`${normalizedProduct.title || 'Item'} added to cart!`, 'success');
@@ -655,10 +665,20 @@ function createCartManagerFromBobbyCart() {
             try {
                 window.BobbyCart.removeItem(itemId);
                 
-                // Update local state
+                // Update local state with safer property access
                 this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
-                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
-                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // Safely calculate item count with fallbacks for missing properties
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() :
+                    this.items.reduce((sum, item) => sum + (item && typeof item.quantity === 'number' ? item.quantity : 1), 0);
+                
+                // Safely calculate total with fallbacks for missing properties
+                this.total = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    const price = typeof item.price === 'number' ? item.price : 0;
+                    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                    return sum + (price * quantity);
+                }, 0);
                 
                 return true;
             } catch (error) {
@@ -671,10 +691,20 @@ function createCartManagerFromBobbyCart() {
             try {
                 window.BobbyCart.updateQuantity(itemId, newQuantity);
                 
-                // Update local state
+                // Update local state with safer property access
                 this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
-                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
-                this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                
+                // Safely calculate item count with fallbacks for missing properties
+                this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() :
+                    this.items.reduce((sum, item) => sum + (item && typeof item.quantity === 'number' ? item.quantity : 1), 0);
+                
+                // Safely calculate total with fallbacks for missing properties
+                this.total = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    const price = typeof item.price === 'number' ? item.price : 0;
+                    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                    return sum + (price * quantity);
+                }, 0);
                 
                 return true;
             } catch (error) {
@@ -730,29 +760,95 @@ function createCartManagerFromBobbyCart() {
         },
         
         updateCartDisplay: function() {
-            // Update local state
-            this.items = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];
-            this.itemCount = window.BobbyCart.getItemCount ? window.BobbyCart.getItemCount() : this.items.reduce((sum, item) => sum + item.quantity, 0);
-            this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Update cart count display
-            this.updateCartCount();
-            
-            return true;
+            try {
+                // Update local state with safer property access
+                this.items = Array.isArray(window.BobbyCart?.getItems?.()) ? window.BobbyCart.getItems() : [];
+                
+                // Ensure items is always an array even if getItems() returns something unexpected
+                if (!Array.isArray(this.items)) {
+                    console.warn("BobbyCart.getItems did not return an array, using empty array instead");
+                    this.items = [];
+                }
+                
+                // Safely calculate item count with fallbacks for missing properties
+                this.itemCount = typeof window.BobbyCart?.getItemCount === 'function' ?
+                    window.BobbyCart.getItemCount() :
+                    this.items.reduce((sum, item) => sum + (item && typeof item.quantity === 'number' ? item.quantity : 1), 0);
+                
+                // Safely calculate total with fallbacks for missing properties
+                this.total = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    const price = typeof item.price === 'number' ? item.price : 0;
+                    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                    return sum + (price * quantity);
+                }, 0);
+                
+                // Update cart count display
+                this.updateCartCount();
+                
+                return true;
+            } catch (error) {
+                console.error("Error in updateCartDisplay:", error);
+                // Fallback to empty state
+                this.items = [];
+                this.itemCount = 0;
+                this.total = 0;
+                
+                // Still try to update the cart count UI
+                try {
+                    this.updateCartCount();
+                } catch (e) {
+                    console.error("Failed to update cart count:", e);
+                }
+                
+                return false;
+            }
         },
         
         updateCartCount: function() {
-            // Calculate total
-            this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Update cart count elements
-            const cartCounts = document.querySelectorAll('.cart-count');
-            cartCounts.forEach(cartCount => {
-                cartCount.textContent = this.itemCount;
-                cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
-            });
-            
-            return true;
+            try {
+                // Ensure items is an array
+                if (!Array.isArray(this.items)) {
+                    console.warn("Items is not an array in updateCartCount, using empty array");
+                    this.items = [];
+                }
+                
+                // Safely calculate total with fallbacks for missing properties
+                this.total = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    const price = typeof item.price === 'number' ? item.price : 0;
+                    const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+                    return sum + (price * quantity);
+                }, 0);
+                
+                // Safely calculate item count
+                this.itemCount = this.items.reduce((sum, item) => {
+                    if (!item) return sum;
+                    return sum + (typeof item.quantity === 'number' ? item.quantity : 1);
+                }, 0);
+                
+                // Update cart count elements
+                try {
+                    const cartCounts = document.querySelectorAll('.cart-count');
+                    if (cartCounts.length === 0) {
+                        console.warn("No .cart-count elements found to update");
+                    }
+                    
+                    cartCounts.forEach(cartCount => {
+                        if (cartCount) {
+                            cartCount.textContent = this.itemCount.toString();
+                            cartCount.style.display = this.itemCount > 0 ? 'flex' : 'none';
+                        }
+                    });
+                } catch (domError) {
+                    console.error("Error updating DOM cart count elements:", domError);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Error in updateCartCount:", error);
+                return false;
+            }
         },
         
         proceedToCheckout: function() {

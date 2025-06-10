@@ -57,7 +57,18 @@
       // Create a more robust variant identifier
       const color = product.selectedColor || product.color || '';
       const size = product.selectedSize || product.size || '';
-      const variantId = `${product.id}_${color}_${size}`.replace(/\s+/g, '_');
+      
+      // Create a safer variant ID by limiting length and avoiding special characters
+      let safeProductId = (product.id || '').toString().substring(0, 30);
+      let safeColor = (color || '').toString().substring(0, 15);
+      let safeSize = (size || '').toString().substring(0, 10);
+      
+      // Replace problematic characters with safe ones
+      safeProductId = safeProductId.replace(/[^a-zA-Z0-9_-]/g, '_');
+      safeColor = safeColor.replace(/[^a-zA-Z0-9_-]/g, '_');
+      safeSize = safeSize.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      const variantId = `${safeProductId}_${safeColor}_${safeSize}`;
       
       console.log(`Cart duplicate fix: Processing add to cart for ${product.title} (${variantId})`);
       
@@ -66,12 +77,23 @@
       // 1. Check for rapid duplicate clicks (time-based)
       const now = Date.now();
       const debounce = window.BobbyCartDebounce;
+      
+      // Use a simple timestamp as the key to avoid any issues with complex keys
       const itemSpecificKey = variantId;
+      
       // Ensure lastAddedItems exists
       if (!debounce.lastAddedItems) {
         debounce.lastAddedItems = {};
       }
-      const lastAddTime = debounce.lastAddedItems[itemSpecificKey] || 0;
+      
+      // Use try/catch to handle any potential property access errors
+      let lastAddTime = 0;
+      try {
+        lastAddTime = debounce.lastAddedItems[itemSpecificKey] || 0;
+      } catch (e) {
+        console.error('Error accessing lastAddedItems:', e);
+        // Continue with lastAddTime = 0
+      }
       
       if ((now - lastAddTime) < debounce.debounceTime) {
         console.log(`Cart duplicate fix: Blocked rapid duplicate add for ${variantId} - last added ${now - lastAddTime}ms ago`);
@@ -99,8 +121,12 @@
           console.log(`Cart duplicate fix: Updating quantity instead of blocking`);
           this.updateQuantity(existingItem.id, existingItem.quantity + (product.quantity || 1));
           
-          // Update timestamp
-          debounce.lastAddedItems[itemSpecificKey] = now;
+          // Update timestamp safely
+          try {
+            debounce.lastAddedItems[itemSpecificKey] = now;
+          } catch (e) {
+            console.error('Error updating lastAddedItems:', e);
+          }
           return true;
         }
         
@@ -112,7 +138,14 @@
       // 3. If we get here, it's safe to add the item - update tracking
       debounce.lastAddedItem = variantId;  // Global last item
       debounce.lastAddedTimestamp = now;   // Global timestamp
-      debounce.lastAddedItems[itemSpecificKey] = now;  // Item-specific timestamp
+      
+      // Update item-specific timestamp safely
+      try {
+        debounce.lastAddedItems[itemSpecificKey] = now;  // Item-specific timestamp
+      } catch (e) {
+        console.error('Error updating lastAddedItems timestamp:', e);
+        // Continue with the cart operation even if we can't update the timestamp
+      }
       
       // Call the original method
       return originalAddItem.call(this, product);
@@ -178,20 +211,28 @@
       window.cartManager.addItem = window.BobbyCart.addItem;
     }
     
-    if (window.BobbyCarts && typeof window.BobbyCarts.addToCart === 'function') {
-      const originalBobbyCarts = window.BobbyCarts.addToCart;
+    // Look for any alternative BobbyCart implementation and ensure it uses the same prevention logic
+    if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function' &&
+        window.BobbyCart.addItem !== originalAddItem) {
+      console.log('Cart duplicate fix: Found alternative BobbyCart implementation, applying fix');
+      const altOriginalAddItem = window.BobbyCart.addItem;
       
-      window.BobbyCarts.addToCart = function(product) {
+      window.BobbyCart.addItem = function(product) {
         // Convert to compatible format if needed
         const cartProduct = {
           ...product,
-          id: product.id,
-          selectedColor: product.color || product.selectedColor,
-          selectedSize: product.size || product.selectedSize
+          id: product.id || product.productId || `product_${Date.now()}`,
+          selectedColor: product.color || product.selectedColor || 'Default',
+          selectedSize: product.size || product.selectedSize || 'One Size'
         };
         
         // Use the same prevention logic
-        return window.BobbyCart.addItem(cartProduct);
+        try {
+          return originalAddItem.call(this, cartProduct);
+        } catch (e) {
+          console.error('Error in BobbyCart.addItem:', e);
+          return altOriginalAddItem.call(this, product);
+        }
       };
     }
   });

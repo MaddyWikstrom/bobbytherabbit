@@ -704,8 +704,9 @@ const CartBridgeFix = {
         // Handle escape key to close cart
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                // FIXED: Check if cart is open using correct method
-                const isCartOpen = (window.cartManager && window.cartManager.isOpen);
+                // Check if cart is open in either system
+                const isCartOpen = (window.BobbyCart && (window.BobbyCart.state?.isOpen || typeof window.BobbyCart.getState === 'function' && window.BobbyCart.getState()?.isOpen)) ||
+                                   (window.cartManager && window.cartManager.isOpen);
                 
                 if (isCartOpen) {
                     if (window.BobbyCart) {  // FIXED: Name
