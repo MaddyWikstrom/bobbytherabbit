@@ -21,7 +21,7 @@ class QuickViewManager {
             window.BobbyCartDebounce = {
                 lastAddedTimestamp: 0,
                 lastAddedItem: null,
-                debounceTime: 1000 // 1 second debounce
+                debounceTime: 3000 // 3 second debounce - matched with product-detail.js
             };
         }
         
@@ -2357,7 +2357,7 @@ class QuickViewManager {
             window.BobbyCartDebounce = {
                 lastAddedTimestamp: 0,
                 lastAddedItem: null,
-                debounceTime: 1000 // 1 second debounce
+                debounceTime: 3000 // 3 second debounce - matched with product-detail.js
             };
         }
         
@@ -2370,7 +2370,21 @@ class QuickViewManager {
         // Check if we're adding the same item too quickly
         if (debounce.lastAddedItem === itemKey &&
             (now - debounce.lastAddedTimestamp) < debounce.debounceTime) {
+            console.log(`Blocking duplicate add within ${debounce.debounceTime}ms window`);
             return false;
+        }
+        
+        // Additional check: see if this item is already in the cart
+        if (window.BobbyCart && window.BobbyCart.items) {
+            const existingItem = window.BobbyCart.items.find(item => {
+                const existingKey = `${item.id}_${item.selectedColor || 'nocolor'}_${item.selectedSize || 'nosize'}`;
+                return existingKey === itemKey;
+            });
+            
+            if (existingItem) {
+                console.log('Item already exists in cart, preventing duplicate add');
+                return false;
+            }
         }
         
         // Update the global tracking

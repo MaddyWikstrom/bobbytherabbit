@@ -2462,6 +2462,15 @@ class ProductDetailManager {
                 return;
             }
             
+            // Initialize global cart debounce if it doesn't exist
+            if (!window.BobbyCartDebounce) {
+                window.BobbyCartDebounce = {
+                    lastAddedTimestamp: 0,
+                    lastAddedItem: null,
+                    debounceTime: 1000 // 1 second debounce
+                };
+            }
+            
             // Check if product has sizes available
             const hasSizes = this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
             
@@ -2484,6 +2493,12 @@ class ProductDetailManager {
             
             // Create a unique ID for each product variant combination
             const variantId = `${this.currentProduct.id}_${this.selectedVariant.color}_${this.selectedVariant.size}`.replace(/\s+/g, '_');
+            
+            // Check if we can add this item (prevent duplicates)
+            if (!this.canAddToCart(variantId)) {
+                console.log('Prevented duplicate add to cart via global debounce');
+                return;
+            }
             
             // Find a color-specific image for the cart thumbnail
             let colorImage = this.currentProduct.mainImage;
@@ -2603,6 +2618,47 @@ class ProductDetailManager {
             console.error('Critical error in addToCart:', error);
             this.showNotification('Error adding product to cart', 'error');
         }
+    }
+    
+    // Check if we can add an item to cart (prevent duplicates)
+    canAddToCart(itemId) {
+        // Make sure global debounce object exists
+        if (!window.BobbyCartDebounce) {
+            window.BobbyCartDebounce = {
+                lastAddedTimestamp: 0,
+                lastAddedItem: null,
+                debounceTime: 3000 // Increase to 3 seconds for more reliable debounce
+            };
+        }
+        
+        const now = Date.now();
+        const debounce = window.BobbyCartDebounce;
+        
+        // Check if we're adding the same item too quickly
+        if (debounce.lastAddedItem === itemId &&
+            (now - debounce.lastAddedTimestamp) < debounce.debounceTime) {
+            console.log(`Blocking duplicate add within ${debounce.debounceTime}ms window`);
+            return false;
+        }
+        
+        // Additional check: see if this item is already in the cart
+        if (window.BobbyCart && window.BobbyCart.items) {
+            const existingItem = window.BobbyCart.items.find(item => {
+                const itemKey = `${item.id}_${item.selectedColor || 'nocolor'}_${item.selectedSize || 'nosize'}`;
+                return itemKey === itemId;
+            });
+            
+            if (existingItem) {
+                console.log('Item already exists in cart, preventing duplicate add');
+                return false;
+            }
+        }
+        
+        // Update the global tracking
+        debounce.lastAddedItem = itemId;
+        debounce.lastAddedTimestamp = now;
+        
+        return true;
     }
     
     // Add compatibility method to match the cart system's naming convention

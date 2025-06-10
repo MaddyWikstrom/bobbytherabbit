@@ -1,6 +1,8 @@
 /**
  * Universal Cart Fix - Ensures cart functionality works on all pages
  * This script initializes cart buttons across the entire site
+ *
+ * UPDATED: Added duplicate cart prevention mechanisms
  */
 
 // Execute when DOM is loaded
@@ -12,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Set up cart observers for dynamically added content
   observeCartElements();
+  
+  // Apply cart system fixes
+  patchCartSystems();
 });
 
 // Initialize immediately if DOM is already loaded
@@ -19,6 +24,83 @@ if (document.readyState === 'interactive' || document.readyState === 'complete')
   console.log('🛒 DOM already loaded, initializing universal cart immediately...');
   initializeCartButtons();
   observeCartElements();
+  patchCartSystems();
+}
+
+/**
+ * Patch all cart systems to prevent duplicate additions
+ */
+function patchCartSystems() {
+  console.log('🛒 Patching cart systems to prevent duplicates...');
+  
+  // Wait for cart systems to initialize
+  setTimeout(function() {
+    // Patch BobbyCart system
+    if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+      const originalAddItem = window.BobbyCart.addItem;
+      
+      // Override with our duplicate-preventing version
+      window.BobbyCart.addItem = function(item) {
+        // Initialize cart debounce if it doesn't exist
+        if (!window.BobbyCartDebounce) {
+          window.BobbyCartDebounce = {
+            lastAddedTimestamp: 0,
+            lastAddedItem: null,
+            debounceTime: 3000 // 3 second debounce
+          };
+        }
+        
+        // Generate a unique key for this item
+        const itemKey = `${item.id}_${item.selectedColor || item.color || 'nocolor'}_${item.selectedSize || item.size || 'nosize'}`;
+        
+        // Check if this exact item was just added (within debounce window)
+        const now = Date.now();
+        const debounce = window.BobbyCartDebounce;
+        
+        if (debounce.lastAddedItem === itemKey &&
+            (now - debounce.lastAddedTimestamp) < debounce.debounceTime) {
+          console.log(`⚠️ Preventing duplicate add of ${itemKey} within ${debounce.debounceTime}ms window`);
+          
+          // Show a notification instead of adding to cart
+          if (typeof window.showNotification === 'function') {
+            window.showNotification('Item already added to cart', 'success');
+          }
+          
+          return false; // Prevent addition
+        }
+        
+        // Check if this item already exists in cart
+        const existingItem = this.items.find(cartItem => {
+          const cartItemKey = `${cartItem.id}_${cartItem.selectedColor || cartItem.color || 'nocolor'}_${cartItem.selectedSize || cartItem.size || 'nosize'}`;
+          return cartItemKey === itemKey;
+        });
+        
+        if (existingItem) {
+          console.log(`⚠️ Item already exists in cart, preventing duplicate add: ${itemKey}`);
+          
+          // Show a notification instead of adding to cart
+          if (typeof window.showNotification === 'function') {
+            window.showNotification('Item already in cart', 'success');
+          }
+          
+          return false; // Prevent addition
+        }
+        
+        // Update the global tracking
+        debounce.lastAddedItem = itemKey;
+        debounce.lastAddedTimestamp = now;
+        
+        // Proceed with original function
+        return originalAddItem.call(this, item);
+      };
+      
+      console.log('✅ BobbyCart.addItem patched to prevent duplicates');
+    }
+    
+    // Patch any other cart systems as needed
+    // (Add more systems here if they're discovered)
+    
+  }, 500); // Delay to ensure cart systems are loaded
 }
 
 /**
