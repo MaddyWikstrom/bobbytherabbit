@@ -2,6 +2,8 @@
 
 This guide summarizes the Shopify checkout integration options and fixes implemented for Bobby Streetwear.
 
+> **CRITICAL UPDATE:** After testing, we discovered ESM compatibility issues with the original Netlify function approach. A completely rewritten version (`create-checkout-fixed.js`) has been created that uses Node's native https module instead of node-fetch to avoid these issues.
+
 ## Implementation Options
 
 ### Option 1: Integrated Cart Solution

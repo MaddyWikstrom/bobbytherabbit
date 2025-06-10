@@ -1,4 +1,52 @@
-const fetch = require('node-fetch');
+// Using native https module instead of node-fetch to avoid ESM compatibility issues
+const https = require('https');
+
+// Helper function for HTTPS requests
+function httpsRequest(options, data = null) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      const chunks = [];
+      
+      res.on('data', (chunk) => chunks.push(chunk));
+      
+      res.on('end', () => {
+        const body = Buffer.concat(chunks).toString();
+        
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            resolve({
+              statusCode: res.statusCode,
+              headers: res.headers,
+              body: JSON.parse(body)
+            });
+          } catch (e) {
+            resolve({
+              statusCode: res.statusCode,
+              headers: res.headers,
+              body
+            });
+          }
+        } else {
+          reject({
+            statusCode: res.statusCode,
+            headers: res.headers,
+            body
+          });
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      reject(error);
+    });
+    
+    if (data) {
+      req.write(data);
+    }
+    
+    req.end();
+  });
+}
 
 exports.handler = async (event, context) => {
   // Enable CORS to help with cross-origin issues
@@ -26,74 +74,42 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    console.log('Enhanced checkout process started');
-    
-    // Log the raw request for debugging
-    console.log('Raw request body:', event.body);
+    console.log('Checkout process started');
     
     // Parse the cart items from the request
     let requestBody;
     try {
       requestBody = JSON.parse(event.body);
-      console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           error: 'Invalid request format',
-          details: 'Request body could not be parsed as JSON',
-          rawBody: event.body
+          details: 'Request body could not be parsed as JSON'
         })
       };
     }
     
     const { items } = requestBody;
     
-    // Validate items with more detailed logging
-    if (!items) {
-      console.error('No items property in request body');
+    // Validate items
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      console.error('No valid items provided in request');
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
-          error: 'No items provided',
-          details: 'Request must include an "items" property'
+          error: 'No valid items provided',
+          details: 'Request must include an array of items' 
         })
       };
     }
-    
-    if (!Array.isArray(items)) {
-      console.error('Items is not an array:', typeof items);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Invalid items format',
-          details: 'Items must be an array'
-        })
-      };
-    }
-    
-    if (items.length === 0) {
-      console.error('Items array is empty');
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Empty cart',
-          details: 'No items provided for checkout'
-        })
-      };
-    }
-
-    // Log the raw items received for debugging
-    console.log('Raw checkout items received:', JSON.stringify(items));
 
     // Get Shopify credentials from environment variables
-    const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
-    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
+    const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
+    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
     if (!SHOPIFY_DOMAIN || !SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
       console.error('Missing Shopify credentials in environment variables');
@@ -109,20 +125,15 @@ exports.handler = async (event, context) => {
 
     console.log(`Using Shopify domain: ${SHOPIFY_DOMAIN}`);
 
-    // Validate and normalize line items with enhanced error handling
+    // Validate and normalize line items
     const lineItems = [];
     let hasErrors = false;
     let errorDetails = [];
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      
-      // Log each item for debugging
-      console.log(`Processing item ${i}:`, JSON.stringify(item));
-      
+    for (const item of items) {
       if (!item.variantId) {
         hasErrors = true;
-        errorDetails.push(`Missing variantId for item at index ${i}: ${JSON.stringify(item)}`);
+        errorDetails.push(`Missing variantId for item: ${JSON.stringify(item)}`);
         continue;
       }
 
@@ -130,68 +141,15 @@ exports.handler = async (event, context) => {
       const quantity = parseInt(item.quantity, 10);
       if (isNaN(quantity) || quantity <= 0) {
         hasErrors = true;
-        errorDetails.push(`Invalid quantity for item at index ${i}: ${JSON.stringify(item)}`);
+        errorDetails.push(`Invalid quantity for item: ${JSON.stringify(item)}`);
         continue;
       }
 
       // Normalize Shopify ID format if needed
       let variantId = item.variantId;
-      
-      console.log(`Processing variant ID: ${variantId} (type: ${typeof variantId})`);
-      
-      // Handle undefined or null
-      if (!variantId) {
-        hasErrors = true;
-        errorDetails.push(`Missing variantId for item at index ${i}: ${JSON.stringify(item)}`);
-        continue;
-      }
-      
-      // Fix common variant ID format issues
-      if (typeof variantId === 'number') {
-        console.log(`Converting numeric variant ID ${variantId} to string`);
-        variantId = variantId.toString();
-      }
-      
-      // Handle cases where variantId might be an object
-      if (typeof variantId === 'object') {
-        console.log(`variantId is an object:`, variantId);
-        if (variantId.id) {
-          console.log(`Using variantId.id: ${variantId.id}`);
-          variantId = variantId.id.toString();
-        } else {
-          hasErrors = true;
-          errorDetails.push(`Invalid variantId object for item at index ${i}: ${JSON.stringify(item)}`);
-          continue;
-        }
-      }
-      
-      // Ensure proper Shopify GraphQL ID format
-      if (!variantId.includes('gid://')) {
-        console.log(`Converting to GraphQL ID format: ${variantId}`);
-        
-        // Check if it's already in a legacy format with slashes
-        if (variantId.includes('/')) {
-          console.log(`Handling legacy format with slashes: ${variantId}`);
-          // Convert from admin API format to storefront format if needed
-          if (variantId.includes('Product/') && !variantId.includes('ProductVariant/')) {
-            const productId = variantId.split('Product/')[1];
-            variantId = `gid://shopify/ProductVariant/${productId}`;
-          } else if (!variantId.includes('shopify/')) {
-            variantId = `gid://shopify/ProductVariant/${variantId.split('/').pop()}`;
-          }
-        } else {
-          // Plain ID - convert to Storefront API expected format
-          console.log(`Converting plain ID to GraphQL format: ${variantId}`);
-          // Preserve any letters that might be part of a custom ID
-          variantId = `gid://shopify/ProductVariant/${variantId}`;
-        }
-      }
-      
-      console.log(`Final variant ID: ${variantId}`);
-      
-      // Verify the ID has the right format after normalization
-      if (!variantId.includes('gid://shopify/ProductVariant/')) {
-        console.warn(`Potentially invalid variant ID format after normalization: ${variantId}`);
+      if (!variantId.includes('/')) {
+        // Convert to Storefront API expected format if needed
+        variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
       }
 
       lineItems.push({
@@ -224,7 +182,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Create the GraphQL mutation for cart creation
+    // Create the GraphQL mutation for cart creation (new API replacing deprecated checkout)
     const mutation = `
       mutation cartCreate($input: CartInput!) {
         cartCreate(input: $input) {
@@ -268,17 +226,9 @@ exports.handler = async (event, context) => {
     `;
 
     console.log(`Making request to Shopify with ${lineItems.length} line items`);
-    console.log('Line items formatted for Shopify:', JSON.stringify(lineItems.map(item => ({
-      merchandiseId: item.variantId,
-      quantity: item.quantity
-    }))));
 
-    // Log environment variables (without sensitive values)
-    console.log(`SHOPIFY_DOMAIN is ${SHOPIFY_DOMAIN ? 'set' : 'NOT SET'}`);
-    console.log(`SHOPIFY_STOREFRONT_ACCESS_TOKEN is ${SHOPIFY_STOREFRONT_ACCESS_TOKEN ? 'set' : 'NOT SET'}`);
-    
-    // Prepare the request body
-    const graphqlRequestBody = {
+    // Prepare request payload
+    const requestPayload = JSON.stringify({
       query: mutation,
       variables: {
         input: {
@@ -288,150 +238,91 @@ exports.handler = async (event, context) => {
           }))
         }
       }
-    };
-    
-    console.log('Shopify GraphQL request prepared:', JSON.stringify(graphqlRequestBody, null, 2));
-    
-    // Build the full API URL - use the version from the .env file
-    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-01';
-    const apiUrl = `https://${SHOPIFY_DOMAIN}/api/${apiVersion}/graphql.json`;
-    console.log(`Making request to Shopify API: ${apiUrl}`);
-    
-    // Make the request to Shopify Storefront API
-    let response;
+    });
+
+    // Make the request to Shopify Storefront API using native https
     try {
-      response = await fetch(apiUrl, {
+      // Set up request options
+      const requestOptions = {
+        hostname: SHOPIFY_DOMAIN,
+        path: '/api/2024-04/graphql.json',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(requestPayload),
           'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_ACCESS_TOKEN,
-          'User-Agent': 'Bobby-Streetwear-Checkout/2.0'
-        },
-        body: JSON.stringify(graphqlRequestBody)
-      });
+          'User-Agent': 'Bobby-Streetwear-Checkout/1.0'
+        }
+      };
+
+      // Make the request
+      const response = await httpsRequest(requestOptions, requestPayload);
+      const data = response.body;
+
+      // Check for GraphQL errors
+      if (data.errors) {
+        console.error('GraphQL errors from Shopify:', data.errors);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Shopify GraphQL errors',
+            details: data.errors
+          })
+        };
+      }
+
+      // Check for cart user errors
+      if (data.data?.cartCreate?.userErrors?.length > 0) {
+        console.error('Cart creation errors from Shopify:', data.data.cartCreate.userErrors);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: 'Failed to create cart',
+            details: data.data.cartCreate.userErrors
+          })
+        };
+      }
+
+      // Verify cart was created
+      if (!data.data?.cartCreate?.cart) {
+        console.error('No cart created in Shopify response');
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            error: 'No cart created',
+            details: 'Shopify response did not include cart details'
+          })
+        };
+      }
+
+      // Return the checkout URL and details
+      const cart = data.data.cartCreate.cart;
+      console.log('Cart created successfully:', cart.id);
       
-      console.log(`Shopify API response status: ${response.status} ${response.statusText}`);
-    } catch (fetchError) {
-      console.error('Network error when contacting Shopify:', fetchError);
       return {
-        statusCode: 500,
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          checkoutUrl: cart.checkoutUrl,
+          checkoutId: cart.id,
+          totalPrice: cart.cost.totalAmount,
+          lineItems: cart.lines.edges
+        })
+      };
+    } catch (error) {
+      console.error('Network error when contacting Shopify:', error);
+      return {
+        statusCode: error.statusCode || 500,
         headers,
         body: JSON.stringify({ 
           error: 'Failed to contact Shopify',
-          details: fetchError.message
+          details: error.body || error.message
         })
       };
     }
-
-    // Get full response details for better debugging
-    const responseStatus = response.status;
-    const responseStatusText = response.statusText;
-    
-    if (!response.ok) {
-      // Try to get more details from the error response
-      let errorResponseText;
-      try {
-        errorResponseText = await response.text();
-      } catch (e) {
-        errorResponseText = "Could not read error response";
-      }
-      
-      console.error(`HTTP error from Shopify: ${responseStatus} ${responseStatusText}`);
-      console.error('Response body:', errorResponseText);
-      
-      return {
-        statusCode: responseStatus,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Shopify API error',
-          details: `${responseStatus}: ${responseStatusText}`,
-          response: errorResponseText
-        })
-      };
-    }
-
-    let data;
-    try {
-      data = await response.json();
-    } catch (jsonError) {
-      console.error('Failed to parse Shopify response:', jsonError);
-      
-      // Try to get the raw response for debugging
-      let rawResponse;
-      try {
-        rawResponse = await response.text();
-      } catch (e) {
-        rawResponse = "Could not read response";
-      }
-      
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Invalid response from Shopify',
-          details: jsonError.message,
-          rawResponse: rawResponse
-        })
-      };
-    }
-
-    // Check for GraphQL errors
-    if (data.errors) {
-      console.error('GraphQL errors from Shopify:', data.errors);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ 
-          error: 'Shopify GraphQL errors',
-          details: data.errors
-        })
-      };
-    }
-
-    // Check for cart user errors
-    if (data.data?.cartCreate?.userErrors?.length > 0) {
-      console.error('Cart creation errors from Shopify:', data.data.cartCreate.userErrors);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Failed to create cart',
-          details: data.data.cartCreate.userErrors
-        })
-      };
-    }
-
-    // Verify cart was created
-    if (!data.data?.cartCreate?.cart) {
-      console.error('No cart created in Shopify response');
-      console.error('Full response:', JSON.stringify(data));
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({
-          error: 'No cart created',
-          details: 'Shopify response did not include cart details',
-          response: data
-        })
-      };
-    }
-
-    // Return the checkout URL and details
-    const cart = data.data.cartCreate.cart;
-    console.log('Cart created successfully:', cart.id);
-    console.log('Checkout URL:', cart.checkoutUrl);
-    
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        checkoutUrl: cart.checkoutUrl,
-        checkoutId: cart.id,
-        totalPrice: cart.cost.totalAmount,
-        lineItems: cart.lines.edges
-      })
-    };
-
   } catch (error) {
     console.error('Unexpected error in checkout function:', error);
     return {
