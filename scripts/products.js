@@ -17,6 +17,31 @@ class ProductManager {
         await this.loadProducts();
         this.setupEventListeners();
         this.renderProducts();
+        
+        // Add event listener for handling browser navigation (back/forward buttons)
+        window.addEventListener('popstate', () => {
+            // Remove any open modals when navigating
+            this.removeAllModals();
+        });
+    }
+    
+    // Helper to remove all modals
+    removeAllModals() {
+        // Remove any size selection modals
+        const sizeModal = document.getElementById('size-selection-modal');
+        if (sizeModal) {
+            sizeModal.remove();
+        }
+        
+        // Remove any quick view modals
+        const quickViewModal = document.querySelector('.quick-view-modal-overlay');
+        if (quickViewModal) {
+            quickViewModal.remove();
+        }
+        
+        // Remove any related modal styles
+        const modalStyles = document.querySelectorAll('style[data-modal-styles]');
+        modalStyles.forEach(style => style.remove());
     }
 
     async loadProducts() {
@@ -1100,9 +1125,16 @@ class ProductManager {
     
     // Method to show size selection modal
     showSizeSelectionModal(product) {
+        // Check if modal already exists and remove it first
+        const existingModal = document.querySelector('.size-selection-modal-overlay');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
         // Create modal overlay
         const modalOverlay = document.createElement('div');
         modalOverlay.className = 'size-selection-modal-overlay';
+        modalOverlay.id = 'size-selection-modal';
         
         // Create modal content
         const modalContent = document.createElement('div');
@@ -1167,6 +1199,8 @@ class ProductManager {
         
         // Add CSS styles for the modal
         const styleEl = document.createElement('style');
+        // Add data attribute so we can find and clean up these styles later
+        styleEl.setAttribute('data-modal-styles', 'size-selection');
         styleEl.textContent = `
             .size-selection-modal-overlay {
                 position: fixed;
@@ -1563,6 +1597,9 @@ class ProductManager {
     }
 
     showQuickView(productId) {
+        // First remove any existing modals
+        this.removeAllModals();
+        
         // Use the new QuickViewManager to handle quick view functionality
         if (window.quickViewManager) {
             window.quickViewManager.openQuickView(productId);
