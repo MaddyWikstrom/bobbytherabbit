@@ -821,29 +821,17 @@ class QuickViewManager {
                             // If the product has colors, check if a color is selected
                             if (product.colors && product.colors.length > 0) {
                                 const selectedColor = card.querySelector('.quick-add-color-btn.selected');
+                                // FIXED: Don't auto-add to cart, just enable the button
                                 if (selectedColor) {
-                                    // Both size and color selected, auto-add to cart
-                                    const color = selectedColor.getAttribute('data-color');
-                                    const selectedSize = size;
-                                    
-                                    // Auto-add to cart with small delay for visual feedback
-                                    setTimeout(() => {
-                                        this.quickAddToCart(productId, productHandle, color, selectedSize);
-                                        this.showNotification(`Added ${this.simplifySize(selectedSize)} ${color} to bag`, 'success');
-                                    }, 300);
+                                    // Enable the add button when both color and size are selected
+                                    addButton.disabled = false;
+                                } else {
+                                    // If no color selected, wait for color selection
+                                    addButton.disabled = true;
                                 }
-                                // If no color selected, wait for color selection
-                                addButton.disabled = true;
                             } else {
-                                // No colors for this product, auto-add with just size
-                                const selectedSize = size;
-                                
-                                // Auto-add to cart with small delay for visual feedback
-                                setTimeout(() => {
-                                    this.quickAddToCart(productId, productHandle, null, selectedSize);
-                                    this.showNotification(`Added ${this.simplifySize(selectedSize)} to bag`, 'success');
-                                }, 300);
-                                
+                                // No colors for this product, enable add button
+                                // FIXED: Don't auto-add to cart, just enable the button
                                 addButton.disabled = false;
                             }
                         });
@@ -906,16 +894,11 @@ class QuickViewManager {
                                 }
                             }
                             
-                            // If size is already selected, auto-add to cart
+                            // FIXED: Don't auto-add to cart, just enable the button if size is selected
                             const selectedSize = card.querySelector('.quick-add-size-btn.selected');
                             if (selectedSize) {
-                                const size = selectedSize.getAttribute('data-size');
-                                
-                                // Auto-add to cart with small delay for visual feedback
-                                setTimeout(() => {
-                                    this.quickAddToCart(productId, productHandle, colorName, size);
-                                    this.showNotification(`Added ${this.simplifySize(size)} ${colorName} to bag`, 'success');
-                                }, 300);
+                                // Enable the add button when both color and size are selected
+                                addButton.disabled = false;
                             }
                         });
                         
