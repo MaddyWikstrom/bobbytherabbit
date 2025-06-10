@@ -718,75 +718,49 @@ class QuickViewManager {
             }
         });
         
-        // Immediately add some default sizes until product data loads
-        const defaultSizes = ['S', 'M', 'L', 'XL', '2XL'];
-        defaultSizes.forEach(size => {
-            const sizeBtn = document.createElement('button');
-            sizeBtn.className = 'quick-add-size-btn';
-            sizeBtn.setAttribute('data-size', size);
-            sizeBtn.textContent = size;
-            
-            sizeBtn.addEventListener('click', (e) => {
-                // Deselect all other size buttons
-                card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-                
-                // Select this size
-                sizeBtn.classList.add('selected');
-                
-                // Enable add button if color is also selected
-                const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
-                addButton.disabled = !hasColorSelected;
-            });
-            
-            sizesContainer.appendChild(sizeBtn);
-        });
+        // Add a loading indicator
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'quick-add-loading';
+        loadingIndicator.textContent = 'Loading options...';
+        loadingIndicator.style.color = '#fff';
+        loadingIndicator.style.textAlign = 'center';
+        loadingIndicator.style.padding = '5px';
+        loadingIndicator.style.fontSize = '12px';
         
-        // Also add some default colors
-        const defaultColors = [
-            { name: 'Black', code: '#000000' },
-            { name: 'Vintage Black', code: '#222222' },
-            { name: 'Charcoal Gray', code: '#36454f' },
-            { name: 'Purple', code: '#6c5ce7' }
-        ];
+        sizesContainer.appendChild(loadingIndicator);
         
-        defaultColors.forEach(color => {
-            const colorBtn = document.createElement('div');
-            colorBtn.className = 'quick-add-color-btn';
-            colorBtn.setAttribute('data-color', color.name);
-            colorBtn.style.backgroundColor = color.code;
-            
-            colorBtn.addEventListener('click', (e) => {
-                // Deselect all other color buttons
-                card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-                
-                // Select this color
-                colorBtn.classList.add('selected');
-                
-                // Update product card image
-                this.updateProductCardImage(color.name, card);
-                
-                // Enable add button if size is also selected
-                const hasSizeSelected = card.querySelector('.quick-add-size-btn.selected');
-                addButton.disabled = !hasSizeSelected;
-            });
-            
-            colorsContainer.appendChild(colorBtn);
-        });
-        
-        // Now fetch actual product data to replace defaults if possible
+        // Fetch actual product data
         this.fetchProductData(productId, productHandle)
             .then(product => {
                 if (!product) return;
                 
-                // Clear default sizes and add actual ones
+                // Clear loading indicator
                 sizesContainer.innerHTML = '';
+                colorsContainer.innerHTML = '';
                 
-                // Populate sizes
-                if (product.sizes && product.sizes.length > 0) {
+                // Determine if product has colors and sizes
+                const hasColors = product.colors && product.colors.length > 0;
+                const hasSizes = product.sizes && product.sizes.length > 0;
+                
+                // If no variants at all, just enable the button
+                if (!hasColors && !hasSizes) {
+                    addButton.disabled = false;
+                    
+                    // Add a message
+                    const noOptionsMsg = document.createElement('div');
+                    noOptionsMsg.textContent = 'One size fits all';
+                    noOptionsMsg.style.color = '#fff';
+                    noOptionsMsg.style.textAlign = 'center';
+                    noOptionsMsg.style.padding = '5px';
+                    sizesContainer.appendChild(noOptionsMsg);
+                    
+                    // Hide colors container
+                    colorsContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Populate sizes if available
+                if (hasSizes) {
                     product.sizes.forEach(size => {
                         const sizeBtn = document.createElement('button');
                         sizeBtn.className = 'quick-add-size-btn';
@@ -802,32 +776,58 @@ class QuickViewManager {
                             // Select this size
                             sizeBtn.classList.add('selected');
                             
-                            // Enable add button if color is also selected
-                            const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
-                            addButton.disabled = !hasColorSelected;
+                            // Enable add button if color is also selected or no colors required
+                            if (hasColors) {
+                                const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
+                                addButton.disabled = !hasColorSelected;
+                            } else {
+                                // No colors needed, so enable button
+                                addButton.disabled = false;
+                            }
                         });
                         
                         sizesContainer.appendChild(sizeBtn);
                     });
                 } else {
-                    // Re-add default sizes if no product sizes found
-                    defaultSizes.forEach(size => {
-                        const sizeBtn = document.createElement('button');
-                        sizeBtn.className = 'quick-add-size-btn';
-                        sizeBtn.setAttribute('data-size', size);
-                        sizeBtn.textContent = size;
+                    // No sizes available, hide the container
+                    sizesContainer.style.display = 'none';
+                }
+                
+                // Populate colors if available
+                if (hasColors) {
+                    product.colors.forEach(color => {
+                        const colorBtn = document.createElement('div');
+                        colorBtn.className = 'quick-add-color-btn';
+                        colorBtn.setAttribute('data-color', color.name);
+                        colorBtn.style.backgroundColor = color.code;
                         
-                        sizeBtn.addEventListener('click', (e) => {
-                            card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
+                        colorBtn.addEventListener('click', (e) => {
+                            // Deselect all other color buttons
+                            card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
                                 btn.classList.remove('selected');
                             });
-                            sizeBtn.classList.add('selected');
-                            const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
-                            addButton.disabled = !hasColorSelected;
+                            
+                            // Select this color
+                            colorBtn.classList.add('selected');
+                            
+                            // Update product card image
+                            this.updateProductCardImage(color.name, card);
+                            
+                            // Enable add button if size is also selected or no sizes required
+                            if (hasSizes) {
+                                const hasSizeSelected = card.querySelector('.quick-add-size-btn.selected');
+                                addButton.disabled = !hasSizeSelected;
+                            } else {
+                                // No sizes needed, so enable button
+                                addButton.disabled = false;
+                            }
                         });
                         
-                        sizesContainer.appendChild(sizeBtn);
+                        colorsContainer.appendChild(colorBtn);
                     });
+                } else {
+                    // No colors available, hide the container
+                    colorsContainer.style.display = 'none';
                 }
                 
                 // Populate colors
