@@ -424,17 +424,19 @@ class QuickViewManager {
             
             .product-quick-add-overlay {
                 position: absolute;
-                bottom: 0;
+                bottom: 60px; /* Position higher up to not cover color buttons */
                 left: 0;
                 width: 100%;
                 background-color: rgba(0, 0, 0, 0.9);
                 padding: 10px;
-                transform: translateY(100%);
-                transition: transform 0.3s ease, opacity 0.3s ease;
+                transition: opacity 0.3s ease;
                 opacity: 0;
                 visibility: hidden;
                 z-index: 5;
-                pointer-events: none;
+                pointer-events: auto; /* Allow interaction */
+                height: auto;
+                max-height: 150px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             }
             
             .product-quick-add-title {
@@ -1056,9 +1058,15 @@ class QuickViewManager {
             /* Ensure the overlay appears on hover */
             .product-card:hover .product-quick-add-overlay {
                 opacity: 1 !important;
-                transform: translateY(0) !important;
                 pointer-events: auto !important;
                 visibility: visible !important;
+            }
+            
+            /* Debugging helper class */
+            .force-visible {
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
             }
         `;
         
@@ -1552,6 +1560,42 @@ document.addEventListener('DOMContentLoaded', ensureQuickViewOnAllCards);
 // Run after any potential dynamic content loading
 setTimeout(ensureQuickViewOnAllCards, 1000);
 setTimeout(ensureQuickViewOnAllCards, 2000);
+
+// Debug helper function - can be used to force show a specific overlay
+function debugForceShowOverlay(cardSelector) {
+    const cards = document.querySelectorAll(cardSelector || '.product-card');
+    cards.forEach(card => {
+        const overlay = card.querySelector('.product-quick-add-overlay');
+        if (overlay) {
+            overlay.classList.add('force-visible');
+            
+            // Log for debugging
+            console.log('Forced overlay visible on:', card);
+            
+            // Ensure it has size and color options
+            const sizesContainer = overlay.querySelector('.product-quick-add-sizes');
+            const colorsContainer = overlay.querySelector('.product-quick-add-colors');
+            
+            if (sizesContainer && !sizesContainer.children.length) {
+                console.warn('No size options in overlay', card);
+            }
+            
+            if (colorsContainer && !colorsContainer.children.length) {
+                console.warn('No color options in overlay', card);
+            }
+        } else {
+            console.error('No overlay found on card:', card);
+        }
+    });
+}
+
+// Run a final check after page has fully loaded
+window.addEventListener('load', () => {
+    ensureQuickViewOnAllCards();
+    
+    // Uncomment the line below to force show all overlays for debugging
+    // setTimeout(() => debugForceShowOverlay(), 3000);
+});
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
