@@ -379,15 +379,7 @@ class SearchManager {
                             ).join('')}
                         </div>
                     </div>
-                    <div class="search-result-actions">
-                        <button class="quick-add-btn" onclick="event.stopPropagation(); searchManager.quickAdd('${result.id}')" title="Quick add to cart">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="9" cy="21" r="1"></circle>
-                                <circle cx="20" cy="21" r="1"></circle>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
-                        </button>
-                    </div>
+                    <!-- Quick add button removed -->
                 </div>
             `;
         }).join('');
@@ -472,37 +464,13 @@ class SearchManager {
         }
     }
 
+    // Quick add functionality removed
     quickAdd(productId) {
-        const product = window.productManager.products.find(p => p.id === productId);
-        if (!product) return;
+        console.log('Quick add functionality has been removed');
         
-        let added = false;
-        
-        // Try BobbyCart first (our main cart system)
-        if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
-            window.BobbyCart.addItem(product);
-            added = true;
-        }
-        // Fallback to old cart manager
-        else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
-            window.cartManager.addItem(product);
-            added = true;
-        }
-        
-        if (added) {
-            // Show notification if available
-            if (typeof this.showNotification === 'function') {
-                this.showNotification('Added to cart', 'success');
-            }
-            
-            // Try to open cart
-            setTimeout(() => {
-                if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
-                    window.BobbyCart.openCart();
-                } else if (window.cartManager && typeof window.cartManager.openCart === 'function') {
-                    window.cartManager.openCart();
-                }
-            }, 300);
+        // Redirect to product page instead
+        if (window.productManager) {
+            window.productManager.viewProduct(productId);
         }
     }
 
@@ -720,23 +688,7 @@ const searchStyles = `
         flex-shrink: 0;
     }
 
-    .quick-add-btn {
-        background: rgba(34, 197, 94, 0.2);
-        border: none;
-        color: #22c55e;
-        padding: 0.5rem;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .quick-add-btn:hover {
-        background: rgba(34, 197, 94, 0.4);
-        transform: scale(1.1);
-    }
+    /* Quick add button styles removed */
 
     .no-search-results {
         text-align: center;

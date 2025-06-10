@@ -447,118 +447,7 @@ class QuickViewManager {
                 overflow: hidden;
             }
             
-            .product-quick-add-overlay {
-                position: absolute;
-                top: 0; /* Position at the top instead of bottom */
-                left: 0;
-                width: 100%;
-                background-color: rgba(32, 32, 50, 0.95); /* Slightly blueish black to match theme */
-                padding: 8px;
-                transition: opacity 0.3s ease;
-                opacity: 0;
-                visibility: hidden;
-                z-index: 5;
-                pointer-events: auto; /* Allow interaction */
-                height: auto;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-                border-bottom: 2px solid #6c5ce7; /* Purple accent border */
-            }
-            
-            .product-quick-add-title {
-                font-weight: bold;
-                font-size: 14px;
-                margin-bottom: 6px;
-                text-align: center;
-                color: white;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            }
-            
-            .product-quick-add-sizes {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 5px;
-                margin-bottom: 8px;
-                min-height: 30px; /* Ensure there's always space for sizes */
-            }
-            
-            .quick-add-size-btn {
-                min-width: 30px;
-                height: 30px;
-                border: 1px solid #6c5ce7; /* Purple border */
-                background: #2d2d44; /* Dark blue-purple background */
-                color: white;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                font-size: 12px;
-                padding: 0 8px;
-                border-radius: 3px;
-                margin: 0 2px;
-                font-weight: bold;
-            }
-            
-            .quick-add-size-btn:hover {
-                border-color: #8e44ad; /* Brighter purple on hover */
-                background-color: #3d3d5c; /* Lighter background on hover */
-                box-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
-            }
-            
-            .quick-add-size-btn.selected {
-                background-color: #6c5ce7; /* Purple background when selected */
-                color: white;
-                border-color: white;
-                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-            }
-            
-            .product-quick-add-colors {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 5px;
-                margin-bottom: 8px;
-            }
-            
-            .quick-add-color-btn {
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                cursor: pointer;
-                border: 1px solid #ddd;
-                position: relative;
-            }
-            
-            .quick-add-color-btn.selected {
-                border: 2px solid #000;
-            }
-            
-            .quick-add-to-cart-btn {
-                width: 100%;
-                background-color: #6c5ce7; /* Purple background to match the theme */
-                color: white;
-                border: none;
-                padding: 8px;
-                cursor: pointer;
-                font-size: 13px;
-                border-radius: 3px;
-                font-weight: bold;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                transition: all 0.2s ease;
-            }
-            
-            .quick-add-to-cart-btn:hover {
-                background-color: #8e44ad; /* Darker purple on hover */
-                box-shadow: 0 0 10px rgba(108, 92, 231, 0.7);
-            }
-            
-            .quick-add-to-cart-btn:disabled {
-                background-color: #444;
-                color: #999;
-                cursor: not-allowed;
-                box-shadow: none;
-            }
+            /* Quick add overlay functionality removed */
             
             /* Notification */
             .quick-view-notification {
@@ -742,7 +631,7 @@ class QuickViewManager {
         });
     }
     
-    // Add quick view button to product card - simplified to use same logic as product page
+    // Quick add to card functionality removed
     addQuickViewButtonToCard(card) {
         if (!card) return;
         
@@ -755,237 +644,10 @@ class QuickViewManager {
             return;
         }
         
-        // Create quick add overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'product-quick-add-overlay';
-        
-        // Add title
-        const title = document.createElement('div');
-        title.className = 'product-quick-add-title';
-        title.textContent = 'Quick Add to Bag';
-        
-        // Create container for sizes (before colors - matching reference image)
-        const sizesContainer = document.createElement('div');
-        sizesContainer.className = 'product-quick-add-sizes';
-        
-        // Create container for colors
-        const colorsContainer = document.createElement('div');
-        colorsContainer.className = 'product-quick-add-colors';
-        
-        // Add button
-        const addButton = document.createElement('button');
-        addButton.className = 'quick-add-to-cart-btn';
-        addButton.textContent = 'Add to Bag';
-        addButton.disabled = true;
-        
-        // Assemble overlay
-        overlay.appendChild(title);
-        overlay.appendChild(sizesContainer);
-        overlay.appendChild(colorsContainer);
-        overlay.appendChild(addButton);
-        
-        // Add the overlay to the card
-        card.appendChild(overlay);
-        
         // Setup click event on the card itself to show quick view
         card.addEventListener('click', (e) => {
-            // Only open quick view if we clicked the card itself, not a button inside the overlay
-            if (!e.target.closest('.product-quick-add-overlay')) {
-                e.preventDefault();
-                this.openQuickViewById(productId, productHandle);
-            }
-        });
-        
-        // Fetch product data first, so we display accurate options
-        // IMPORTANT: We don't add default sizes immediately anymore
-        this.fetchProductData(productId, productHandle)
-            .then(product => {
-                if (!product) return;
-                
-                // Only update if we get product data
-                console.log('Got product data:', product.title);
-                
-                // Process color-specific images for this product
-                this.prepareColorImagesForProduct(product);
-                
-                // Only add size options if product has them
-                if (product.sizes && product.sizes.length > 0) {
-                    sizesContainer.innerHTML = '';
-                    
-                    product.sizes.forEach(size => {
-                        const sizeBtn = document.createElement('button');
-                        sizeBtn.className = 'quick-add-size-btn';
-                        sizeBtn.setAttribute('data-size', size);
-                        sizeBtn.textContent = this.simplifySize(size);
-                        
-                        sizeBtn.addEventListener('click', (e) => {
-                            // Deselect all other size buttons
-                            card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
-                                btn.classList.remove('selected');
-                            });
-                            
-                            // Select this size
-                            sizeBtn.classList.add('selected');
-                            
-                            // If the product has colors, check if a color is selected
-                            if (product.colors && product.colors.length > 0) {
-                                const selectedColor = card.querySelector('.quick-add-color-btn.selected');
-                                if (selectedColor) {
-                                    // Both size and color selected, auto-add to cart
-                                    const color = selectedColor.getAttribute('data-color');
-                                    const selectedSize = size;
-                                    
-                                    // Auto-add to cart with small delay for visual feedback
-                                    setTimeout(() => {
-                                        this.quickAddToCart(productId, productHandle, color, selectedSize);
-                                        this.showNotification(`Added ${this.simplifySize(selectedSize)} ${color} to bag`, 'success');
-                                    }, 300);
-                                }
-                                // If no color selected, wait for color selection
-                                addButton.disabled = true;
-                            } else {
-                                // No colors for this product, auto-add with just size
-                                const selectedSize = size;
-                                
-                                // Auto-add to cart with small delay for visual feedback
-                                setTimeout(() => {
-                                    this.quickAddToCart(productId, productHandle, null, selectedSize);
-                                    this.showNotification(`Added ${this.simplifySize(selectedSize)} to bag`, 'success');
-                                }, 300);
-                                
-                                addButton.disabled = false;
-                            }
-                        });
-                        
-                        sizesContainer.appendChild(sizeBtn);
-                    });
-                } else {
-                    // Don't add "One Size" by default
-                    // Hide size container if no sizes
-                    sizesContainer.style.display = 'none';
-                }
-                
-                // CRITICAL FIX: Only add color options if the product TRULY has variant colors
-                // Not because we added default colors in processProductData
-                console.log('Product color check:', product.title, '- has', (product.colors?.length || 0), 'colors');
-                
-                // We need to be ABSOLUTELY SURE this product has real color variants
-                // This is the root cause of showing Black/White on products without variants
-                const hasRealColorVariants = product.colors &&
-                                           product.colors.length > 0 &&
-                                           !product.colors.every(c =>
-                                               (typeof c === 'object' ? c.name : c) === 'Black' ||
-                                               (typeof c === 'object' ? c.name : c) === 'White');
-                
-                if (hasRealColorVariants) {
-                    console.log('Product has REAL COLOR VARIANTS:', product.colors.length);
-                    console.log('Colors:', product.colors.map(c => typeof c === 'object' ? c.name : c).join(', '));
-                    
-                    colorsContainer.style.display = 'flex';
-                    colorsContainer.innerHTML = '';
-                    
-                    product.colors.forEach(color => {
-                        const colorName = typeof color === 'object' ? color.name : color;
-                        const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
-                        
-                        console.log(`Adding color button: ${colorName} (${colorCode})`);
-                        
-                        const colorBtn = document.createElement('div');
-                        colorBtn.className = 'quick-add-color-btn';
-                        colorBtn.setAttribute('data-color', colorName);
-                        colorBtn.style.backgroundColor = colorCode;
-                        colorBtn.title = colorName;
-                        
-                        // If we have a color-specific image, store it
-                        if (product.colorImages && product.colorImages[colorName] && product.colorImages[colorName].length > 0) {
-                            colorBtn.setAttribute('data-color-image', product.colorImages[colorName][0]);
-                        }
-                        
-                        colorBtn.addEventListener('click', (e) => {
-                            card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
-                                btn.classList.remove('selected');
-                            });
-                            colorBtn.classList.add('selected');
-                            
-                            // Update product card image if we have a color-specific image
-                            if (colorBtn.getAttribute('data-color-image')) {
-                                const cardImage = card.querySelector('img.product-image');
-                                if (cardImage) {
-                                    cardImage.src = colorBtn.getAttribute('data-color-image');
-                                }
-                            }
-                            
-                            // If size is already selected, auto-add to cart
-                            const selectedSize = card.querySelector('.quick-add-size-btn.selected');
-                            if (selectedSize) {
-                                const size = selectedSize.getAttribute('data-size');
-                                
-                                // Auto-add to cart with small delay for visual feedback
-                                setTimeout(() => {
-                                    this.quickAddToCart(productId, productHandle, colorName, size);
-                                    this.showNotification(`Added ${this.simplifySize(size)} ${colorName} to bag`, 'success');
-                                }, 300);
-                            }
-                        });
-                        
-                        colorsContainer.appendChild(colorBtn);
-                    });
-                    
-                    // Select first color by default
-                    const firstColorBtn = colorsContainer.querySelector('.quick-add-color-btn');
-                    if (firstColorBtn) {
-                        firstColorBtn.classList.add('selected');
-                        
-                        // Update product card image if we have a color-specific image
-                        if (firstColorBtn.getAttribute('data-color-image')) {
-                            const cardImage = card.querySelector('img.product-image');
-                            if (cardImage) {
-                                cardImage.src = firstColorBtn.getAttribute('data-color-image');
-                            }
-                        }
-                    }
-                } else {
-                    // No REAL colors available - hide the container and clear it
-                    console.log('No real color variants for this product - hiding color options');
-                    colorsContainer.style.display = 'none';
-                    colorsContainer.innerHTML = '';
-                    
-                    // CRITICAL FIX: Also update the product.colors array to be empty
-                    // This prevents the auto-add code from trying to use colors
-                    product.colors = [];
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching product data:', error);
-                // No fallback sizes - just leave empty if we can't get product data
-                sizesContainer.innerHTML = '<div style="padding: 5px; text-align: center; color: white;">Unable to load options</div>';
-            });
-        
-        // Click handler for the "Add to Bag" button in overlay
-        addButton.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            
-            // Get selected options from overlay
-            const selectedColor = card.querySelector('.quick-add-color-btn.selected');
-            const selectedSize = card.querySelector('.quick-add-size-btn.selected');
-            
-            // Get color if available, otherwise null
-            const color = selectedColor ? selectedColor.getAttribute('data-color') : null;
-            
-            // Size is required
-            if (selectedSize) {
-                const size = selectedSize.getAttribute('data-size');
-                
-                // Quick add to cart without opening modal
-                this.quickAddToCart(productId, productHandle, color, size);
-                
-                // Show confirmation notification
-                this.showNotification(`Added to bag: ${this.simplifySize(size)} ${color || ''}`, 'success');
-            } else {
-                // If somehow the button is enabled without size, show error
-                this.showNotification('Please select a size', 'error');
-            }
+            this.openQuickViewById(productId, productHandle);
         });
     }
     
@@ -1551,104 +1213,15 @@ class QuickViewManager {
         });
     }
     
-    // Quick add to cart directly from the overlay - using global debounce
+    // Quick add to cart functionality removed
     async quickAddToCart(productId, productHandle, color, size) {
-        try {
-            console.log(`Quick adding to cart: ${productId || productHandle} (${color || 'N/A'} / ${size || 'N/A'})`);
-            
-            // Always re-fetch product data to ensure it's fresh
-            const product = await this.fetchProductData(productId, productHandle);
-            if (!product) {
-                this.showNotification(`Sorry, we couldn't find this product`, 'error');
-                return false;
-            }
-            
-            // Store as current product
-            this.currentProduct = product;
-            
-            // IMPROVED: More robust validation that matches other methods
-            console.log(`Validating selection - Product has ${product.colors?.length || 0} colors and ${product.sizes?.length || 0} sizes`);
-            
-            const validationResults = {
-                colorNeeded: product.colors && product.colors.length > 0,
-                sizeNeeded: product.sizes && product.sizes.length > 0,
-                colorValid: true,
-                sizeValid: true,
-                errorMessage: ''
-            };
-            
-            // Only validate color if product actually has color variants
-            if (validationResults.colorNeeded) {
-                console.log(`Color validation needed: selected=${color || 'none'}`);
-                
-                if (!color) {
-                    validationResults.colorValid = false;
-                    validationResults.errorMessage = 'Please select a color';
-                } else {
-                    // Check if this is a valid color for this product
-                    const isValidColor = product.colors.some(c =>
-                        (typeof c === 'object' ? c.name : c) === color
-                    );
-                    
-                    if (!isValidColor) {
-                        validationResults.colorValid = false;
-                        validationResults.errorMessage = `Color "${color}" is not available for this product`;
-                    }
-                }
-            } else {
-                // No colors needed - ignore any color that was passed
-                console.log('Product has no color variants - ignoring color selection');
-            }
-            
-            // Only validate size if product has sizes
-            if (validationResults.colorValid && validationResults.sizeNeeded) {
-                console.log(`Size validation needed: selected=${size || 'none'}`);
-                
-                if (!size) {
-                    validationResults.sizeValid = false;
-                    validationResults.errorMessage = 'Please select a size';
-                } else {
-                    // Check if this is a valid size for this product
-                    const isValidSize = product.sizes.includes(size);
-                    
-                    if (!isValidSize) {
-                        validationResults.sizeValid = false;
-                        validationResults.errorMessage = `Size "${size}" is not available for this product`;
-                    }
-                }
-            } else if (!validationResults.colorValid) {
-                // Skip size validation if color validation already failed
-            } else {
-                // No sizes needed - ignore any size that was passed
-                console.log('Product has no size variants - ignoring size selection');
-            }
-            
-            // Check overall validation result
-            const isValidSelection = (!validationResults.colorNeeded || validationResults.colorValid) &&
-                                     (!validationResults.sizeNeeded || validationResults.sizeValid);
-            
-            if (!isValidSelection) {
-                throw new Error(validationResults.errorMessage || 'Invalid selection');
-            }
-            
-            // Set selected variant
-            this.selectedVariant.color = color;
-            this.selectedVariant.size = size;
-            this.selectedVariant.quantity = 1;
-            
-            // Add to cart with more detailed logging
-            console.log(`Adding to cart: ${product.title} - ${color || ''} ${size || ''}`);
-            this.addToCart();
-            
-            return true;
-        } catch (error) {
-            console.error('Quick add error:', error);
-            this.showNotification(error.message || 'Error adding to cart', 'error');
-            return false;
-        }
+        // Function disabled - quick add functionality removed
+        console.log('Quick add functionality has been removed');
+        this.showNotification('Quick add functionality has been removed', 'info');
+        return false;
     }
     
-    // Add specific styles to hide buttons on product cards
+    // Add specific styles - but without quick add references
     addButtonHidingStyles() {
         // Check if styles already exist
         if (document.querySelector('#quick-view-button-hiding-styles')) return;
@@ -1666,7 +1239,7 @@ class QuickViewManager {
            .product-card .quick-buttons,
            .product-card [class*="cart"],
            .product-card [class*="Cart"],
-           .product-card button:not(.quick-add-size-btn):not(.quick-add-color-btn),
+           .product-card button,
            .product-card .btn,
            .product-card .button,
            .product-card .add-to-cart,
@@ -1705,13 +1278,6 @@ class QuickViewManager {
                position: absolute !important;
                z-index: -1 !important;
            }
-            
-            /* Ensure the overlay appears on hover */
-            .product-card:hover .product-quick-add-overlay {
-                opacity: 1 !important;
-                pointer-events: auto !important;
-                visibility: visible !important;
-            }
             
             /* Debugging helper class */
             .force-visible {
@@ -2436,13 +2002,17 @@ function ensureQuickViewOnAllCards() {
         // Don't log to avoid console spam
         productCards.forEach(card => {
             // Remove any existing add-to-cart, heart, or other buttons
-            const buttonsToRemove = card.querySelectorAll('.add-to-cart-btn, .quick-shop-btn, .cart-btn, .eye-btn, .button, button:not(.quick-add-size-btn):not(.quick-add-color-btn), .heart, .heart-icon, .favorite, .favorite-icon, .wishlist, .wishlist-icon, [class*="heart"], [class*="favorite"], [class*="wishlist"], svg[class*="heart"], svg[class*="favorite"], svg[class*="wishlist"], .icon-heart, .icon-favorite, .icon-wishlist, i.fa-heart, i.fa-star');
+            const buttonsToRemove = card.querySelectorAll('.add-to-cart-btn, .quick-shop-btn, .cart-btn, .eye-btn, .button, button, .heart, .heart-icon, .favorite, .favorite-icon, .wishlist, .wishlist-icon, [class*="heart"], [class*="favorite"], [class*="wishlist"], svg[class*="heart"], svg[class*="favorite"], svg[class*="wishlist"], .icon-heart, .icon-favorite, .icon-wishlist, i.fa-heart, i.fa-star');
             buttonsToRemove.forEach(btn => btn.remove());
             
-            // Add our quick view overlay if it doesn't exist
-            if (!card.querySelector('.product-quick-add-overlay')) {
-                quickViewManager.addQuickViewButtonToCard(card);
+            // Remove the quick add overlay if it exists
+            const quickAddOverlay = card.querySelector('.product-quick-add-overlay');
+            if (quickAddOverlay) {
+                quickAddOverlay.remove();
             }
+            
+            // Add basic click event for quick view
+            quickViewManager.addQuickViewButtonToCard(card);
         });
     }
 }
@@ -2458,31 +2028,11 @@ document.addEventListener('DOMContentLoaded', ensureQuickViewOnAllCards);
 setTimeout(ensureQuickViewOnAllCards, 1000);
 setTimeout(ensureQuickViewOnAllCards, 2000);
 
-// Debug helper function - can be used to force show a specific overlay
+// Debug helper function - modified to remove references to the overlay
 function debugForceShowOverlay(cardSelector) {
     const cards = document.querySelectorAll(cardSelector || '.product-card');
     cards.forEach(card => {
-        const overlay = card.querySelector('.product-quick-add-overlay');
-        if (overlay) {
-            overlay.classList.add('force-visible');
-            
-            // Log for debugging
-            console.log('Forced overlay visible on:', card);
-            
-            // Ensure it has size and color options
-            const sizesContainer = overlay.querySelector('.product-quick-add-sizes');
-            const colorsContainer = overlay.querySelector('.product-quick-add-colors');
-            
-            if (sizesContainer && !sizesContainer.children.length) {
-                console.warn('No size options in overlay', card);
-            }
-            
-            if (colorsContainer && !colorsContainer.children.length) {
-                console.warn('No color options in overlay', card);
-            }
-        } else {
-            console.error('No overlay found on card:', card);
-        }
+        console.log('Debug inspecting card:', card);
     });
 }
 

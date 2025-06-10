@@ -1089,7 +1089,7 @@ class ProductManager {
         }
     }
 
-    // Quick view functionality completely removed
+    // Quick view and quick add functionality completely removed
 
     viewProduct(productId, selectedColor = null) {
         // Basic error check
