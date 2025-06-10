@@ -15,6 +15,7 @@ class QuickViewManager {
         this.isLoading = false;
         this.modalCreated = false;
         this.isColorFiltering = false;
+        this.lastAddedItem = null; // Track last added item to prevent duplicates
         
         this.init();
     }
@@ -1530,6 +1531,15 @@ class QuickViewManager {
         try {
             console.log(`Quick adding to cart: ${productId || productHandle} (${color || 'N/A'} / ${size || 'N/A'})`);
             
+            // Generate a unique key for this item to prevent duplicates
+            const itemKey = `${productId || productHandle}_${color || 'nocolor'}_${size || 'nosize'}`;
+            
+            // Check if we've recently added this exact item to prevent duplicates
+            if (this.lastAddedItem === itemKey) {
+                console.log("Preventing duplicate quick add to cart:", itemKey);
+                return false;
+            }
+            
             // Always re-fetch product data to ensure it's fresh
             const product = await this.fetchProductData(productId, productHandle);
             if (!product) {
@@ -1610,9 +1620,17 @@ class QuickViewManager {
             this.selectedVariant.size = size;
             this.selectedVariant.quantity = 1;
             
+            // Store this item as the last added to prevent duplicates
+            this.lastAddedItem = itemKey;
+            
             // Add to cart with more detailed logging
             console.log(`Adding to cart: ${product.title} - ${color || ''} ${size || ''}`);
             this.addToCart();
+            
+            // Reset last added after a delay to allow future adds of the same item
+            setTimeout(() => {
+                this.lastAddedItem = null;
+            }, 1000);
             
             return true;
         } catch (error) {
@@ -2242,6 +2260,15 @@ class QuickViewManager {
         }
         
         try {
+            // Generate a unique key for this item to prevent duplicates
+            const itemKey = `${this.currentProduct.id}_${this.selectedVariant.color || 'nocolor'}_${this.selectedVariant.size || 'nosize'}`;
+            
+            // Check if we've recently added this exact item to prevent duplicates
+            if (this.lastAddedItem === itemKey) {
+                console.log("Preventing duplicate add to cart:", itemKey);
+                return;
+            }
+            
             // Create cart item
             const cartItem = {
                 ...this.currentProduct,
@@ -2266,7 +2293,9 @@ class QuickViewManager {
                 cartItem.image = mainImage.src;
                 cartItem.mainImage = mainImage.src;
             }
-            // No fallback image handling - if there's no image, there's no image
+            
+            // Store this item as the last added to prevent duplicates
+            this.lastAddedItem = itemKey;
             
             // Add to cart using available cart system
             let cartAddSuccess = false;
@@ -2311,10 +2340,15 @@ class QuickViewManager {
                 // Show confirmation notification
                 const sizeText = this.selectedVariant.size ? ` (${this.simplifySize(this.selectedVariant.size)})` : '';
                 this.showNotification(`Added ${this.currentProduct.title}${sizeText} to cart`, 'success');
+                
+                // Reset last added after a delay to allow future adds of the same item
+                setTimeout(() => {
+                    this.lastAddedItem = null;
+                }, 1000);
             }
             
         } catch (error) {
-            // Error adding to cart
+            console.error('Error adding to cart:', error);
             this.showNotification('Error adding to cart', 'error');
         }
     }
