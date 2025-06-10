@@ -10,6 +10,9 @@
  */
 
 (function() {
+  // Create a global reference to store the original addItem method
+  window.cartOriginalAddItem = null;
+  
   // Ensure we have the global cart debounce object
   // Ensure BobbyCartDebounce exists with all required properties
   if (!window.BobbyCartDebounce) {
@@ -44,8 +47,9 @@
   waitForCart(() => {
     console.log('Cart duplicate fix: Patching cart system to prevent duplicates');
     
-    // Store the original addItem method
+    // Store the original addItem method both locally and globally
     const originalAddItem = window.BobbyCart.addItem;
+    window.cartOriginalAddItem = originalAddItem; // Save globally for other functions to access
     
     // Create enhanced version with duplicate prevention
     window.BobbyCart.addItem = function(product) {
@@ -163,7 +167,7 @@
     
     // Look for any alternative BobbyCart implementation and ensure it uses the same prevention logic
     if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function' &&
-        window.BobbyCart.addItem !== originalAddItem) {
+        window.BobbyCart.addItem !== window.cartOriginalAddItem) {
       console.log('Cart duplicate fix: Found alternative BobbyCart implementation, applying fix');
       const altOriginalAddItem = window.BobbyCart.addItem;
       
@@ -178,7 +182,7 @@
         
         // Use the same prevention logic
         try {
-          return originalAddItem.call(this, cartProduct);
+          return window.cartOriginalAddItem.call(this, cartProduct);
         } catch (e) {
           console.error('Error in BobbyCart.addItem:', e);
           return altOriginalAddItem.call(this, product);

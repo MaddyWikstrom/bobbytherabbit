@@ -324,10 +324,71 @@ exports.handler = async (event, context) => {
 
       // Make the request
       console.log("📡 Sending request to Shopify...");
-      const response = await httpsRequest(requestOptions, requestPayload);
-      console.log("📥 Response status:", response.statusCode);
-      const data = response.body;
-      console.log("📦 Response data:", JSON.stringify(data).substring(0, 500) + '...');
+      
+      // Double-check credentials before making the request
+      if (!SHOPIFY_STOREFRONT_ACCESS_TOKEN || SHOPIFY_STOREFRONT_ACCESS_TOKEN.trim() === '') {
+        console.error("🚨 CRITICAL: Storefront Access Token is empty or missing");
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            error: 'Missing API credentials',
+            details: 'Storefront Access Token is required'
+          })
+        };
+      }
+      
+      // Define data variable at this scope level so it's available after the try/catch
+      let data;
+      
+      try {
+        const response = await httpsRequest(requestOptions, requestPayload);
+        console.log("📥 Response status:", response.statusCode);
+        
+        // Enhanced response validation
+        if (!response.body) {
+          console.error("📛 Empty response body from Shopify");
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              error: 'Empty response from Shopify',
+              details: 'The API returned an empty response'
+            })
+          };
+        }
+        
+        if (typeof response.body === 'string') {
+          try {
+            data = JSON.parse(response.body);
+          } catch (jsonError) {
+            console.error("📛 Invalid JSON in response:", response.body.substring(0, 200));
+            return {
+              statusCode: 500,
+              headers,
+              body: JSON.stringify({
+                error: 'Invalid JSON response',
+                details: 'Could not parse API response as JSON',
+                rawResponse: response.body.substring(0, 200)
+              })
+            };
+          }
+        } else {
+          data = response.body;
+        }
+        
+        console.log("📦 Response data:", JSON.stringify(data).substring(0, 500) + '...');
+      } catch (responseError) {
+        console.error("📛 Error processing Shopify response:", responseError);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            error: 'Error processing response',
+            details: responseError.message
+          })
+        };
+      }
 
       // Check for GraphQL errors
       if (data.errors) {

@@ -13,7 +13,10 @@ const DirectStorefrontCheckout = (function() {
   const SHOPIFY_CONFIG = {
     domain: 'mfdkk3-7g.myshopify.com',
     storefrontAccessToken: '8c6bd66766da4553701a1f1fe7d94dc4',
-    apiVersion: '2023-07'
+    apiVersion: '2023-07',
+    // Retry configuration
+    maxRetries: 3,
+    retryDelay: 1000
   };
 
   // Check if already initialized to prevent duplicate declaration

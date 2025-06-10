@@ -521,8 +521,14 @@ const CartBridgeFix = {
         if (window.BobbyCart && window.cartManager) {  // FIXED: Name
             
             const bobbyCartItems = window.BobbyCart.getItems ? window.BobbyCart.getItems() : [];  // FIXED: Name
+            const cartManagerItems = window.cartManager.items || [];
             
-            if (bobbyCartItems.length >= window.cartManager.items.length) {  // FIXED: Logic to get items
+            console.log('Cart items found:', {
+                bobbyCart: bobbyCartItems.length,
+                cartManager: cartManagerItems.length
+            });
+            
+            if (bobbyCartItems.length >= cartManagerItems.length) {  // Use the safe reference
                 primarySystem = 'BobbyCart';  // FIXED: Name
                 secondarySystem = 'CartManager';
             } else {

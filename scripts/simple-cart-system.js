@@ -524,8 +524,8 @@ if (window.BobbyCartSystem) {
         quantity: item.quantity
       }));
       
-      // Call fixed Netlify function to create checkout
-      fetch('/.netlify/functions/create-checkout-fixed', {
+      // Call simplified Netlify function for checkout
+      fetch('/.netlify/functions/create-checkout-simplified', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
