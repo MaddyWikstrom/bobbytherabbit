@@ -645,11 +645,11 @@ class QuickViewManager {
                 const color = e.target.getAttribute('data-color');
                 this.selectedVariant.color = color;
                 
-                // Filter images to show color-specific images
-                this.filterImagesByColor(color);
+                // Update thumbnails for this color
+                this.updateThumbnailsForColor(color, this.currentProduct);
                 
                 // Update size availability based on color
-                this.renderSizeOptions();
+                this.updateSizesForColor(color, this.currentProduct);
                 
                 // Update state
                 this.updateQuickViewState();
@@ -974,169 +974,65 @@ class QuickViewManager {
         }
     }
     
-    // Fetch product data from API
+    // Fetch product data from API - simple direct approach
     async fetchProductData(productId, productHandle) {
-        // First, check if we already have product data on the page
-        // This is common on product detail pages where the data is already loaded
+        // First, check if we have product data on the page (for product detail pages)
         if (window.product) {
             console.log("Using existing product data from page");
             return this.processProductData(window.product);
         }
-        
-        // Next, check if there's any global Shopify product data available
-        if (window.ShopifyProduct) {
-            console.log("Using ShopifyProduct global data");
-            return this.processProductData(window.ShopifyProduct);
-        }
-        
-        // Try to get the product from the current page's meta data
-        const metaProduct = this.getProductFromMeta();
-        if (metaProduct) {
-            console.log("Found product in page meta data");
-            return metaProduct;
-        }
-        
+
         try {
-            // Simplify what we're looking for - either ID or handle
-            const productIdentifier = productId || productHandle || '';
-            if (!productIdentifier) {
-                throw new Error('No product identifier provided');
-            }
+            // Use a single API endpoint - exactly the same as the product details page
+            const timestamp = new Date().getTime();
+            const url = `/.netlify/functions/get-products?id=${productId || ''}&handle=${productHandle || ''}&_=${timestamp}`;
             
-            // Try all potential API endpoints in sequence
-            const endpoints = [
-                `/.netlify/functions/get-products?${productId ? 'id=' + productId : 'handle=' + productHandle}`,
-                `/api/get-products?${productId ? 'id=' + productId : 'handle=' + productHandle}`,
-                `/products/${productHandle}.js`,
-                `/products/${productIdentifier}.js`
-            ];
+            console.log("Fetching product data from:", url);
             
-            // Try each endpoint until one works
-            for (const endpoint of endpoints) {
-                try {
-                    console.log("Trying to fetch product data from:", endpoint);
-                    const response = await fetch(endpoint);
-                    
-                    if (!response.ok) {
-                        console.warn(`Endpoint ${endpoint} returned ${response.status}`);
-                        continue; // Try next endpoint
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Different endpoints return different data structures
-                    const productData = data.product || data;
-                    
-                    if (!productData || !productData.title) {
-                        console.warn("Invalid product data structure from", endpoint);
-                        continue; // Try next endpoint
-                    }
-                    
-                    console.log("Successfully fetched product:", productData.title);
-                    return this.processProductData(productData);
-                    
-                } catch (endpointError) {
-                    console.warn(`Error with endpoint ${endpoint}:`, endpointError);
-                    // Continue to next endpoint
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch product data: ${response.status}`);
             }
             
-            // If we get here, all endpoints failed
-            console.warn("All API endpoints failed for", productIdentifier);
+            const data = await response.json();
             
-            // As last resort, create mock product for UI testing
-            return this.createMockProduct(productIdentifier);
+            if (!data || !data.product) {
+                throw new Error('Invalid product data received');
+            }
+            
+            console.log("Successfully received product data:", data.product.title);
+            return this.processProductData(data.product);
             
         } catch (error) {
-            console.error('Error in product data fetching process:', error);
-            return this.createMockProduct(productId || productHandle);
-        }
-    }
-    
-    // Try to get product data from page meta tags
-    getProductFromMeta() {
-        try {
-            // Look for JSON-LD structured data
-            const jsonLdElements = document.querySelectorAll('script[type="application/ld+json"]');
-            for (const element of jsonLdElements) {
-                try {
-                    const data = JSON.parse(element.textContent);
-                    
-                    if (data && data['@type'] === 'Product') {
-                        // Convert JSON-LD to our product format
-                        const product = {
-                            id: data.productID || data.sku || 'meta-product',
-                            title: data.name,
-                            description: data.description,
-                            price: parseFloat(data.offers?.price || 0),
-                            comparePrice: parseFloat(data.offers?.comparePrice || 0),
-                            images: data.image ? (Array.isArray(data.image) ? data.image : [data.image]) : [],
-                            colors: [],
-                            sizes: [],
-                            inventory: {},
-                            category: this.extractCategory(data.name)
-                        };
-                        
-                        // Extract variants if available
-                        if (data.offers && Array.isArray(data.offers)) {
-                            const colorSet = new Set();
-                            const sizeSet = new Set();
-                            
-                            data.offers.forEach(offer => {
-                                if (offer.itemOffered && offer.itemOffered.color) {
-                                    colorSet.add(offer.itemOffered.color);
-                                }
-                                if (offer.itemOffered && offer.itemOffered.size) {
-                                    sizeSet.add(offer.itemOffered.size);
-                                }
-                            });
-                            
-                            product.colors = Array.from(colorSet).map(colorName => ({
-                                name: colorName,
-                                code: this.getColorCode(colorName)
-                            }));
-                            
-                            product.sizes = Array.from(sizeSet);
-                        }
-                        
-                        return product;
-                    }
-                } catch (jsonError) {
-                    // Skip this element if JSON parsing fails
-                }
+            console.error('Error fetching product data:', error);
+            
+            // Check if we have a product in window object as fallback
+            if (window.product) {
+                return this.processProductData(window.product);
             }
             
-            // Look for Shopify meta tags as fallback
-            const metaTags = {
-                id: document.querySelector('meta[property="product:id"]')?.content,
-                title: document.querySelector('meta[property="og:title"]')?.content,
-                description: document.querySelector('meta[property="og:description"]')?.content,
-                image: document.querySelector('meta[property="og:image"]')?.content,
-                price: document.querySelector('meta[property="product:price:amount"]')?.content
+            // Just return a basic object with the ID so we don't break things
+            return {
+                id: productId || productHandle || 'unknown',
+                title: productId || productHandle || 'Product',
+                handle: productHandle || productId || 'unknown',
+                description: 'Product data could not be loaded',
+                price: 0,
+                comparePrice: 0,
+                images: [],
+                colors: [],
+                sizes: ['S', 'M', 'L', 'XL'],
+                inventory: {},
+                category: 'Unknown'
             };
-            
-            if (metaTags.title && metaTags.title.includes(' - ')) {
-                const product = {
-                    id: metaTags.id || 'meta-product',
-                    title: metaTags.title.split(' - ')[0].trim(),
-                    description: metaTags.description || '',
-                    price: parseFloat(metaTags.price || 0),
-                    comparePrice: 0,
-                    images: metaTags.image ? [metaTags.image] : [],
-                    colors: [],
-                    sizes: ['S', 'M', 'L', 'XL', '2XL'],
-                    inventory: {},
-                    category: this.extractCategory(metaTags.title)
-                };
-                
-                return product;
-            }
-            
-        } catch (error) {
-            console.warn("Error extracting product from meta:", error);
         }
-        
-        return null;
     }
     
     // Process raw product data into a standardized format
@@ -1207,60 +1103,181 @@ class QuickViewManager {
         return product;
     }
     
-    // Create mock product data when API calls fail
-    createMockProduct(idOrHandle) {
-        console.log("Creating mock product for UI testing:", idOrHandle);
-        
-        // Extract product name from ID or handle
-        let productName = idOrHandle || 'Sample Product';
-        
-        // Clean up the handle/id to make a readable name
-        if (productName.includes('-')) {
-            productName = productName
-                .split('-')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
+    // Simplify and update color variants to match product details page
+    updateProductVariantDisplay(product) {
+        if (!product || !product.colors || product.colors.length === 0) {
+            return;
         }
         
-        // Generate a mock product with realistic data
-        const mockProduct = {
-            id: idOrHandle || 'mock-product-' + Date.now(),
-            title: productName,
-            handle: idOrHandle || 'mock-product',
-            description: `This is a mock product for "${productName}" created for UI testing when API data is unavailable.`,
-            price: 29.99,
-            comparePrice: Math.random() > 0.5 ? 39.99 : 0, // 50% chance of having a sale price
-            images: [
-                'https://via.placeholder.com/800x800?text=' + encodeURIComponent(productName),
-                'https://via.placeholder.com/800x800?text=' + encodeURIComponent(productName + ' (Alt)'),
-            ],
-            colors: [
-                {name: 'Black', code: '#000000'},
-                {name: 'White', code: '#FFFFFF'},
-                {name: 'Red', code: '#ff0000'},
-            ],
-            sizes: ['S', 'M', 'L', 'XL', '2XL'],
-            inventory: {
-                'Black-S': 10,
-                'Black-M': 10,
-                'Black-L': 10,
-                'Black-XL': 10,
-                'Black-2XL': 10,
-                'White-S': 10,
-                'White-M': 10,
-                'White-L': 10,
-                'White-XL': 10,
-                'White-2XL': 10,
-                'Red-S': 10,
-                'Red-M': 10,
-                'Red-L': 10,
-                'Red-XL': 10,
-                'Red-2XL': 10,
-            },
-            category: this.extractCategory(productName),
-        };
+        // Get the appropriate containers
+        const colorOptions = document.getElementById('quick-view-color-options');
+        const colorGroup = document.getElementById('quick-view-color-group');
         
-        return mockProduct;
+        // Clear current options
+        colorOptions.innerHTML = '';
+        
+        // Make sure color section is visible
+        colorGroup.style.display = 'block';
+        
+        // Create new color options with the same structure as product details page
+        product.colors.forEach((color, index) => {
+            // Handle both string and object formats for colors
+            const colorName = typeof color === 'object' ? color.name : color;
+            const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
+            
+            // Create color option element
+            const option = document.createElement('div');
+            option.className = 'quick-view-color-option';
+            option.setAttribute('data-color', colorName);
+            option.style.backgroundColor = colorCode;
+            option.title = colorName;
+            
+            // Add a color name tooltip
+            const colorNameSpan = document.createElement('span');
+            colorNameSpan.className = 'quick-view-color-name';
+            colorNameSpan.textContent = colorName;
+            option.appendChild(colorNameSpan);
+            
+            // Try to find an image for this color
+            if (product.colorImages && product.colorImages[colorName]) {
+                option.setAttribute('data-color-image', product.colorImages[colorName][0]);
+            }
+            
+            // Add event listeners matching product details page
+            option.addEventListener('mouseenter', () => {
+                if (product.colorImages && product.colorImages[colorName]) {
+                    const mainImage = document.getElementById('quick-view-main-image');
+                    mainImage.dataset.originalSrc = mainImage.dataset.originalSrc || mainImage.src;
+                    mainImage.src = product.colorImages[colorName][0];
+                }
+            });
+            
+            option.addEventListener('mouseleave', () => {
+                // Only restore if not the selected color
+                if (!option.classList.contains('selected')) {
+                    const mainImage = document.getElementById('quick-view-main-image');
+                    if (mainImage.dataset.originalSrc) {
+                        mainImage.src = mainImage.dataset.originalSrc;
+                    }
+                }
+            });
+            
+            option.addEventListener('click', () => {
+                // Update UI to show this as selected
+                document.querySelectorAll('.quick-view-color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                
+                // Update selected variant state
+                this.selectedVariant.color = colorName;
+                
+                // Update main image permanently
+                if (product.colorImages && product.colorImages[colorName]) {
+                    const mainImage = document.getElementById('quick-view-main-image');
+                    mainImage.src = product.colorImages[colorName][0];
+                    mainImage.dataset.originalSrc = product.colorImages[colorName][0];
+                    
+                    // Also update thumbnails to show color-specific images
+                    this.updateThumbnailsForColor(colorName, product);
+                }
+                
+                // Update available sizes based on selected color
+                this.updateSizesForColor(colorName, product);
+                
+                // Update the add to cart button state
+                this.updateQuickViewState();
+            });
+            
+            colorOptions.appendChild(option);
+        });
+        
+        // Select first color by default
+        const firstColorOption = colorOptions.querySelector('.quick-view-color-option');
+        if (firstColorOption) {
+            firstColorOption.classList.add('selected');
+            this.selectedVariant.color = firstColorOption.getAttribute('data-color');
+        }
+    }
+    
+    // Update thumbnails when color is selected
+    updateThumbnailsForColor(colorName, product) {
+        if (!product || !colorName) return;
+        
+        const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
+        thumbnailsContainer.innerHTML = '';
+        
+        // Get color-specific images
+        let images = [];
+        if (product.colorImages && product.colorImages[colorName]) {
+            images = product.colorImages[colorName];
+        } else {
+            // Fallback to all product images
+            images = product.images;
+        }
+        
+        // Create thumbnails
+        images.forEach((imageUrl, index) => {
+            const thumbnail = document.createElement('img');
+            thumbnail.className = `quick-view-thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.src = imageUrl;
+            thumbnail.alt = `${product.title} - ${colorName} - Image ${index + 1}`;
+            
+            thumbnailsContainer.appendChild(thumbnail);
+        });
+    }
+    
+    // Update available sizes based on selected color
+    updateSizesForColor(colorName, product) {
+        const sizeOptions = document.getElementById('quick-view-size-options');
+        sizeOptions.innerHTML = '';
+        
+        if (!product.sizes || product.sizes.length === 0) {
+            return;
+        }
+        
+        // Create size options for this color
+        product.sizes.forEach(size => {
+            const option = document.createElement('div');
+            option.className = 'quick-view-size-option';
+            option.setAttribute('data-size', size);
+            
+            // Check inventory if we have it
+            let isAvailable = true;
+            if (product.inventory && colorName) {
+                const inventoryKey = `${colorName}-${size}`;
+                const stockLevel = product.inventory[inventoryKey] || 0;
+                isAvailable = stockLevel > 0;
+                
+                if (!isAvailable) {
+                    option.classList.add('unavailable');
+                }
+            }
+            
+            // Use simplified size display
+            option.textContent = this.simplifySize(size);
+            
+            // Add click handler
+            option.addEventListener('click', () => {
+                if (option.classList.contains('unavailable')) {
+                    return; // Don't select unavailable sizes
+                }
+                
+                // Update UI
+                document.querySelectorAll('.quick-view-size-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                
+                // Update state
+                this.selectedVariant.size = size;
+                
+                // Update add button state
+                this.updateQuickViewState();
+            });
+            
+            sizeOptions.appendChild(option);
+        });
     }
     
     // Quick add to cart directly from the overlay
@@ -1547,20 +1564,90 @@ class QuickViewManager {
             document.getElementById('quick-view-price-discount').style.display = 'none';
         }
         
+        // Prepare color-specific image mapping (just like product details page)
+        this.prepareColorImages();
+        
         // Render images
         this.renderImages();
         
-        // Render color options
-        this.renderColorOptions();
+        // Using the same variant logic as product details page
+        this.updateProductVariantDisplay(this.currentProduct);
         
-        // Render size options
-        this.renderSizeOptions();
+        // Also update the sizes based on the first color
+        if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
+            const firstColor = typeof this.currentProduct.colors[0] === 'object' ?
+                this.currentProduct.colors[0].name : this.currentProduct.colors[0];
+            
+            this.updateSizesForColor(firstColor, this.currentProduct);
+        }
         
         // Initialize the add to cart button state
         this.updateQuickViewState();
     }
     
-    // Render product images
+    // Process color-specific images - same logic as product details page
+    prepareColorImages() {
+        // Skip if no product or already processed
+        if (!this.currentProduct || this.currentProduct.colorImages) {
+            return;
+        }
+        
+        // Initialize color images map
+        this.currentProduct.colorImages = {};
+        
+        // Skip if no colors
+        if (!this.currentProduct.colors || this.currentProduct.colors.length === 0) {
+            return;
+        }
+        
+        // Extract colors to a simple array of names for easier processing
+        const colorNames = this.currentProduct.colors.map(color =>
+            typeof color === 'object' ? color.name : color
+        );
+        
+        // For each color, find matching images
+        colorNames.forEach(colorName => {
+            // Initialize with empty array
+            this.currentProduct.colorImages[colorName] = [];
+            
+            // First, try to find variant-specific images from variants
+            if (this.currentProduct.variants && this.currentProduct.variants.length > 0) {
+                const colorVariants = this.currentProduct.variants.filter(variant =>
+                    variant.color === colorName && variant.image
+                );
+                
+                if (colorVariants.length > 0) {
+                    colorVariants.forEach(variant => {
+                        if (variant.image && !this.currentProduct.colorImages[colorName].includes(variant.image)) {
+                            this.currentProduct.colorImages[colorName].push(variant.image);
+                        }
+                    });
+                }
+            }
+            
+            // If no variant images found, try to find images with color name in URL
+            if (this.currentProduct.colorImages[colorName].length === 0 && this.currentProduct.images) {
+                const colorLower = colorName.toLowerCase();
+                const matchingImages = this.currentProduct.images.filter(url => {
+                    const urlLower = url.toLowerCase();
+                    return urlLower.includes(colorLower) ||
+                        (colorLower === 'vintage black' && urlLower.includes('vintage')) ||
+                        (colorLower === 'charcoal gray' && urlLower.includes('charcoal'));
+                });
+                
+                if (matchingImages.length > 0) {
+                    this.currentProduct.colorImages[colorName] = matchingImages;
+                }
+            }
+            
+            // If still no images, just use all product images
+            if (this.currentProduct.colorImages[colorName].length === 0 && this.currentProduct.images) {
+                this.currentProduct.colorImages[colorName] = [...this.currentProduct.images];
+            }
+        });
+    }
+    
+    // Render product images with improved event handling
     renderImages() {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             // No images to display
@@ -1587,77 +1674,69 @@ class QuickViewManager {
             thumbnail.src = imageUrl;
             thumbnail.alt = `${this.currentProduct.title} - Image ${index + 1}`;
             
+            // Add click handler
+            thumbnail.addEventListener('click', () => {
+                // Update active thumbnail
+                document.querySelectorAll('.quick-view-thumbnail').forEach(thumb => {
+                    thumb.classList.remove('active');
+                });
+                thumbnail.classList.add('active');
+                
+                // Update main image
+                mainImage.src = imageUrl;
+                mainImage.dataset.originalSrc = imageUrl;
+            });
+            
             thumbnailsContainer.appendChild(thumbnail);
         });
     }
     
-    // Render color options
-    renderColorOptions() {
-        const colorOptions = document.getElementById('quick-view-color-options');
-        const colorGroup = document.getElementById('quick-view-color-group');
+    // Update thumbnails when color is selected
+    updateThumbnailsForColor(colorName, product) {
+        if (!product || !colorName) return;
         
-        // Hide color section if no colors available
-        if (!this.currentProduct.colors || this.currentProduct.colors.length === 0) {
-            colorGroup.style.display = 'none';
-            return;
+        const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
+        thumbnailsContainer.innerHTML = '';
+        
+        // Get color-specific images
+        let images = [];
+        if (product.colorImages && product.colorImages[colorName]) {
+            images = product.colorImages[colorName];
+        } else {
+            // Fallback to all product images
+            images = product.images;
         }
         
-        colorGroup.style.display = 'block';
-        colorOptions.innerHTML = '';
-        
-        // Create a color option for each available color
-        this.currentProduct.colors.forEach(color => {
-            const option = document.createElement('div');
-            option.className = 'quick-view-color-option';
-            option.setAttribute('data-color', color.name);
-            option.style.color = color.code;
+        // Create thumbnails
+        images.forEach((imageUrl, index) => {
+            const thumbnail = document.createElement('img');
+            thumbnail.className = `quick-view-thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.src = imageUrl;
+            thumbnail.alt = `${product.title} - ${colorName} - Image ${index + 1}`;
             
-            const colorName = document.createElement('span');
-            colorName.className = 'quick-view-color-name';
-            colorName.textContent = color.name;
-            
-            option.appendChild(colorName);
-            colorOptions.appendChild(option);
-        });
-    }
-    
-    // Render size options
-    renderSizeOptions() {
-        const sizeOptions = document.getElementById('quick-view-size-options');
-        const sizeGroup = document.getElementById('quick-view-size-group');
-        
-        // Hide size section if no sizes available
-        if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
-            sizeGroup.style.display = 'none';
-            return;
-        }
-        
-        sizeGroup.style.display = 'block';
-        sizeOptions.innerHTML = '';
-        
-        // Create a size option for each available size
-        this.currentProduct.sizes.forEach(size => {
-            const option = document.createElement('div');
-            option.className = 'quick-view-size-option';
-            option.setAttribute('data-size', size);
-            
-            // Check if this size is available for the selected color
-            let isAvailable = true;
-            if (this.selectedVariant.color) {
-                const inventoryKey = `${this.selectedVariant.color}-${size}`;
-                const stockLevel = this.currentProduct.inventory[inventoryKey] || 0;
-                isAvailable = stockLevel > 0;
+            // Add click handler
+            thumbnail.addEventListener('click', () => {
+                // Update active thumbnail
+                document.querySelectorAll('.quick-view-thumbnail').forEach(thumb => {
+                    thumb.classList.remove('active');
+                });
+                thumbnail.classList.add('active');
                 
-                if (!isAvailable) {
-                    option.classList.add('unavailable');
-                }
-            }
+                // Update main image
+                const mainImage = document.getElementById('quick-view-main-image');
+                mainImage.src = imageUrl;
+                mainImage.dataset.originalSrc = imageUrl;
+            });
             
-            // Use simplified size display
-            option.textContent = this.simplifySize(size);
-            
-            sizeOptions.appendChild(option);
+            thumbnailsContainer.appendChild(thumbnail);
         });
+        
+        // Update main image to first thumbnail
+        if (images.length > 0) {
+            const mainImage = document.getElementById('quick-view-main-image');
+            mainImage.src = images[0];
+            mainImage.dataset.originalSrc = images[0];
+        }
     }
     
     // Update button states based on selection
@@ -1770,62 +1849,13 @@ class QuickViewManager {
         }
     }
     
-    // Filter images by color
+    // This method is now replaced by updateThumbnailsForColor
+    // We keep it as a wrapper for backward compatibility
     filterImagesByColor(colorName) {
-        if (this.isColorFiltering) return; // Prevent multiple simultaneous filters
+        if (!colorName || !this.currentProduct) return;
         
-        this.isColorFiltering = true;
-        const MAX_IMAGES = 5; // Limit to avoid endless loops
-        
-        try {
-            // If no color or no images, do nothing
-            if (!colorName || !this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length <= 1) {
-                this.isColorFiltering = false;
-                return;
-            }
-            
-            // Get color name in lowercase for matching
-            const colorLower = colorName.toLowerCase();
-            
-            // Find matching images - first, try exact color name in the URL
-            let matchedImages = this.currentProduct.images.filter(url => {
-                const urlLower = url.toLowerCase();
-                return urlLower.includes(colorLower) || 
-                       // Special case for vintage black and charcoal gray
-                       (colorLower === 'vintage black' && urlLower.includes('vintage')) ||
-                       (colorLower === 'charcoal gray' && urlLower.includes('charcoal'));
-            });
-            
-            // Cap the number of images to avoid processing too many
-            if (matchedImages.length > MAX_IMAGES) {
-                matchedImages = matchedImages.slice(0, MAX_IMAGES);
-            }
-            
-            // If we found at least one matching image, update the gallery
-            if (matchedImages.length > 0) {
-                // Update main image to first matching image
-                const mainImage = document.getElementById('quick-view-main-image');
-                mainImage.src = matchedImages[0];
-                
-                // Update thumbnails
-                const thumbnailsContainer = document.getElementById('quick-view-thumbnails');
-                thumbnailsContainer.innerHTML = '';
-                
-                matchedImages.forEach((imageUrl, index) => {
-                    const thumbnail = document.createElement('img');
-                    thumbnail.className = `quick-view-thumbnail ${index === 0 ? 'active' : ''}`;
-                    thumbnail.src = imageUrl;
-                    thumbnail.alt = `${this.currentProduct.title} - ${colorName} - Image ${index + 1}`;
-                    
-                    thumbnailsContainer.appendChild(thumbnail);
-                });
-            }
-        } catch (error) {
-            // Error in filtering - silently fail
-        } finally {
-            // Always clear the filtering flag
-            this.isColorFiltering = false;
-        }
+        // Just use our new method instead
+        this.updateThumbnailsForColor(colorName, this.currentProduct);
     }
     
     // Update product card image when color is selected
