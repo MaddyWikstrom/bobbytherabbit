@@ -851,40 +851,9 @@ class QuickViewManager {
                         sizesContainer.appendChild(sizeBtn);
                     });
                 } else {
-                    // Add a default "One Size" option for products without variants
-                    const sizeBtn = document.createElement('button');
-                    sizeBtn.className = 'quick-add-size-btn';
-                    sizeBtn.setAttribute('data-size', 'One Size');
-                    sizeBtn.textContent = 'One Size';
-                    
-                    sizeBtn.addEventListener('click', (e) => {
-                        card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        sizeBtn.classList.add('selected');
-                        
-                        // One size items with no color can be added directly
-                        if (!product.colors || product.colors.length === 0) {
-                            setTimeout(() => {
-                                this.quickAddToCart(productId, productHandle, null, 'One Size');
-                                this.showNotification(`Added to bag`, 'success');
-                            }, 300);
-                            addButton.disabled = false;
-                        } else {
-                            // Wait for color selection
-                            const selectedColor = card.querySelector('.quick-add-color-btn.selected');
-                            if (selectedColor) {
-                                const color = selectedColor.getAttribute('data-color');
-                                setTimeout(() => {
-                                    this.quickAddToCart(productId, productHandle, color, 'One Size');
-                                    this.showNotification(`Added ${color} to bag`, 'success');
-                                }, 300);
-                            }
-                            addButton.disabled = !selectedColor;
-                        }
-                    });
-                    
-                    sizesContainer.appendChild(sizeBtn);
+                    // Don't add "One Size" by default
+                    // Hide size container if no sizes
+                    sizesContainer.style.display = 'none';
                 }
                 
                 // CRITICAL FIX: Only add color options if the product TRULY has variant colors
@@ -979,32 +948,8 @@ class QuickViewManager {
             })
             .catch(error => {
                 console.error('Error fetching product data:', error);
-                
-                // Add default size options as fallback
-                const defaultSizes = ['S', 'M', 'L', 'XL'];
-                defaultSizes.forEach(size => {
-                    const sizeBtn = document.createElement('button');
-                    sizeBtn.className = 'quick-add-size-btn';
-                    sizeBtn.setAttribute('data-size', size);
-                    sizeBtn.textContent = size;
-                    
-                    sizeBtn.addEventListener('click', (e) => {
-                        card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
-                            btn.classList.remove('selected');
-                        });
-                        sizeBtn.classList.add('selected');
-                        
-                        // Direct add for fallback (no colors)
-                        setTimeout(() => {
-                            this.quickAddToCart(productId, productHandle, null, size);
-                            this.showNotification(`Added ${size} to bag`, 'success');
-                        }, 300);
-                        
-                        addButton.disabled = false;
-                    });
-                    
-                    sizesContainer.appendChild(sizeBtn);
-                });
+                // No fallback sizes - just leave empty if we can't get product data
+                sizesContainer.innerHTML = '<div style="padding: 5px; text-align: center; color: white;">Unable to load options</div>';
             });
         
         // Click handler for the "Add to Bag" button in overlay
@@ -1067,10 +1012,8 @@ class QuickViewManager {
             
             if (matchingImages.length > 0) {
                 product.colorImages[colorName] = matchingImages;
-            } else {
-                // If no specific images found, use all product images
-                product.colorImages[colorName] = [...product.images];
             }
+            // NO FALLBACK - if no color-specific images found, leave empty
         });
     }
     
@@ -1130,12 +1073,11 @@ class QuickViewManager {
             // Fetch product data
             const product = await this.fetchProductData(productId, productHandle);
             
-            // IMPROVED ERROR HANDLING: If product is null (API failure), show clear error
+            // If product is null (API failure), close modal and show error
             if (!product) {
                 this.showLoading(false);
-                this.showNotification(`Product not found: ${productHandle || productId}`, 'error');
-                console.error('Product not found:', productHandle || productId);
                 this.closeQuickView();
+                this.showNotification(`Unable to load product data`, 'error');
                 return;
             }
             
@@ -1271,15 +1213,12 @@ class QuickViewManager {
                 console.log(`Found product: ${productData.title || productId || productHandle}`);
                 return this.processProductData(productData);
             } else {
-                // NO FALLBACKS - just throw error if product not found
+                // Product not found
                 throw new Error(`Product not found: ${productId || productHandle}`);
             }
             
         } catch (error) {
             console.error('Error fetching product data:', error);
-            
-            // NO FALLBACKS - return null instead of creating a fake product
-            // This will prevent the system from trying to show placeholder.png
             return null;
         }
     }
@@ -1293,16 +1232,16 @@ class QuickViewManager {
         }
         
         try {
-            // Extract basic product info with safe defaults
+            // Extract basic product info - no fallbacks for critical fields
             const product = {
-                id: rawProduct.id || 'unknown-' + Math.floor(Math.random() * 1000),
-                title: rawProduct.title || 'Unknown Product',
-                handle: rawProduct.handle || 'unknown-product',
+                id: rawProduct.id,
+                title: rawProduct.title || '',
+                handle: rawProduct.handle || '',
                 description: rawProduct.description || rawProduct.body_html || '',
                 price: 0,
                 comparePrice: 0,
                 images: [],
-                colors: [], // No default colors - critical fix
+                colors: [],
                 sizes: [],
                 inventory: {},
                 category: this.extractCategory(rawProduct.title || ''),
@@ -1393,15 +1332,8 @@ class QuickViewManager {
                 });
             }
             
-            // If no sizes found, provide defaults based on category
-            if (sizeSet.size === 0) {
-                if (product.category.toLowerCase().includes('hat') ||
-                    product.category.toLowerCase().includes('beanie')) {
-                    sizeSet.add('One Size');
-                } else {
-                    ['S', 'M', 'L', 'XL', '2XL'].forEach(size => sizeSet.add(size));
-                }
-            }
+            // Don't add default sizes if none found
+            // This ensures we only show actual product data
             
             // CRITICAL FIX: Only add colors if we actually found multiple color variants
             if (colorSet.size > 1) {
@@ -2101,22 +2033,14 @@ class QuickViewManager {
                 }
             }
             
-            // If still no images, just use all product images
-            if (this.currentProduct.colorImages[colorName].length === 0 && this.currentProduct.images) {
-                this.currentProduct.colorImages[colorName] = [...this.currentProduct.images];
-            }
+            // NO FALLBACKS - if no color-specific images, we leave the array empty
         });
     }
     
     // Render product images with improved event handling
     renderImages() {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
-            // No images to display
-            const mainImage = document.getElementById('quick-view-main-image');
-            // Use data URI instead of external placeholder to avoid 404 errors
-            mainImage.src = 'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'400\' viewBox=\'0 0 400 400\'%3e%3crect fill=\'%23f0f0f0\' width=\'400\' height=\'400\'/%3e%3ctext fill=\'%23999999\' font-family=\'sans-serif\' font-size=\'20\' text-anchor=\'middle\' x=\'200\' y=\'200\'%3eNo Image%3c/text%3e%3c/svg%3e';
-            mainImage.alt = this.currentProduct?.title || 'Product Image';
-            
+            // No images available - don't attempt to set any image source
             document.getElementById('quick-view-thumbnails').innerHTML = '';
             return;
         }
@@ -2164,9 +2088,11 @@ class QuickViewManager {
         let images = [];
         if (product.colorImages && product.colorImages[colorName]) {
             images = product.colorImages[colorName];
-        } else {
-            // Fallback to all product images
-            images = product.images;
+        }
+        
+        // No fallback - if no images for this color, don't show any
+        if (images.length === 0) {
+            return;
         }
         
         // Create thumbnails
@@ -2271,12 +2197,12 @@ class QuickViewManager {
     // Get available stock for selected variant
     getAvailableStock() {
         if (!this.currentProduct || !this.selectedVariant.color || !this.selectedVariant.size) {
-            return 10; // Default max if no variant selected
+            return 0; // Don't provide default stock, return 0 to trigger out-of-stock behavior
         }
         
         // Get stock from inventory
         const inventoryKey = `${this.selectedVariant.color}-${this.selectedVariant.size}`;
-        return this.currentProduct.inventory[inventoryKey] || 10;
+        return this.currentProduct.inventory[inventoryKey] || 0; // No fallback stock
     }
     
     // Enhanced add to cart with better validation and feedback
@@ -2351,16 +2277,13 @@ class QuickViewManager {
                 color: this.selectedVariant.color
             };
             
-            // Find the correct image for the selected color
-            if (this.selectedVariant.color && this.currentProduct.images.length > 1) {
-                // Select the current main image as the cart image
-                const mainImage = document.getElementById('quick-view-main-image');
+            // Find the correct image for the selected color - use only current main image
+            const mainImage = document.getElementById('quick-view-main-image');
+            if (mainImage && mainImage.src) {
                 cartItem.image = mainImage.src;
                 cartItem.mainImage = mainImage.src;
-            } else if (this.currentProduct.images.length > 0) {
-                cartItem.image = this.currentProduct.images[0];
-                cartItem.mainImage = this.currentProduct.images[0];
             }
+            // No fallback image handling - if there's no image, there's no image
             
             // Add to cart using available cart system
             let cartAddSuccess = false;
@@ -2422,30 +2345,25 @@ class QuickViewManager {
         this.updateThumbnailsForColor(colorName, this.currentProduct);
     }
     
-    // Update product card image when color is selected
+    // Update product card image when color is selected - ONLY use color-specific images
     updateProductCardImage(colorName, card) {
         if (!card || !colorName || !this.currentProduct) return;
         
         try {
-            // Find an image that matches this color
-            const colorLower = colorName.toLowerCase();
-            const matchingImage = this.currentProduct.images.find(url => {
-                const urlLower = url.toLowerCase();
-                return urlLower.includes(colorLower) || 
-                       // Special cases
-                       (colorLower === 'vintage black' && urlLower.includes('vintage')) ||
-                       (colorLower === 'charcoal gray' && urlLower.includes('charcoal'));
-            });
-            
-            // If we found a matching image, update the card image
-            if (matchingImage) {
-                const cardImage = card.querySelector('img');
+            // Only use images from colorImages map - no searching through all images
+            if (this.currentProduct.colorImages &&
+                this.currentProduct.colorImages[colorName] &&
+                this.currentProduct.colorImages[colorName].length > 0) {
+                
+                const cardImage = card.querySelector('img.product-image');
                 if (cardImage) {
-                    cardImage.src = matchingImage;
+                    cardImage.src = this.currentProduct.colorImages[colorName][0];
                 }
             }
+            // No fallbacks - if no color-specific image exists, don't change anything
         } catch (error) {
-            // Error updating image - silently fail
+            console.error("Error updating product card image:", error);
+            // Don't attempt any recovery
         }
     }
 }
