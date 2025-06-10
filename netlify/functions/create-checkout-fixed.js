@@ -79,25 +79,43 @@ exports.handler = async (event, context) => {
   try {
     console.log('Checkout process started');
     
-    // Parse the cart items from the request
+    // Parse the cart items from the request with flexible format support
     let requestBody;
+    let items = [];
+    
     try {
       console.log("📦 Raw request body:", event.body);
       requestBody = JSON.parse(event.body);
       console.log("✅ Parsed request body:", JSON.stringify(requestBody));
+      
+      // Support multiple formats: {items: []}, {lineItems: []}, or direct array
+      if (Array.isArray(requestBody)) {
+        console.log("📝 Request body is an array - using directly as items");
+        items = requestBody;
+      } else if (requestBody.items && Array.isArray(requestBody.items)) {
+        console.log("📝 Found items array in request body");
+        items = requestBody.items;
+      } else if (requestBody.lineItems && Array.isArray(requestBody.lineItems)) {
+        console.log("📝 Found lineItems array in request body");
+        items = requestBody.lineItems;
+      } else {
+        // Last resort - try to convert the entire object to an item
+        if (requestBody.id || requestBody.variantId) {
+          console.log("📝 Request body appears to be a single item - converting to array");
+          items = [requestBody];
+        }
+      }
     } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
+      console.error('❌ Failed to parse request body:', parseError);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: 'Invalid request format',
           details: 'Request body could not be parsed as JSON'
         })
       };
     }
-    
-    const { items } = requestBody;
     
     // Validate items
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -143,14 +161,24 @@ exports.handler = async (event, context) => {
     console.log("📝 Processing items for checkout:", JSON.stringify(items));
 
     for (const item of items) {
-      if (!item.variantId) {
+      // Find the variant ID with fallbacks for different formats
+      let variantId = item.variantId || item.id || item.variant_id;
+      
+      // Handle the case where ID is in a nested object
+      if (!variantId && item.variant && item.variant.id) {
+        variantId = item.variant.id;
+      }
+      
+      if (!variantId) {
         hasErrors = true;
         errorDetails.push(`Missing variantId for item: ${JSON.stringify(item)}`);
         continue;
       }
+      
+      console.log(`🔍 Processing item with raw ID: ${variantId}`);
 
       // Convert quantities to integers and ensure they're positive
-      const quantity = parseInt(item.quantity, 10);
+      const quantity = parseInt(item.quantity, 10) || 1;  // Default to 1 if not specified
       if (isNaN(quantity) || quantity <= 0) {
         hasErrors = true;
         errorDetails.push(`Invalid quantity for item: ${JSON.stringify(item)}`);
@@ -158,11 +186,26 @@ exports.handler = async (event, context) => {
       }
 
       // Normalize Shopify ID format if needed
-      let variantId = item.variantId;
-      if (!variantId.includes('/')) {
-        // Convert to Storefront API expected format if needed
-        variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
+      if (!variantId.includes('gid://shopify')) {
+        // Handle numeric IDs
+        if (/^\d+$/.test(variantId)) {
+          variantId = `gid://shopify/ProductVariant/${variantId}`;
+        }
+        // Handle IDs with prefixes like "variant-"
+        else if (variantId.includes('-')) {
+          const parts = variantId.split('-');
+          const potentialId = parts.find(part => /^\d+$/.test(part));
+          if (potentialId) {
+            variantId = `gid://shopify/ProductVariant/${potentialId}`;
+          }
+        }
+        // Strip any non-numeric characters if still not in GID format
+        else if (!variantId.includes('/')) {
+          variantId = `gid://shopify/ProductVariant/${variantId.replace(/\D/g, '')}`;
+        }
       }
+      
+      console.log(`✅ Processed item ID: ${variantId}, Quantity: ${quantity}`);
 
       lineItems.push({
         variantId,
