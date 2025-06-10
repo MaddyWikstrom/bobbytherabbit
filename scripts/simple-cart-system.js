@@ -471,54 +471,91 @@ const BobbyCartSystem = (function() {
     }
   }
   
-  // Proceed to checkout
+  // Proceed to checkout using Storefront API
   function proceedToCheckout() {
     if (items.length === 0) {
       alert('Your cart is empty');
       return;
     }
     
-    // Prepare checkout items
-    const checkoutItems = items.map(item => ({
-      variantId: item.id,
-      quantity: item.quantity
-    }));
-    
-    // Call Netlify function to create checkout
-    fetch('/.netlify/functions/create-checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        items: checkoutItems
-      })
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Checkout creation failed: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      if (data.error) {
-        throw new Error(data.error);
+    // Check if Storefront API checkout is available
+    if (window.BobbyCheckoutStorefront && typeof window.BobbyCheckoutStorefront.processCheckout === 'function') {
+      // Show loading state on checkout button if available
+      const checkoutBtn = document.querySelector('.cart-checkout-btn');
+      if (checkoutBtn) {
+        checkoutBtn.innerHTML = '<span>PROCESSING...</span>';
+        checkoutBtn.disabled = true;
       }
       
-      if (data.checkoutUrl) {
-        // Clear cart after successful checkout creation
-        clearCart();
+      // Use Storefront API for checkout
+      window.BobbyCheckoutStorefront.processCheckout(items)
+        .then(success => {
+          if (success) {
+            // Clear cart after successful checkout creation
+            clearCart();
+          } else {
+            // Reset checkout button if process failed
+            if (checkoutBtn) {
+              checkoutBtn.innerHTML = '<span>Checkout</span>';
+              checkoutBtn.disabled = false;
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Checkout error:', error);
+          alert('There was an error processing your checkout. Please try again.');
+          
+          // Reset checkout button
+          if (checkoutBtn) {
+            checkoutBtn.innerHTML = '<span>Checkout</span>';
+            checkoutBtn.disabled = false;
+          }
+        });
+    } else {
+      // Fallback to Netlify function approach if Storefront API not available
+      
+      // Prepare checkout items
+      const checkoutItems = items.map(item => ({
+        variantId: item.id,
+        quantity: item.quantity
+      }));
+      
+      // Call Netlify function to create checkout
+      fetch('/.netlify/functions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: checkoutItems
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Checkout creation failed: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
         
-        // Redirect to Shopify checkout
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    })
-    .catch(error => {
-      console.error('Checkout error:', error);
-      alert('There was an error processing your checkout. Please try again.');
-    });
+        if (data.checkoutUrl) {
+          // Clear cart after successful checkout creation
+          clearCart();
+          
+          // Redirect to Shopify checkout
+          window.location.href = data.checkoutUrl;
+        } else {
+          throw new Error('No checkout URL received');
+        }
+      })
+      .catch(error => {
+        console.error('Checkout error:', error);
+        alert('There was an error processing your checkout. Please try again.');
+      });
+    }
   }
   
   // Add cart styles
