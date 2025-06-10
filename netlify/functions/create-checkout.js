@@ -1,4 +1,5 @@
-const fetch = require('node-fetch');
+// Use dynamic import for node-fetch to fix ESM compatibility issues
+const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
 exports.handler = async (event, context) => {
   // Enable CORS to help with cross-origin issues
