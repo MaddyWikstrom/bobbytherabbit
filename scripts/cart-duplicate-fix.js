@@ -98,8 +98,7 @@
       if ((now - lastAddTime) < debounce.debounceTime) {
         console.log(`Cart duplicate fix: Blocked rapid duplicate add for ${variantId} - last added ${now - lastAddTime}ms ago`);
         
-        // Show notification to user
-        showDuplicateNotification('Item already added to cart');
+        // Notification removed
         return false;
       }
       
@@ -130,8 +129,7 @@
           return true;
         }
         
-        // Show notification to user
-        showDuplicateNotification('Item already in cart');
+        // Notification removed
         return false;
       }
       
@@ -151,54 +149,11 @@
       return originalAddItem.call(this, product);
     };
     
-    // Helper function to show notification
+    // Helper function for notifications - disabled
     function showDuplicateNotification(message) {
-      // Check if notification system exists
-      if (typeof window.showNotification === 'function') {
-        window.showNotification(message, 'warning');
-        return;
-      }
-      
-      // Create a simple notification if needed
-      const notification = document.createElement('div');
-      notification.className = 'cart-duplicate-notification';
-      notification.textContent = message;
-      notification.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #ff9800;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 4px;
-        z-index: 10000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        animation: fadeInOut 3s forwards;
-      `;
-      
-      // Add animation styles
-      if (!document.getElementById('cart-duplicate-notification-styles')) {
-        const style = document.createElement('style');
-        style.id = 'cart-duplicate-notification-styles';
-        style.textContent = `
-          @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            80% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
-          }
-        `;
-        document.head.appendChild(style);
-      }
-      
-      document.body.appendChild(notification);
-      
-      // Remove notification after animation completes
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 3000);
+      // Notifications disabled - do nothing
+      // Just log to console for debugging
+      console.log("Cart notification suppressed:", message);
     }
     
     console.log('Cart duplicate fix: Successfully patched cart system');
