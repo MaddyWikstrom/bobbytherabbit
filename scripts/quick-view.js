@@ -424,27 +424,28 @@ class QuickViewManager {
             
             .product-quick-add-overlay {
                 position: absolute;
-                bottom: 60px; /* Position higher up to not cover color buttons */
+                top: 0; /* Position at the top instead of bottom */
                 left: 0;
                 width: 100%;
-                background-color: rgba(0, 0, 0, 0.9);
-                padding: 10px;
+                background-color: rgba(32, 32, 50, 0.95); /* Slightly blueish black to match theme */
+                padding: 8px;
                 transition: opacity 0.3s ease;
                 opacity: 0;
                 visibility: hidden;
                 z-index: 5;
                 pointer-events: auto; /* Allow interaction */
                 height: auto;
-                max-height: 150px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+                border-bottom: 2px solid #6c5ce7; /* Purple accent border */
             }
             
             .product-quick-add-title {
                 font-weight: bold;
                 font-size: 14px;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 text-align: center;
                 color: white;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             }
             
             .product-quick-add-sizes {
@@ -453,13 +454,14 @@ class QuickViewManager {
                 justify-content: center;
                 gap: 5px;
                 margin-bottom: 8px;
+                min-height: 30px; /* Ensure there's always space for sizes */
             }
             
             .quick-add-size-btn {
                 min-width: 30px;
                 height: 30px;
-                border: 1px solid #999;
-                background: #333;
+                border: 1px solid #6c5ce7; /* Purple border */
+                background: #2d2d44; /* Dark blue-purple background */
                 color: white;
                 display: flex;
                 align-items: center;
@@ -469,17 +471,20 @@ class QuickViewManager {
                 padding: 0 8px;
                 border-radius: 3px;
                 margin: 0 2px;
+                font-weight: bold;
             }
             
             .quick-add-size-btn:hover {
-                border-color: #fff;
-                background-color: #444;
+                border-color: #8e44ad; /* Brighter purple on hover */
+                background-color: #3d3d5c; /* Lighter background on hover */
+                box-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
             }
             
             .quick-add-size-btn.selected {
-                background-color: white;
-                color: black;
+                background-color: #6c5ce7; /* Purple background when selected */
+                color: white;
                 border-color: white;
+                box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
             }
             
             .product-quick-add-colors {
@@ -505,24 +510,29 @@ class QuickViewManager {
             
             .quick-add-to-cart-btn {
                 width: 100%;
-                background-color: white;
-                color: black;
+                background-color: #6c5ce7; /* Purple background to match the theme */
+                color: white;
                 border: none;
                 padding: 8px;
                 cursor: pointer;
                 font-size: 13px;
                 border-radius: 3px;
                 font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: all 0.2s ease;
             }
             
             .quick-add-to-cart-btn:hover {
-                background-color: #f0f0f0;
+                background-color: #8e44ad; /* Darker purple on hover */
+                box-shadow: 0 0 10px rgba(108, 92, 231, 0.7);
             }
             
             .quick-add-to-cart-btn:disabled {
-                background-color: #555;
+                background-color: #444;
                 color: #999;
                 cursor: not-allowed;
+                box-shadow: none;
             }
             
             /* Notification */
@@ -708,10 +718,72 @@ class QuickViewManager {
             }
         });
         
-        // Fetch product data and populate options
+        // Immediately add some default sizes until product data loads
+        const defaultSizes = ['S', 'M', 'L', 'XL', '2XL'];
+        defaultSizes.forEach(size => {
+            const sizeBtn = document.createElement('button');
+            sizeBtn.className = 'quick-add-size-btn';
+            sizeBtn.setAttribute('data-size', size);
+            sizeBtn.textContent = size;
+            
+            sizeBtn.addEventListener('click', (e) => {
+                // Deselect all other size buttons
+                card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Select this size
+                sizeBtn.classList.add('selected');
+                
+                // Enable add button if color is also selected
+                const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
+                addButton.disabled = !hasColorSelected;
+            });
+            
+            sizesContainer.appendChild(sizeBtn);
+        });
+        
+        // Also add some default colors
+        const defaultColors = [
+            { name: 'Black', code: '#000000' },
+            { name: 'Vintage Black', code: '#222222' },
+            { name: 'Charcoal Gray', code: '#36454f' },
+            { name: 'Purple', code: '#6c5ce7' }
+        ];
+        
+        defaultColors.forEach(color => {
+            const colorBtn = document.createElement('div');
+            colorBtn.className = 'quick-add-color-btn';
+            colorBtn.setAttribute('data-color', color.name);
+            colorBtn.style.backgroundColor = color.code;
+            
+            colorBtn.addEventListener('click', (e) => {
+                // Deselect all other color buttons
+                card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Select this color
+                colorBtn.classList.add('selected');
+                
+                // Update product card image
+                this.updateProductCardImage(color.name, card);
+                
+                // Enable add button if size is also selected
+                const hasSizeSelected = card.querySelector('.quick-add-size-btn.selected');
+                addButton.disabled = !hasSizeSelected;
+            });
+            
+            colorsContainer.appendChild(colorBtn);
+        });
+        
+        // Now fetch actual product data to replace defaults if possible
         this.fetchProductData(productId, productHandle)
             .then(product => {
                 if (!product) return;
+                
+                // Clear default sizes and add actual ones
+                sizesContainer.innerHTML = '';
                 
                 // Populate sizes
                 if (product.sizes && product.sizes.length > 0) {
@@ -731,6 +803,25 @@ class QuickViewManager {
                             sizeBtn.classList.add('selected');
                             
                             // Enable add button if color is also selected
+                            const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
+                            addButton.disabled = !hasColorSelected;
+                        });
+                        
+                        sizesContainer.appendChild(sizeBtn);
+                    });
+                } else {
+                    // Re-add default sizes if no product sizes found
+                    defaultSizes.forEach(size => {
+                        const sizeBtn = document.createElement('button');
+                        sizeBtn.className = 'quick-add-size-btn';
+                        sizeBtn.setAttribute('data-size', size);
+                        sizeBtn.textContent = size;
+                        
+                        sizeBtn.addEventListener('click', (e) => {
+                            card.querySelectorAll('.quick-add-size-btn').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            sizeBtn.classList.add('selected');
                             const hasColorSelected = card.querySelector('.quick-add-color-btn.selected');
                             addButton.disabled = !hasColorSelected;
                         });
