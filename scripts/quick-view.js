@@ -1041,7 +1041,11 @@ class QuickViewManager {
     
     // Open quick view for a specific product by ID or handle
     async openQuickViewById(productId, productHandle) {
-        if (!productId && !productHandle) return;
+        if (!productId && !productHandle) {
+            console.error('No product ID or handle provided');
+            this.showNotification('Cannot display product: missing ID', 'error');
+            return;
+        }
         
         try {
             this.showLoading(true);
@@ -1057,8 +1061,13 @@ class QuickViewManager {
             // Fetch product data
             const product = await this.fetchProductData(productId, productHandle);
             
+            // IMPROVED ERROR HANDLING: If product is null (API failure), show clear error
             if (!product) {
-                throw new Error('Product not found');
+                this.showLoading(false);
+                this.showNotification(`Product not found: ${productHandle || productId}`, 'error');
+                console.error('Product not found:', productHandle || productId);
+                this.closeQuickView();
+                return;
             }
             
             // Store current product
@@ -1100,12 +1109,13 @@ class QuickViewManager {
             const timestamp = new Date().getTime();
             const url = `/.netlify/functions/get-products?id=${productId || ''}&handle=${productHandle || ''}&_=${timestamp}`;
             
-            console.log("Fetching product data from:", url);
+            // REDUCED LOGGING: Just log the essential
+            console.log(`Fetching product: ${productId || productHandle || 'unknown'}`);
             
             const response = await fetch(url);
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch product data: ${response.status}`);
+                throw new Error(`API error: ${response.status}`);
             }
             
             // Parse the response
@@ -1115,11 +1125,8 @@ class QuickViewManager {
             try {
                 data = JSON.parse(text);
             } catch (parseError) {
-                console.warn("JSON parse error:", parseError);
                 throw new Error("Invalid JSON response");
             }
-            
-            console.log("API Response structure:", Object.keys(data));
             
             // Handle different API response formats
             let productData = null;
@@ -1127,18 +1134,13 @@ class QuickViewManager {
             // Format 1: { product: {...} }
             if (data && data.product) {
                 productData = data.product;
-                console.log("Found product in data.product format");
             }
             // Format 2: { products: [...] } - Products list from Netlify function with edges/node format
             else if (data && data.products && Array.isArray(data.products)) {
-                console.log("Found products array with", data.products.length, "items");
-                
                 // Check if we're dealing with Shopify GraphQL edges/node format
                 const hasEdgeNodeFormat = data.products[0] && data.products[0].node;
                 
                 if (hasEdgeNodeFormat) {
-                    console.log("Detected edge/node format from Shopify GraphQL");
-                    
                     // If looking for a specific product
                     if (productId || productHandle) {
                         const matchingEdge = data.products.find(edge => {
@@ -1149,14 +1151,11 @@ class QuickViewManager {
                         
                         if (matchingEdge) {
                             productData = matchingEdge.node;
-                            console.log("Found matching product in GraphQL format:", productData.title);
                         } else if (data.products.length > 0) {
                             productData = data.products[0].node;
-                            console.log("No exact match found, using first product:", productData.title);
                         }
                     } else if (data.products.length > 0) {
                         productData = data.products[0].node;
-                        console.log("Using first product from GraphQL response");
                     }
                 } else {
                     // Regular array of products without GraphQL structure
@@ -1168,21 +1167,16 @@ class QuickViewManager {
                         
                         if (matchingProduct) {
                             productData = matchingProduct;
-                            console.log("Found matching product:", productData.title);
                         } else if (data.products.length > 0) {
                             productData = data.products[0];
-                            console.log("No match found, using first product");
                         }
                     } else if (data.products.length > 0) {
                         productData = data.products[0];
-                        console.log("Using first product from array");
                     }
                 }
             }
             // Format 3: Array of products
             else if (Array.isArray(data) && data.length > 0) {
-                console.log("Found direct array of products");
-                
                 if (productId || productHandle) {
                     const matchingProduct = data.find(product =>
                         (productId && product.id && product.id.includes(productId)) ||
@@ -1191,86 +1185,42 @@ class QuickViewManager {
                     
                     if (matchingProduct) {
                         productData = matchingProduct;
-                        console.log("Found matching product in array");
                     } else {
                         productData = data[0];
-                        console.log("No match in array, using first product");
                     }
                 } else {
                     productData = data[0];
-                    console.log("Using first product from array");
                 }
             }
             // Format 4: Direct product object with title/id
             else if (data && (data.title || data.id)) {
                 productData = data;
-                console.log("Found direct product object");
             }
             
             // If we found valid product data, process it
             if (productData && (productData.title || productData.id)) {
-                console.log("Successfully received product data:", productData.title || productId || productHandle);
+                console.log(`Found product: ${productData.title || productId || productHandle}`);
                 return this.processProductData(productData);
             } else {
-                // Product data not in expected format - create simple product from ID/handle
-                console.log("Got product data:", formatProductName(productHandle || productId));
-                
-                // Construct a basic product from the handle/ID
-                return {
-                    id: productId || productHandle,
-                    title: formatProductName(productHandle || productId),
-                    handle: productHandle || productId,
-                    description: `${formatProductName(productHandle || productId)} details`,
-                    price: 29.99,
-                    comparePrice: 0,
-                    images: [],
-                    colors: [],
-                    sizes: ['S', 'M', 'L', 'XL'],
-                    inventory: {},
-                    category: this.extractCategory(formatProductName(productHandle || productId)),
-                };
+                // NO FALLBACKS - just throw error if product not found
+                throw new Error(`Product not found: ${productId || productHandle}`);
             }
             
         } catch (error) {
             console.error('Error fetching product data:', error);
             
-            // Create a basic product from handle/ID
-            const productName = formatProductName(productHandle || productId);
-            console.log("Got product data:", productName);
-            
-            return {
-                id: productId || productHandle || 'unknown',
-                title: productName,
-                handle: productHandle || productId || 'unknown',
-                description: `${productName} details`,
-                price: 29.99,
-                comparePrice: 0,
-                images: [],
-                colors: [],
-                sizes: ['S', 'M', 'L', 'XL'],
-                inventory: {},
-                category: this.extractCategory(productName),
-            };
+            // NO FALLBACKS - return null instead of creating a fake product
+            // This will prevent the system from trying to show placeholder.png
+            return null;
         }
     }
     
     // Process raw product data into a standardized format with improved error handling
     processProductData(rawProduct) {
         if (!rawProduct) {
-            console.error("Invalid product data - null or undefined");
-            return {
-                id: 'unknown',
-                title: 'Unknown Product',
-                handle: 'unknown',
-                description: 'Product details unavailable',
-                price: 0,
-                comparePrice: 0,
-                images: [],
-                colors: [], // FIXED: No default colors - previously had Black
-                sizes: ['S', 'M', 'L', 'XL'],
-                inventory: {},
-                category: 'Unknown'
-            };
+            // Minimal error message - no fallback product
+            console.error("Product data is missing");
+            return null;
         }
         
         try {
@@ -1283,128 +1233,99 @@ class QuickViewManager {
                 price: 0,
                 comparePrice: 0,
                 images: [],
-                colors: [],
+                colors: [], // No default colors - critical fix
                 sizes: [],
                 inventory: {},
                 category: this.extractCategory(rawProduct.title || ''),
             };
             
-            // Safely extract price
-            try {
-                if (rawProduct.price) {
-                    product.price = parseFloat(rawProduct.price) || 0;
-                } else if (rawProduct.variants && rawProduct.variants.length > 0 && rawProduct.variants[0].price) {
-                    product.price = parseFloat(rawProduct.variants[0].price) || 0;
-                }
-            } catch (priceError) {
-                console.warn("Error extracting price:", priceError);
-                product.price = 29.99; // Default price
+            // SIMPLIFIED: Extract price with less logging
+            if (rawProduct.price) {
+                product.price = parseFloat(rawProduct.price) || 0;
+            } else if (rawProduct.variants && rawProduct.variants.length > 0 && rawProduct.variants[0].price) {
+                product.price = parseFloat(rawProduct.variants[0].price) || 0;
             }
             
-            // Safely extract compare price
-            try {
-                if (rawProduct.compare_at_price) {
-                    product.comparePrice = parseFloat(rawProduct.compare_at_price) || 0;
-                } else if (rawProduct.variants && rawProduct.variants.length > 0 && rawProduct.variants[0].compare_at_price) {
-                    product.comparePrice = parseFloat(rawProduct.variants[0].compare_at_price) || 0;
-                }
-            } catch (comparePriceError) {
-                console.warn("Error extracting compare price:", comparePriceError);
-                product.comparePrice = 0;
+            // SIMPLIFIED: Extract compare price with less logging
+            if (rawProduct.compare_at_price) {
+                product.comparePrice = parseFloat(rawProduct.compare_at_price) || 0;
+            } else if (rawProduct.variants && rawProduct.variants.length > 0 && rawProduct.variants[0].compare_at_price) {
+                product.comparePrice = parseFloat(rawProduct.variants[0].compare_at_price) || 0;
             }
             
-            // Process images safely
-            try {
-                if (rawProduct.images) {
-                    if (Array.isArray(rawProduct.images)) {
-                        product.images = rawProduct.images.map(img => {
-                            if (typeof img === 'string') return img;
-                            if (img && img.src) return img.src;
-                            return '';
-                        }).filter(url => url); // Remove empty strings
-                    } else if (typeof rawProduct.images === 'string') {
-                        product.images = [rawProduct.images];
-                    } else if (rawProduct.images.src) {
-                        product.images = [rawProduct.images.src];
-                    }
+            // Process images efficiently
+            if (rawProduct.images) {
+                if (Array.isArray(rawProduct.images)) {
+                    product.images = rawProduct.images
+                        .map(img => typeof img === 'string' ? img : (img && img.src ? img.src : ''))
+                        .filter(url => url); // Remove empty strings
+                } else if (typeof rawProduct.images === 'string') {
+                    product.images = [rawProduct.images];
+                } else if (rawProduct.images.src) {
+                    product.images = [rawProduct.images.src];
                 }
-                
-                // If no images found, check featured_image
-                if (product.images.length === 0 && rawProduct.featured_image) {
-                    if (typeof rawProduct.featured_image === 'string') {
-                        product.images = [rawProduct.featured_image];
-                    } else if (rawProduct.featured_image.src) {
-                        product.images = [rawProduct.featured_image.src];
-                    }
+            }
+            
+            // Check featured_image as backup
+            if (product.images.length === 0 && rawProduct.featured_image) {
+                if (typeof rawProduct.featured_image === 'string') {
+                    product.images = [rawProduct.featured_image];
+                } else if (rawProduct.featured_image.src) {
+                    product.images = [rawProduct.featured_image.src];
                 }
-            } catch (imageError) {
-                console.warn("Error processing images:", imageError);
-                product.images = [];
             }
             
             // Process variants to extract colors and sizes
             const colorSet = new Set();
             const sizeSet = new Set();
             
-            try {
-                if (rawProduct.variants && Array.isArray(rawProduct.variants)) {
-                    rawProduct.variants.forEach(variant => {
-                        // Safe extraction with defaults
-                        let color = null;
-                        let size = null;
+            if (rawProduct.variants && Array.isArray(rawProduct.variants)) {
+                rawProduct.variants.forEach(variant => {
+                    let color = null;
+                    let size = null;
+                    
+                    // Format 1: Direct option properties
+                    if (variant.option1) color = variant.option1;
+                    if (variant.option2) size = variant.option2;
+                    
+                    // Format 2: Options array
+                    if (variant.options && Array.isArray(variant.options)) {
+                        const colorOption = variant.options.find(opt =>
+                            opt.name && (opt.name.toLowerCase() === 'color' || opt.name.toLowerCase() === 'colour'));
                         
-                        // Try different variant formats
-                        try {
-                            // Format 1: Direct option properties
-                            if (variant.option1) color = variant.option1;
-                            if (variant.option2) size = variant.option2;
-                            
-                            // Format 2: Options array
-                            if (variant.options && Array.isArray(variant.options)) {
-                                const colorOption = variant.options.find(opt =>
-                                    opt.name && (opt.name.toLowerCase() === 'color' || opt.name.toLowerCase() === 'colour'));
-                                
-                                const sizeOption = variant.options.find(opt =>
-                                    opt.name && opt.name.toLowerCase() === 'size');
-                                
-                                if (colorOption) color = colorOption.value;
-                                if (sizeOption) size = sizeOption.value;
-                            }
-                            
-                            // Format 3: Variant title as fallback
-                            if (!color && !size && variant.title && variant.title !== 'Default Title') {
-                                // Split by slash if it contains one
-                                if (variant.title.includes('/')) {
-                                    const parts = variant.title.split('/').map(p => p.trim());
-                                    if (parts.length >= 1) color = parts[0];
-                                    if (parts.length >= 2) size = parts[1];
-                                } else {
-                                    // Use title as size for single-option variants
-                                    size = variant.title;
-                                }
-                            }
-                            
-                            // Add to sets (deduplicate)
-                            if (color) colorSet.add(color);
-                            if (size) sizeSet.add(size);
-                            
-                            // Add to inventory
-                            if (color && size) {
-                                const inventoryKey = `${color}-${size}`;
-                                product.inventory[inventoryKey] = variant.inventory_quantity || 10;
-                            }
-                        } catch (variantError) {
-                            console.warn("Error processing variant:", variantError);
+                        const sizeOption = variant.options.find(opt =>
+                            opt.name && opt.name.toLowerCase() === 'size');
+                        
+                        if (colorOption) color = colorOption.value;
+                        if (sizeOption) size = sizeOption.value;
+                    }
+                    
+                    // Format 3: Variant title as fallback
+                    if (!color && !size && variant.title && variant.title !== 'Default Title') {
+                        if (variant.title.includes('/')) {
+                            const parts = variant.title.split('/').map(p => p.trim());
+                            if (parts.length >= 1) color = parts[0];
+                            if (parts.length >= 2) size = parts[1];
+                        } else {
+                            // Use title as size for single-option variants
+                            size = variant.title;
                         }
-                    });
-                }
-            } catch (variantsError) {
-                console.warn("Error processing variants:", variantsError);
+                    }
+                    
+                    // Add to sets (deduplicate)
+                    if (color) colorSet.add(color);
+                    if (size) sizeSet.add(size);
+                    
+                    // Add to inventory
+                    if (color && size) {
+                        const inventoryKey = `${color}-${size}`;
+                        product.inventory[inventoryKey] = variant.inventory_quantity || 10;
+                    }
+                });
             }
             
-            // If no sizes found, provide defaults
+            // If no sizes found, provide defaults based on category
             if (sizeSet.size === 0) {
-                // Use category to determine appropriate sizes
                 if (product.category.toLowerCase().includes('hat') ||
                     product.category.toLowerCase().includes('beanie')) {
                     sizeSet.add('One Size');
@@ -1413,23 +1334,15 @@ class QuickViewManager {
                 }
             }
             
-            // Only add colors if we found them in the product data
-            // DO NOT add default colors - this was causing issues
-            // by showing Black/White colors for products that don't have color variants
-            
-            // Convert sets to arrays ONLY if we actually found color variants
+            // CRITICAL FIX: Only add colors if we actually found color variants
             if (colorSet.size > 0) {
-                // Real color variants found - use them
                 product.colors = Array.from(colorSet).map(colorName => ({
                     name: colorName,
                     code: this.getColorCode(colorName)
                 }));
-                console.log(`Found ${product.colors.length} real color variants:`,
-                    product.colors.map(c => c.name).join(', '));
+                console.log(`Product ${product.title}: ${product.colors.length} colors`);
             } else {
-                // No color variants found - leave colors array EMPTY
-                product.colors = [];
-                console.log(`No color variants found for ${product.title}`);
+                product.colors = []; // Empty array = no color options
             }
             
             product.sizes = Array.from(sizeSet);
@@ -1438,21 +1351,7 @@ class QuickViewManager {
             
         } catch (error) {
             console.error("Error processing product data:", error);
-            
-            // Fallback to basic product
-            return {
-                id: rawProduct.id || 'unknown',
-                title: rawProduct.title || 'Unknown Product',
-                handle: rawProduct.handle || 'unknown-product',
-                description: 'Product details could not be processed',
-                price: 29.99,
-                comparePrice: 0,
-                images: [],
-                colors: [], // FIXED: No default colors - previously added Black by default
-                sizes: ['S', 'M', 'L', 'XL'],
-                inventory: {},
-                category: 'Unknown'
-            };
+            return null; // Return null instead of creating a fallback product
         }
     }
     
@@ -1636,12 +1535,13 @@ class QuickViewManager {
     // Quick add to cart directly from the overlay
     async quickAddToCart(productId, productHandle, color, size) {
         try {
-            console.log(`Quick adding to cart: ${color || 'N/A'} / ${size || 'N/A'}`);
+            console.log(`Quick adding to cart: ${productId || productHandle} (${color || 'N/A'} / ${size || 'N/A'})`);
             
             // Always re-fetch product data to ensure it's fresh
             const product = await this.fetchProductData(productId, productHandle);
             if (!product) {
-                throw new Error('Product not found');
+                this.showNotification(`Sorry, we couldn't find this product`, 'error');
+                return false;
             }
             
             // Store as current product
@@ -2040,7 +1940,8 @@ class QuickViewManager {
         if (!this.currentProduct || !this.currentProduct.images || this.currentProduct.images.length === 0) {
             // No images to display
             const mainImage = document.getElementById('quick-view-main-image');
-            mainImage.src = 'https://via.placeholder.com/400x400?text=No+Image+Available';
+            // Use data URI instead of external placeholder to avoid 404 errors
+            mainImage.src = 'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'400\' viewBox=\'0 0 400 400\'%3e%3crect fill=\'%23f0f0f0\' width=\'400\' height=\'400\'/%3e%3ctext fill=\'%23999999\' font-family=\'sans-serif\' font-size=\'20\' text-anchor=\'middle\' x=\'200\' y=\'200\'%3eNo Image%3c/text%3e%3c/svg%3e';
             mainImage.alt = this.currentProduct?.title || 'Product Image';
             
             document.getElementById('quick-view-thumbnails').innerHTML = '';
