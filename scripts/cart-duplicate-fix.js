@@ -115,22 +115,17 @@
       if (existingItem) {
         console.log(`Cart duplicate fix: Item already exists in cart - ${variantId}`);
         
-        // Check if we just want to update quantity instead of blocking
-        if (product.updateQuantityIfExists) {
-          console.log(`Cart duplicate fix: Updating quantity instead of blocking`);
-          this.updateQuantity(existingItem.id, existingItem.quantity + (product.quantity || 1));
-          
-          // Update timestamp safely
-          try {
-            debounce.lastAddedItems[itemSpecificKey] = now;
-          } catch (e) {
-            console.error('Error updating lastAddedItems:', e);
-          }
-          return true;
-        }
+        // Always update quantity instead of blocking
+        console.log(`Cart duplicate fix: Incrementing quantity of existing item`);
+        this.updateQuantity(existingItem.id, existingItem.quantity + (product.quantity || 1));
         
-        // Notification removed
-        return false;
+        // Update timestamp safely
+        try {
+          debounce.lastAddedItems[itemSpecificKey] = now;
+        } catch (e) {
+          console.error('Error updating lastAddedItems:', e);
+        }
+        return true;
       }
       
       // 3. If we get here, it's safe to add the item - update tracking
