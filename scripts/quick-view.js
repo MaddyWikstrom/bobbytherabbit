@@ -1098,24 +1098,92 @@ class QuickViewManager {
                 throw new Error("Invalid JSON response");
             }
             
+            console.log("API Response structure:", Object.keys(data));
+            
             // Handle different API response formats
             let productData = null;
             
             // Format 1: { product: {...} }
             if (data && data.product) {
                 productData = data.product;
+                console.log("Found product in data.product format");
             }
-            // Format 2: { products: [...] }
-            else if (data && data.products && Array.isArray(data.products) && data.products.length > 0) {
-                productData = data.products[0];
+            // Format 2: { products: [...] } - Products list from Netlify function with edges/node format
+            else if (data && data.products && Array.isArray(data.products)) {
+                console.log("Found products array with", data.products.length, "items");
+                
+                // Check if we're dealing with Shopify GraphQL edges/node format
+                const hasEdgeNodeFormat = data.products[0] && data.products[0].node;
+                
+                if (hasEdgeNodeFormat) {
+                    console.log("Detected edge/node format from Shopify GraphQL");
+                    
+                    // If looking for a specific product
+                    if (productId || productHandle) {
+                        const matchingEdge = data.products.find(edge => {
+                            const node = edge.node;
+                            return (productId && node.id.includes(productId)) ||
+                                  (productHandle && node.handle === productHandle);
+                        });
+                        
+                        if (matchingEdge) {
+                            productData = matchingEdge.node;
+                            console.log("Found matching product in GraphQL format:", productData.title);
+                        } else if (data.products.length > 0) {
+                            productData = data.products[0].node;
+                            console.log("No exact match found, using first product:", productData.title);
+                        }
+                    } else if (data.products.length > 0) {
+                        productData = data.products[0].node;
+                        console.log("Using first product from GraphQL response");
+                    }
+                } else {
+                    // Regular array of products without GraphQL structure
+                    if (productId || productHandle) {
+                        const matchingProduct = data.products.find(product =>
+                            (productId && product.id && product.id.includes(productId)) ||
+                            (productHandle && product.handle === productHandle)
+                        );
+                        
+                        if (matchingProduct) {
+                            productData = matchingProduct;
+                            console.log("Found matching product:", productData.title);
+                        } else if (data.products.length > 0) {
+                            productData = data.products[0];
+                            console.log("No match found, using first product");
+                        }
+                    } else if (data.products.length > 0) {
+                        productData = data.products[0];
+                        console.log("Using first product from array");
+                    }
+                }
             }
             // Format 3: Array of products
             else if (Array.isArray(data) && data.length > 0) {
-                productData = data[0];
+                console.log("Found direct array of products");
+                
+                if (productId || productHandle) {
+                    const matchingProduct = data.find(product =>
+                        (productId && product.id && product.id.includes(productId)) ||
+                        (productHandle && product.handle === productHandle)
+                    );
+                    
+                    if (matchingProduct) {
+                        productData = matchingProduct;
+                        console.log("Found matching product in array");
+                    } else {
+                        productData = data[0];
+                        console.log("No match in array, using first product");
+                    }
+                } else {
+                    productData = data[0];
+                    console.log("Using first product from array");
+                }
             }
             // Format 4: Direct product object with title/id
             else if (data && (data.title || data.id)) {
                 productData = data;
+                console.log("Found direct product object");
             }
             
             // If we found valid product data, process it
@@ -1135,10 +1203,7 @@ class QuickViewManager {
                     price: 29.99,
                     comparePrice: 0,
                     images: [],
-                    colors: [
-                        {name: 'Black', code: '#000000'},
-                        {name: 'White', code: '#ffffff'},
-                    ],
+                    colors: [],
                     sizes: ['S', 'M', 'L', 'XL'],
                     inventory: {},
                     category: this.extractCategory(formatProductName(productHandle || productId)),
@@ -1160,10 +1225,7 @@ class QuickViewManager {
                 price: 29.99,
                 comparePrice: 0,
                 images: [],
-                colors: [
-                    {name: 'Black', code: '#000000'},
-                    {name: 'White', code: '#ffffff'},
-                ],
+                colors: [],
                 sizes: ['S', 'M', 'L', 'XL'],
                 inventory: {},
                 category: this.extractCategory(productName),
@@ -1330,11 +1392,9 @@ class QuickViewManager {
                 }
             }
             
-            // If no colors found, provide defaults
-            if (colorSet.size === 0) {
-                colorSet.add('Black');
-                colorSet.add('White');
-            }
+            // Only add colors if we found them in the product data
+            // DO NOT add default colors - this was causing issues
+            // by showing Black/White colors for products that don't have color variants
             
             // Convert sets to arrays
             product.colors = Array.from(colorSet).map(colorName => ({
