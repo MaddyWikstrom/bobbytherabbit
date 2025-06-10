@@ -45,9 +45,16 @@ class QuickViewManager {
     // Handle browser history events to fix back button issues
     setupHistoryHandling() {
         // Listen for browser back/forward navigation
-        window.addEventListener('popstate', (event) => {
-            // Close the quick view when back button is pressed
-            this.closeQuickView();
+        // Handle both popstate (back/forward buttons) and beforeunload (page navigation)
+        window.addEventListener('popstate', () => {
+            // Fully destroy the quick view when back button is pressed
+            this.destroyQuickView();
+        });
+        
+        // Also handle page unloading or navigation
+        window.addEventListener('beforeunload', () => {
+            // Clean up before navigating away
+            this.destroyQuickView();
         });
     }
     
@@ -1416,7 +1423,7 @@ class QuickViewManager {
         }
     }
     
-    // Close the modal
+    // Close the modal with animation
     closeQuickView() {
         const modal = document.getElementById('quick-view-modal');
         const overlay = document.getElementById('quick-view-overlay');
@@ -1427,6 +1434,40 @@ class QuickViewManager {
                 overlay.classList.remove('active');
             }, 300);
         }
+    }
+    
+    // Completely destroy and remove the quick view from DOM
+    destroyQuickView() {
+        // First close to trigger animation
+        this.closeQuickView();
+        
+        // Then fully remove from DOM
+        const container = document.querySelector('.quick-view-overlay');
+        if (container && container.parentNode) {
+            // Use timeout to allow animation to complete
+            setTimeout(() => {
+                container.parentNode.removeChild(container);
+                
+                // Reset document body - remove any overlay effects
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                
+                // Reset modal created flag so it can be recreated if needed
+                this.modalCreated = false;
+                
+                // Force cleanup of any overlay effects
+                const overlayStyles = document.querySelectorAll('.modal-open, .overlay-visible');
+                overlayStyles.forEach(el => el.classList.remove('modal-open', 'overlay-visible'));
+            }, 300);
+        }
+        
+        // Immediately remove any lingering overlay backgrounds
+        const overlayBackgrounds = document.querySelectorAll('.modal-backdrop, .overlay-backdrop');
+        overlayBackgrounds.forEach(el => {
+            if (el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
+        });
     }
     
     // Render the quick view contents
