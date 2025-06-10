@@ -735,14 +735,76 @@ class QuickViewManager {
                 // Select this size
                 sizeBtn.classList.add('selected');
                 
-                // Enable add button
+                // Enable add button and auto-add if color already selected
                 addButton.disabled = false;
+                
+                // If there's already a color selected, auto-add to cart
+                const selectedColor = card.querySelector('.quick-add-color-btn.selected');
+                if (selectedColor) {
+                    // Add to cart automatically
+                    const color = selectedColor.getAttribute('data-color');
+                    const size = sizeBtn.getAttribute('data-size');
+                    
+                    // Save selections
+                    this.selectedVariant.color = color;
+                    this.selectedVariant.size = size;
+                    
+                    // Auto-add to cart with small delay for visual feedback
+                    setTimeout(() => {
+                        this.quickAddToCart(productId, productHandle, color, size);
+                        this.showNotification(`Added ${size} ${color || ''} to bag`, 'success');
+                    }, 300);
+                }
             });
             
             sizesContainer.appendChild(sizeBtn);
         });
         
-        // Attempt to fetch product data in background, but don't block UI
+        // Add some default colors (these will be replaced with real data if available)
+        const defaultColors = [
+            { name: 'Black', code: '#000000' },
+            { name: 'Vintage Black', code: '#222222' },
+            { name: 'Charcoal Gray', code: '#36454f' },
+            { name: 'Purple', code: '#6c5ce7' }
+        ];
+        
+        defaultColors.forEach(color => {
+            const colorBtn = document.createElement('div');
+            colorBtn.className = 'quick-add-color-btn';
+            colorBtn.setAttribute('data-color', color.name);
+            colorBtn.style.backgroundColor = color.code;
+            
+            colorBtn.addEventListener('click', (e) => {
+                // Deselect all other color buttons
+                card.querySelectorAll('.quick-add-color-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Select this color
+                colorBtn.classList.add('selected');
+                
+                // If size is already selected, auto-add to cart
+                const selectedSize = card.querySelector('.quick-add-size-btn.selected');
+                if (selectedSize) {
+                    const size = selectedSize.getAttribute('data-size');
+                    const colorName = color.name;
+                    
+                    // Save selections
+                    this.selectedVariant.color = colorName;
+                    this.selectedVariant.size = size;
+                    
+                    // Auto-add to cart with small delay for visual feedback
+                    setTimeout(() => {
+                        this.quickAddToCart(productId, productHandle, colorName, size);
+                        this.showNotification(`Added ${size} ${colorName} to bag`, 'success');
+                    }, 300);
+                }
+            });
+            
+            colorsContainer.appendChild(colorBtn);
+        });
+        
+        // Now attempt to fetch real product data in background
         this.fetchProductData(productId, productHandle)
             .then(product => {
                 if (!product) return;
