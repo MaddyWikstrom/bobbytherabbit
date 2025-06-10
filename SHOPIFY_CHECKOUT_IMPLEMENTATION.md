@@ -24,13 +24,19 @@ This guide summarizes the Shopify checkout integration options and fixes impleme
 ## Fixed Issues
 
 ### 1. Netlify Function 502 Error
-The 502 Bad Gateway error was caused by ESM compatibility issues with node-fetch. We fixed this by:
-```js
-// Use dynamic import for node-fetch to fix ESM compatibility issues
-const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
-```
+The 502 Bad Gateway error was caused by ESM compatibility issues with node-fetch. We fixed this by creating a completely rewritten version that uses Node's native https module instead.
 
-### 2. Duplicate Script Declaration Errors
+### 2. Netlify Function 500 Internal Server Error
+To diagnose 500 Internal Server errors, we've added enhanced logging throughout the function. These logs will appear in the Netlify Functions dashboard and help identify exactly where issues are occurring:
+
+- Request payload logging
+- Shopify credentials verification
+- Line item preparation
+- GraphQL request details
+- Response parsing
+- Error details
+
+### 3. Duplicate Script Declaration Errors
 Added safeguards to prevent script conflicts:
 ```js
 // Prevent duplicate declarations
@@ -50,6 +56,41 @@ if (window.BobbyCartSystem) {
 ### For Deployed Testing
 1. All options should work when deployed
 2. The Netlify function approach now uses dynamic imports to fix ESM compatibility
+
+## Troubleshooting
+
+If you encounter issues with the checkout process, follow these steps to diagnose and resolve them:
+
+### Checking Netlify Function Logs
+
+1. Go to your Netlify dashboard
+2. Navigate to Functions > create-checkout-fixed > Logs
+3. Look for log entries with emoji indicators:
+   - 🚀 Function start
+   - 📦 Request body information
+   - 🔑 Credential verification
+   - 📝 Line item processing
+   - 📤 GraphQL request details
+   - 📥 Response information
+   - ❌ Error indicators
+
+### Common Issues and Solutions
+
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| Missing line items | Cart items not formatted correctly | Check the format of items being sent from the cart |
+| Invalid variant ID | Variant IDs not in Shopify's GID format | Ensure IDs are formatted as `gid://shopify/ProductVariant/12345678` |
+| Missing Shopify credentials | Environment variables not set | Configure SHOPIFY_DOMAIN and SHOPIFY_STOREFRONT_ACCESS_TOKEN in Netlify |
+| GraphQL syntax errors | Malformed query | Check the mutation string for any syntax errors |
+| CORS errors | Cross-origin issues | Ensure the CORS headers are properly set |
+
+### Testing Without Deployment
+
+For local testing without dealing with Netlify Functions:
+
+1. Use the `direct-storefront-checkout.html` example
+2. This bypasses server-side processing completely
+3. Note that your Storefront API token will be exposed in client-side code
 
 ## Recommended Approach
 
