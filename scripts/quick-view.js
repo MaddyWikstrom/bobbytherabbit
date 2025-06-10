@@ -23,7 +23,62 @@ class QuickViewManager {
         this.createQuickViewModal();
         this.addQuickViewStyles();
         this.setupEventListeners();
+        
+        // Hide all unwanted buttons in product cards
+        this.addButtonHidingStyles();
+        
         // QuickView system initialized
+    }
+    
+    // Add specific styles to hide buttons on product cards
+    addButtonHidingStyles() {
+        // Check if styles already exist
+        if (document.querySelector('#quick-view-button-hiding-styles')) return;
+        
+        const styles = `
+            /* Hide ALL buttons on product cards */
+            .product-card .add-to-cart-btn,
+            .product-card .quick-shop-btn,
+            .product-card .cart-btn,
+            .product-card .eye-btn,
+            .product-card .quick-view-btn,
+            .product-card .add-to-bag-btn,
+            .product-card .quick-shop-buttons,
+            .product-card .button-container,
+            .product-card .quick-buttons,
+            .product-card [class*="cart"],
+            .product-card [class*="Cart"],
+            .product-card button:not(.quick-add-size-btn):not(.quick-add-color-btn),
+            .product-card .btn,
+            .product-card .button,
+            .product-card .add-to-cart,
+            .product-card .add-to-bag,
+            .product-card .buy-now,
+            .product-card a.btn,
+            .product-card .actions,
+            .product-card .product-actions,
+            .product-card .hover-actions,
+            .product-card .product-buttons,
+            .product-card .hover-buttons {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+            
+            /* Ensure the overlay appears on hover */
+            .product-card:hover .product-quick-add-overlay {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
+                pointer-events: auto !important;
+                visibility: visible !important;
+            }
+        `;
+        
+        const styleEl = document.createElement('style');
+        styleEl.id = 'quick-view-button-hiding-styles';
+        styleEl.textContent = styles;
+        document.head.appendChild(styleEl);
     }
 
     // Extract category from product title
@@ -479,8 +534,37 @@ class QuickViewManager {
     }
 }
 
+// Function to ensure all product cards have quick view functionality
+function ensureQuickViewOnAllCards() {
+    const quickViewManager = new QuickViewManager();
+    
+    // Force add quick view to all product cards on page
+    const productCards = document.querySelectorAll('.product-card');
+    if (productCards.length > 0) {
+        console.log(`Adding quick view to ${productCards.length} product cards`);
+        productCards.forEach(card => {
+            // Remove any existing add-to-cart or other buttons
+            const buttonsToRemove = card.querySelectorAll('.add-to-cart-btn, .quick-shop-btn, .cart-btn, .eye-btn, .button, button:not(.quick-add-size-btn):not(.quick-add-color-btn)');
+            buttonsToRemove.forEach(btn => btn.remove());
+            
+            // Add our quick view overlay if it doesn't exist
+            if (!card.querySelector('.product-quick-add-overlay')) {
+                quickViewManager.addQuickViewButtonToCard(card);
+            }
+        });
+    }
+}
+
 // Initialize the quick view manager
 const quickViewManager = new QuickViewManager();
+
+// Run immediately and also when the DOM is fully loaded
+ensureQuickViewOnAllCards();
+document.addEventListener('DOMContentLoaded', ensureQuickViewOnAllCards);
+
+// Run after any potential dynamic content loading
+setTimeout(ensureQuickViewOnAllCards, 1000);
+setTimeout(ensureQuickViewOnAllCards, 2000);
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
