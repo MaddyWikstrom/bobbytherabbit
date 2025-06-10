@@ -818,15 +818,30 @@ class QuickViewManager {
                     sizesContainer.appendChild(sizeBtn);
                 }
                 
-                // Add color options if product has colors
-                if (product.colors && product.colors.length > 0) {
-                    console.log('Product has colors:', product.colors.length);
+                // CRITICAL FIX: Only add color options if the product TRULY has variant colors
+                // Not because we added default colors in processProductData
+                console.log('Product color check:', product.title, '- has', (product.colors?.length || 0), 'colors');
+                
+                // We need to be ABSOLUTELY SURE this product has real color variants
+                // This is the root cause of showing Black/White on products without variants
+                const hasRealColorVariants = product.colors &&
+                                           product.colors.length > 0 &&
+                                           !product.colors.every(c =>
+                                               (typeof c === 'object' ? c.name : c) === 'Black' ||
+                                               (typeof c === 'object' ? c.name : c) === 'White');
+                
+                if (hasRealColorVariants) {
+                    console.log('Product has REAL COLOR VARIANTS:', product.colors.length);
+                    console.log('Colors:', product.colors.map(c => typeof c === 'object' ? c.name : c).join(', '));
+                    
                     colorsContainer.style.display = 'flex';
                     colorsContainer.innerHTML = '';
                     
                     product.colors.forEach(color => {
                         const colorName = typeof color === 'object' ? color.name : color;
                         const colorCode = typeof color === 'object' ? color.code : this.getColorCode(color);
+                        
+                        console.log(`Adding color button: ${colorName} (${colorCode})`);
                         
                         const colorBtn = document.createElement('div');
                         colorBtn.className = 'quick-add-color-btn';
@@ -883,8 +898,14 @@ class QuickViewManager {
                         }
                     }
                 } else {
-                    // No colors available - hide the container
+                    // No REAL colors available - hide the container and clear it
+                    console.log('No real color variants for this product - hiding color options');
                     colorsContainer.style.display = 'none';
+                    colorsContainer.innerHTML = '';
+                    
+                    // CRITICAL FIX: Also update the product.colors array to be empty
+                    // This prevents the auto-add code from trying to use colors
+                    product.colors = [];
                 }
             })
             .catch(error => {
@@ -1245,7 +1266,7 @@ class QuickViewManager {
                 price: 0,
                 comparePrice: 0,
                 images: [],
-                colors: [{name: 'Black', code: '#000000'}],
+                colors: [], // FIXED: No default colors - previously had Black
                 sizes: ['S', 'M', 'L', 'XL'],
                 inventory: {},
                 category: 'Unknown'
@@ -1396,11 +1417,20 @@ class QuickViewManager {
             // DO NOT add default colors - this was causing issues
             // by showing Black/White colors for products that don't have color variants
             
-            // Convert sets to arrays
-            product.colors = Array.from(colorSet).map(colorName => ({
-                name: colorName,
-                code: this.getColorCode(colorName)
-            }));
+            // Convert sets to arrays ONLY if we actually found color variants
+            if (colorSet.size > 0) {
+                // Real color variants found - use them
+                product.colors = Array.from(colorSet).map(colorName => ({
+                    name: colorName,
+                    code: this.getColorCode(colorName)
+                }));
+                console.log(`Found ${product.colors.length} real color variants:`,
+                    product.colors.map(c => c.name).join(', '));
+            } else {
+                // No color variants found - leave colors array EMPTY
+                product.colors = [];
+                console.log(`No color variants found for ${product.title}`);
+            }
             
             product.sizes = Array.from(sizeSet);
             
@@ -1418,7 +1448,7 @@ class QuickViewManager {
                 price: 29.99,
                 comparePrice: 0,
                 images: [],
-                colors: [{name: 'Black', code: '#000000'}],
+                colors: [], // FIXED: No default colors - previously added Black by default
                 sizes: ['S', 'M', 'L', 'XL'],
                 inventory: {},
                 category: 'Unknown'
@@ -1617,34 +1647,69 @@ class QuickViewManager {
             // Store as current product
             this.currentProduct = product;
             
-            // Validate that selections are valid for this product
-            let isValidSelection = true;
-            let errorMessage = '';
+            // IMPROVED: More robust validation that matches other methods
+            console.log(`Validating selection - Product has ${product.colors?.length || 0} colors and ${product.sizes?.length || 0} sizes`);
             
-            // Validate color if product has colors
-            if (product.colors && product.colors.length > 0) {
+            const validationResults = {
+                colorNeeded: product.colors && product.colors.length > 0,
+                sizeNeeded: product.sizes && product.sizes.length > 0,
+                colorValid: true,
+                sizeValid: true,
+                errorMessage: ''
+            };
+            
+            // Only validate color if product actually has color variants
+            if (validationResults.colorNeeded) {
+                console.log(`Color validation needed: selected=${color || 'none'}`);
+                
                 if (!color) {
-                    isValidSelection = false;
-                    errorMessage = 'Please select a color';
-                } else if (!product.colors.some(c => c.name === color)) {
-                    isValidSelection = false;
-                    errorMessage = `Color "${color}" is not available for this product`;
+                    validationResults.colorValid = false;
+                    validationResults.errorMessage = 'Please select a color';
+                } else {
+                    // Check if this is a valid color for this product
+                    const isValidColor = product.colors.some(c =>
+                        (typeof c === 'object' ? c.name : c) === color
+                    );
+                    
+                    if (!isValidColor) {
+                        validationResults.colorValid = false;
+                        validationResults.errorMessage = `Color "${color}" is not available for this product`;
+                    }
                 }
+            } else {
+                // No colors needed - ignore any color that was passed
+                console.log('Product has no color variants - ignoring color selection');
             }
             
-            // Validate size if product has sizes
-            if (isValidSelection && product.sizes && product.sizes.length > 0) {
+            // Only validate size if product has sizes
+            if (validationResults.colorValid && validationResults.sizeNeeded) {
+                console.log(`Size validation needed: selected=${size || 'none'}`);
+                
                 if (!size) {
-                    isValidSelection = false;
-                    errorMessage = 'Please select a size';
-                } else if (!product.sizes.includes(size)) {
-                    isValidSelection = false;
-                    errorMessage = `Size "${size}" is not available for this product`;
+                    validationResults.sizeValid = false;
+                    validationResults.errorMessage = 'Please select a size';
+                } else {
+                    // Check if this is a valid size for this product
+                    const isValidSize = product.sizes.includes(size);
+                    
+                    if (!isValidSize) {
+                        validationResults.sizeValid = false;
+                        validationResults.errorMessage = `Size "${size}" is not available for this product`;
+                    }
                 }
+            } else if (!validationResults.colorValid) {
+                // Skip size validation if color validation already failed
+            } else {
+                // No sizes needed - ignore any size that was passed
+                console.log('Product has no size variants - ignoring size selection');
             }
+            
+            // Check overall validation result
+            const isValidSelection = (!validationResults.colorNeeded || validationResults.colorValid) &&
+                                     (!validationResults.sizeNeeded || validationResults.sizeValid);
             
             if (!isValidSelection) {
-                throw new Error(errorMessage);
+                throw new Error(validationResults.errorMessage || 'Invalid selection');
             }
             
             // Set selected variant
@@ -2066,11 +2131,15 @@ class QuickViewManager {
     updateQuickViewState() {
         const addBtn = document.getElementById('quick-view-add-btn');
         
-        // Disable add button if color or size not selected
-        const hasRequiredSelections = this.currentProduct.colors.length === 0 || this.selectedVariant.color;
-        const hasSizeIfNeeded = this.currentProduct.sizes.length === 0 || this.selectedVariant.size;
+        // FIXED: More robust handling of products without color variants
+        // Only require color selection if product actually has colors
+        const hasColorIfNeeded = (!this.currentProduct.colors || this.currentProduct.colors.length === 0) || this.selectedVariant.color;
+        const hasSizeIfNeeded = (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) || this.selectedVariant.size;
         
-        addBtn.disabled = !(hasRequiredSelections && hasSizeIfNeeded);
+        const shouldEnable = hasColorIfNeeded && hasSizeIfNeeded;
+        console.log(`Add button state: hasColorIfNeeded=${hasColorIfNeeded}, hasSizeIfNeeded=${hasSizeIfNeeded}, enabled=${shouldEnable}`);
+        
+        addBtn.disabled = !shouldEnable;
     }
     
     // Get available stock for selected variant
@@ -2086,8 +2155,26 @@ class QuickViewManager {
     
     // Add current product to cart
     addToCart() {
-        if (!this.currentProduct || (this.currentProduct.colors.length > 0 && !this.selectedVariant.color) || (this.currentProduct.sizes.length > 0 && !this.selectedVariant.size)) {
-            // Cannot add to cart if required options not selected
+        // FIXED: More robust validation for products without variants
+        // Only require color if the product actually has color variants
+        if (!this.currentProduct) {
+            console.error("Cannot add to cart: No product selected");
+            return;
+        }
+        
+        // Validate color selection only if product has colors
+        const needsColor = this.currentProduct.colors && this.currentProduct.colors.length > 0;
+        const colorSelected = !needsColor || this.selectedVariant.color;
+        
+        // Validate size selection only if product has sizes
+        const needsSize = this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
+        const sizeSelected = !needsSize || this.selectedVariant.size;
+        
+        // Check if we can proceed
+        if (!colorSelected || !sizeSelected) {
+            console.error("Cannot add to cart: Required options not selected", {
+                needsColor, colorSelected, needsSize, sizeSelected
+            });
             return;
         }
         
