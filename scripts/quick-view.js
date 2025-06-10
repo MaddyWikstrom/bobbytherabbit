@@ -35,14 +35,15 @@ class QuickViewManager {
         // Check if modal already exists
         if (this.modalCreated) return;
         
-        // Create modal elements
+        // Create modal elements with updated structure to match the CSS in styles/quick-view.css
         const modalHtml = `
             <div id="quick-view-overlay" class="quick-view-overlay">
                 <div id="quick-view-modal" class="quick-view-modal">
                     <button id="quick-view-close" class="quick-view-close">&times;</button>
                     
                     <div class="quick-view-content">
-                        <div class="quick-view-left">
+                        <!-- Left side - Gallery with better image display -->
+                        <div class="quick-view-gallery">
                             <div class="quick-view-image-container">
                                 <img id="quick-view-main-image" class="quick-view-main-image" src="" alt="Product Image">
                                 <div id="quick-view-loading" class="quick-view-loading">
@@ -52,7 +53,8 @@ class QuickViewManager {
                             <div id="quick-view-thumbnails" class="quick-view-thumbnails"></div>
                         </div>
                         
-                        <div class="quick-view-right">
+                        <!-- Right side - Product information and options -->
+                        <div class="quick-view-info">
                             <div class="quick-view-header">
                                 <h3 id="quick-view-title" class="quick-view-title"></h3>
                                 <div id="quick-view-category" class="quick-view-category"></div>
@@ -64,25 +66,39 @@ class QuickViewManager {
                                 <span id="quick-view-price-discount" class="quick-view-price-discount"></span>
                             </div>
                             
+                            <div id="quick-view-description" class="quick-view-description"></div>
+                            
                             <div class="quick-view-options">
+                                <!-- Color selection - Displayed only for products with multiple colors -->
+                                <div id="quick-view-color-group" class="quick-view-option-group">
+                                    <div class="quick-view-option-label">Color: <span class="required-indicator">*</span></div>
+                                    <div id="quick-view-color-options" class="quick-view-color-options"></div>
+                                </div>
+                                
                                 <!-- Size selection -->
                                 <div id="quick-view-size-group" class="quick-view-option-group">
-                                    <div class="quick-view-option-label">Size:</div>
+                                    <div class="quick-view-option-label">Size: <span class="required-indicator">*</span></div>
                                     <div id="quick-view-size-options" class="quick-view-size-options"></div>
                                 </div>
                                 
-                                <!-- Color selection -->
-                                <div id="quick-view-color-group" class="quick-view-option-group">
-                                    <div class="quick-view-option-label">Color:</div>
-                                    <div id="quick-view-color-options" class="quick-view-color-options"></div>
+                                <!-- Quantity selection -->
+                                <div id="quick-view-quantity" class="quick-view-quantity">
+                                    <span class="quick-view-quantity-label">Quantity:</span>
+                                    <div class="quick-view-quantity-selector">
+                                        <button id="quick-view-decrement" class="quick-view-quantity-btn">-</button>
+                                        <span id="quick-view-quantity-display" class="quick-view-quantity-display">1</span>
+                                        <button id="quick-view-increment" class="quick-view-quantity-btn">+</button>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="quick-view-actions">
-                                <button id="quick-view-add-btn" class="quick-view-add-btn">Add to Cart</button>
-                            </div>
+                            <!-- Validation message area -->
+                            <div id="quick-view-validation-message" class="quick-view-validation-message" style="display: none;"></div>
                             
-                            <div id="quick-view-description" class="quick-view-description"></div>
+                            <div class="quick-view-actions">
+                                <button id="quick-view-add-btn" class="quick-add-btn">Add to Cart</button>
+                                <button id="quick-view-view-details" class="quick-view-btn">View Details</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -600,8 +616,61 @@ class QuickViewManager {
             }
         });
         
-        // Add to cart button click
-        document.getElementById('quick-view-add-btn').addEventListener('click', () => this.addToCart());
+        // Add to cart button click with visual feedback
+        document.getElementById('quick-view-add-btn').addEventListener('click', () => {
+            // Add visual feedback animation to the button when clicked
+            const addBtn = document.getElementById('quick-view-add-btn');
+            addBtn.classList.add('adding');
+            
+            // Attempt to add to cart
+            this.addToCart();
+            
+            // Reset animation after a delay
+            setTimeout(() => {
+                addBtn.classList.remove('adding');
+            }, 1500);
+        });
+        
+        // View Details button - Navigate to the product page
+        const viewDetailsBtn = document.getElementById('quick-view-view-details');
+        if (viewDetailsBtn) {
+            viewDetailsBtn.addEventListener('click', () => {
+                if (this.currentProduct) {
+                    // Navigate to the product page with color parameter if color is selected
+                    let url = `product.html?id=${this.currentProduct.id}`;
+                    if (this.selectedVariant.color) {
+                        url += `&color=${encodeURIComponent(this.selectedVariant.color)}`;
+                    }
+                    if (this.selectedVariant.size) {
+                        url += `&size=${encodeURIComponent(this.selectedVariant.size)}`;
+                    }
+                    window.location.href = url;
+                }
+            });
+        }
+        
+        // Quantity controls
+        const quantityDisplay = document.getElementById('quick-view-quantity-display');
+        const incrementBtn = document.getElementById('quick-view-increment');
+        const decrementBtn = document.getElementById('quick-view-decrement');
+        
+        if (incrementBtn && decrementBtn && quantityDisplay) {
+            incrementBtn.addEventListener('click', () => {
+                const currentQty = parseInt(this.selectedVariant.quantity);
+                if (currentQty < 10) { // Maximum quantity of 10
+                    this.selectedVariant.quantity = currentQty + 1;
+                    quantityDisplay.textContent = this.selectedVariant.quantity;
+                }
+            });
+            
+            decrementBtn.addEventListener('click', () => {
+                const currentQty = parseInt(this.selectedVariant.quantity);
+                if (currentQty > 1) { // Minimum quantity of 1
+                    this.selectedVariant.quantity = currentQty - 1;
+                    quantityDisplay.textContent = this.selectedVariant.quantity;
+                }
+            });
+        }
         
         // Thumbnail click - change main image
         document.getElementById('quick-view-thumbnails').addEventListener('click', (e) => {
@@ -1334,13 +1403,22 @@ class QuickViewManager {
                 }
             }
             
-            // CRITICAL FIX: Only add colors if we actually found color variants
-            if (colorSet.size > 0) {
+            // CRITICAL FIX: Only add colors if we actually found multiple color variants
+            if (colorSet.size > 1) {
                 product.colors = Array.from(colorSet).map(colorName => ({
                     name: colorName,
                     code: this.getColorCode(colorName)
                 }));
                 console.log(`Product ${product.title}: ${product.colors.length} colors`);
+            } else if (colorSet.size === 1) {
+                // If only one color, add it but mark the product as single-color
+                const singleColor = Array.from(colorSet)[0];
+                product.colors = [{
+                    name: singleColor,
+                    code: this.getColorCode(singleColor)
+                }];
+                product.hasSingleColor = true;
+                console.log(`Product ${product.title}: Single color product (${singleColor})`);
             } else {
                 product.colors = []; // Empty array = no color options
             }
@@ -1858,19 +1936,114 @@ class QuickViewManager {
         // Render images
         this.renderImages();
         
-        // Using the same variant logic as product details page
-        this.updateProductVariantDisplay(this.currentProduct);
-        
-        // Also update the sizes based on the first color
-        if (this.currentProduct.colors && this.currentProduct.colors.length > 0) {
-            const firstColor = typeof this.currentProduct.colors[0] === 'object' ?
-                this.currentProduct.colors[0].name : this.currentProduct.colors[0];
+        // Hide color selection if product has only one color or no colors
+        const colorGroup = document.getElementById('quick-view-color-group');
+        if (this.currentProduct.hasSingleColor || !this.currentProduct.colors || this.currentProduct.colors.length <= 1) {
+            colorGroup.style.display = 'none';
             
-            this.updateSizesForColor(firstColor, this.currentProduct);
+            // If we have a single color, pre-select it
+            if (this.currentProduct.colors && this.currentProduct.colors.length === 1) {
+                const singleColor = typeof this.currentProduct.colors[0] === 'object' ?
+                    this.currentProduct.colors[0].name : this.currentProduct.colors[0];
+                this.selectedVariant.color = singleColor;
+            }
+        } else {
+            // Show the color selection for multiple colors
+            colorGroup.style.display = 'block';
+            
+            // Update product variant display for colors
+            this.updateProductVariantDisplay(this.currentProduct);
+            
+            // Add a "required" indicator if colors need to be selected
+            if (this.isRequiredField('color')) {
+                const colorLabel = colorGroup.querySelector('.quick-view-option-label');
+                if (colorLabel) {
+                    colorLabel.innerHTML = 'Color: <span class="required-indicator">*</span>';
+                }
+            }
         }
+        
+        // Handle sizes
+        const sizeGroup = document.getElementById('quick-view-size-group');
+        if (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) {
+            sizeGroup.style.display = 'none';
+        } else {
+            sizeGroup.style.display = 'block';
+            
+            // Update sizes based on the first color or single color
+            const firstColor = this.selectedVariant.color ||
+                (this.currentProduct.colors && this.currentProduct.colors.length > 0 ?
+                    (typeof this.currentProduct.colors[0] === 'object' ?
+                        this.currentProduct.colors[0].name : this.currentProduct.colors[0]) :
+                    null);
+            
+            if (firstColor) {
+                this.updateSizesForColor(firstColor, this.currentProduct);
+            }
+            
+            // Add a "required" indicator if sizes need to be selected
+            if (this.isRequiredField('size')) {
+                const sizeLabel = sizeGroup.querySelector('.quick-view-option-label');
+                if (sizeLabel) {
+                    sizeLabel.innerHTML = 'Size: <span class="required-indicator">*</span>';
+                }
+            }
+        }
+        
+        // Add validation message area
+        const validationMsg = document.createElement('div');
+        validationMsg.id = 'quick-view-validation-message';
+        validationMsg.className = 'quick-view-validation-message';
+        validationMsg.style.display = 'none';
+        document.querySelector('.quick-view-actions').insertAdjacentElement('beforebegin', validationMsg);
         
         // Initialize the add to cart button state
         this.updateQuickViewState();
+        
+        // Add CSS for required indicators
+        if (!document.getElementById('quick-view-validation-styles')) {
+            const validationStyles = document.createElement('style');
+            validationStyles.id = 'quick-view-validation-styles';
+            validationStyles.textContent = `
+                .required-indicator {
+                    color: #ef4444;
+                    margin-left: 4px;
+                }
+                .quick-view-validation-message {
+                    color: #ef4444;
+                    font-size: 0.9rem;
+                    margin-bottom: 1rem;
+                    padding: 0.5rem;
+                    border-radius: 4px;
+                    background-color: rgba(239, 68, 68, 0.1);
+                    text-align: center;
+                }
+                .selection-made .required-indicator {
+                    color: #10b981;
+                }
+                .quick-view-option-group {
+                    transition: all 0.3s ease;
+                }
+                .quick-view-option-group.highlight {
+                    animation: highlight-field 2s ease;
+                }
+                @keyframes highlight-field {
+                    0%, 100% { background-color: transparent; }
+                    50% { background-color: rgba(239, 68, 68, 0.1); }
+                }
+            `;
+            document.head.appendChild(validationStyles);
+        }
+    }
+    
+    // Helper method to check if a field is required for adding to cart
+    isRequiredField(field) {
+        if (field === 'color') {
+            return this.currentProduct && this.currentProduct.colors && this.currentProduct.colors.length > 1;
+        } else if (field === 'size') {
+            return this.currentProduct && this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
+        }
+        return false;
     }
     
     // Process color-specific images - same logic as product details page
@@ -2028,19 +2201,71 @@ class QuickViewManager {
         }
     }
     
-    // Update button states based on selection
+    // Enhanced update button states with validation messages
     updateQuickViewState() {
         const addBtn = document.getElementById('quick-view-add-btn');
+        const validationMsg = document.getElementById('quick-view-validation-message');
         
         // FIXED: More robust handling of products without color variants
-        // Only require color selection if product actually has colors
-        const hasColorIfNeeded = (!this.currentProduct.colors || this.currentProduct.colors.length === 0) || this.selectedVariant.color;
-        const hasSizeIfNeeded = (!this.currentProduct.sizes || this.currentProduct.sizes.length === 0) || this.selectedVariant.size;
+        // Only require color selection if product actually has multiple colors
+        const hasColorIfNeeded = (!this.isRequiredField('color')) || this.selectedVariant.color;
+        const hasSizeIfNeeded = (!this.isRequiredField('size')) || this.selectedVariant.size;
         
         const shouldEnable = hasColorIfNeeded && hasSizeIfNeeded;
-        console.log(`Add button state: hasColorIfNeeded=${hasColorIfNeeded}, hasSizeIfNeeded=${hasSizeIfNeeded}, enabled=${shouldEnable}`);
         
+        // Update button state
         addBtn.disabled = !shouldEnable;
+        
+        // Update button text for clarity
+        addBtn.textContent = shouldEnable ? "Add to Cart" : "Select Options";
+        
+        // Show/hide validation message
+        if (validationMsg) {
+            if (!shouldEnable) {
+                validationMsg.style.display = 'block';
+                
+                // Create specific message based on what's missing
+                let message = 'Please select: ';
+                const missing = [];
+                
+                if (!hasColorIfNeeded) {
+                    missing.push('Color');
+                    // Highlight the color group
+                    const colorGroup = document.getElementById('quick-view-color-group');
+                    if (colorGroup && !colorGroup.classList.contains('highlight')) {
+                        colorGroup.classList.add('highlight');
+                        setTimeout(() => colorGroup.classList.remove('highlight'), 2000);
+                    }
+                }
+                
+                if (!hasSizeIfNeeded) {
+                    missing.push('Size');
+                    // Highlight the size group
+                    const sizeGroup = document.getElementById('quick-view-size-group');
+                    if (sizeGroup && !sizeGroup.classList.contains('highlight')) {
+                        sizeGroup.classList.add('highlight');
+                        setTimeout(() => sizeGroup.classList.remove('highlight'), 2000);
+                    }
+                }
+                
+                validationMsg.textContent = message + missing.join(' & ');
+            } else {
+                validationMsg.style.display = 'none';
+            }
+        }
+        
+        // Mark fields as selected in the UI
+        if (this.selectedVariant.color && this.isRequiredField('color')) {
+            const colorGroup = document.getElementById('quick-view-color-group');
+            if (colorGroup) colorGroup.classList.add('selection-made');
+        }
+        
+        if (this.selectedVariant.size && this.isRequiredField('size')) {
+            const sizeGroup = document.getElementById('quick-view-size-group');
+            if (sizeGroup) sizeGroup.classList.add('selection-made');
+        }
+        
+        console.log(`Add button state: hasColorIfNeeded=${hasColorIfNeeded}, hasSizeIfNeeded=${hasSizeIfNeeded}, enabled=${shouldEnable}`);
     }
     
     // Get available stock for selected variant
@@ -2054,28 +2279,56 @@ class QuickViewManager {
         return this.currentProduct.inventory[inventoryKey] || 10;
     }
     
-    // Add current product to cart
+    // Enhanced add to cart with better validation and feedback
     addToCart() {
-        // FIXED: More robust validation for products without variants
-        // Only require color if the product actually has color variants
+        // Validate before proceeding
         if (!this.currentProduct) {
             console.error("Cannot add to cart: No product selected");
+            this.showNotification("Product data missing", "error");
             return;
         }
         
-        // Validate color selection only if product has colors
-        const needsColor = this.currentProduct.colors && this.currentProduct.colors.length > 0;
+        // Validate color selection only if product has multiple colors
+        const needsColor = this.isRequiredField('color');
         const colorSelected = !needsColor || this.selectedVariant.color;
         
         // Validate size selection only if product has sizes
-        const needsSize = this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
+        const needsSize = this.isRequiredField('size');
         const sizeSelected = !needsSize || this.selectedVariant.size;
         
         // Check if we can proceed
         if (!colorSelected || !sizeSelected) {
+            let errorMessage = "Please select: ";
+            const missing = [];
+            
+            if (!colorSelected) missing.push("Color");
+            if (!sizeSelected) missing.push("Size");
+            
+            errorMessage += missing.join(" & ");
+            
             console.error("Cannot add to cart: Required options not selected", {
                 needsColor, colorSelected, needsSize, sizeSelected
             });
+            
+            this.showNotification(errorMessage, "error");
+            
+            // Highlight the missing selections
+            if (!colorSelected) {
+                const colorGroup = document.getElementById('quick-view-color-group');
+                if (colorGroup) {
+                    colorGroup.classList.add('highlight');
+                    setTimeout(() => colorGroup.classList.remove('highlight'), 2000);
+                }
+            }
+            
+            if (!sizeSelected) {
+                const sizeGroup = document.getElementById('quick-view-size-group');
+                if (sizeGroup) {
+                    sizeGroup.classList.add('highlight');
+                    setTimeout(() => sizeGroup.classList.remove('highlight'), 2000);
+                }
+            }
+            
             return;
         }
         
