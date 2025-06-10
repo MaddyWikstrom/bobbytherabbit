@@ -15,7 +15,15 @@ class QuickViewManager {
         this.isLoading = false;
         this.modalCreated = false;
         this.isColorFiltering = false;
-        this.lastAddedItem = null; // Track last added item to prevent duplicates
+        
+        // Initialize global cart debounce if it doesn't exist
+        if (!window.BobbyCartDebounce) {
+            window.BobbyCartDebounce = {
+                lastAddedTimestamp: 0,
+                lastAddedItem: null,
+                debounceTime: 1000 // 1 second debounce
+            };
+        }
         
         this.init();
     }
@@ -1543,19 +1551,10 @@ class QuickViewManager {
         });
     }
     
-    // Quick add to cart directly from the overlay
+    // Quick add to cart directly from the overlay - using global debounce
     async quickAddToCart(productId, productHandle, color, size) {
         try {
             console.log(`Quick adding to cart: ${productId || productHandle} (${color || 'N/A'} / ${size || 'N/A'})`);
-            
-            // Generate a unique key for this item to prevent duplicates
-            const itemKey = `${productId || productHandle}_${color || 'nocolor'}_${size || 'nosize'}`;
-            
-            // Check if we've recently added this exact item to prevent duplicates
-            if (this.lastAddedItem === itemKey) {
-                console.log("Preventing duplicate quick add to cart:", itemKey);
-                return false;
-            }
             
             // Always re-fetch product data to ensure it's fresh
             const product = await this.fetchProductData(productId, productHandle);
@@ -1637,17 +1636,9 @@ class QuickViewManager {
             this.selectedVariant.size = size;
             this.selectedVariant.quantity = 1;
             
-            // Store this item as the last added to prevent duplicates
-            this.lastAddedItem = itemKey;
-            
             // Add to cart with more detailed logging
             console.log(`Adding to cart: ${product.title} - ${color || ''} ${size || ''}`);
             this.addToCart();
-            
-            // Reset last added after a delay to allow future adds of the same item
-            setTimeout(() => {
-                this.lastAddedItem = null;
-            }, 1000);
             
             return true;
         } catch (error) {
@@ -2223,7 +2214,7 @@ class QuickViewManager {
         return this.currentProduct.inventory[inventoryKey] || 0; // No fallback stock
     }
     
-    // Enhanced add to cart with better validation and feedback
+    // Enhanced add to cart with global debounce mechanism
     addToCart() {
         // Validate before proceeding
         if (!this.currentProduct) {
@@ -2277,15 +2268,6 @@ class QuickViewManager {
         }
         
         try {
-            // Generate a unique key for this item to prevent duplicates
-            const itemKey = `${this.currentProduct.id}_${this.selectedVariant.color || 'nocolor'}_${this.selectedVariant.size || 'nosize'}`;
-            
-            // Check if we've recently added this exact item to prevent duplicates
-            if (this.lastAddedItem === itemKey) {
-                console.log("Preventing duplicate add to cart:", itemKey);
-                return;
-            }
-            
             // Create cart item
             const cartItem = {
                 ...this.currentProduct,
@@ -2311,8 +2293,11 @@ class QuickViewManager {
                 cartItem.mainImage = mainImage.src;
             }
             
-            // Store this item as the last added to prevent duplicates
-            this.lastAddedItem = itemKey;
+            // Check if we should add this item - use global debouncer
+            if (!this.canAddToCart(cartItem)) {
+                console.log("Prevented duplicate add to cart via global debounce");
+                return;
+            }
             
             // Add to cart using available cart system
             let cartAddSuccess = false;
@@ -2357,17 +2342,42 @@ class QuickViewManager {
                 // Show confirmation notification
                 const sizeText = this.selectedVariant.size ? ` (${this.simplifySize(this.selectedVariant.size)})` : '';
                 this.showNotification(`Added ${this.currentProduct.title}${sizeText} to cart`, 'success');
-                
-                // Reset last added after a delay to allow future adds of the same item
-                setTimeout(() => {
-                    this.lastAddedItem = null;
-                }, 1000);
             }
             
         } catch (error) {
             console.error('Error adding to cart:', error);
             this.showNotification('Error adding to cart', 'error');
         }
+    }
+    
+    // Global debounce mechanism for cart additions
+    canAddToCart(cartItem) {
+        // Create a unique global key
+        if (!window.BobbyCartDebounce) {
+            window.BobbyCartDebounce = {
+                lastAddedTimestamp: 0,
+                lastAddedItem: null,
+                debounceTime: 1000 // 1 second debounce
+            };
+        }
+        
+        const now = Date.now();
+        const debounce = window.BobbyCartDebounce;
+        
+        // Generate a unique key for this item
+        const itemKey = `${cartItem.id}_${cartItem.selectedColor || 'nocolor'}_${cartItem.selectedSize || 'nosize'}`;
+        
+        // Check if we're adding the same item too quickly
+        if (debounce.lastAddedItem === itemKey &&
+            (now - debounce.lastAddedTimestamp) < debounce.debounceTime) {
+            return false;
+        }
+        
+        // Update the global tracking
+        debounce.lastAddedItem = itemKey;
+        debounce.lastAddedTimestamp = now;
+        
+        return true;
     }
     
     // This method is now replaced by updateThumbnailsForColor
