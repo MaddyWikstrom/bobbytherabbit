@@ -848,15 +848,7 @@ class ProductManager {
                          <div>${product.title.charAt(0)}</div>
                        </div>`
                     }
-                    <div class="product-overlay">
-                        <button class="product-action-btn quick-view-btn" title="Quick View">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                        <!-- Quick add to cart button removed -->
-                    </div>
+                    <!-- Product overlay removed to eliminate all popups -->
                     <div class="product-badges">
                         ${product.new ? '<span class="product-badge new">New</span>' : ''}
                         ${product.sale ? `<span class="product-badge sale">-${discount}%</span>` : ''}
@@ -897,14 +889,7 @@ class ProductManager {
     // the main getColorCode method to handle all color formats
 
     attachProductEventListeners() {
-        // Quick view buttons
-        document.querySelectorAll('.quick-view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const productId = e.target.closest('.product-card').dataset.productId;
-                this.showQuickView(productId);
-            });
-        });
+        // Quick view buttons removed
 
         // Add to cart buttons - removed quick add functionality
         document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
@@ -1132,18 +1117,7 @@ class ProductManager {
         }
     }
 
-    showQuickView(productId) {
-        // First remove any existing modals
-        this.removeAllModals();
-        
-        // Use the new QuickViewManager to handle quick view functionality
-        if (window.quickViewManager) {
-            window.quickViewManager.openQuickView(productId);
-        } else {
-            // Quick View Manager not available
-            this.showNotification('Quick View is not available at the moment', 'error');
-        }
-    }
+    // Quick view functionality completely removed
 
     viewProduct(productId, selectedColor = null) {
         // Basic error check
