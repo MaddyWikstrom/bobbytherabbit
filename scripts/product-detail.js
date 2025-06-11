@@ -2471,15 +2471,38 @@ class ProductDetailManager {
                 };
             }
             
+            // ENFORCE SIZE SELECTION: Always require size selection for all products
             // Check if product has sizes available
             const hasSizes = this.currentProduct.sizes && this.currentProduct.sizes.length > 0;
             
-            // If product has sizes but none selected, show error
+            // If no size is selected, show error and highlight size options
             if (hasSizes && !this.selectedVariant.size) {
                 console.warn('Cannot add to cart: Size not selected');
                 this.showNotification('Please select a size', 'error');
+                
+                // Highlight size options to make it clear they need to select one
+                const sizeOptions = document.getElementById('size-options');
+                if (sizeOptions) {
+                    sizeOptions.classList.add('highlight-required');
+                    // Add a temporary highlight animation
+                    sizeOptions.style.animation = 'pulse-highlight 2s';
+                    setTimeout(() => {
+                        sizeOptions.style.animation = '';
+                    }, 2000);
+                }
+                
+                // Add required indicator next to Sizes heading
+                const sizesHeader = document.querySelector('.sizes-header h3');
+                if (sizesHeader && !sizesHeader.querySelector('.required-indicator')) {
+                    const requiredIndicator = document.createElement('span');
+                    requiredIndicator.className = 'required-indicator';
+                    requiredIndicator.textContent = ' *';
+                    requiredIndicator.style.color = '#ff4757';
+                    sizesHeader.appendChild(requiredIndicator);
+                }
+                
                 return;
-            } else if (!this.selectedVariant.size) {
+            } else if (!this.selectedVariant.size && !hasSizes) {
                 // For products without size options (like beanies), set a default size
                 console.log('Product has no size options, using default "One Size"');
                 this.selectedVariant.size = "One Size";

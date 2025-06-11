@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Cart Fix - Bobby Streetwear</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #13132b;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: rgba(30, 30, 50, 0.8);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+        }
+        h1 {
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 0;
+        }
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 119, 198, 0.4);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        a {
+            color: #a855f7;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Emergency Cart Fix</h1>
+        <p>If you have items stuck in your cart that you can't remove, use the buttons below to fix the issue.</p>
+        
+        <div>
+            <button id="remove-hoodie" class="btn">Remove Stuck Hoodie</button>
+            <button id="clear-all" class="btn">Clear Entire Cart</button>
+            <button id="back-to-shop" class="btn">Return to Shop</button>
+        </div>
+        
+        <div id="result" class="result">
+            <p id="result-message"></p>
+        </div>
+    </div>
+
+    <!-- Load the cart system script -->
+    <script src="scripts/shopify-id-handler.js"></script>
+    <script src="scripts/simple-cart-system.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultDiv = document.getElementById('result');
+            const resultMessage = document.getElementById('result-message');
+            
+            // Button to remove stuck hoodie
+            document.getElementById('remove-hoodie').addEventListener('click', function() {
+                try {
+                    // Wait for cart system to initialize
+                    setTimeout(() => {
+                        if (window.BobbyCart && typeof window.BobbyCart.emergencyClearItem === 'function') {
+                            // Use the emergency function to remove hoodies
+                            window.BobbyCart.emergencyClearItem('hoodie');
+                            
+                            resultDiv.style.display = 'block';
+                            resultMessage.innerHTML = '<span class="success">✅ Successfully removed hoodie items from cart!</span>';
+                        } else {
+                            resultDiv.style.display = 'block';
+                            resultMessage.innerHTML = '<span class="error">❌ Cart system not available. Please try again in a few seconds.</span>';
+                        }
+                    }, 1000);
+                } catch (err) {
+                    resultDiv.style.display = 'block';
+                    resultMessage.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+                }
+            });
+            
+            // Button to clear entire cart
+            document.getElementById('clear-all').addEventListener('click', function() {
+                try {
+                    // Wait for cart system to initialize
+                    setTimeout(() => {
+                        if (window.BobbyCart && typeof window.BobbyCart.clearCart === 'function') {
+                            window.BobbyCart.clearCart();
+                            
+                            resultDiv.style.display = 'block';
+                            resultMessage.innerHTML = '<span class="success">✅ Successfully cleared entire cart!</span>';
+                        } else {
+                            resultDiv.style.display = 'block';
+                            resultMessage.innerHTML = '<span class="error">❌ Cart system not available. Please try again in a few seconds.</span>';
+                        }
+                    }, 1000);
+                } catch (err) {
+                    resultDiv.style.display = 'block';
+                    resultMessage.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+                }
+            });
+            
+            // Button to return to shop
+            document.getElementById('back-to-shop').addEventListener('click', function() {
+                window.location.href = 'products.html';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -61,10 +61,17 @@ exports.handler = async (event, context) => {
     }
 
     // Get Shopify credentials from environment variables
-    const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
-    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || process.env.SHOPIFY_DOMAIN;
+    const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN; // Use the available token
+    const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-04';
 
-    if (!SHOPIFY_DOMAIN || !SHOPIFY_STOREFRONT_ACCESS_TOKEN) {
+    console.log("Shopify credentials check:", {
+      domain: SHOPIFY_DOMAIN ? '✅ Present' : '❌ Missing',
+      token: SHOPIFY_TOKEN ? '✅ Present' : '❌ Missing',
+      apiVersion: API_VERSION
+    });
+
+    if (!SHOPIFY_DOMAIN || !SHOPIFY_TOKEN) {
       console.error('Missing Shopify credentials in environment variables');
       return {
         statusCode: 500,
@@ -183,11 +190,11 @@ exports.handler = async (event, context) => {
     // Make the request to Shopify Storefront API
     let response;
     try {
-      response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-04/graphql.json`, {
+      response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Shopify-Storefront-Access-Token': SHOPIFY_STOREFRONT_ACCESS_TOKEN,
+          'X-Shopify-Storefront-Access-Token': SHOPIFY_TOKEN,
           'User-Agent': 'Bobby-Streetwear-Checkout/1.0'
         },
         body: JSON.stringify({

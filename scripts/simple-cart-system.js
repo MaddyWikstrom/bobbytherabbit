@@ -336,7 +336,15 @@ if (window.BobbyCartSystem) {
   
   // Remove an item from the cart
   function removeItem(itemId) {
-    items = items.filter(item => item.cartItemId !== itemId);
+    console.log(`Removing item with ID: ${itemId}`);
+    
+    // Improved, more reliable item removal - check all possible ID fields
+    items = items.filter(item => {
+      // Check all possible ID fields for the best matching experience
+      return item.cartItemId !== itemId &&
+             item.id !== itemId &&
+             item.productId !== itemId;
+    });
     
     // Save cart data
     saveCartData();
@@ -375,6 +383,43 @@ if (window.BobbyCartSystem) {
     
     // Update cart UI
     updateCartUI();
+  }
+  
+  // Emergency function to remove items by title match (case insensitive)
+  function emergencyClearItem(titleMatch) {
+    if (!titleMatch) {
+      console.warn('No title match provided for emergency item removal');
+      return;
+    }
+    
+    console.log(`🚨 Emergency removing items with title matching: "${titleMatch}"`);
+    const initialCount = items.length;
+    
+    // Convert the search term to lowercase for case-insensitive matching
+    const searchTerm = titleMatch.toLowerCase();
+    
+    // Filter out items that match the title
+    items = items.filter(item => {
+      const itemTitle = (item.title || '').toLowerCase();
+      const matches = itemTitle.includes(searchTerm);
+      
+      if (matches) {
+        console.log(`🗑️ Removing item: ${item.title} (ID: ${item.id || item.cartItemId})`);
+      }
+      
+      return !matches;
+    });
+    
+    const removedCount = initialCount - items.length;
+    console.log(`🧹 Emergency removal complete: ${removedCount} item(s) removed`);
+    
+    // Save cart data
+    saveCartData();
+    
+    // Update cart UI
+    updateCartUI();
+    
+    return removedCount;
   }
   
   // Update the cart UI
@@ -935,6 +980,15 @@ if (window.BobbyCartSystem) {
         clearCart();
       } catch (err) {
         console.error('Error in clearCart API call:', err);
+      }
+    },
+    // Emergency function to remove stuck items by name
+    emergencyClearItem: function(titleMatch) {
+      try {
+        console.log('🚨 EMERGENCY ITEM REMOVAL 🚨');
+        emergencyClearItem(titleMatch);
+      } catch (err) {
+        console.error('Error in emergencyClearItem API call:', err);
       }
     },
     getItems: function() {
