@@ -84,7 +84,15 @@ class ProductManager {
 
     async loadShopifyProducts() {
         try {
-            console.log('Fetching products from Netlify function');
+            // First try direct Storefront API
+            const directProducts = await this.loadProductsDirectFromStorefront();
+            if (directProducts && directProducts.length > 0) {
+                console.log(`Successfully loaded ${directProducts.length} products directly from Storefront API`);
+                return directProducts;
+            }
+            
+            // Fall back to Netlify function if direct method fails
+            console.log('Direct Storefront API failed, falling back to Netlify function');
             
             // Use Netlify function to bypass CORS restrictions
             // Add a timestamp to prevent caching issues
@@ -158,6 +166,115 @@ class ProductManager {
             console.error('Error loading Shopify products via Netlify function:', error);
             // Show error notification to user
             this.showNotification(`Error loading products: ${error.message}`, 'error');
+            return null;
+        }
+    }
+
+    async loadProductsDirectFromStorefront() {
+        try {
+            console.log('Attempting to load products directly from Shopify Storefront API');
+            
+            // Shopify Storefront API configuration
+            const SHOPIFY_DOMAIN = 'mfdkk3-7g.myshopify.com';
+            const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
+            const API_VERSION = '2024-04';
+            
+            // GraphQL query - same as used in the Netlify function
+            const productsQuery = `
+                query Products {
+                    products(first: 250) {
+                        edges {
+                            node {
+                                id
+                                title
+                                handle
+                                description
+                                priceRange {
+                                    minVariantPrice {
+                                        amount
+                                        currencyCode
+                                    }
+                                    maxVariantPrice {
+                                        amount
+                                        currencyCode
+                                    }
+                                }
+                                images(first: 5) {
+                                    edges {
+                                        node {
+                                            url
+                                            altText
+                                        }
+                                    }
+                                }
+                                variants(first: 100) {
+                                    edges {
+                                        node {
+                                            id
+                                            title
+                                            price {
+                                                amount
+                                                currencyCode
+                                            }
+                                            compareAtPrice {
+                                                amount
+                                                currencyCode
+                                            }
+                                            availableForSale
+                                            selectedOptions {
+                                                name
+                                                value
+                                            }
+                                            image {
+                                                url
+                                            }
+                                        }
+                                    }
+                                }
+                                tags
+                                productType
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            // Make direct request to Shopify Storefront API
+            const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ query: productsQuery })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Storefront API request failed: ${response.status}`, errorText);
+                return null;
+            }
+            
+            const data = await response.json();
+            
+            if (data.errors) {
+                console.error('GraphQL errors:', data.errors);
+                return null;
+            }
+            
+            if (!data.data || !data.data.products || !data.data.products.edges) {
+                console.error('Invalid data structure returned from Storefront API');
+                return null;
+            }
+            
+            console.log(`Successfully loaded ${data.data.products.edges.length} products from Storefront API`);
+            
+            // Convert the products to our format
+            return this.convertShopifyProducts(data.data.products.edges);
+            
+        } catch (error) {
+            console.error('Error loading products directly from Storefront API:', error);
             return null;
         }
     }

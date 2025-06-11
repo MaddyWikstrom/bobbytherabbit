@@ -581,8 +581,8 @@ class CartManager {
                 return;
             }
 
-            // Create checkout via Netlify function
-            const response = await fetch('/.netlify/functions/create-checkout', {
+            // Use the fixed Cart API version of the checkout function
+            const response = await fetch('/.netlify/functions/create-checkout-fixed', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -627,56 +627,87 @@ class CartManager {
     async prepareCheckoutItems() {
         try {
             const checkoutItems = [];
+            let needsProductLookup = false;
             
-            // First try to use stored Shopify variant IDs
+            // First pass: check which items have valid Shopify variant IDs
             for (const cartItem of this.items) {
-                if (cartItem.shopifyVariantId) {
+                // Check if the ID is already in GID format
+                const isValidGID = cartItem.shopifyVariantId &&
+                                 typeof cartItem.shopifyVariantId === 'string' &&
+                                 cartItem.shopifyVariantId.startsWith('gid://shopify/ProductVariant/');
+                
+                if (isValidGID) {
+                    // Already valid, add to checkout items
                     checkoutItems.push({
                         variantId: cartItem.shopifyVariantId,
                         quantity: cartItem.quantity
                     });
+                } else {
+                    // Needs lookup
+                    needsProductLookup = true;
                 }
             }
             
-            // If we have all items with variant IDs, return them
+            // If all items have valid GID variant IDs, return them
             if (checkoutItems.length === this.items.length) {
+                console.log('All items have valid Shopify variant IDs:', checkoutItems);
                 return checkoutItems;
             }
             
             // Otherwise, load products to find missing variant IDs
-            const response = await fetch('/.netlify/functions/get-products');
-            if (!response.ok) {
-                throw new Error('Failed to load products');
-            }
-            
-            const products = await response.json();
-            
-            // Process items that don't have variant IDs
-            for (const cartItem of this.items) {
-                if (!cartItem.shopifyVariantId) {
+            if (needsProductLookup) {
+                console.log('Loading products to find missing variant IDs');
+                const response = await fetch('/.netlify/functions/get-products');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load products');
+                }
+                
+                let products = [];
+                const responseData = await response.json();
+                
+                // Handle both API response formats
+                if (responseData.products && Array.isArray(responseData.products)) {
+                    products = responseData.products;
+                } else if (Array.isArray(responseData)) {
+                    products = responseData;
+                } else {
+                    throw new Error('Invalid product data format');
+                }
+                
+                // Process items that don't have valid variant IDs
+                for (const cartItem of this.items) {
+                    // Skip items we already processed
+                    const existingItem = checkoutItems.find(item => item.variantId === cartItem.shopifyVariantId);
+                    if (existingItem) continue;
+                    
                     // Find the product in Shopify data
                     const shopifyProduct = products.find(p => {
                         const node = p.node || p;
                         return node.handle === cartItem.productId ||
                                node.id === cartItem.shopifyProductId ||
-                               node.id.includes(cartItem.productId);
+                               node.id?.includes(cartItem.productId);
                     });
                     
                     if (shopifyProduct) {
                         const product = shopifyProduct.node || shopifyProduct;
                         
                         // Find the matching variant
-                        const variant = product.variants.edges.find(v => {
+                        const variants = product.variants?.edges || [];
+                        const variant = variants.find(v => {
                             const variantNode = v.node;
                             let colorMatch = true;
                             let sizeMatch = true;
                             
+                            // Skip if no selectedOptions
+                            if (!variantNode.selectedOptions) return false;
+                            
                             variantNode.selectedOptions.forEach(option => {
                                 if (option.name.toLowerCase() === 'color' && cartItem.color !== 'Default') {
-                                    colorMatch = option.value === cartItem.color;
+                                    colorMatch = option.value.toLowerCase() === cartItem.color.toLowerCase();
                                 }
                                 if (option.name.toLowerCase() === 'size' && cartItem.size !== 'One Size') {
-                                    sizeMatch = option.value === cartItem.size;
+                                    sizeMatch = option.value.toLowerCase() === cartItem.size.toLowerCase();
                                 }
                             });
                             
@@ -688,16 +719,25 @@ class CartManager {
                             cartItem.shopifyVariantId = variant.node.id;
                             this.saveCartToStorage();
                             
+                            // Add to checkout items
                             checkoutItems.push({
                                 variantId: variant.node.id,
                                 quantity: cartItem.quantity
                             });
+                            
+                            console.log(`Found variant ID for ${cartItem.title}: ${variant.node.id}`);
+                        } else {
+                            console.warn(`Couldn't find matching variant for ${cartItem.title} (${cartItem.color}/${cartItem.size})`);
                         }
+                    } else {
+                        console.warn(`Couldn't find product for ${cartItem.title}`);
                     }
                 }
             }
             
-            return checkoutItems;
+            // Log what we're sending to checkout
+            console.log('Prepared checkout items:', checkoutItems);
+            return checkoutItems.length > 0 ? checkoutItems : null;
             
         } catch (error) {
             console.error('Error preparing checkout items:', error);
