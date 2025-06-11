@@ -427,7 +427,7 @@ if (window.BobbyCartSystem) {
     decreaseButtons.forEach(button => {
       button.addEventListener('click', function() {
         const itemId = this.getAttribute('data-item-id');
-        const itemIndex = items.findIndex(item => item.id === itemId);
+        const itemIndex = items.findIndex(item => item.cartItemId === itemId);
         if (itemIndex >= 0) {
           updateQuantity(itemId, items[itemIndex].quantity - 1);
         }
@@ -439,7 +439,7 @@ if (window.BobbyCartSystem) {
     increaseButtons.forEach(button => {
       button.addEventListener('click', function() {
         const itemId = this.getAttribute('data-item-id');
-        const itemIndex = items.findIndex(item => item.id === itemId);
+        const itemIndex = items.findIndex(item => item.cartItemId === itemId);
         if (itemIndex >= 0) {
           updateQuantity(itemId, items[itemIndex].quantity + 1);
         }
