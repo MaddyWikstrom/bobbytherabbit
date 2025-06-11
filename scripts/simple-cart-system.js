@@ -550,6 +550,8 @@ if (window.BobbyCartSystem) {
     
     // Check if Storefront API checkout is available
     if (window.BobbyCheckoutStorefront && typeof window.BobbyCheckoutStorefront.processCheckout === 'function') {
+      console.log('🔄 Using BobbyCheckoutStorefront integration for checkout');
+      
       // Show loading state on checkout button if available
       const checkoutBtn = document.querySelector('.cart-checkout-btn');
       if (checkoutBtn) {
@@ -559,16 +561,31 @@ if (window.BobbyCartSystem) {
       
       // Use Storefront API for checkout
       window.BobbyCheckoutStorefront.processCheckout(items)
-        .then(success => {
-          if (success) {
-            // Clear cart after successful checkout creation
-            clearCart();
-          } else {
-            // Reset checkout button if process failed
-            if (checkoutBtn) {
-              checkoutBtn.innerHTML = '<span>Checkout</span>';
-              checkoutBtn.disabled = false;
+        .then(result => {
+          console.log('🔄 BobbyCheckoutStorefront result:', result);
+          
+          if (result && result.checkoutUrl) {
+            console.log('✅ Received Shopify checkout URL from BobbyCheckoutStorefront:', result.checkoutUrl);
+            
+            // Ensure the URL is a complete Shopify checkout URL
+            if (!result.checkoutUrl.includes('myshopify.com/')) {
+              console.error('❌ Invalid checkout URL format from BobbyCheckoutStorefront');
+              throw new Error('Invalid checkout URL format. Must be a Shopify-hosted checkout URL.');
             }
+            
+            // Add a small delay to allow console logging before redirect
+            setTimeout(() => {
+              // Clear cart after successful checkout creation
+              clearCart();
+              
+              // CRITICAL: Direct redirection to Shopify's hosted checkout URL
+              console.log('🔀 Redirecting to Shopify checkout:', result.checkoutUrl);
+              window.location.assign(result.checkoutUrl);
+            }, 100);
+            
+            return true; // Indicate success
+          } else {
+            throw new Error('No valid checkout URL received from BobbyCheckoutStorefront');
           }
         })
         .catch(error => {
@@ -580,6 +597,8 @@ if (window.BobbyCartSystem) {
             checkoutBtn.innerHTML = '<span>Checkout</span>';
             checkoutBtn.disabled = false;
           }
+          
+          return false; // Indicate failure
         });
     } else {
       // Fallback to Netlify function approach if Storefront API not available
@@ -611,11 +630,24 @@ if (window.BobbyCartSystem) {
         }
         
         if (data.checkoutUrl) {
-          // Clear cart after successful checkout creation
-          clearCart();
+          console.log('✅ Received Shopify checkout URL:', data.checkoutUrl);
           
-          // Redirect to Shopify checkout
-          window.location.href = data.checkoutUrl;
+          // Ensure the URL is a complete Shopify checkout URL
+          if (!data.checkoutUrl.includes('myshopify.com/')) {
+            console.error('❌ Invalid checkout URL format. Must be a Shopify-hosted checkout URL.');
+            alert('There was an error with the checkout URL format. Please try again.');
+            return;
+          }
+          
+          // Add a small delay to allow console logging before redirect
+          setTimeout(() => {
+            // Clear cart after successful checkout creation
+            clearCart();
+            
+            // CRITICAL: Direct redirection to Shopify's hosted checkout URL
+            console.log('🔀 Redirecting to Shopify checkout:', data.checkoutUrl);
+            window.location.assign(data.checkoutUrl);
+          }, 100);
         } else {
           throw new Error('No checkout URL received');
         }
