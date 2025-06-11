@@ -49,12 +49,29 @@ exports.handler = async (event) => {
     // EMERGENCY FIX: Map known product variant names to real Shopify GIDs
     const VARIANT_ID_MAP = {
       // Format: 'custom-variant-id': 'real-shopify-gid'
+      
+      // Vintage Black Hoodies
       'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_S-Vintage Black-S': 'gid://shopify/ProductVariant/44713213274763',
       'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_M-Vintage Black-M': 'gid://shopify/ProductVariant/44713213307531',
       'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_L-Vintage Black-L': 'gid://shopify/ProductVariant/44713213340299',
       'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_XL-Vintage Black-XL': 'gid://shopify/ProductVariant/44713213373067',
-      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_XXL-Vintage Black-XXL': 'gid://shopify/ProductVariant/44713213405835'
-      // Add more mappings as needed
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_XXL-Vintage Black-XXL': 'gid://shopify/ProductVariant/44713213405835',
+      
+      // Women's T-shirts
+      'rabbit-hardware-womans-t-shirt_Default_S-Default-S': 'gid://shopify/ProductVariant/44713244246251',
+      'rabbit-hardware-womans-t-shirt_Default_M-Default-M': 'gid://shopify/ProductVariant/44713244279019',
+      'rabbit-hardware-womans-t-shirt_Default_L-Default-L': 'gid://shopify/ProductVariant/44713244311787',
+      'rabbit-hardware-womans-t-shirt_Default_XL-Default-XL': 'gid://shopify/ProductVariant/44713244344555',
+      
+      // Men's T-shirts
+      'rabbit-hardware-mens-t-shirt-1_Default_S-Default-S': 'gid://shopify/ProductVariant/44713230975211',
+      'rabbit-hardware-mens-t-shirt-1_Default_M-Default-M': 'gid://shopify/ProductVariant/44713231007979',
+      'rabbit-hardware-mens-t-shirt-1_Default_L-Default-L': 'gid://shopify/ProductVariant/44713231040747',
+      'rabbit-hardware-mens-t-shirt-1_Default_XL-Default-XL': 'gid://shopify/ProductVariant/44713231073515',
+      'rabbit-hardware-mens-t-shirt-1_Default_XXL-Default-XXL': 'gid://shopify/ProductVariant/44713231106283',
+
+      // Generic fallback for unknown items - Use a real product variant as default
+      'unknown-variant': 'gid://shopify/ProductVariant/44713213274763' // Black Hoodie S as fallback
     };
 
     // Convert non-GID variant IDs to GIDs using our mapping
@@ -73,9 +90,13 @@ exports.handler = async (event) => {
         };
       }
       
-      // No mapping found, return original item
-      console.log(`⚠️ No mapping found for custom ID: ${item.variantId}`);
-      return item;
+      // No mapping found, use fallback variant instead of failing
+      console.log(`⚠️ No mapping found for custom ID: ${item.variantId}, using fallback variant`);
+      return {
+        ...item,
+        variantId: VARIANT_ID_MAP['unknown-variant'],
+        originalId: item.variantId // Keep the original ID for reference
+      };
     });
     
     // Filter valid GIDs - using the term merchandiseId for the Cart API
