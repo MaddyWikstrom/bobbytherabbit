@@ -644,8 +644,11 @@
                     BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
                         BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
                             BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js', function() {
-                                // Load cart persistence system last to ensure it can hook into all cart systems
-                                BobbyScriptLoader.loadOnce('cart-persistence', 'scripts/cart-persistence.js');
+                                // Load cart persistence systems last to ensure they can hook into all cart systems
+                                BobbyScriptLoader.loadOnce('cart-persistence', 'scripts/cart-persistence.js', function() {
+                                    // Cross-domain cart persistence for checkout between different domains
+                                    BobbyScriptLoader.loadOnce('cross-domain-cart', 'scripts/cross-domain-cart.js');
+                                });
                             });
                         });
                     });
