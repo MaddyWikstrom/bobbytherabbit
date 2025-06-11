@@ -643,7 +643,10 @@
                 BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
                     BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
                         BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
-                            BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js');
+                            BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js', function() {
+                                // Load cart persistence system last to ensure it can hook into all cart systems
+                                BobbyScriptLoader.loadOnce('cart-persistence', 'scripts/cart-persistence.js');
+                            });
                         });
                     });
                 });
