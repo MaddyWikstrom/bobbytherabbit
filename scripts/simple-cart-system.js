@@ -261,16 +261,29 @@ if (window.BobbyCartSystem) {
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
     
-    // Create a variant-specific ID that combines product ID with color and size
+    // Check if we're receiving a real Shopify variant ID (starts with gid://)
+    const isShopifyGID = product.id && typeof product.id === 'string' &&
+                         product.id.startsWith('gid://shopify/ProductVariant/');
+    
+    if (isShopifyGID) {
+      console.log(`✅ Using real Shopify variant ID: ${product.id}`);
+    } else {
+      console.log(`⚠️ Non-Shopify variant ID used: ${product.id}`);
+    }
+    
+    // Store color and size information
     const color = product.selectedColor || '';
     const size = product.selectedSize || '';
-    const variantId = `${product.id}-${color}-${size}`;
     
-    console.log(`Generated variant ID: ${variantId}`);
+    // Create an internal cart ID for managing the item in the cart
+    // This is separate from the Shopify variant ID
+    const cartItemId = `${product.id}-${color}-${size}`;
+    
+    console.log(`Generated cart item ID: ${cartItemId}`);
     
     // Check if this specific variant already exists in cart
     const existingItemIndex = items.findIndex(item =>
-      item.id === variantId ||
+      item.cartItemId === cartItemId ||
       (item.productId === product.id &&
        item.selectedColor === color &&
        item.selectedSize === size)
@@ -287,11 +300,19 @@ if (window.BobbyCartSystem) {
         console.log(`Updating image for existing cart item: ${product.title}`);
         items[existingItemIndex].image = product.image;
       }
+      
+      // Always ensure we have the Shopify variant ID if it's available
+      if (isShopifyGID && !items[existingItemIndex].shopifyVariantId) {
+        console.log(`Adding missing Shopify variant ID to existing item: ${product.id}`);
+        items[existingItemIndex].shopifyVariantId = product.id;
+      }
     } else {
       // Add new item with default quantity of 1 at the top of the cart
       console.log(`Adding new item to cart: ${product.title} (${color}/${size})`);
       items.unshift({
-        id: variantId,
+        id: product.id, // Original ID (could be Shopify GID or internal ID)
+        cartItemId: cartItemId, // Internal ID for cart management
+        shopifyVariantId: isShopifyGID ? product.id : null, // Store Shopify variant ID if available
         productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
         price: product.price || 0,
@@ -315,7 +336,7 @@ if (window.BobbyCartSystem) {
   
   // Remove an item from the cart
   function removeItem(itemId) {
-    items = items.filter(item => item.id !== itemId);
+    items = items.filter(item => item.cartItemId !== itemId);
     
     // Save cart data
     saveCartData();
@@ -326,7 +347,7 @@ if (window.BobbyCartSystem) {
   
   // Update item quantity
   function updateQuantity(itemId, quantity) {
-    const itemIndex = items.findIndex(item => item.id === itemId);
+    const itemIndex = items.findIndex(item => item.cartItemId === itemId);
     
     if (itemIndex >= 0) {
       if (quantity <= 0) {
@@ -367,7 +388,7 @@ if (window.BobbyCartSystem) {
         cartItemsContainer.innerHTML = '<div class="empty-cart-message">Your cart is empty</div>';
       } else {
         cartItemsContainer.innerHTML = items.map(item => `
-          <div class="cart-item" data-item-id="${item.id}">
+          <div class="cart-item" data-item-id="${item.cartItemId}">
             <div class="cart-item-image">
               <img src="${item.image}" alt="${item.title}" onerror="this.src='assets/placeholder.png'">
             </div>
@@ -378,12 +399,12 @@ if (window.BobbyCartSystem) {
                 ''}</div>
               <div class="cart-item-price">$${(item.price).toFixed(2)}</div>
               <div class="cart-item-quantity">
-                <button class="quantity-decrease" data-item-id="${item.id}">-</button>
+                <button class="quantity-decrease" data-item-id="${item.cartItemId}">-</button>
                 <span class="quantity-value">${item.quantity}</span>
-                <button class="quantity-increase" data-item-id="${item.id}">+</button>
+                <button class="quantity-increase" data-item-id="${item.cartItemId}">+</button>
               </div>
             </div>
-            <button class="cart-item-remove" data-item-id="${item.id}">&times;</button>
+            <button class="cart-item-remove" data-item-id="${item.cartItemId}">&times;</button>
           </div>
         `).join('');
         
@@ -527,7 +548,7 @@ if (window.BobbyCartSystem) {
         },
         body: JSON.stringify({
           items: items.map(item => ({
-            variantId: item.id, // Pass the original ID directly
+            variantId: item.shopifyVariantId || item.id, // Use Shopify variant ID if available
             quantity: item.quantity
           }))
         })
