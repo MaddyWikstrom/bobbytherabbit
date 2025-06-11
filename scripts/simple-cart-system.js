@@ -261,12 +261,24 @@ if (window.BobbyCartSystem) {
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
     
+    // Preserve the original Shopify variant ID if present
+    let shopifyVariantId = null;
+    
+    // Check if the product already has a valid Shopify variant ID
+    if (product.id && product.id.startsWith('gid://shopify/ProductVariant/')) {
+      shopifyVariantId = product.id;
+      console.log(`Using existing Shopify variant ID: ${shopifyVariantId}`);
+    } else if (product.variantId && product.variantId.startsWith('gid://shopify/ProductVariant/')) {
+      shopifyVariantId = product.variantId;
+      console.log(`Using product.variantId as Shopify variant ID: ${shopifyVariantId}`);
+    }
+    
     // Create a variant-specific ID that combines product ID with color and size
     const color = product.selectedColor || '';
     const size = product.selectedSize || '';
     const variantId = `${product.id}-${color}-${size}`;
     
-    console.log(`Generated variant ID: ${variantId}`);
+    console.log(`Generated cart item ID: ${variantId}`);
     
     // Check if this specific variant already exists in cart
     const existingItemIndex = items.findIndex(item =>
@@ -287,12 +299,19 @@ if (window.BobbyCartSystem) {
         console.log(`Updating image for existing cart item: ${product.title}`);
         items[existingItemIndex].image = product.image;
       }
+      
+      // Ensure Shopify variant ID is saved if available
+      if (shopifyVariantId && !items[existingItemIndex].variantId) {
+        console.log(`Adding Shopify variant ID to existing cart item: ${shopifyVariantId}`);
+        items[existingItemIndex].variantId = shopifyVariantId;
+      }
     } else {
       // Add new item with default quantity of 1 at the top of the cart
       console.log(`Adding new item to cart: ${product.title} (${color}/${size})`);
       items.unshift({
         id: variantId,
         productId: product.productId || product.id, // Store original product ID
+        variantId: shopifyVariantId, // Store the Shopify variant ID if available
         title: product.title || 'Product',
         price: product.price || 0,
         image: product.image || 'assets/placeholder.png',
@@ -301,6 +320,13 @@ if (window.BobbyCartSystem) {
         selectedColor: color,
         selectedSize: size
       });
+      
+      // Log whether we have a valid Shopify variant ID for checkout
+      if (shopifyVariantId) {
+        console.log(`Item added with valid Shopify variant ID: ${shopifyVariantId}`);
+      } else {
+        console.warn(`Item added without a valid Shopify variant ID. This may cause checkout issues.`);
+      }
     }
     
     // Save cart data
@@ -518,24 +544,41 @@ if (window.BobbyCartSystem) {
     } else {
       // Fallback to Netlify function approach if Storefront API not available
       
-      // Prepare checkout items with proper Shopify variant ID formatting
-      const checkoutItems = items.map(item => {
-        let variantId = item.id;
-        // Extract the numeric part from the variant ID
-        const numericMatch = variantId.match(/(\d+)/);
-        if (numericMatch && numericMatch[1]) {
-          // Convert to Shopify GID format
-          variantId = `gid://shopify/ProductVariant/${numericMatch[1]}`;
-          console.log(`Converting variant ID ${item.id} to Shopify GID format: ${variantId}`);
-        } else if (!variantId.startsWith('gid://shopify/ProductVariant/')) {
-          console.warn(`Unable to convert variant ID to Shopify format: ${item.id}`);
-        }
-        
-        return {
-          variantId: variantId,
-          quantity: item.quantity
-        };
-      });
+      // Only use items with valid Shopify variant IDs and filter out invalid ones
+      const checkoutItems = items
+        .filter(item => {
+          // Check if this is already a valid Shopify GID
+          if (item.id.startsWith('gid://shopify/ProductVariant/')) {
+            return true;
+          }
+          
+          // Check if there's a separate variantId property that's a valid Shopify GID
+          if (item.variantId && item.variantId.startsWith('gid://shopify/ProductVariant/')) {
+            return true;
+          }
+          
+          // If this is not a valid Shopify variant ID, log a warning
+          console.warn(`Skipping item with invalid Shopify variant ID: ${item.id}`);
+          return false;
+        })
+        .map(item => {
+          // Use the variantId property if it exists, otherwise use the id
+          const variantId = (item.variantId && item.variantId.startsWith('gid://shopify/ProductVariant/'))
+            ? item.variantId
+            : item.id;
+            
+          return {
+            variantId: variantId,
+            quantity: item.quantity
+          };
+        });
+      
+      // Alert if all items were filtered out due to invalid IDs
+      if (checkoutItems.length === 0) {
+        console.error('No valid Shopify variant IDs found in cart');
+        alert('Unable to checkout: Your cart contains products with invalid Shopify variant IDs. Please refresh the page and try again with products loaded directly from Shopify.');
+        return;
+      }
       
       // Call fixed Netlify function for checkout
       fetch('/.netlify/functions/create-checkout-fixed', {
