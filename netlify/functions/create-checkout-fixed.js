@@ -337,14 +337,30 @@ exports.handler = async (event) => {
     }
 
     console.log("✅ Cart created successfully!");
-    console.log("🔗 Checkout URL:", cart.checkoutUrl);
+    console.log("🔗 Original checkout URL:", cart.checkoutUrl);
+
+    // Use SHOPIFY_STORE_DOMAIN if available for checkout URL
+    let finalCheckoutUrl = cart.checkoutUrl;
+    
+    // Check if we need to replace the default myshopify domain with SHOPIFY_STORE_DOMAIN
+    if (cart.checkoutUrl.includes('myshopify.com') && SHOPIFY_DOMAIN) {
+      // Extract the default Shopify domain from the URL (e.g., mfdkk3-7g.myshopify.com)
+      const shopifyUrlMatch = cart.checkoutUrl.match(/https:\/\/([^\/]+)/);
+      if (shopifyUrlMatch && shopifyUrlMatch[1]) {
+        const shopifyDomain = shopifyUrlMatch[1];
+        console.log(`🔄 Replacing ${shopifyDomain} with ${SHOPIFY_DOMAIN} in checkout URL`);
+        finalCheckoutUrl = cart.checkoutUrl.replace(shopifyDomain, SHOPIFY_DOMAIN);
+      }
+    }
+
+    console.log("🔗 Final checkout URL:", finalCheckoutUrl);
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         // Return checkoutUrl to maintain compatibility with client code
-        checkoutUrl: cart.checkoutUrl,
+        checkoutUrl: finalCheckoutUrl,
         cartId: cart.id,
         itemCount: cart.lines?.edges?.length || 0
       })

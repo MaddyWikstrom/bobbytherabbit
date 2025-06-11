@@ -567,21 +567,12 @@ if (window.BobbyCartSystem) {
           if (result && result.checkoutUrl) {
             console.log('✅ Received Shopify checkout URL from BobbyCheckoutStorefront:', result.checkoutUrl);
             
-            // Ensure the URL is a complete Shopify checkout URL
-            if (!result.checkoutUrl.includes('myshopify.com/')) {
-              console.error('❌ Invalid checkout URL format from BobbyCheckoutStorefront');
-              throw new Error('Invalid checkout URL format. Must be a Shopify-hosted checkout URL.');
-            }
+            // Clear cart after successful checkout creation
+            clearCart();
             
-            // Add a small delay to allow console logging before redirect
-            setTimeout(() => {
-              // Clear cart after successful checkout creation
-              clearCart();
-              
-              // CRITICAL: Direct redirection to Shopify's hosted checkout URL
-              console.log('🔀 Redirecting to Shopify checkout:', result.checkoutUrl);
-              window.location.assign(result.checkoutUrl);
-            }, 100);
+            // CRITICAL: Direct redirection to the exact Shopify-hosted checkout URL
+            console.log('🔀 Redirecting to Shopify checkout:', result.checkoutUrl);
+            window.location.href = result.checkoutUrl;
             
             return true; // Indicate success
           } else {
@@ -632,22 +623,12 @@ if (window.BobbyCartSystem) {
         if (data.checkoutUrl) {
           console.log('✅ Received Shopify checkout URL:', data.checkoutUrl);
           
-          // Ensure the URL is a complete Shopify checkout URL
-          if (!data.checkoutUrl.includes('myshopify.com/')) {
-            console.error('❌ Invalid checkout URL format. Must be a Shopify-hosted checkout URL.');
-            alert('There was an error with the checkout URL format. Please try again.');
-            return;
-          }
+          // Clear cart after successful checkout creation
+          clearCart();
           
-          // Add a small delay to allow console logging before redirect
-          setTimeout(() => {
-            // Clear cart after successful checkout creation
-            clearCart();
-            
-            // CRITICAL: Direct redirection to Shopify's hosted checkout URL
-            console.log('🔀 Redirecting to Shopify checkout:', data.checkoutUrl);
-            window.location.assign(data.checkoutUrl);
-          }, 100);
+          // CRITICAL: Direct redirection to the exact Shopify-hosted checkout URL
+          console.log('🔀 Redirecting to Shopify checkout:', data.checkoutUrl);
+          window.location.href = data.checkoutUrl;
         } else {
           throw new Error('No checkout URL received');
         }
