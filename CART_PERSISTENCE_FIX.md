@@ -1,46 +1,46 @@
-# Cart Persistence Fix (Cross-Domain Version)
+# Back Button Cart Fix
 
 ## Issue Fixed
-Previously, the cart was being cleared when redirecting to the Shopify checkout page. When users clicked "Back" from the checkout page, they would find their cart empty and would need to re-add all items. This was particularly challenging because the main site is on bobbytherabbit.com while the Shopify checkout is on mfdkk3-7g.myshopify.com.
+The cart was being cleared when redirecting to the Shopify checkout page. When users clicked the back button from the checkout page, they would find their cart empty and would need to re-add all items. This issue was specifically happening during navigation between bobbytherabbit.com and mfdkk3-7g.myshopify.com domains.
 
 ## Solution Implemented
 
-The fix preserves cart contents even when navigating between different domains:
+The fix implements a targeted approach specifically designed to handle the back button scenario:
 
-1. **Created a Cross-Domain Cart Persistence System**:
-   - New standalone script (`cross-domain-cart.js`) that specifically handles domain transitions
-   - Uses localStorage instead of sessionStorage for cross-domain persistence
-   - Detects when a user is returning from the Shopify checkout domain
+1. **Focused Back Button Detection**:
+   - New standalone script (`back-button-cart-fix.js`) loaded early in the page lifecycle
+   - Specialized detection of browser back button events using both history state and referrer checks
+   - Direct interception of checkout buttons and form submissions
 
-2. **Multiple Protection Mechanisms**:
-   - Proactive cart backup before checkout using localStorage
-   - Referrer detection to identify returns from Shopify domain
-   - Timestamp tracking to identify checkout sessions
-   - Multiple cart restoration methods for different cart systems
+2. **Robust Backup & Restoration Strategy**:
+   - Automatic cart backup to localStorage before checkout redirects
+   - Multiple restoration approaches targeting different cart implementations
+   - Periodic backup to ensure no cart data is lost even without explicit checkout
 
-3. **Universal Compatibility**:
-   - Works across domain boundaries (bobbytherabbit.com ↔ mfdkk3-7g.myshopify.com)
-   - Compatible with all cart implementations (CartManager, BobbyCart)
-   - Works with all checkout methods (regular checkout, Storefront API)
-   - Added to all HTML files for complete site protection
+3. **Cross-Domain Compatibility**:
+   - Uses localStorage instead of sessionStorage to persist data across domains
+   - Detects navigation between bobbytherabbit.com and mfdkk3-7g.myshopify.com
+   - Multiple detection mechanisms to ensure reliable operation in all browsers
 
 ## How It Works Now
 
-1. User adds items to cart on bobbytherabbit.com
-2. User clicks "Checkout"
-3. The CrossDomainCart system creates a backup in localStorage
-4. User is redirected to Shopify checkout (mfdkk3-7g.myshopify.com)
-5. If user clicks "Back" or abandons checkout:
-   - System detects they're returning from the Shopify domain
-   - Cart items are automatically restored from localStorage
-   - Shopping experience continues seamlessly with all items intact
-6. If user completes their order:
-   - The backup is only cleared when explicitly told the order is complete
+1. When a user visits any page, the script immediately loads and checks if they're returning from checkout
+2. Before checkout, the cart is automatically backed up to localStorage
+3. When the user clicks the back button after checkout:
+   - The system detects the back navigation through browser history state or referrer checks
+   - Cart items are immediately restored from the backup
+   - The cart UI is updated to show the restored items
+
+## Testing
+
+A special test page has been created to verify the fix:
+- `test-back-button-fix.html` - Allows testing the cart backup and restoration without going through actual checkout
+- Provides simulation of checkout and back button behavior
+- Shows real-time state of localStorage and cart contents
 
 ## Implementation Details
 
-- Uses localStorage which persists across domains and sessions
-- Checks document.referrer to detect returns from Shopify domain
-- Uses timestamps to identify active checkout sessions
-- Provides multiple restoration methods for different cart implementations
-- Added to all HTML files to ensure site-wide protection
+- Script is loaded at the top of each page to ensure it runs before other cart logic
+- Uses multiple cart detection and restoration methods for maximum compatibility
+- Directly intercepts all checkout events site-wide
+- Added to all main HTML files (index.html, cart.html, products.html)

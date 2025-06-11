@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back Button Cart Fix - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-button.secondary {
+            background-color: #2196F3;
+        }
+        .test-button.danger {
+            background-color: #f44336;
+        }
+        .result-box {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            min-height: 50px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            color: blue;
+        }
+    </style>
+    
+    <!-- Include the Back Button Cart Fix script -->
+    <script src="scripts/back-button-cart-fix.js"></script>
+    
+    <!-- Mock cart for testing -->
+    <script>
+        // Create a mock cart manager for testing purposes
+        window.cartManager = {
+            items: [],
+            addItem: function(item) {
+                this.items.push(item);
+                this.saveCartToStorage();
+                this.updateCartDisplay();
+                return true;
+            },
+            removeItem: function(itemId) {
+                this.items = this.items.filter(item => item.id !== itemId);
+                this.saveCartToStorage();
+                this.updateCartDisplay();
+            },
+            clearCart: function() {
+                this.items = [];
+                this.saveCartToStorage();
+                this.updateCartDisplay();
+            },
+            saveCartToStorage: function() {
+                localStorage.setItem('bobby-streetwear-cart', JSON.stringify(this.items));
+            },
+            loadCartFromStorage: function() {
+                const savedCart = localStorage.getItem('bobby-streetwear-cart');
+                if (savedCart) {
+                    this.items = JSON.parse(savedCart);
+                }
+            },
+            updateCartDisplay: function() {
+                const cartItemsElement = document.getElementById('cart-items');
+                const cartCountElement = document.getElementById('cart-count');
+                
+                if (cartItemsElement) {
+                    if (this.items.length === 0) {
+                        cartItemsElement.innerHTML = '<div class="log-entry">Cart is empty</div>';
+                    } else {
+                        cartItemsElement.innerHTML = this.items.map(item => 
+                            `<div class="log-entry">${item.title} - $${item.price.toFixed(2)} x ${item.quantity}</div>`
+                        ).join('');
+                    }
+                }
+                
+                if (cartCountElement) {
+                    cartCountElement.textContent = this.items.reduce((sum, item) => sum + item.quantity, 0);
+                }
+            }
+        };
+        
+        // Load cart data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            cartManager.loadCartFromStorage();
+            cartManager.updateCartDisplay();
+            
+            // Log localStorage state
+            updateStorageDisplay();
+        });
+        
+        // Function to add test items to cart
+        function addTestItems() {
+            cartManager.addItem({
+                id: 'test-item-1',
+                productId: '123',
+                title: 'Test Hoodie',
+                price: 49.99,
+                color: 'Black',
+                size: 'M',
+                quantity: 1,
+                image: 'assets/hoodie-black.png'
+            });
+            
+            cartManager.addItem({
+                id: 'test-item-2',
+                productId: '456',
+                title: 'Test T-Shirt',
+                price: 29.99,
+                color: 'White',
+                size: 'L',
+                quantity: 2,
+                image: 'assets/tee-1.png'
+            });
+            
+            logMessage('Added test items to cart', 'success');
+            updateStorageDisplay();
+        }
+        
+        // Function to simulate checkout process
+        function simulateCheckout() {
+            // Backup cart (should happen automatically via our fix)
+            if (window.BobbyBackButtonFix) {
+                window.BobbyBackButtonFix.backupCart();
+            }
+            
+            // Set checkout flag
+            localStorage.setItem('bobby-checkout-in-progress', 'true');
+            
+            // Clear cart to simulate the bug
+            cartManager.clearCart();
+            
+            logMessage('Simulated checkout: Cart cleared and backup created', 'info');
+            updateStorageDisplay();
+        }
+        
+        // Function to simulate back button
+        function simulateBackButton() {
+            if (window.BobbyBackButtonFix) {
+                window.BobbyBackButtonFix.checkAndRestore();
+                logMessage('Simulated back button: Restored cart from backup', 'success');
+            } else {
+                logMessage('Back button fix not available', 'error');
+            }
+            
+            cartManager.updateCartDisplay();
+            updateStorageDisplay();
+        }
+        
+        // Function to clear all storage
+        function clearAllStorage() {
+            localStorage.removeItem('bobby-cart-backup-data');
+            localStorage.removeItem('bobby-checkout-in-progress');
+            localStorage.removeItem('bobby-streetwear-cart');
+            localStorage.removeItem('bobby-cart-cross-domain-backup');
+            localStorage.removeItem('bobby-checkout-timestamp');
+            localStorage.removeItem('bobby-checkout-referrer');
+            
+            cartManager.items = [];
+            cartManager.updateCartDisplay();
+            
+            logMessage('Cleared all storage', 'info');
+            updateStorageDisplay();
+        }
+        
+        // Function to log messages
+        function logMessage(message, type) {
+            const logElement = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type || ''}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        // Function to update storage display
+        function updateStorageDisplay() {
+            const storageElement = document.getElementById('storage-display');
+            const relevantKeys = [
+                'bobby-cart-backup-data',
+                'bobby-checkout-in-progress',
+                'bobby-streetwear-cart',
+                'bobby-cart-cross-domain-backup',
+                'bobby-checkout-timestamp',
+                'bobby-checkout-referrer'
+            ];
+            
+            let html = '';
+            for (const key of relevantKeys) {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    let displayValue = value;
+                    if (value.length > 100) {
+                        displayValue = value.substring(0, 100) + '... (' + value.length + ' chars)';
+                    }
+                    html += `<div class="log-entry"><strong>${key}:</strong> ${displayValue}</div>`;
+                }
+            }
+            
+            if (html === '') {
+                html = '<div class="log-entry">No relevant storage data found</div>';
+            }
+            
+            storageElement.innerHTML = html;
+        }
+    </script>
+</head>
+<body>
+    <h1>Back Button Cart Fix - Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Current Cart Contents</h2>
+        <div>Items in cart: <span id="cart-count">0</span></div>
+        <div class="result-box" id="cart-items">
+            <!-- Cart items will appear here -->
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button class="test-button" onclick="addTestItems()">Add Test Items</button>
+        <button class="test-button secondary" onclick="simulateCheckout()">Simulate Checkout</button>
+        <button class="test-button secondary" onclick="simulateBackButton()">Simulate Back Button</button>
+        <button class="test-button danger" onclick="clearAllStorage()">Clear All Storage</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>LocalStorage Contents</h2>
+        <div class="result-box" id="storage-display">
+            <!-- Storage data will appear here -->
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Log</h2>
+        <div class="result-box" id="test-log">
+            <!-- Log messages will appear here -->
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>How to Test</h2>
+        <ol>
+            <li>Click "Add Test Items" to add sample products to your cart</li>
+            <li>Click "Simulate Checkout" to simulate the checkout process (this clears the cart but creates a backup)</li>
+            <li>Click "Simulate Back Button" to test if the cart restoration works</li>
+            <li>Use "Clear All Storage" to reset everything</li>
+        </ol>
+        <p>If working properly, after clicking "Simulate Back Button", your cart items should be restored.</p>
+        <p><strong>To test with real checkout:</strong></p>
+        <ol>
+            <li>Go to the actual site</li>
+            <li>Add items to your cart</li>
+            <li>Click checkout</li>
+            <li>Use your browser's back button to return to the site</li>
+            <li>Your cart should still have your items</li>
+        </ol>
+    </div>
+</body>
+</html>
