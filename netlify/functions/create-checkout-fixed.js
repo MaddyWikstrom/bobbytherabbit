@@ -1,3 +1,4 @@
+// Dynamic variant resolution checkout function
 exports.handler = async (event) => {
   const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
@@ -249,9 +250,9 @@ exports.handler = async (event) => {
     
     // Convert to Cart API format - using merchandiseId for the Cart API
     const lines = processedItems.map(item => {
-      return `{
-        merchandiseId: "${item.variantId}",
-        quantity: ${item.quantity}
+      return `{ 
+        merchandiseId: "${item.variantId}", 
+        quantity: ${item.quantity} 
       }`;
     }).join(',');
 
@@ -341,7 +342,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
+      body: JSON.stringify({ 
         // Return checkoutUrl to maintain compatibility with client code
         checkoutUrl: cart.checkoutUrl,
         cartId: cart.id,
@@ -354,7 +355,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
+      body: JSON.stringify({ 
         error: err.message || "Internal error",
         details: err.stack,
         itemsReceived: items?.length || 0,
