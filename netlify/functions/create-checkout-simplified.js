@@ -140,16 +140,36 @@ exports.handler = async (event) => {
 
       lineItems.push({ variantId, quantity });
     }
-
+    
     console.log("✅ Formatted line items:", JSON.stringify(lineItems));
-
+    
+    // Filter out invalid variant IDs before proceeding
+    const isValidGID = id => typeof id === 'string' && id.startsWith('gid://shopify/ProductVariant/');
+    const validLineItems = lineItems.filter(item => isValidGID(item.variantId));
+    
+    console.log(`📊 Filtered items: ${lineItems.length} original items, ${validLineItems.length} valid items`);
+    
+    // Check if we have any valid items left
+    if (validLineItems.length === 0) {
+      console.error("❌ No valid variant IDs to checkout after filtering");
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "No valid items to checkout",
+          details: "All variant IDs were invalid or could not be converted to Shopify GID format",
+          validFormat: "gid://shopify/ProductVariant/1234567890"
+        })
+      };
+    }
+    
     // Create the GraphQL mutation for checkout creation
     // Using the newer checkoutCreate mutation which has better performance
     const query = `
       mutation {
         checkoutCreate(input: {
           lineItems: [
-            ${lineItems.map(item => `{variantId: "${item.variantId}", quantity: ${item.quantity}}`).join(',')}
+            ${validLineItems.map(item => `{variantId: "${item.variantId}", quantity: ${item.quantity}}`).join(',')}
           ]
         }) {
           checkout {
