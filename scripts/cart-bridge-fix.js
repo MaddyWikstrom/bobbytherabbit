@@ -2,33 +2,37 @@
  * Cart Bridge Fix for Bobby Streetwear
  * This script bridges the gap between the new BobbyCart system and the older CartManager
  * to ensure consistent cart functionality across all pages.
+ *
+ * Version 1.1: Added protection against duplicate declarations
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔄 Initializing Cart Bridge Fix...');
-    
-    // Wait for either cart system to be available
-    const initBridge = setInterval(() => {
-        // Check if either cart system is available - NOTE: Fixed BobbyCart vs BobbyCarts naming
-        if (window.BobbyCart || window.cartManager) {
+// Only initialize if not already loaded
+if (typeof window.CartBridgeFix === 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Initializing Cart Bridge Fix...');
+        
+        // Wait for either cart system to be available
+        const initBridge = setInterval(() => {
+            // Check if either cart system is available
+            if (window.BobbyCart || window.cartManager) {
+                clearInterval(initBridge);
+                window.CartBridgeFix.init();
+            }
+        }, 100);
+
+        // Only wait for a maximum of 5 seconds
+        setTimeout(() => {
             clearInterval(initBridge);
-            CartBridgeFix.init();
-        }
-    }, 100);
+            // If no cart system is available after 5 seconds, try to initialize the bridge anyway
+            if (!window.BobbyCart && !window.cartManager) {
+                console.warn('⚠️ No cart system detected after timeout, attempting to initialize bridge...');
+                window.CartBridgeFix.init();
+            }
+        }, 5000);
+    });
 
-    // Only wait for a maximum of 5 seconds
-    setTimeout(() => {
-        clearInterval(initBridge);
-        // If no cart system is available after 5 seconds, try to initialize the bridge anyway
-        if (!window.BobbyCart && !window.cartManager) {
-            console.warn('⚠️ No cart system detected after timeout, attempting to initialize bridge...');
-            CartBridgeFix.init();
-        }
-    }, 5000);
-});
-
-// Main Bridge Fix Object
-const CartBridgeFix = {
+    // Main Bridge Fix Object - attach to window to prevent redeclaration issues
+    window.CartBridgeFix = {
     // Track if we've already initialized
     initialized: false,
     
@@ -725,3 +729,6 @@ const CartBridgeFix = {
         });
     }
 };
+} else {
+    console.log('⚠️ CartBridgeFix already exists, not reinitializing');
+}

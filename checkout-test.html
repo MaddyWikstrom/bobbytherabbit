@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bungi x Bobby | Checkout Test</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/cart-styles.css">
+    
+    <!-- Script Loader to prevent duplicate script loading -->
+    <script src="scripts/script-loader-fix.js"></script>
+    
+    <style>
+        .test-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: rgba(20, 20, 35, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .test-title {
+            color: #7877c6;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(120, 119, 198, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(120, 119, 198, 0.3);
+        }
+        
+        .test-products {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .test-product {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .test-product img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        
+        .test-product-title {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .test-product-price {
+            color: #a855f7;
+            margin-bottom: 10px;
+        }
+        
+        .add-to-cart-btn {
+            background: linear-gradient(45deg, #7877c6, #a855f7);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 119, 198, 0.3);
+        }
+        
+        .console-log {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            color: #00ff00;
+            font-family: monospace;
+            margin-top: 20px;
+            height: 200px;
+            overflow-y: auto;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .open-cart-btn {
+            background: linear-gradient(45deg, #3b82f6, #7877c6);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .checkout-btn {
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .clear-cart-btn {
+            background: linear-gradient(45deg, #ef4444, #f59e0b);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">Checkout Test Page</h1>
+        
+        <div class="test-section">
+            <h2 class="test-title">Test Actions</h2>
+            <div class="actions">
+                <button class="open-cart-btn" id="open-cart">Open Cart</button>
+                <button class="checkout-btn" id="direct-checkout">Direct Checkout</button>
+                <button class="clear-cart-btn" id="clear-cart">Clear Cart</button>
+            </div>
+            
+            <h2 class="test-title">Test Products with Proper Variant IDs</h2>
+            <div class="test-products">
+                <!-- Product with proper GID format -->
+                <div class="test-product">
+                    <img src="assets/hoodie-black.png" alt="Black Hoodie">
+                    <div class="test-product-title">Black Hoodie</div>
+                    <div class="test-product-price">$59.99</div>
+                    <button class="add-to-cart-btn" 
+                        data-product-id="gid://shopify/ProductVariant/43629478559983"
+                        data-product-title="Black Hoodie"
+                        data-product-price="59.99"
+                        data-product-image="assets/hoodie-black.png">
+                        Add to Cart
+                    </button>
+                </div>
+                
+                <!-- Product with numeric ID that needs conversion -->
+                <div class="test-product">
+                    <img src="assets/hoodie-navy.png" alt="Navy Hoodie">
+                    <div class="test-product-title">Navy Hoodie</div>
+                    <div class="test-product-price">$59.99</div>
+                    <button class="add-to-cart-btn" 
+                        data-product-id="43629478592751"
+                        data-product-title="Navy Hoodie"
+                        data-product-price="59.99"
+                        data-product-image="assets/hoodie-navy.png">
+                        Add to Cart
+                    </button>
+                </div>
+                
+                <!-- Product with complex ID that needs extraction -->
+                <div class="test-product">
+                    <img src="assets/hoodie-maroon.png" alt="Maroon Hoodie">
+                    <div class="test-product-title">Maroon Hoodie</div>
+                    <div class="test-product-price">$59.99</div>
+                    <button class="add-to-cart-btn" 
+                        data-product-id="product-variant-43629478625519"
+                        data-product-title="Maroon Hoodie"
+                        data-product-price="59.99"
+                        data-product-image="assets/hoodie-maroon.png">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2 class="test-title">Console Output</h2>
+            <div class="console-log" id="console-output">
+                <!-- Console logs will appear here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load script loader and cart scripts properly -->
+    <script>
+        // Override console.log to display in our custom console
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = function() {
+            // Call original console.log
+            originalConsoleLog.apply(console, arguments);
+            
+            // Add to our custom console
+            const output = document.getElementById('console-output');
+            if (output) {
+                const log = document.createElement('div');
+                const args = Array.from(arguments).join(' ');
+                log.textContent = '> ' + args;
+                output.appendChild(log);
+                output.scrollTop = output.scrollHeight;
+            }
+        };
+        
+        console.error = function() {
+            // Call original console.error
+            originalConsoleError.apply(console, arguments);
+            
+            // Add to our custom console with red color
+            const output = document.getElementById('console-output');
+            if (output) {
+                const log = document.createElement('div');
+                const args = Array.from(arguments).join(' ');
+                log.textContent = '❌ ' + args;
+                log.style.color = '#ff4d4d';
+                output.appendChild(log);
+                output.scrollTop = output.scrollHeight;
+            }
+        };
+        
+        console.warn = function() {
+            // Call original console.warn
+            originalConsoleWarn.apply(console, arguments);
+            
+            // Add to our custom console with yellow color
+            const output = document.getElementById('console-output');
+            if (output) {
+                const log = document.createElement('div');
+                const args = Array.from(arguments).join(' ');
+                log.textContent = '⚠️ ' + args;
+                log.style.color = '#ffcc00';
+                output.appendChild(log);
+                output.scrollTop = output.scrollHeight;
+            }
+        };
+        
+        // Use script loader to load cart scripts in the correct order
+        if (window.BobbyScriptLoader) {
+            console.log('Using script loader to load cart scripts in sequence');
+            BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
+                console.log('Simple cart system loaded');
+                BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
+                    console.log('Cart bridge fix loaded');
+                    BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
+                        console.log('Cart duplicate fix loaded');
+                        BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js', function() {
+                            console.log('Cart render fix loaded');
+                            initPage();
+                        });
+                    });
+                });
+            });
+        } else {
+            console.warn('Script loader not available, loading scripts directly');
+            // Sequential script loading as fallback
+            loadScript('scripts/simple-cart-system.js', function() {
+                loadScript('scripts/cart-bridge-fix.js', function() {
+                    loadScript('scripts/cart-duplicate-fix.js', function() {
+                        loadScript('scripts/cart-render-fix.js', function() {
+                            initPage();
+                        });
+                    });
+                });
+            });
+            
+            function loadScript(src, callback) {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = callback;
+                document.head.appendChild(script);
+            }
+        }
+        
+        // Initialize page interactions
+        function initPage() {
+            console.log('Initializing test page...');
+            
+            // Add to cart buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const product = {
+                        id: this.getAttribute('data-product-id'),
+                        title: this.getAttribute('data-product-title'),
+                        price: parseFloat(this.getAttribute('data-product-price')),
+                        image: this.getAttribute('data-product-image'),
+                        quantity: 1,
+                        selectedColor: 'Default',
+                        selectedSize: 'L'
+                    };
+                    
+                    console.log(`Adding product to cart: ${product.title} (ID: ${product.id})`);
+                    
+                    if (window.BobbyCart && typeof window.BobbyCart.addItem === 'function') {
+                        window.BobbyCart.addItem(product);
+                    } else if (window.cartManager && typeof window.cartManager.addItem === 'function') {
+                        window.cartManager.addItem(product);
+                    } else {
+                        console.error('No cart system available to add item');
+                    }
+                });
+            });
+            
+            // Open cart button
+            document.getElementById('open-cart').addEventListener('click', function() {
+                console.log('Opening cart...');
+                if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
+                    window.BobbyCart.openCart();
+                } else if (window.cartManager && typeof window.cartManager.openCart === 'function') {
+                    window.cartManager.openCart();
+                } else {
+                    console.error('No cart system available to open cart');
+                }
+            });
+            
+            // Direct checkout button
+            document.getElementById('direct-checkout').addEventListener('click', function() {
+                console.log('Initiating direct checkout...');
+                if (window.BobbyCart && typeof window.BobbyCart.proceedToCheckout === 'function') {
+                    window.BobbyCart.proceedToCheckout();
+                } else if (window.cartManager && typeof window.cartManager.proceedToCheckout === 'function') {
+                    window.cartManager.proceedToCheckout();
+                } else {
+                    console.error('No cart system available for checkout');
+                }
+            });
+            
+            // Clear cart button
+            document.getElementById('clear-cart').addEventListener('click', function() {
+                console.log('Clearing cart...');
+                if (window.BobbyCart && typeof window.BobbyCart.clearCart === 'function') {
+                    window.BobbyCart.clearCart();
+                } else if (window.cartManager && typeof window.cartManager.clearCart === 'function') {
+                    window.cartManager.clearCart();
+                } else {
+                    console.error('No cart system available to clear cart');
+                }
+            });
+            
+            console.log('Test page initialized. Ready to test checkout functionality.');
+        }
+    </script>
+</body>
+</html>

@@ -19,6 +19,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Script Loader to prevent duplicate script loading -->
+    <script src="scripts/script-loader-fix.js"></script>
+    
     <!-- Cart System with improved initialization to avoid password screen conflicts -->
     <script>
         // Define a cart initialization flag to track state
@@ -30,33 +33,36 @@
             
             // Only load if not already loaded
             if (!window.cartSystemReady) {
-                // Create script elements - load both cart system and bridge
-                const simpleCartScript = document.createElement('script');
-                simpleCartScript.src = "/scripts/simple-cart-system.js";
-                simpleCartScript.async = true;
-                simpleCartScript.onload = function() {
-                    console.log("Cart system script loaded successfully");
-                    
-                    // After cart system loads, load bridge fix
-                    const bridgeScript = document.createElement('script');
-                    bridgeScript.src = "/scripts/cart-bridge-fix.js";
-                    bridgeScript.async = true;
-                    bridgeScript.onload = function() {
-                        console.log("Cart bridge fix loaded successfully");
-                    };
-                    bridgeScript.onerror = function() {
-                        console.error("Failed to load cart bridge fix");
-                    };
-                    document.head.appendChild(bridgeScript);
-                    
+                // Use the script loader to prevent duplicates
+                if (window.BobbyScriptLoader) {
+                    // Load cart system first
+                    window.BobbyScriptLoader.loadOnce('simple-cart-system', '/scripts/simple-cart-system.js', function(success) {
+                        if (success) {
+                            console.log("Cart system script loaded successfully");
+                            
+                            // After cart system loads, load bridge fix
+                            window.BobbyScriptLoader.loadOnce('cart-bridge-fix', '/scripts/cart-bridge-fix.js', function(success) {
+                                if (success) {
+                                    console.log("Cart bridge fix loaded successfully");
+                                } else {
+                                    console.error("Failed to load cart bridge fix");
+                                }
+                            });
+                            
+                            window.cartSystemReady = true;
+                        } else {
+                            console.error("Failed to load cart system script");
+                        }
+                    });
+                } else {
+                    // Fallback to direct loading if script loader isn't available
+                    const simpleCartScript = document.createElement('script');
+                    simpleCartScript.src = "/scripts/simple-cart-system.js";
+                    simpleCartScript.async = true;
+                    document.head.appendChild(simpleCartScript);
+                    console.warn("Script loader not available, using direct loading");
                     window.cartSystemReady = true;
-                };
-                simpleCartScript.onerror = function() {
-                    console.error("Failed to load cart system script");
-                };
-                
-                // Append to document
-                document.head.appendChild(simpleCartScript);
+                }
             }
         }
     </script>
@@ -612,11 +618,26 @@
     <!-- Quick View functionality -->
     <script src="scripts/quick-view.js"></script>
     
-    <!-- Cart Fixes - Order matters: system first, then bridge, then duplicate fix, then render fix -->
-    <script src="scripts/simple-cart-system.js"></script>
-    <script src="scripts/cart-bridge-fix.js"></script>
-    <script src="scripts/cart-duplicate-fix.js"></script>
-    <script src="scripts/cart-render-fix.js"></script>
+    <!-- Cart Fixes - Using script loader to prevent duplicate loading -->
+    <script>
+        // Use script loader to load cart scripts in the correct order
+        if (window.BobbyScriptLoader) {
+            // Load scripts in sequence with dependencies
+            BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
+                BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
+                    BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
+                        BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js');
+                    });
+                });
+            });
+        } else {
+            // Fallback to standard script tags if loader isn't available
+            document.write('<script src="scripts/simple-cart-system.js"><\/script>');
+            document.write('<script src="scripts/cart-bridge-fix.js"><\/script>');
+            document.write('<script src="scripts/cart-duplicate-fix.js"><\/script>');
+            document.write('<script src="scripts/cart-render-fix.js"><\/script>');
+        }
+    </script>
     
     <!-- Collection Wave Background -->
     <script src="scripts/collection-wave-bg.js"></script>

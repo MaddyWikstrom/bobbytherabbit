@@ -518,11 +518,24 @@ if (window.BobbyCartSystem) {
     } else {
       // Fallback to Netlify function approach if Storefront API not available
       
-      // Prepare checkout items
-      const checkoutItems = items.map(item => ({
-        variantId: item.id,
-        quantity: item.quantity
-      }));
+      // Prepare checkout items with proper Shopify variant ID formatting
+      const checkoutItems = items.map(item => {
+        let variantId = item.id;
+        // Extract the numeric part from the variant ID
+        const numericMatch = variantId.match(/(\d+)/);
+        if (numericMatch && numericMatch[1]) {
+          // Convert to Shopify GID format
+          variantId = `gid://shopify/ProductVariant/${numericMatch[1]}`;
+          console.log(`Converting variant ID ${item.id} to Shopify GID format: ${variantId}`);
+        } else if (!variantId.startsWith('gid://shopify/ProductVariant/')) {
+          console.warn(`Unable to convert variant ID to Shopify format: ${item.id}`);
+        }
+        
+        return {
+          variantId: variantId,
+          quantity: item.quantity
+        };
+      });
       
       // Call simplified Netlify function for checkout
       fetch('/.netlify/functions/create-checkout-simplified', {
