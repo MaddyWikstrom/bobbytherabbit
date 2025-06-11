@@ -45,13 +45,15 @@ exports.handler = async (event) => {
       };
     }
 
-    // Get Shopify credentials from environment variables
-    const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
-    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    // Get Shopify credentials from environment variables (using available env vars)
+    const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || process.env.SHOPIFY_DOMAIN;
+    const SHOPIFY_STOREFRONT_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '2023-07';
     
     console.log("🔑 Shopify credentials check:", {
       domain: SHOPIFY_DOMAIN ? "✅ Present" : "❌ Missing",
-      token: SHOPIFY_STOREFRONT_ACCESS_TOKEN ? "✅ Present" : "❌ Missing"
+      token: SHOPIFY_STOREFRONT_ACCESS_TOKEN ? "✅ Present" : "❌ Missing",
+      apiVersion: SHOPIFY_API_VERSION
     });
 
     // Validate credentials
@@ -165,8 +167,8 @@ exports.handler = async (event) => {
 
     console.log("📤 GraphQL query:", query);
 
-    // Make the request to Shopify
-    const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2023-07/graphql.json`, {
+    // Make the request to Shopify with the available API version
+    const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
