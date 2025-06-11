@@ -14,14 +14,263 @@ class ProductManager {
     }
 
     async init() {
-        await this.loadProducts();
-        this.setupEventListeners();
-        this.renderProducts();
-        
-        // Add event listener for handling browser navigation (back/forward buttons)
-        window.addEventListener('popstate', () => {
-            // Remove any open modals when navigating
-            this.removeAllModals();
+        try {
+            // Use the ShopifyProductLoader to fetch products with real Shopify variant IDs
+            if (window.ShopifyProductLoader && typeof window.ShopifyProductLoader.loadProductsAndRender === 'function') {
+                console.log('Using ShopifyProductLoader to fetch products with real variant IDs');
+                
+                // We'll load the products here but render them through our own system
+                await this.loadProductsViaLoader();
+            } else {
+                // Fall back to original method if loader isn't available
+                console.log('ShopifyProductLoader not available, using original loading method');
+                await this.loadProducts();
+            }
+            
+            this.setupEventListeners();
+            this.renderProducts();
+            
+            // Add event listener for handling browser navigation (back/forward buttons)
+            window.addEventListener('popstate', () => {
+                // Remove any open modals when navigating
+                this.removeAllModals();
+            });
+        } catch (error) {
+            console.error('Error initializing product manager:', error);
+            this.showNotification('Error loading products. Please try again later.', 'error');
+        }
+    }
+    
+    // New method to load products using ShopifyProductLoader
+    async loadProductsViaLoader() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Create a temporary container to hold the products
+                const tempContainer = document.createElement('div');
+                tempContainer.style.display = 'none';
+                document.body.appendChild(tempContainer);
+                
+                // Define a callback function to process the products
+                window.processShopifyProducts = (products) => {
+                    if (Array.isArray(products) && products.length > 0) {
+                        console.log(`Received ${products.length} products from ShopifyProductLoader`);
+                        
+                        // Process each product to match our format
+                        this.products = products.map(product => {
+                            return {
+                                id: product.id,  // This is already the Shopify GID
+                                shopifyId: product.id,
+                                title: product.title || 'Unknown Product',
+                                description: this.cleanDescription(product.description || ''),
+                                category: this.extractCategory(product.title || product.productType || ''),
+                                price: parseFloat(product.price) || 0,
+                                comparePrice: product.comparePrice ? parseFloat(product.comparePrice) : null,
+                                images: [product.image],
+                                mainImage: product.image || '',
+                                variants: product.variants || [],
+                                colors: product.selectedColor ? [{name: product.selectedColor, code: this.getColorCode(product.selectedColor)}] : [],
+                                sizes: product.selectedSize ? [product.selectedSize] : [],
+                                featured: false,
+                                new: false,
+                                sale: product.comparePrice && parseFloat(product.price) < parseFloat(product.comparePrice),
+                                tags: [],
+                                productType: '',
+                                colorImages: {},
+                                displayPriority: 999
+                            };
+                        });
+                        
+                        // Apply initial sorting
+                        this.products.sort((a, b) => {
+                            const priorityA = a.displayPriority || 999;
+                            const priorityB = b.displayPriority || 999;
+                            return priorityA - priorityB;
+                        });
+                        
+                        this.filteredProducts = [...this.products];
+                        
+                        // Remove the temporary container
+                        document.body.removeChild(tempContainer);
+                        resolve();
+                    } else {
+                        console.warn('No products received from ShopifyProductLoader');
+                        reject(new Error('No products received from ShopifyProductLoader'));
+                    }
+                };
+                
+                // Use the loader to fetch products
+                // Store products in a global variable that our callback can access
+                window.shopifyProducts = [];
+                
+                // Create a custom override of the loadProductsAndRender function
+                const originalRender = window.ShopifyProductLoader.loadProductsAndRender;
+                window.ShopifyProductLoader.loadProductsAndRender = async function(containerSelector, limit, collectionHandle) {
+                    try {
+                        // Get the products directly from Shopify
+                        const products = await this.fetchProducts(limit, collectionHandle);
+                        
+                        // Store the products globally
+                        window.shopifyProducts = products;
+                        
+                        // Call our callback
+                        if (typeof window.processShopifyProducts === 'function') {
+                            window.processShopifyProducts(products);
+                        }
+                        
+                        // Restore original function
+                        window.ShopifyProductLoader.loadProductsAndRender = originalRender;
+                        
+                        return products;
+                    } catch (error) {
+                        console.error('Error in loadProductsAndRender override:', error);
+                        reject(error);
+                    }
+                };
+                
+                // Add the fetchProducts method if it doesn't exist
+                if (!window.ShopifyProductLoader.fetchProducts) {
+                    window.ShopifyProductLoader.fetchProducts = async function(limit = 50, collectionHandle = null) {
+                        try {
+                            // Shopify Storefront API configuration
+                            const SHOPIFY_DOMAIN = 'mfdkk3-7g.myshopify.com';
+                            const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
+                            const API_VERSION = '2024-04';
+                            
+                            // GraphQL query
+                            let query;
+                            
+                            if (collectionHandle) {
+                                query = `
+                                    {
+                                        collection(handle: "${collectionHandle}") {
+                                            products(first: ${limit}) {
+                                                edges {
+                                                    node {
+                                                        id
+                                                        title
+                                                        handle
+                                                        description
+                                                        variants(first: 10) {
+                                                            edges {
+                                                                node {
+                                                                    id
+                                                                    title
+                                                                    price {
+                                                                        amount
+                                                                    }
+                                                                    availableForSale
+                                                                }
+                                                            }
+                                                        }
+                                                        images(first: 5) {
+                                                            edges {
+                                                                node {
+                                                                    url
+                                                                    altText
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                `;
+                            } else {
+                                query = `
+                                    {
+                                        products(first: ${limit}) {
+                                            edges {
+                                                node {
+                                                    id
+                                                    title
+                                                    handle
+                                                    description
+                                                    variants(first: 10) {
+                                                        edges {
+                                                            node {
+                                                                id
+                                                                title
+                                                                price {
+                                                                    amount
+                                                                }
+                                                                availableForSale
+                                                            }
+                                                        }
+                                                    }
+                                                    images(first: 5) {
+                                                        edges {
+                                                            node {
+                                                                url
+                                                                altText
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                `;
+                            }
+                            
+                            // Fetch products from Shopify Storefront API
+                            const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
+                                },
+                                body: JSON.stringify({ query })
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error(`API error: ${response.status} ${response.statusText}`);
+                            }
+                            
+                            const result = await response.json();
+                            
+                            // Handle GraphQL errors
+                            if (result.errors && result.errors.length > 0) {
+                                throw new Error(`GraphQL error: ${result.errors[0].message}`);
+                            }
+                            
+                            // Extract products from response
+                            const productsData = collectionHandle
+                                ? (result.data.collection?.products?.edges || [])
+                                : (result.data.products?.edges || []);
+                            
+                            // Map to simpler format
+                            return productsData.map(({ node: product }) => {
+                                const firstVariant = product.variants.edges[0]?.node || {};
+                                const firstImage = product.images.edges[0]?.node?.url || '';
+                                
+                                return {
+                                    id: firstVariant.id || product.id, // Use variant ID as product ID
+                                    title: product.title,
+                                    description: product.description,
+                                    price: firstVariant.price?.amount || 0,
+                                    image: firstImage,
+                                    handle: product.handle
+                                };
+                            });
+                        } catch (error) {
+                            console.error('Error fetching products:', error);
+                            return [];
+                        }
+                    };
+                }
+                
+                // Trigger the loader to fetch products
+                window.ShopifyProductLoader.loadProductsAndRender('.temp-container', 50);
+                
+                // Set a timeout in case the loader doesn't respond
+                setTimeout(() => {
+                    reject(new Error('ShopifyProductLoader timed out'));
+                }, 10000);
+            } catch (error) {
+                console.error('Error in loadProductsViaLoader:', error);
+                reject(error);
+            }
         });
     }
     

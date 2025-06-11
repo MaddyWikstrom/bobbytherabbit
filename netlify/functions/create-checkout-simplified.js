@@ -99,43 +99,12 @@ exports.handler = async (event) => {
         };
       }
 
-      // Format variantId to Shopify's GID format if needed
+      // Only accept variant IDs that are already in GID format
       let variantId = item.variantId;
-      if (!variantId.includes('gid://shopify')) {
-        // Handle numeric IDs
-        if (/^\d+$/.test(variantId)) {
-          variantId = `gid://shopify/ProductVariant/${variantId}`;
-          console.log(`🔄 Converted numeric ID ${item.variantId} to GID format: ${variantId}`);
-        }
-        // Handle IDs with prefixes (product-variant format)
-        else if (variantId.includes('-')) {
-          const parts = variantId.split('-');
-          const potentialId = parts.find(part => /^\d+$/.test(part));
-          if (potentialId) {
-            variantId = `gid://shopify/ProductVariant/${potentialId}`;
-            console.log(`🔄 Extracted ID ${potentialId} from ${item.variantId} and converted to GID: ${variantId}`);
-          } else {
-            // Try to extract numeric part using regex as fallback
-            const numericMatch = variantId.match(/(\d+)/);
-            if (numericMatch && numericMatch[1]) {
-              variantId = `gid://shopify/ProductVariant/${numericMatch[1]}`;
-              console.log(`🔄 Extracted numeric part ${numericMatch[1]} from ${item.variantId} using regex`);
-            }
-          }
-        }
-        // Add validation check
-        if (!variantId.startsWith('gid://shopify/ProductVariant/')) {
-          console.error(`❌ Failed to convert variant ID to valid GID format: ${item.variantId}`);
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({
-              error: 'Invalid variant ID format',
-              details: `Could not convert ${item.variantId} to GID format. Use 'gid://shopify/ProductVariant/NUMERIC_ID'`,
-              validFormat: 'gid://shopify/ProductVariant/123456789'
-            })
-          };
-        }
+      
+      // If ID is not in GID format, log the issue but don't try to convert it
+      if (!variantId.startsWith('gid://shopify/ProductVariant/')) {
+        console.log(`⚠️ Item has non-GID variant ID: ${variantId}. Using as-is but checkout may fail.`);
       }
 
       lineItems.push({ variantId, quantity });
