@@ -537,8 +537,8 @@ if (window.BobbyCartSystem) {
         };
       });
       
-      // Call simplified Netlify function for checkout
-      fetch('/.netlify/functions/create-checkout-simplified', {
+      // Call fixed Netlify function for checkout
+      fetch('/.netlify/functions/create-checkout-fixed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
