@@ -209,13 +209,27 @@ const BobbyCheckoutStorefront = (function() {
       }
       
       // Validate and redirect to Shopify checkout
+      let finalUrl = checkoutUrl;
+      
+      // Check if URL is a valid Shopify checkout URL
       if (checkoutUrl.includes('myshopify.com')) {
         console.log('✅ Valid Shopify checkout URL, redirecting now');
-        window.location.href = checkoutUrl;
       } else {
-        console.error('❌ Invalid checkout URL - not a Shopify domain:', checkoutUrl);
-        throw new Error('Invalid checkout URL: Not a Shopify domain');
+        console.warn('⚠️ Non-Shopify URL detected:', checkoutUrl);
+        
+        // If we got a bobbytherabbit.com URL, replace it with the myshopify domain
+        if (finalUrl.includes('bobbytherabbit.com')) {
+          finalUrl = finalUrl.replace('bobbytherabbit.com', 'mfdkk3-7g.myshopify.com');
+          console.log('🔄 Fixed URL to:', finalUrl);
+        } else {
+          console.error('❌ Could not fix invalid checkout URL');
+          throw new Error('Invalid checkout URL: Not a Shopify domain');
+        }
       }
+      
+      // Redirect to the final URL
+      console.log('🚀 Final redirect URL:', finalUrl);
+      window.location.href = finalUrl;
       
       return true;
     } catch (error) {

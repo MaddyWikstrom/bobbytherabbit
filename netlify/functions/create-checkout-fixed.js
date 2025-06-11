@@ -339,25 +339,25 @@ exports.handler = async (event) => {
     console.log("✅ Cart created successfully!");
     console.log("🔗 Original checkout URL:", cart.checkoutUrl);
 
-    // Use SHOPIFY_STORE_DOMAIN if available for checkout URL
+    // IMPORTANT: Always use the original Shopify URL without modifications
+    // We are forcing the use of myshopify.com domain for checkout
     let finalCheckoutUrl = cart.checkoutUrl;
     
-    // Only replace the domain if we have a custom store domain that's different from the default myshopify.com domain
-    // and different from the fallback value in our code
-    const storeCustomDomain = process.env.SHOPIFY_STORE_DOMAIN;
-    if (cart.checkoutUrl.includes('myshopify.com') && storeCustomDomain &&
-        !storeCustomDomain.includes('myshopify.com') &&
-        storeCustomDomain !== 'mfdkk3-7g.myshopify.com') {
-      // Extract the default Shopify domain from the URL (e.g., mfdkk3-7g.myshopify.com)
-      const shopifyUrlMatch = cart.checkoutUrl.match(/https:\/\/([^\/]+)/);
-      if (shopifyUrlMatch && shopifyUrlMatch[1]) {
-        const shopifyDomain = shopifyUrlMatch[1];
-        console.log(`🔄 Replacing ${shopifyDomain} with ${storeCustomDomain} in checkout URL`);
-        finalCheckoutUrl = cart.checkoutUrl.replace(shopifyDomain, storeCustomDomain);
+    // Make sure we're returning a proper Shopify URL
+    if (!finalCheckoutUrl.includes('myshopify.com')) {
+      console.error(`❌ ERROR: Checkout URL does not contain myshopify.com domain: ${finalCheckoutUrl}`);
+      
+      // Force URL to use the Shopify domain - construct it if necessary
+      if (finalCheckoutUrl.includes('bobbytherabbit.com')) {
+        console.log(`🔄 Detected bobbytherabbit.com URL, replacing with myshopify.com domain`);
+        finalCheckoutUrl = finalCheckoutUrl.replace('bobbytherabbit.com', 'mfdkk3-7g.myshopify.com');
+      } else {
+        // If we can't fix it, log an error but still return the original URL
+        console.error(`⚠️ Unable to correct checkout URL to use myshopify.com domain`);
       }
-    } else {
-      console.log(`🛒 Using original Shopify checkout URL without domain replacement`);
     }
+    
+    console.log(`🛒 Using Shopify checkout URL: ${finalCheckoutUrl}`);
 
     console.log("🔗 Final checkout URL:", finalCheckoutUrl);
 

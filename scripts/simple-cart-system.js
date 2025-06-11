@@ -629,14 +629,29 @@ if (window.BobbyCartSystem) {
           // CRITICAL: Direct redirection to the exact Shopify-hosted checkout URL
           console.log('🔀 Redirecting to Shopify checkout:', data.checkoutUrl);
           
+          // Force URL to use myshopify.com domain if needed
+          let finalUrl = data.checkoutUrl;
+          
           // Ensure this is a proper Shopify URL before redirecting
           if (data.checkoutUrl.includes('myshopify.com')) {
             console.log('✅ Confirmed valid Shopify URL, redirecting now');
-            window.location.href = data.checkoutUrl;
           } else {
-            console.error('❌ Invalid checkout URL - not a Shopify domain:', data.checkoutUrl);
-            alert('Error: Invalid checkout URL. Please contact support.');
+            console.warn('⚠️ Non-Shopify URL detected, attempting to fix:', data.checkoutUrl);
+            
+            // If we got a bobbytherabbit.com URL, replace it with the myshopify domain
+            if (finalUrl.includes('bobbytherabbit.com')) {
+              finalUrl = finalUrl.replace('bobbytherabbit.com', 'mfdkk3-7g.myshopify.com');
+              console.log('🔄 Fixed URL to:', finalUrl);
+            } else {
+              console.error('❌ Could not fix invalid checkout URL');
+              alert('Error: Invalid checkout URL. Please contact support.');
+              return;
+            }
           }
+          
+          // Redirect to the final URL
+          console.log('🚀 Final redirect URL:', finalUrl);
+          window.location.href = finalUrl;
         } else {
           throw new Error('No checkout URL received');
         }
