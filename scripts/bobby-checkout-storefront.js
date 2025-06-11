@@ -227,6 +227,10 @@ const BobbyCheckoutStorefront = (function() {
         }
       }
       
+      // Store flag in sessionStorage to indicate checkout is in progress
+      // This will prevent the cart from being cleared when returning from checkout
+      sessionStorage.setItem('bobby-checkout-in-progress', 'true');
+      
       // Redirect to the final URL
       console.log('🚀 Final redirect URL:', finalUrl);
       window.location.href = finalUrl;

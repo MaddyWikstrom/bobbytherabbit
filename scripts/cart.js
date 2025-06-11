@@ -606,8 +606,9 @@ class CartManager {
             if (data.checkoutUrl) {
                 this.showNotification('Redirecting to checkout...', 'success');
                 
-                // Clear cart after successful checkout creation
-                this.clearCart();
+                // Store cart data in sessionStorage before checkout
+                // This allows us to preserve the cart until the order is actually completed
+                sessionStorage.setItem('bobby-checkout-in-progress', 'true');
                 
                 // Redirect to Shopify checkout
                 setTimeout(() => {
@@ -780,6 +781,16 @@ class CartManager {
             if (savedCart) {
                 this.items = JSON.parse(savedCart);
             }
+            
+            // Check if user is returning from an in-progress checkout
+            // This indicates they clicked "Back" in the checkout page
+            const checkoutInProgress = sessionStorage.getItem('bobby-checkout-in-progress');
+            if (checkoutInProgress === 'true') {
+                console.log('User returned from checkout - keeping cart items');
+                // We don't need to do anything special here as the cart is already loaded
+                // Just clear the checkout in progress flag for next time
+                sessionStorage.removeItem('bobby-checkout-in-progress');
+            }
         } catch (error) {
             console.error('Error loading cart from storage:', error);
             this.items = [];
@@ -829,6 +840,17 @@ class CartManager {
             shipping: this.total > 50 ? 0 : 9.99, // Free shipping over $50
             total: this.total + (this.total * 0.08) + (this.total > 50 ? 0 : 9.99)
         };
+    }
+    
+    /**
+     * Handle order completion - called when an order is successfully completed
+     * This should only be called when we know for certain the order was completed
+     */
+    handleOrderCompleted() {
+        console.log('Order completed - clearing cart');
+        this.clearCart();
+        // Clear any checkout in progress flag
+        sessionStorage.removeItem('bobby-checkout-in-progress');
     }
 }
 
