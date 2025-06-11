@@ -1,46 +1,224 @@
-# Getting Real Shopify Variant IDs
+# Real Shopify Variant IDs Guide
 
-## The Problem: Placeholder IDs Don't Work
+## Overview
+This guide explains how to obtain and use real Shopify variant IDs for your store to prevent the 500 errors during checkout operations.
 
-You're seeing this error because the variant IDs being used (like `gid://shopify/ProductVariant/1`) don't actually exist in your Shopify store:
+## Understanding Shopify Variant IDs
 
+Shopify uses Global IDs (GIDs) in the format `gid://shopify/ProductVariant/12345678` for checkout operations. Using incorrect IDs or attempting to convert custom IDs incorrectly was causing your checkout failures.
+
+## Getting Your Store's Real Variant IDs
+
+You'll need to query your actual store data to get the real Shopify variant IDs. Below are examples of what the data structure looks like based on sample data:
+
+### Boots
+
+#### Snare Boot
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Black / 7 | 7 | `gid://shopify/ProductVariant/36607622083` |
+| Black / 8 | 8 | `gid://shopify/ProductVariant/36607622147` |
+| Black / 9 | 9 | `gid://shopify/ProductVariant/36607622211` |
+| Black / 10 | 10 | `gid://shopify/ProductVariant/36607622275` |
+| Black / 11 | 11 | `gid://shopify/ProductVariant/36607622339` |
+
+#### Neptune Boot
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Black / 7 | 7 | `gid://shopify/ProductVariant/36607637635` |
+| Black / 8 | 8 | `gid://shopify/ProductVariant/36607637699` |
+| Black / 9 | 9 | `gid://shopify/ProductVariant/36607637763` |
+| Black / 10 | 10 | `gid://shopify/ProductVariant/36607637827` |
+| Black / 11 | 11 | `gid://shopify/ProductVariant/36607637891` |
+
+#### Arena Zip Boot
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Black / 7 | 7 | `gid://shopify/ProductVariant/36607671875` |
+| Black / 8 | 8 | `gid://shopify/ProductVariant/36607672003` |
+| Black / 9 | 9 | `gid://shopify/ProductVariant/36607672067` |
+| Black / 10 | 10 | `gid://shopify/ProductVariant/36607672259` |
+| Black / 11 | 11 | `gid://shopify/ProductVariant/36607672451` |
+
+#### Pin Boot
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Taupe / 7 | 7 | `gid://shopify/ProductVariant/36607686531` |
+| Taupe / 8 | 8 | `gid://shopify/ProductVariant/36607686659` |
+| Taupe / 9 | 9 | `gid://shopify/ProductVariant/36607686723` |
+| Taupe / 10 | 10 | `gid://shopify/ProductVariant/36607686915` |
+| Taupe / 11 | 11 | `gid://shopify/ProductVariant/36607686979` |
+
+### Shirts
+
+#### Hanra Shirt
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Grey / S | S | `gid://shopify/ProductVariant/36607712259` |
+| Grey / M | M | `gid://shopify/ProductVariant/36607712323` |
+| Grey / L | L | `gid://shopify/ProductVariant/36607712387` |
+
+#### Meteor Shirt
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Grey / S | S | `gid://shopify/ProductVariant/36607724099` |
+| Grey / M | M | `gid://shopify/ProductVariant/36607724227` |
+| Grey / L | L | `gid://shopify/ProductVariant/36607724355` |
+
+#### Hurst Shirt
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Light Grey / S | S | `gid://shopify/ProductVariant/36607738947` |
+| Light Grey / M | M | `gid://shopify/ProductVariant/36607739011` |
+| Light Grey / L | L | `gid://shopify/ProductVariant/36607739075` |
+
+#### Monte Shirt
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Grey / S | S | `gid://shopify/ProductVariant/36607743555` |
+| Grey / M | M | `gid://shopify/ProductVariant/36607743683` |
+| Grey / L | L | `gid://shopify/ProductVariant/36607743747` |
+
+### Jumpers
+
+#### Ekktar Crew Jumper
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Taupe Marl / S | S | `gid://shopify/ProductVariant/36607763075` |
+| Taupe Marl / M | M | `gid://shopify/ProductVariant/36607763139` |
+| Taupe Marl / L | L | `gid://shopify/ProductVariant/36607763203` |
+| Ink / S | S | `gid://shopify/ProductVariant/36607763267` |
+| Ink / M | M | `gid://shopify/ProductVariant/36607763331` |
+
+#### Rye Crew Jumper
+| Variant | Size | Shopify Variant ID |
+|---------|------|-------------------|
+| Taupe Marl / S | S | `gid://shopify/ProductVariant/36607767235` |
+| Taupe Marl / M | M | `gid://shopify/ProductVariant/36607767299` |
+| Taupe Marl / L | L | `gid://shopify/ProductVariant/36607767363` |
+| Ink / S | S | `gid://shopify/ProductVariant/36607767427` |
+| Ink / M | M | `gid://shopify/ProductVariant/36607767491` |
+
+## How to Use These IDs
+
+### 1. Update Your Variant ID Mapping
+
+Based on your error logs, you need to update the `VARIANT_ID_MAP` in your `netlify/functions/create-checkout-fixed.js` file with the missing variant IDs. Here's how you should structure it:
+
+```javascript
+const VARIANT_ID_MAP = {
+  // Format: 'custom-variant-id': 'real-shopify-gid'
+  
+  // EXISTING ITEMS - KEEP THESE
+  // ... [your existing mappings]
+  
+  // MISSING ITEMS FROM ERROR LOGS - ADD THESE
+  // Replace the placeholder GIDs with real ones from your Shopify API query
+  'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Navy_Blazer_S': 'gid://shopify/ProductVariant/XXXXXXXXXX',
+  'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Navy_Blazer_XL': 'gid://shopify/ProductVariant/XXXXXXXXXX',
+  'rabbit-hardware-womans-t-shirt_Default_XS': 'gid://shopify/ProductVariant/XXXXXXXXXX',
+  'bungi-x-bobby-cuffed-beanie-1_Black_One_Size': 'gid://shopify/ProductVariant/XXXXXXXXXX',
+  
+  // Generic fallback for unknown items - Use a real product variant as default
+  'unknown-variant': 'gid://shopify/ProductVariant/XXXXXXXXXX' // Update this with a real ID
+};
 ```
-❌ "The merchandise with id gid://shopify/ProductVariant/1 does not exist."
+
+When you query each product in the Storefront API Explorer, you'll get responses like this:
+
+```json
+{
+  "data": {
+    "product": {
+      "title": "Bobby Cuffed Beanie",
+      "variants": {
+        "edges": [
+          {
+            "node": {
+              "id": "gid://shopify/ProductVariant/46823105626279",
+              "title": "Black / One Size",
+              "selectedOptions": [
+                {
+                  "name": "Color",
+                  "value": "Black"
+                },
+                {
+                  "name": "Size",
+                  "value": "One Size"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
 ```
 
-Real Shopify variant IDs typically look like: `gid://shopify/ProductVariant/44713213274763`
+Then you would update your mapping like:
+```javascript
+'bungi-x-bobby-cuffed-beanie-1_Black_One_Size': 'gid://shopify/ProductVariant/46823105626279',
+```
 
-## Solution: Using Real Variant IDs
+### 2. Ensure ShopifyIdHandler is Properly Implemented
 
-### Step 1: Get Real Variant IDs from Your Shopify Store
+The `ShopifyIdHandler` should be used throughout your site to preserve these real Shopify variant IDs. Make sure it's properly loaded on all pages that interact with the cart.
 
-#### Option A: Using Shopify Storefront API Explorer
+### 3. Modify the Product Detail Page
 
-1. Go to your Shopify admin
-2. Navigate to **Apps** > **App and sales channel settings**
-3. Scroll to the bottom and click **Develop apps and channels**
-4. Click on your Storefront API app (or create one if needed)
-5. Click on **API credentials** to get your Storefront API token
-6. Visit the [Shopify Storefront API Explorer](https://shopify.dev/tools/graphiql-storefront-api)
-7. Enter your shop domain and API token
-8. Run this query to get your product and variant IDs:
+Update your product detail page to pass the real Shopify variant IDs to the cart. For example:
+
+```javascript
+// When adding to cart
+const selectedVariant = getSelectedVariant();
+const product = {
+  id: selectedVariant.id, // This should be the real Shopify GID
+  title: productTitle,
+  price: selectedVariant.price,
+  image: selectedVariant.image,
+  selectedColor: selectedColor,
+  selectedSize: selectedSize,
+  quantity: quantity
+};
+BobbyCart.addItem(product);
+```
+
+## Troubleshooting Checkout Issues
+
+If you still encounter checkout issues:
+
+1. **Check the Console Logs**: Look for any messages about variant IDs or checkout errors
+2. **Verify ID Format**: Ensure all IDs being sent to checkout are in the correct GID format
+3. **Check API Tokens**: Make sure you're using the correct Storefront API token
+4. **Validate Environment Variables**: Confirm that your Netlify environment variables are correctly set
+
+## Finding Variant IDs for Specific Products
+
+Your logs show several missing variant mappings:
+- `bungi-x-bobby-rabbit-hardware-unisex-hoodie_Navy_Blazer_S`
+- `bungi-x-bobby-rabbit-hardware-unisex-hoodie_Navy_Blazer_XL`
+- `rabbit-hardware-womans-t-shirt_Default_XS`
+- `bungi-x-bobby-cuffed-beanie-1_Black_One_Size`
+
+To find the exact Shopify GIDs for these variants:
+
+1. Visit the [Shopify Storefront API Explorer](https://shopify.dev/tools/graphiql-storefront-api)
+2. Enter your shop domain and API token
+3. Run a targeted query for each product handle:
 
 ```graphql
 {
-  products(first: 10) {
-    edges {
-      node {
-        title
-        handle
-        variants(first: 5) {
-          edges {
-            node {
-              id
-              title
-              price {
-                amount
-              }
-            }
+  product(handle: "bungi-x-bobby-cuffed-beanie-1") {
+    title
+    variants(first: 50) {
+      edges {
+        node {
+          id
+          title
+          selectedOptions {
+            name
+            value
           }
         }
       }
@@ -49,74 +227,28 @@ Real Shopify variant IDs typically look like: `gid://shopify/ProductVariant/4471
 }
 ```
 
-9. Copy the variant IDs from the response (they'll be in the format `gid://shopify/ProductVariant/12345678901234`)
+4. Replace `"bungi-x-bobby-cuffed-beanie-1"` with each product handle you need
+5. Look for variants that match the color and size options you need:
+   - For the beanie example, look for options like "Black" + "One Size"
+   - For hoodies, look for "Navy Blazer" + "S" or "XL"
 
-#### Option B: Using Developer Tools in Shopify Admin
+## Querying Multiple Products
 
-1. Go to your Shopify admin
-2. Navigate to **Products** > **All products**
-3. Click on a product
-4. Click on a variant
-5. Open your browser's Developer Tools (F12 or right-click > Inspect)
-6. Go to the Network tab
-7. Refresh the page and look for GraphQL requests
-8. Find the variant ID in the response data
+If you need IDs for all products at once:
 
-### Step 2: Update Your Product Buttons
+## Important Note: This is Sample Data
 
-Update your product buttons in HTML to use real variant IDs:
+The variant IDs shown in this guide are from a sample response and are provided only to demonstrate the format and structure. **These are not your actual store's variant IDs.** You must run the GraphQL query against your own store to get your real variant IDs.
 
-```html
-<button class="add-to-cart-btn"
-  data-product-id="gid://shopify/ProductVariant/44713213274763"
-  data-product-title="Classic Black Hoodie"
-  data-product-price="59.99"
-  data-product-image="assets/hoodie-black.png">
-  Add to Cart
-</button>
-```
+## Steps to Implement in Your Store
 
-Replace `44713213274763` with your actual variant IDs from step 1.
+1. **Run the GraphQL Query**: Use the Storefront API Explorer with your store credentials to get your actual variant IDs
+2. **Update Your Variant ID Mapping**: Add your real GIDs to the mapping in your checkout function
+3. **Test the Checkout Process**: Make a test purchase to verify the checkout process works correctly
+4. **Monitor for Errors**: Keep an eye on the console logs for any remaining issues
 
-## Option C: Creating a Product Mapping Script
+## Conclusion
 
-If you have many products, you might want to create a mapping script:
+Using the correct Shopify variant IDs in the proper GID format is essential for successful checkout operations. By querying your store for the real variant IDs and implementing them in your checkout system, you should be able to resolve the 500 errors and provide a smooth shopping experience for your customers.
 
-1. Create a file named `scripts/product-variant-mapping.js`
-2. Add a mapping of your product IDs to Shopify variant IDs:
-
-```javascript
-// Product ID to Shopify Variant ID mapping
-const productVariantMapping = {
-  // Format: 'your-internal-product-id': 'gid://shopify/ProductVariant/actual-variant-id'
-  'black-hoodie-l': 'gid://shopify/ProductVariant/44713213274763',
-  'navy-hoodie-m': 'gid://shopify/ProductVariant/44713213307531',
-  // Add more mappings here
-};
-
-// Function to get Shopify variant ID from internal product ID
-function getShopifyVariantId(internalProductId) {
-  return productVariantMapping[internalProductId] || null;
-}
-
-// Make available globally
-window.getShopifyVariantId = getShopifyVariantId;
-```
-
-3. Include this script in your pages
-4. Modify your cart system to use this mapping when sending items to checkout
-
-## Testing Your Implementation
-
-1. Deploy these changes to your site
-2. Add a product to cart
-3. Check the browser console to confirm the correct variant ID is being used
-4. Proceed to checkout and verify that you're redirected to Shopify's checkout page
-5. Confirm your cart items appear correctly in the checkout
-
-## Troubleshooting
-
-- If you still see "does not exist" errors, double-check that you're using the correct variant IDs from your Shopify store
-- Ensure the variant IDs are being properly passed to the cart system
-- Verify that your Storefront API token has the necessary permissions
-- Check Netlify function logs for any additional errors or warnings
+Remember that each time you add new products or variants to your store, you'll need to update your variant ID mapping with the new GIDs to ensure they work properly with checkout.
