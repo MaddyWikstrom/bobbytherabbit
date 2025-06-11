@@ -548,7 +548,8 @@ if (window.BobbyCartSystem) {
         },
         body: JSON.stringify({
           items: items.map(item => ({
-            variantId: item.shopifyVariantId || item.id, // Use Shopify variant ID if available
+            // Try all possible sources of Shopify variant IDs in order of preference
+            variantId: item.shopifyVariantId || item.id, // Use shopifyVariantId added by ShopifyIdHandler
             quantity: item.quantity
           }))
         })

@@ -35,13 +35,18 @@
             if (!window.cartSystemReady) {
                 // Use the script loader to prevent duplicates
                 if (window.BobbyScriptLoader) {
-                    // Load cart system first
-                    window.BobbyScriptLoader.loadOnce('simple-cart-system', '/scripts/simple-cart-system.js', function(success) {
+                    // Load Shopify ID handler first
+                    window.BobbyScriptLoader.loadOnce('shopify-id-handler', '/scripts/shopify-id-handler.js', function(success) {
                         if (success) {
-                            console.log("Cart system script loaded successfully");
+                            console.log("Shopify ID handler loaded successfully");
                             
-                            // After cart system loads, load bridge fix
-                            window.BobbyScriptLoader.loadOnce('cart-bridge-fix', '/scripts/cart-bridge-fix.js', function(success) {
+                            // Then load cart system
+                            window.BobbyScriptLoader.loadOnce('simple-cart-system', '/scripts/simple-cart-system.js', function(success) {
+                                if (success) {
+                                    console.log("Cart system script loaded successfully");
+                                    
+                                    // After cart system loads, load bridge fix
+                                    window.BobbyScriptLoader.loadOnce('cart-bridge-fix', '/scripts/cart-bridge-fix.js', function(success) {
                                 if (success) {
                                     console.log("Cart bridge fix loaded successfully");
                                 } else {
@@ -55,11 +60,22 @@
                         }
                     });
                 } else {
+                    console.error("Failed to load Shopify ID handler");
+                }
+            });
+                } else {
                     // Fallback to direct loading if script loader isn't available
-                    const simpleCartScript = document.createElement('script');
-                    simpleCartScript.src = "/scripts/simple-cart-system.js";
-                    simpleCartScript.async = true;
-                    document.head.appendChild(simpleCartScript);
+                    // Load Shopify ID handler first
+                    const shopifyIdHandler = document.createElement('script');
+                    shopifyIdHandler.src = "/scripts/shopify-id-handler.js";
+                    shopifyIdHandler.onload = function() {
+                        // Then load cart system
+                        const simpleCartScript = document.createElement('script');
+                        simpleCartScript.src = "/scripts/simple-cart-system.js";
+                        simpleCartScript.async = true;
+                        document.head.appendChild(simpleCartScript);
+                    };
+                    document.head.appendChild(shopifyIdHandler);
                     console.warn("Script loader not available, using direct loading");
                     window.cartSystemReady = true;
                 }
@@ -623,15 +639,18 @@
         // Use script loader to load cart scripts in the correct order
         if (window.BobbyScriptLoader) {
             // Load scripts in sequence with dependencies
-            BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
-                BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
-                    BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
-                        BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js');
+            BobbyScriptLoader.loadOnce('shopify-id-handler', 'scripts/shopify-id-handler.js', function() {
+                BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
+                    BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
+                        BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
+                            BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js');
+                        });
                     });
                 });
             });
         } else {
             // Fallback to standard script tags if loader isn't available
+            document.write('<script src="scripts/shopify-id-handler.js"><\/script>');
             document.write('<script src="scripts/simple-cart-system.js"><\/script>');
             document.write('<script src="scripts/cart-bridge-fix.js"><\/script>');
             document.write('<script src="scripts/cart-duplicate-fix.js"><\/script>');
