@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bungi x Bobby | Shopify Products Demo</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/cart-styles.css">
+    
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #7877c6;
+            margin-bottom: 10px;
+        }
+        
+        .setup-instructions {
+            background: rgba(120, 119, 198, 0.1);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .setup-instructions h2 {
+            color: #7877c6;
+            margin-top: 0;
+        }
+        
+        .setup-instructions ol {
+            padding-left: 20px;
+        }
+        
+        .setup-instructions code {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #7877c6, #a855f7);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 119, 198, 0.3);
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+        }
+        
+        .product-card {
+            background: rgba(20, 20, 35, 0.95);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image-container {
+            height: 240px;
+            overflow: hidden;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        
+        .product-details {
+            padding: 20px;
+        }
+        
+        .product-title {
+            color: white;
+            font-size: 1.2rem;
+            margin: 0 0 10px;
+        }
+        
+        .product-price {
+            color: #a855f7;
+            font-weight: bold;
+            font-size: 1.25rem;
+            margin-bottom: 15px;
+        }
+        
+        .add-to-cart-btn {
+            background: linear-gradient(45deg, #7877c6, #a855f7);
+            border: none;
+            padding: 10px 0;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 119, 198, 0.3);
+        }
+        
+        .loading-container {
+            text-align: center;
+            padding: 50px 0;
+            grid-column: 1 / -1;
+        }
+        
+        .loading-spinner {
+            border: 5px solid rgba(120, 119, 198, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #7877c6;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-container {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+        
+        .error-container p {
+            color: #ff4d4d;
+            margin-bottom: 15px;
+        }
+        
+        .retry-btn {
+            background: linear-gradient(45deg, #ff4d4d, #f59e0b);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Shopify Products with Real Variant IDs</h1>
+            <p>This demo loads real products directly from your Shopify store with correct variant IDs</p>
+        </div>
+        
+        <div class="setup-instructions">
+            <h2>Quick Setup</h2>
+            <ol>
+                <li>Open <code>scripts/load-products.js</code></li>
+                <li>Replace <code>your-store.myshopify.com</code> with your actual Shopify domain</li>
+                <li>Replace <code>your-storefront-access-token</code> with your Storefront API token</li>
+                <li>Refresh this page to see your real products</li>
+            </ol>
+            <p><strong>Note:</strong> You can get a Storefront API token from your Shopify Admin → Apps → "App and sales channel settings" → Develop apps and channels</p>
+        </div>
+        
+        <div class="actions">
+            <button class="btn" id="view-cart">View Cart</button>
+            <button class="btn" id="checkout">Checkout</button>
+            <button class="btn" id="clear-cart">Clear Cart</button>
+            <button class="btn" id="reload-products">Reload Products</button>
+        </div>
+        
+        <div class="product-grid" data-auto-load="true">
+            <!-- Products will be loaded here by load-products.js -->
+        </div>
+    </div>
+    
+    <!-- Cart and Product Loading Scripts -->
+    <script src="scripts/simple-cart-system.js"></script>
+    <script src="scripts/cart-bridge-fix.js"></script>
+    <script src="scripts/cart-duplicate-fix.js"></script>
+    <script src="scripts/cart-render-fix.js"></script>
+    <script src="scripts/product-variant-mapping.js"></script>
+    <script src="scripts/load-products.js"></script>
+    
+    <script>
+        // Initialize page actions
+        document.addEventListener('DOMContentLoaded', function() {
+            // View cart button
+            document.getElementById('view-cart').addEventListener('click', function() {
+                if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
+                    window.BobbyCart.openCart();
+                } else if (window.cartManager && typeof window.cartManager.openCart === 'function') {
+                    window.cartManager.openCart();
+                } else {
+                    console.error('No cart system available');
+                }
+            });
+            
+            // Checkout button
+            document.getElementById('checkout').addEventListener('click', function() {
+                if (window.BobbyCart && typeof window.BobbyCart.proceedToCheckout === 'function') {
+                    window.BobbyCart.proceedToCheckout();
+                } else if (window.cartManager && typeof window.cartManager.proceedToCheckout === 'function') {
+                    window.cartManager.proceedToCheckout();
+                } else {
+                    console.error('No cart system available');
+                }
+            });
+            
+            // Clear cart button
+            document.getElementById('clear-cart').addEventListener('click', function() {
+                if (window.BobbyCart && typeof window.BobbyCart.clearCart === 'function') {
+                    window.BobbyCart.clearCart();
+                } else if (window.cartManager && typeof window.cartManager.clearCart === 'function') {
+                    window.cartManager.clearCart();
+                } else {
+                    console.error('No cart system available');
+                }
+            });
+            
+            // Reload products button
+            document.getElementById('reload-products').addEventListener('click', function() {
+                if (window.loadBobbyProducts) {
+                    window.loadBobbyProducts();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
