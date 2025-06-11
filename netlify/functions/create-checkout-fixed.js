@@ -31,9 +31,9 @@ exports.handler = async (event) => {
 
     console.log("📋 Items received:", items);
 
-    // Check credentials
+    // Check credentials - ALWAYS use Storefront API token for checkout operations
     const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN || process.env.SHOPIFY_DOMAIN;
-    const SHOPIFY_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
+    const SHOPIFY_TOKEN = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN; // Only use Storefront token
     const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-04';
 
     console.log("🔑 Shopify credentials check:", {
@@ -42,8 +42,12 @@ exports.handler = async (event) => {
       apiVersion: API_VERSION
     });
 
-    if (!SHOPIFY_DOMAIN || !SHOPIFY_TOKEN) {
-      throw new Error("Missing Shopify credentials");
+    if (!SHOPIFY_DOMAIN) {
+      throw new Error("Missing Shopify domain configuration");
+    }
+    
+    if (!SHOPIFY_TOKEN) {
+      throw new Error("Missing Shopify Storefront API token. Make sure SHOPIFY_STOREFRONT_ACCESS_TOKEN is set in your environment variables. This token must be generated from Settings > Apps and sales channels > Develop apps > Your App > Storefront API access token, not the Admin API token.");
     }
 
     // EMERGENCY FIX: Map known product variant names to real Shopify GIDs
