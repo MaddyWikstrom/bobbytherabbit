@@ -1,7 +1,22 @@
 exports.handler = async (event) => {
   const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
 
-  console.log("🚀 Checkout function triggered");
+  console.log("🚀 Cart creation function triggered");
+
+  // Enable CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  // Handle OPTIONS request for CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers
+    };
+  }
 
   try {
     const rawBody = event.body;
@@ -31,7 +46,7 @@ exports.handler = async (event) => {
       throw new Error("Missing Shopify credentials");
     }
 
-    // Filter valid GIDs
+    // Filter valid GIDs - using the term merchandiseId for the Cart API
     const isValidGID = id =>
       typeof id === 'string' && id.startsWith('gid://shopify/ProductVariant/');
 
@@ -41,24 +56,29 @@ exports.handler = async (event) => {
       throw new Error("❌ No valid Shopify variant IDs to checkout.");
     }
 
-    // Convert to GraphQL format
-    const lineItems = validItems.map(item =>
-      `{ variantId: "${item.variantId}", quantity: ${item.quantity} }`
-    ).join(',');
+    // Convert to Cart API format - note the different structure from checkoutCreate
+    const lines = validItems.map(item => {
+      // If variantId is already in GID format, use it directly
+      const merchandiseId = item.variantId;
+      return `{ 
+        merchandiseId: "${merchandiseId}", 
+        quantity: ${item.quantity} 
+      }`;
+    }).join(',');
 
+    // Use cartCreate mutation instead of checkoutCreate
     const query = `
       mutation {
-        checkoutCreate(input: {
-          lineItems: [${lineItems}]
+        cartCreate(input: {
+          lines: [${lines}]
         }) {
-          checkout {
+          cart {
             id
-            webUrl
+            checkoutUrl
           }
-          checkoutUserErrors {
-            message
+          userErrors {
             field
-            code
+            message
           }
         }
       }
@@ -87,41 +107,34 @@ exports.handler = async (event) => {
       throw new Error(`GraphQL error: ${result.errors[0].message}`);
     }
 
-    const { checkout, checkoutUserErrors } = result.data.checkoutCreate;
+    const { cart, userErrors } = result.data.cartCreate;
 
-    if (checkoutUserErrors && checkoutUserErrors.length > 0) {
-      throw new Error(`Shopify error: ${checkoutUserErrors[0].message}`);
+    if (userErrors && userErrors.length > 0) {
+      throw new Error(`Shopify error: ${userErrors[0].message}`);
     }
 
-    if (!checkout || !checkout.webUrl) {
+    if (!cart || !cart.checkoutUrl) {
       throw new Error("Checkout URL not returned by Shopify.");
     }
 
-    console.log("✅ Checkout created successfully!");
-    console.log("🔗 Checkout URL:", checkout.webUrl);
+    console.log("✅ Cart created successfully!");
+    console.log("🔗 Checkout URL:", cart.checkoutUrl);
 
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
+      headers,
       body: JSON.stringify({ 
-        checkoutUrl: checkout.webUrl,
-        checkoutId: checkout.id
+        // Return checkoutUrl to maintain compatibility with client code
+        checkoutUrl: cart.checkoutUrl,
+        cartId: cart.id
       })
     };
 
   } catch (err) {
-    console.error("❌ Checkout function error:", err);
+    console.error("❌ Cart creation error:", err);
     return {
       statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
+      headers,
       body: JSON.stringify({ 
         error: err.message || "Internal error",
         details: err.stack
