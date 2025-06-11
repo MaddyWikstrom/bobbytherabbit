@@ -101,8 +101,9 @@ class SilentCheckoutSystem {
 
                         // Check for valid checkout URL before proceeding
                         if (data.checkoutUrl) {
-                            // Clear cart after successful checkout creation
-                            this.clearCart();
+                            // Store cart data in sessionStorage before checkout
+                            // This allows us to preserve the cart until the order is actually completed
+                            sessionStorage.setItem('bobby-checkout-in-progress', 'true');
                             
                             // Redirect immediately to Shopify checkout without delay
                             window.location.href = data.checkoutUrl;
@@ -357,6 +358,19 @@ class SilentCheckoutSystem {
         
         // Maximum wait time of 10 seconds
         setTimeout(() => clearInterval(checkShopifyClient), 10000);
+    }
+    
+    // Handle order completion - called when an order is successfully completed
+    static handleOrderCompleted() {
+        console.log('🛍️ Order completed - clearing cart');
+        
+        // Clear checkout in progress flag
+        sessionStorage.removeItem('bobby-checkout-in-progress');
+        
+        // Clear the cart if cart manager exists
+        if (window.cartManager && typeof window.cartManager.clearCart === 'function') {
+            window.cartManager.clearCart();
+        }
     }
 }
 

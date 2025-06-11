@@ -7,17 +7,18 @@ Previously, the cart was being cleared immediately when redirecting to the Shopi
 
 The fix preserves cart contents until an order is actually completed:
 
-1. **Removed Premature Cart Clearing**: 
+1. **Removed Premature Cart Clearing**:
    - Modified `cart.js` to stop clearing cart contents immediately when redirecting to checkout
+   - Also fixed the same issue in `checkout-fix.js` which had a separate implementation
    - Instead, we now store a flag in sessionStorage indicating checkout is in progress
 
 2. **Added Checkout State Tracking**:
-   - When redirecting to Shopify checkout (from either cart.js or bobby-checkout-storefront.js), a flag is set in sessionStorage
+   - When redirecting to Shopify checkout (from either cart.js, bobby-checkout-storefront.js, or checkout-fix.js), a flag is set in sessionStorage
    - When loading the cart, we check for this flag to detect if a user is returning from checkout
 
 3. **Added Order Completion Handler**:
-   - Added a new `handleOrderCompleted()` method that can be called when an order is successfully completed
-   - This method properly clears the cart only after confirmation that the order was placed
+   - Added new `handleOrderCompleted()` methods in both CartManager and SilentCheckoutSystem classes
+   - These methods properly clear the cart only after confirmation that the order was placed
 
 ## How It Works Now
 
