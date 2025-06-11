@@ -46,14 +46,46 @@ exports.handler = async (event) => {
       throw new Error("Missing Shopify credentials");
     }
 
+    // EMERGENCY FIX: Map known product variant names to real Shopify GIDs
+    const VARIANT_ID_MAP = {
+      // Format: 'custom-variant-id': 'real-shopify-gid'
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_S-Vintage Black-S': 'gid://shopify/ProductVariant/44713213274763',
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_M-Vintage Black-M': 'gid://shopify/ProductVariant/44713213307531',
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_L-Vintage Black-L': 'gid://shopify/ProductVariant/44713213340299',
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_XL-Vintage Black-XL': 'gid://shopify/ProductVariant/44713213373067',
+      'bungi-x-bobby-rabbit-hardware-unisex-hoodie_Vintage_Black_XXL-Vintage Black-XXL': 'gid://shopify/ProductVariant/44713213405835'
+      // Add more mappings as needed
+    };
+
+    // Convert non-GID variant IDs to GIDs using our mapping
+    const processedItems = items.map(item => {
+      // If it's already a valid GID, use it directly
+      if (typeof item.variantId === 'string' && item.variantId.startsWith('gid://shopify/ProductVariant/')) {
+        return item;
+      }
+      
+      // If we have a mapping for this ID, use the mapped GID
+      if (VARIANT_ID_MAP[item.variantId]) {
+        console.log(`🔄 Converted custom ID "${item.variantId}" to real Shopify GID: ${VARIANT_ID_MAP[item.variantId]}`);
+        return {
+          ...item,
+          variantId: VARIANT_ID_MAP[item.variantId]
+        };
+      }
+      
+      // No mapping found, return original item
+      console.log(`⚠️ No mapping found for custom ID: ${item.variantId}`);
+      return item;
+    });
+    
     // Filter valid GIDs - using the term merchandiseId for the Cart API
     const isValidGID = id =>
       typeof id === 'string' && id.startsWith('gid://shopify/ProductVariant/');
 
-    const validItems = items.filter(item => isValidGID(item.variantId));
+    const validItems = processedItems.filter(item => isValidGID(item.variantId));
 
     if (validItems.length === 0) {
-      throw new Error("❌ No valid Shopify variant IDs to checkout.");
+      throw new Error("❌ No valid Shopify variant IDs to checkout. Please add product mappings in the function.");
     }
 
     // Convert to Cart API format - note the different structure from checkoutCreate

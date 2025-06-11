@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real Shopify Variant IDs Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .cart-info {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #f0f0f0;
+      border-radius: 8px;
+    }
+    .cart-info pre {
+      overflow-x: auto;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .steps {
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: #e6f7ff;
+      border-radius: 8px;
+      border-left: 4px solid #1890ff;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      background-color: #f6ffed;
+      border: 1px solid #b7eb8f;
+    }
+    .error {
+      background-color: #fff2f0;
+      border: 1px solid #ffccc7;
+    }
+  </style>
+  <!-- Include the simple cart system -->
+  <script src="scripts/simple-cart-system.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Real Shopify Variant IDs Test</h1>
+    
+    <div class="steps">
+      <h3>What This Page Does:</h3>
+      <ol>
+        <li>Loads products directly from Shopify with their <strong>real variant IDs</strong></li>
+        <li>Adds those products to the cart with the correct IDs</li>
+        <li>Displays the cart data to verify the correct IDs are being used</li>
+      </ol>
+    </div>
+    
+    <div id="status" class="status">
+      Initializing...
+    </div>
+    
+    <div id="product-grid" class="product-grid">
+      <!-- Products will be loaded here -->
+      <div>Loading products...</div>
+    </div>
+    
+    <div class="cart-info">
+      <h3>Cart Contents:</h3>
+      <button id="show-cart">Show Cart Data</button>
+      <div id="cart-data"></div>
+    </div>
+  </div>
+
+  <!-- THIS IS THE KEY PART: Load and use the Shopify product loader with correct credentials -->
+  <script>
+    // First, update these with your real Shopify credentials
+    const REAL_SHOPIFY_DOMAIN = 'mfdkk3-7g.myshopify.com';
+    const REAL_SHOPIFY_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
+    
+    // Helper to log status messages
+    function updateStatus(message, isError = false) {
+      const statusEl = document.getElementById('status');
+      statusEl.innerHTML = message;
+      statusEl.className = isError ? 'status error' : 'status';
+    }
+    
+    // Load products directly from Shopify API
+    async function loadShopifyProducts() {
+      updateStatus('Loading products from Shopify...');
+      
+      try {
+        const query = `{
+          products(first: 5) {
+            edges {
+              node {
+                id
+                title
+                handle
+                variants(first: 10) {
+                  edges {
+                    node {
+                      id
+                      title
+                      price {
+                        amount
+                      }
+                      selectedOptions {
+                        name
+                        value
+                      }
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+                images(first: 3) {
+                  edges {
+                    node {
+                      url
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }`;
+        
+        // Fetch directly from Shopify Storefront API
+        const response = await fetch(`https://${REAL_SHOPIFY_DOMAIN}/api/2024-04/graphql.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Storefront-Access-Token': REAL_SHOPIFY_TOKEN
+          },
+          body: JSON.stringify({ query })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.errors) {
+          throw new Error(`GraphQL error: ${result.errors[0].message}`);
+        }
+        
+        const products = result.data.products.edges;
+        
+        if (products.length === 0) {
+          updateStatus('No products found in your Shopify store', true);
+          return;
+        }
+        
+        updateStatus(`Successfully loaded ${products.length} products from Shopify`);
+        renderProducts(products);
+        
+      } catch (error) {
+        console.error('Error loading products:', error);
+        updateStatus(`Error loading products: ${error.message}`, true);
+      }
+    }
+    
+    // Render products to the page
+    function renderProducts(products) {
+      const container = document.getElementById('product-grid');
+      container.innerHTML = '';
+      
+      products.forEach(({ node: product }) => {
+        // Get the first variant and image
+        const firstVariant = product.variants.edges[0]?.node;
+        if (!firstVariant) return;
+        
+        const variantId = firstVariant.id; // This is the real Shopify GID
+        const productImage = product.images.edges[0]?.node.url || 'assets/product-placeholder.png';
+        
+        // Create the product card
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.innerHTML = `
+          <img src="${productImage}" alt="${product.title}" style="width:100%; height:200px; object-fit:cover;">
+          <h3>${product.title}</h3>
+          <p>Variant: ${firstVariant.title}</p>
+          <p>Price: $${parseFloat(firstVariant.price.amount).toFixed(2)}</p>
+          <p><strong>Real Shopify Variant ID:</strong><br>
+            <small>${variantId}</small>
+          </p>
+          <button class="add-to-cart-btn" data-variant-id="${variantId}">Add to Cart</button>
+        `;
+        
+        container.appendChild(productCard);
+        
+        // Add click handler
+        const addBtn = productCard.querySelector('.add-to-cart-btn');
+        addBtn.addEventListener('click', () => {
+          // Add to cart with the real Shopify variant ID
+          window.BobbyCart.addItem({
+            id: variantId, // This is the real Shopify GID
+            title: product.title,
+            price: parseFloat(firstVariant.price.amount),
+            image: productImage,
+            selectedColor: firstVariant.selectedOptions.find(o => o.name === 'Color')?.value || '',
+            selectedSize: firstVariant.selectedOptions.find(o => o.name === 'Size')?.value || '',
+            quantity: 1
+          });
+          
+          addBtn.textContent = 'Added!';
+          setTimeout(() => {
+            addBtn.textContent = 'Add to Cart';
+          }, 1500);
+          
+          updateStatus(`Added ${product.title} to cart with ID: ${variantId}`);
+        });
+      });
+    }
+    
+    // Show cart data for debugging
+    document.getElementById('show-cart').addEventListener('click', () => {
+      const cartData = document.getElementById('cart-data');
+      
+      if (window.BobbyCart && typeof window.BobbyCart.getItems === 'function') {
+        const items = window.BobbyCart.getItems();
+        cartData.innerHTML = `<pre>${JSON.stringify(items, null, 2)}</pre>`;
+      } else {
+        cartData.innerHTML = '<p>Cart system not available</p>';
+      }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Wait for cart system to initialize
+      setTimeout(() => {
+        loadShopifyProducts();
+      }, 500);
+    });
+  </script>
+</body>
+</html>
