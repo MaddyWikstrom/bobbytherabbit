@@ -208,8 +208,14 @@ const BobbyCheckoutStorefront = (function() {
         throw new Error('No checkout URL received');
       }
       
-      // Redirect to Shopify checkout
-      window.location.href = checkoutUrl;
+      // Validate and redirect to Shopify checkout
+      if (checkoutUrl.includes('myshopify.com')) {
+        console.log('✅ Valid Shopify checkout URL, redirecting now');
+        window.location.href = checkoutUrl;
+      } else {
+        console.error('❌ Invalid checkout URL - not a Shopify domain:', checkoutUrl);
+        throw new Error('Invalid checkout URL: Not a Shopify domain');
+      }
       
       return true;
     } catch (error) {

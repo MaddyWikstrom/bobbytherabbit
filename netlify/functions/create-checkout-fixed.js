@@ -342,15 +342,21 @@ exports.handler = async (event) => {
     // Use SHOPIFY_STORE_DOMAIN if available for checkout URL
     let finalCheckoutUrl = cart.checkoutUrl;
     
-    // Check if we need to replace the default myshopify domain with SHOPIFY_STORE_DOMAIN
-    if (cart.checkoutUrl.includes('myshopify.com') && SHOPIFY_DOMAIN) {
+    // Only replace the domain if we have a custom store domain that's different from the default myshopify.com domain
+    // and different from the fallback value in our code
+    const storeCustomDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    if (cart.checkoutUrl.includes('myshopify.com') && storeCustomDomain &&
+        !storeCustomDomain.includes('myshopify.com') &&
+        storeCustomDomain !== 'mfdkk3-7g.myshopify.com') {
       // Extract the default Shopify domain from the URL (e.g., mfdkk3-7g.myshopify.com)
       const shopifyUrlMatch = cart.checkoutUrl.match(/https:\/\/([^\/]+)/);
       if (shopifyUrlMatch && shopifyUrlMatch[1]) {
         const shopifyDomain = shopifyUrlMatch[1];
-        console.log(`🔄 Replacing ${shopifyDomain} with ${SHOPIFY_DOMAIN} in checkout URL`);
-        finalCheckoutUrl = cart.checkoutUrl.replace(shopifyDomain, SHOPIFY_DOMAIN);
+        console.log(`🔄 Replacing ${shopifyDomain} with ${storeCustomDomain} in checkout URL`);
+        finalCheckoutUrl = cart.checkoutUrl.replace(shopifyDomain, storeCustomDomain);
       }
+    } else {
+      console.log(`🛒 Using original Shopify checkout URL without domain replacement`);
     }
 
     console.log("🔗 Final checkout URL:", finalCheckoutUrl);

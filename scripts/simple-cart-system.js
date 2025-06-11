@@ -628,7 +628,15 @@ if (window.BobbyCartSystem) {
           
           // CRITICAL: Direct redirection to the exact Shopify-hosted checkout URL
           console.log('🔀 Redirecting to Shopify checkout:', data.checkoutUrl);
-          window.location.href = data.checkoutUrl;
+          
+          // Ensure this is a proper Shopify URL before redirecting
+          if (data.checkoutUrl.includes('myshopify.com')) {
+            console.log('✅ Confirmed valid Shopify URL, redirecting now');
+            window.location.href = data.checkoutUrl;
+          } else {
+            console.error('❌ Invalid checkout URL - not a Shopify domain:', data.checkoutUrl);
+            alert('Error: Invalid checkout URL. Please contact support.');
+          }
         } else {
           throw new Error('No checkout URL received');
         }
