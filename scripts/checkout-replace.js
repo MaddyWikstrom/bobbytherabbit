@@ -98,7 +98,9 @@
         // Find all checkout buttons and override their click handlers
         document.addEventListener('click', function(event) {
             // Identify checkout buttons
-            if (event.target.closest('.checkout-btn, [data-checkout-action], button:contains("Checkout")')) {
+            const checkoutButton = event.target.closest('.checkout-btn, [data-checkout-action]');
+            if (checkoutButton ||
+                (event.target.tagName === 'BUTTON' && event.target.textContent.toLowerCase().includes('checkout'))) {
                 console.log('🛒 Checkout button clicked - using our implementation');
                 event.preventDefault();
                 event.stopPropagation();
