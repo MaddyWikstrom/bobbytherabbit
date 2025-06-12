@@ -1,5 +1,218 @@
 /* Mobile-First Optimizations for Bobby Streetwear */
 
+/* Critical Mobile Navigation Fixes */
+@media (max-width: 768px) {
+    /* Fix navigation layout issues */
+    .navbar {
+        padding: 0.5rem 0 !important;
+        background: rgba(10, 10, 10, 0.98) !important;
+        backdrop-filter: blur(20px) !important;
+    }
+    
+    .nav-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 0 15px !important;
+        gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
+        max-width: 100% !important;
+    }
+    
+    .nav-logo {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        max-width: 65% !important;
+    }
+    
+    .nav-logo-img {
+        width: 26px !important;
+        height: 26px !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .nav-brand {
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        flex-shrink: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    /* Hide logo banner completely on mobile */
+    .logo-banner,
+    .banner-logo {
+        display: none !important;
+    }
+    
+    .nav-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+        flex-shrink: 0 !important;
+        justify-content: flex-end !important;
+    }
+    
+    .cart-btn {
+        padding: 0.4rem 0.7rem !important;
+        font-size: 0.8rem !important;
+        border-radius: 6px !important;
+        min-height: 38px !important;
+        min-width: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.3rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .cart-count {
+        width: 16px !important;
+        height: 16px !important;
+        font-size: 0.65rem !important;
+        line-height: 1 !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .cart-icon {
+        font-size: 0.85rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .social-links {
+        display: flex !important;
+        gap: 0.3rem !important;
+    }
+    
+    .hologram-btn {
+        min-width: 38px !important;
+        height: 38px !important;
+        padding: 0.4rem !important;
+    }
+    
+    .social-icon {
+        width: 15px !important;
+        height: 15px !important;
+    }
+    
+    /* Ensure mobile nav toggle is visible and properly positioned */
+    .mobile-nav-toggle {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 32px !important;
+        height: 32px !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin-left: 0.5rem !important;
+        position: relative !important;
+        z-index: 1001 !important;
+        flex-shrink: 0 !important;
+    }
+}
+
+/* Small Mobile Devices - Additional Fixes */
+@media (max-width: 480px) {
+    .nav-container {
+        padding: 0 10px !important;
+        gap: 0.3rem !important;
+    }
+    
+    .nav-brand {
+        font-size: 0.75rem !important;
+    }
+    
+    .nav-logo-img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    .cart-btn {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        min-height: 36px !important;
+        min-width: 36px !important;
+    }
+    
+    .cart-count {
+        width: 14px !important;
+        height: 14px !important;
+        font-size: 0.6rem !important;
+    }
+    
+    .cart-icon {
+        font-size: 0.8rem !important;
+    }
+    
+    .hologram-btn {
+        min-width: 36px !important;
+        height: 36px !important;
+        padding: 0.3rem !important;
+    }
+    
+    .social-icon {
+        width: 13px !important;
+        height: 13px !important;
+    }
+    
+    /* Hide social links on very small screens */
+    .nav-actions .social-links {
+        display: none !important;
+    }
+    
+    .mobile-nav-toggle {
+        width: 30px !important;
+        height: 30px !important;
+        margin-left: 0.3rem !important;
+    }
+}
+
+/* Extra Small Devices */
+@media (max-width: 360px) {
+    .nav-container {
+        padding: 0 8px !important;
+        gap: 0.2rem !important;
+    }
+    
+    .nav-brand {
+        font-size: 0.7rem !important;
+    }
+    
+    .nav-logo-img {
+        width: 22px !important;
+        height: 22px !important;
+    }
+    
+    .cart-btn {
+        padding: 0.25rem 0.4rem !important;
+        font-size: 0.7rem !important;
+        min-height: 32px !important;
+        min-width: 32px !important;
+    }
+    
+    .cart-count {
+        width: 12px !important;
+        height: 12px !important;
+        font-size: 0.55rem !important;
+    }
+    
+    .cart-icon {
+        font-size: 0.75rem !important;
+    }
+    
+    .mobile-nav-toggle {
+        width: 28px !important;
+        height: 28px !important;
+        margin-left: 0.2rem !important;
+    }
+}
+
 /* Touch and Gesture Improvements */
 @media (max-width: 768px) {
     /* Improve touch targets across the site */

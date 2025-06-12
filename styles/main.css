@@ -1201,15 +1201,17 @@ h1, h2, h3, h4, h5, h6 {
     
     /* Enhanced navigation for mobile */
     .navbar {
-        padding: 0.8rem 0;
+        padding: 0.6rem 0;
         position: fixed;
         backdrop-filter: blur(15px);
     }
     
     .nav-container {
-        padding: 0 20px;
-        gap: 1rem;
+        padding: 0 15px;
+        gap: 0.5rem;
         flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
     }
     
     .nav-menu {
@@ -1217,24 +1219,35 @@ h1, h2, h3, h4, h5, h6 {
     }
     
     .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         flex: 1;
         min-width: 0;
+        max-width: 60%;
     }
     
     .nav-brand {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        flex-shrink: 1;
     }
     
     .nav-logo-img {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+    }
+    
+    /* Hide logo banner on mobile to save space */
+    .logo-banner {
+        display: none;
     }
     
     .banner-logo {
-        height: 28px;
+        display: none;
     }
     
     /* Enhanced hero section for mobile */
@@ -1397,38 +1410,56 @@ h1, h2, h3, h4, h5, h6 {
     
     /* Enhanced navigation actions */
     .nav-actions {
-        gap: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         flex-shrink: 0;
+        justify-content: flex-end;
     }
     
     .cart-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
         border-radius: 6px;
-        min-height: 44px;
+        min-height: 40px;
+        min-width: 40px;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
     }
     
     .cart-count {
-        width: 20px;
-        height: 20px;
-        font-size: 0.75rem;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
         line-height: 1;
+        flex-shrink: 0;
+    }
+    
+    .cart-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
     }
     
     /* Enhanced social buttons */
+    .social-links {
+        display: flex;
+        gap: 0.3rem;
+    }
+    
     .hologram-btn {
-        min-width: 44px;
-        height: 44px;
-        padding: 0.6rem;
+        min-width: 40px;
+        height: 40px;
+        padding: 0.5rem;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
     }
     
     .social-icon {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
     }
     
     /* Collection section improvements */
@@ -1562,21 +1593,50 @@ h1, h2, h3, h4, h5, h6 {
         width: 260px;
     }
     
+    .nav-container {
+        padding: 0 10px;
+        gap: 0.3rem;
+    }
+    
+    .nav-brand {
+        font-size: 0.8rem;
+    }
+    
+    .nav-logo-img {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .nav-actions {
+        gap: 0.3rem;
+    }
+    
     .cart-btn {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.85rem;
-        min-height: 40px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        min-height: 36px;
+        min-width: 36px;
+    }
+    
+    .cart-count {
+        width: 16px;
+        height: 16px;
+        font-size: 0.65rem;
+    }
+    
+    .cart-icon {
+        font-size: 0.8rem;
     }
     
     .hologram-btn {
-        min-width: 40px;
-        height: 40px;
-        padding: 0.5rem;
+        min-width: 36px;
+        height: 36px;
+        padding: 0.4rem;
     }
     
     .social-icon {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
     }
     
     /* Hide social links on very small screens to save space */
@@ -1587,6 +1647,40 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Extra small devices */
 @media (max-width: 360px) {
+    .nav-container {
+        padding: 0 8px;
+    }
+    
+    .nav-brand {
+        font-size: 0.75rem;
+    }
+    
+    .nav-logo-img {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .nav-actions {
+        gap: 0.2rem;
+    }
+    
+    .cart-btn {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.75rem;
+        min-height: 32px;
+        min-width: 32px;
+    }
+    
+    .cart-count {
+        width: 14px;
+        height: 14px;
+        font-size: 0.6rem;
+    }
+    
+    .cart-icon {
+        font-size: 0.75rem;
+    }
+    
     .hero-content {
         gap: 2rem;
     }
