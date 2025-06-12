@@ -113,37 +113,104 @@
         }
     }
     
-    /* Fix blurred collection section on mobile */
+    /* COMPREHENSIVE MOBILE BLUR FIX - Crystal Clear Product Images */
     @media (max-width: 768px) {
+        /* Remove all backdrop-filter effects that cause blur on mobile */
         .product-collection::after {
             filter: none !important;
             opacity: 0.3 !important;
         }
         
-        /* Also reduce blur effects on other elements for better mobile performance */
-        .collection-controls {
-            backdrop-filter: blur(5px) !important;
+        /* Target ALL product card selectors to ensure no blur */
+        .product-card,
+        .product-card *,
+        .product-grid .product-card,
+        .product-grid-scroll .product-card,
+        .products-grid .product-card,
+        .collection .product-card,
+        .product-image,
+        .product-image *,
+        .product-image img,
+        .product-overlay,
+        .product-info {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
         }
         
-        .product-card:not(.product-grid-scroll .product-card) {
-            backdrop-filter: blur(5px) !important;
+        /* Ensure product images are crystal clear */
+        .product-image img {
+            image-rendering: -webkit-optimize-contrast !important;
+            image-rendering: crisp-edges !important;
+            image-rendering: pixelated !important;
+            image-rendering: optimizeQuality !important;
+            -webkit-backface-visibility: hidden !important;
+            backface-visibility: hidden !important;
+            transform: translateZ(0) !important;
+            will-change: auto !important;
+        }
+        
+        /* Fix any remaining blur on collection controls */
+        .collection-controls {
+            backdrop-filter: blur(3px) !important;
+            -webkit-backdrop-filter: blur(3px) !important;
+        }
+        
+        /* Ensure clear backgrounds for product cards */
+        .product-card {
+            background: rgba(26, 26, 46, 0.95) !important;
         }
     }
     
     @media (max-width: 480px) {
+        /* Complete removal of all blur effects on small mobile devices */
         .product-collection::after {
             display: none !important;
         }
         
         .collection-controls {
             backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             background: rgba(26, 26, 46, 0.98) !important;
         }
         
+        /* Comprehensive product card blur removal */
         .product-card,
-        .product-grid-scroll .product-card {
+        .product-card *,
+        .product-grid .product-card,
+        .product-grid-scroll .product-card,
+        .products-grid .product-card,
+        .collection .product-card,
+        .product-image,
+        .product-image *,
+        .product-image img,
+        .product-overlay,
+        .product-info,
+        .product-name,
+        .product-price {
             backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
             background: rgba(26, 26, 46, 0.95) !important;
+        }
+        
+        /* Override any inherited blur effects */
+        * {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* Restore necessary backgrounds only where needed */
+        .navbar {
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+        }
+        
+        .cart-content {
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
         }
     }
 }

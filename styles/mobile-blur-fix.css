@@ -1,0 +1,228 @@
+/* MOBILE COLLECTION BLUR FIX - COMPREHENSIVE SOLUTION */
+/* This file specifically addresses the mobile blur issue on product images */
+/* Priority: Load this CSS file last to ensure all overrides take effect */
+
+/* ========================================
+   MOBILE PRODUCT IMAGE BLUR FIX
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* CRITICAL: Remove ALL backdrop-filter effects from product elements */
+    .product-card,
+    .product-card *,
+    .product-grid .product-card,
+    .product-grid-scroll .product-card,
+    .products-grid .product-card,
+    .collection .product-card,
+    .product-image,
+    .product-image *,
+    .product-image img,
+    .product-overlay,
+    .product-info,
+    .product-name,
+    .product-price,
+    .product-action-btn,
+    .quick-view-btn,
+    .add-to-cart-btn {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+    
+    /* CRITICAL: Ensure crystal clear product images */
+    .product-image img,
+    .product-img,
+    .grid-image,
+    .hoodie-front,
+    .hoodie-back,
+    .tee-default,
+    .tee-hover {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+        image-rendering: optimizeQuality !important;
+        -webkit-backface-visibility: hidden !important;
+        backface-visibility: hidden !important;
+        transform: translateZ(0) !important;
+        will-change: auto !important;
+    }
+    
+    /* CRITICAL: Remove blur from collection section backgrounds */
+    .collection,
+    .collection::before,
+    .collection::after,
+    .product-collection,
+    .product-collection::before,
+    .product-collection::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+    
+    /* CRITICAL: Override any inherited blur effects */
+    .collection * {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Maintain necessary blur only for navigation and modals */
+    .navbar {
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+    }
+    
+    .cart-modal,
+    .cart-content {
+        backdrop-filter: blur(5px) !important;
+        -webkit-backdrop-filter: blur(5px) !important;
+    }
+}
+
+/* ========================================
+   SMALL MOBILE DEVICES (< 480px)
+   ======================================== */
+
+@media (max-width: 480px) {
+    /* NUCLEAR OPTION: Remove ALL backdrop-filter effects */
+    * {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Selectively restore blur only where absolutely necessary */
+    .navbar {
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+    
+    .cart-modal .cart-content {
+        backdrop-filter: blur(3px) !important;
+        -webkit-backdrop-filter: blur(3px) !important;
+    }
+    
+    /* Ensure all product elements are completely clear */
+    .product-card,
+    .product-card *,
+    .product-image,
+    .product-image *,
+    .product-image img,
+    .collection,
+    .collection * {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+}
+
+/* ========================================
+   EXTRA SMALL DEVICES (< 360px)
+   ======================================== */
+
+@media (max-width: 360px) {
+    /* Maximum compatibility mode - no blur effects at all */
+    *,
+    *::before,
+    *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+    
+    /* Only restore essential navigation blur */
+    .navbar {
+        backdrop-filter: blur(5px) !important;
+        -webkit-backdrop-filter: blur(5px) !important;
+    }
+}
+
+/* ========================================
+   WEBKIT SPECIFIC FIXES
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Target WebKit browsers specifically */
+    @supports (-webkit-backdrop-filter: blur(1px)) {
+        .product-card,
+        .product-image,
+        .product-image img,
+        .collection {
+            -webkit-backdrop-filter: none !important;
+        }
+    }
+    
+    /* Target modern browsers with backdrop-filter support */
+    @supports (backdrop-filter: blur(1px)) {
+        .product-card,
+        .product-image,
+        .product-image img,
+        .collection {
+            backdrop-filter: none !important;
+        }
+    }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Optimize rendering for mobile */
+    .product-image img {
+        transform: translateZ(0) !important;
+        -webkit-transform: translateZ(0) !important;
+        will-change: auto !important;
+        contain: layout style paint !important;
+    }
+    
+    /* Reduce composite layers */
+    .product-card {
+        will-change: auto !important;
+        contain: layout style !important;
+    }
+}
+
+/* ========================================
+   FALLBACK FOR OLDER MOBILE BROWSERS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Fallback for browsers that don't support backdrop-filter */
+    .product-card {
+        background: rgba(26, 26, 46, 0.95) !important;
+    }
+    
+    .product-overlay {
+        background: rgba(0, 0, 0, 0.7) !important;
+    }
+    
+    .collection-controls {
+        background: rgba(26, 26, 46, 0.98) !important;
+    }
+}
+
+/* ========================================
+   DEBUG MODE (uncomment to test)
+   ======================================== */
+
+/*
+@media (max-width: 768px) {
+    .product-card {
+        border: 2px solid red !important;
+    }
+    
+    .product-image {
+        border: 2px solid blue !important;
+    }
+    
+    .product-image img {
+        border: 2px solid green !important;
+    }
+}
+*/
