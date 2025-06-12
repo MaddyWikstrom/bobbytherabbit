@@ -172,10 +172,19 @@ async function loadProductsAndRender(containerSelector = '.product-grid', limit 
       const firstRegularImage = product.images.edges[0]?.node.url;
       const firstVariantImage = firstVariant.image?.url;
       
-      const productImage = featuredImageUrl ||
-                           firstRegularImage ||
-                           firstVariantImage ||
-                           'assets/product-placeholder.png';
+      // Use a more robust image selection with validation
+      let productImage = 'assets/product-placeholder.png';
+      
+      // Try each image source in order of preference
+      const imageCandidates = [featuredImageUrl, firstRegularImage, firstVariantImage].filter(Boolean);
+      
+      for (const candidate of imageCandidates) {
+        // Basic validation - ensure it's not a page URL
+        if (candidate && !candidate.includes('.html') && !candidate.includes('/products?') && !candidate.includes('/product?')) {
+          productImage = candidate;
+          break;
+        }
+      }
       
       // Get available colors and sizes from variants
       const colorOptions = [...new Set(productVariants
