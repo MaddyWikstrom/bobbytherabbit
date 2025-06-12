@@ -367,40 +367,46 @@ h1, h2, h3, h4, h5, h6 {
     transition: filter 0.5s ease, box-shadow 0.5s ease;
   }
   
-  /* Keyframes for the glow sequence - Much more subtle */
+  /* Keyframes for the glow sequence - Faster and brighter */
   @keyframes glow-sequence {
-    0%, 85% {
+    0%, 80% {
       filter: brightness(1) invert(0);
     }
+    85% {
+      filter: brightness(1.6) invert(0)
+              drop-shadow(0 0 4px var(--accent-purple))
+              drop-shadow(0 0 8px rgba(139, 92, 246, 0.6));
+    }
     90%, 95% {
-      filter: brightness(1.1) invert(0)
-              drop-shadow(0 0 2px var(--accent-purple))
-              drop-shadow(0 0 4px rgba(139, 92, 246, 0.3));
+      filter: brightness(2.0) invert(0)
+              drop-shadow(0 0 6px var(--accent-purple))
+              drop-shadow(0 0 12px rgba(139, 92, 246, 0.8))
+              drop-shadow(0 0 18px rgba(139, 92, 246, 0.4));
     }
     100% {
       filter: brightness(1) invert(0);
     }
   }
   
-  /* Animation delays to stagger the glow for each logo - Slower and more subtle */
+  /* Animation delays to stagger the glow for each logo - Faster cycle */
   .hat {
-    animation: glow-sequence 12s infinite;
+    animation: glow-sequence 6s infinite;
     animation-delay: 0s;
   }
   
   .cookie {
-    animation: glow-sequence 12s infinite;
-    animation-delay: 3s;
+    animation: glow-sequence 6s infinite;
+    animation-delay: 1.5s;
   }
   
   .bunny {
-    animation: glow-sequence 12s infinite;
-    animation-delay: 6s;
+    animation: glow-sequence 6s infinite;
+    animation-delay: 3s;
   }
   
   .b {
-    animation: glow-sequence 12s infinite;
-    animation-delay: 9s;
+    animation: glow-sequence 6s infinite;
+    animation-delay: 4.5s;
   }
 
   

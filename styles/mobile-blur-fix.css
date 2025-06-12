@@ -23,7 +23,10 @@
     .product-price,
     .product-action-btn,
     .quick-view-btn,
-    .add-to-cart-btn {
+    .add-to-cart-btn,
+    .mobile-nav-toggle,
+    .nav-toggle,
+    .hamburger-menu {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
@@ -212,6 +215,16 @@
     .navbar {
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
+    }
+    
+    /* CRITICAL: Ensure mobile navigation elements are visible */
+    .mobile-nav-toggle,
+    .nav-toggle,
+    .hamburger-menu {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1001 !important;
     }
     
     .cart-modal .cart-content {
@@ -515,6 +528,96 @@
         .variant-color:hover {
             transform: scale(1.05) !important;
             border-color: rgba(255, 255, 255, 0.6) !important;
+        }
+    }
+    
+    /* ========================================
+       MOBILE HAMBURGER MENU FIX
+       ======================================== */
+    
+    @media (max-width: 768px) {
+        /* CRITICAL: Ensure hamburger menu is always visible on mobile */
+        .mobile-nav-toggle,
+        .nav-toggle,
+        .hamburger-menu,
+        #nav-toggle,
+        .menu-toggle {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 1002 !important;
+            position: relative !important;
+            width: 40px !important;
+            height: 40px !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            /* Override any filters that might hide the menu */
+            filter: none !important;
+            -webkit-filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        
+        /* Hamburger lines styling */
+        .mobile-nav-toggle::before,
+        .mobile-nav-toggle::after,
+        .mobile-nav-toggle span,
+        .nav-toggle::before,
+        .nav-toggle::after,
+        .nav-toggle span,
+        .hamburger-menu::before,
+        .hamburger-menu::after,
+        .hamburger-menu span {
+            content: '';
+            display: block !important;
+            width: 20px !important;
+            height: 2px !important;
+            background-color: #ffffff !important;
+            margin: 3px 0 !important;
+            transition: all 0.3s ease !important;
+            border-radius: 1px !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* Ensure the hamburger menu container is positioned correctly */
+        .navbar .mobile-nav-toggle,
+        .navbar .nav-toggle,
+        .navbar .hamburger-menu {
+            margin-left: auto !important;
+            margin-right: 16px !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        /* Extra small devices - ensure hamburger is even more visible */
+        .mobile-nav-toggle,
+        .nav-toggle,
+        .hamburger-menu,
+        #nav-toggle,
+        .menu-toggle {
+            width: 36px !important;
+            height: 36px !important;
+            z-index: 1003 !important;
+        }
+        
+        .mobile-nav-toggle::before,
+        .mobile-nav-toggle::after,
+        .mobile-nav-toggle span,
+        .nav-toggle::before,
+        .nav-toggle::after,
+        .nav-toggle span,
+        .hamburger-menu::before,
+        .hamburger-menu::after,
+        .hamburger-menu span {
+            width: 18px !important;
+            height: 2px !important;
         }
     }
     
