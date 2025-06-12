@@ -1029,7 +1029,37 @@
     }
     
     .scrolling-background {
-        display: none; /* Hide on mobile for better performance */
+        display: flex; /* Show scrolling logos on mobile */
+        opacity: 0.1; /* Reduce opacity for better mobile performance */
+    }
+    
+    /* Optimize scrolling animation for mobile */
+    .scrolling-logo {
+        height: 120px; /* Smaller logos on mobile */
+        opacity: 0.1;
+        filter: grayscale(100%) brightness(0.3);
+        animation: scrollHorizontal 25s linear infinite; /* Slightly faster on mobile */
+    }
+    
+    /* Adjust logo spacing for mobile */
+    .scrolling-logo:nth-child(1) {
+        left: 0;
+    }
+    
+    .scrolling-logo:nth-child(2) {
+        left: 200px; /* Closer spacing on mobile */
+    }
+    
+    .scrolling-logo:nth-child(3) {
+        left: 400px;
+    }
+    
+    .scrolling-logo:nth-child(4) {
+        left: 600px;
+    }
+    
+    .scrolling-logo:nth-child(5) {
+        left: 800px;
     }
     
     /* Enhanced collection controls */
