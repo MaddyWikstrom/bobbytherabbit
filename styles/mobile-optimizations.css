@@ -1,0 +1,458 @@
+/* Mobile-First Optimizations for Bobby Streetwear */
+
+/* Touch and Gesture Improvements */
+@media (max-width: 768px) {
+    /* Improve touch targets across the site */
+    button, .btn, a, input, select, textarea {
+        min-height: 44px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Prevent zoom on form inputs */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Improve scrolling performance */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Prevent horizontal scroll */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+    
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+/* Password Screen Mobile Optimizations */
+@media (max-width: 768px) {
+    .password-screen {
+        padding: 20px;
+    }
+    
+    .password-container {
+        padding: 30px 20px;
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .password-title {
+        font-size: 2rem;
+        margin-bottom: 25px;
+        letter-spacing: 2px;
+    }
+    
+    .password-input {
+        width: 100%;
+        max-width: 280px;
+        padding: 12px 16px;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    
+    .password-submit {
+        width: 100%;
+        max-width: 280px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .password-title {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+    
+    .password-container {
+        padding: 25px 15px;
+    }
+}
+
+/* Loading Screen Mobile Optimizations */
+@media (max-width: 768px) {
+    .loading-screen {
+        padding: 20px;
+    }
+    
+    .loading-container {
+        max-width: 100%;
+        padding: 0 20px;
+    }
+    
+    .loading-logo-container {
+        margin-bottom: 2rem;
+    }
+    
+    .loading-logo {
+        max-width: 200px;
+        height: auto;
+    }
+    
+    .loading-cookie {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .loading-text {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .progress-container {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .loading-logo {
+        max-width: 150px;
+    }
+    
+    .loading-cookie {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .loading-text {
+        font-size: 1rem;
+    }
+    
+    .progress-container {
+        max-width: 250px;
+    }
+}
+
+/* Enhanced Product Card Mobile Interactions */
+@media (max-width: 768px) {
+    .product-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .product-card:active {
+        transform: scale(0.98);
+    }
+    
+    .product-overlay {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.6);
+        pointer-events: auto;
+    }
+    
+    .product-action-btn {
+        opacity: 1;
+        transform: translateY(0);
+        position: static;
+        margin: 0.5rem;
+        padding: 0.8rem;
+        border-radius: 8px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .quick-view-btn, .add-to-cart-btn {
+        padding: 0.8rem 1.2rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+        border-radius: 8px;
+    }
+}
+
+/* Mobile-Specific Typography Improvements */
+@media (max-width: 768px) {
+    /* Improve readability on mobile */
+    body {
+        line-height: 1.6;
+        font-size: 16px;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        line-height: 1.3;
+        word-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    p {
+        line-height: 1.6;
+        word-wrap: break-word;
+    }
+    
+    /* Ensure text doesn't get too small */
+    .product-name {
+        font-size: 1.1rem !important;
+        line-height: 1.3;
+    }
+    
+    .product-price {
+        font-size: 1.1rem !important;
+    }
+    
+    .footer-text {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+}
+
+/* Mobile Form Improvements */
+@media (max-width: 768px) {
+    .search-input {
+        -webkit-appearance: none;
+        border-radius: 12px;
+        font-size: 16px;
+        padding: 1rem 1.5rem;
+    }
+    
+    .sort-select {
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a855f7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1rem;
+        padding-right: 3rem;
+        font-size: 16px;
+    }
+}
+
+/* Mobile Animation Optimizations */
+@media (max-width: 768px) {
+    /* Reduce motion for better performance on mobile */
+    .bg-pattern,
+    .glitch-overlay,
+    .grid-details {
+        animation-duration: 60s;
+    }
+    
+    .particle-field {
+        display: none; /* Hide for better performance */
+    }
+    
+    .grid-overlay {
+        animation-duration: 40s;
+    }
+    
+    /* Simplify hover effects for touch devices */
+    .product-card:hover {
+        transform: none;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+    }
+    
+    .hologram-btn:hover {
+        transform: none;
+    }
+    
+    .cta-btn:hover,
+    .add-to-cart-btn:hover,
+    .checkout-btn:hover {
+        transform: none;
+    }
+}
+
+/* Mobile Accessibility Improvements */
+@media (max-width: 768px) {
+    /* Improve focus indicators */
+    button:focus,
+    .btn:focus,
+    a:focus,
+    input:focus,
+    select:focus {
+        outline: 3px solid var(--accent-purple);
+        outline-offset: 2px;
+    }
+    
+    /* Ensure sufficient color contrast */
+    .nav-link,
+    .footer-links a {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .nav-link:hover,
+    .footer-links a:hover {
+        color: var(--accent-purple);
+    }
+    
+    /* Improve button states */
+    .filter-btn:active,
+    .cart-btn:active,
+    .cta-btn:active {
+        transform: scale(0.95);
+    }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+    /* Optimize images for mobile */
+    img {
+        max-width: 100%;
+        height: auto;
+        image-rendering: optimizeQuality;
+    }
+    
+    /* Reduce complexity of gradients on mobile */
+    .hero-bg .particle-field {
+        background: radial-gradient(circle at 50% 50%, var(--glow-purple) 0%, transparent 50%);
+        opacity: 0.03;
+    }
+    
+    /* Simplify background patterns */
+    .product-collection::after {
+        display: none;
+    }
+}
+
+/* Mobile-Specific Layout Improvements */
+@media (max-width: 768px) {
+    /* Improve spacing consistency */
+    section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .container {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    /* Ensure proper margins */
+    .hero-content > * {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Improve button layouts */
+    .nav-actions {
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    /* Better spacing for product grids */
+    .product-grid,
+    .products-grid {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+/* Mobile Landscape Optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero {
+        min-height: 100vh;
+        padding-top: 70px;
+    }
+    
+    .hero-content {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: center;
+        text-align: left;
+    }
+    
+    .hero-title {
+        font-size: clamp(1.8rem, 4vw, 2.2rem);
+    }
+    
+    .product-3d {
+        width: min(200px, 30vw);
+        height: min(200px, 30vw);
+    }
+    
+    .collection {
+        padding: 4rem 0 3rem;
+    }
+    
+    .about {
+        padding: 3rem 0;
+    }
+}
+
+/* Very Small Devices (< 360px) */
+@media (max-width: 359px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    section {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .hero-title {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+    
+    .nav-brand {
+        font-size: 0.85rem;
+    }
+    
+    .cart-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .product-grid,
+    .products-grid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+/* Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .bg-pattern,
+    .glitch-overlay,
+    .grid-details,
+    .particle-field {
+        animation: none !important;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .product-card,
+    .cart-content,
+    .modal-content {
+        border: 2px solid var(--accent-purple);
+    }
+    
+    .filter-btn,
+    .cart-btn,
+    .cta-btn {
+        border-width: 2px;
+    }
+    
+    .nav-link,
+    .footer-links a {
+        color: #ffffff;
+    }
+}
+
+/* Dark Mode Adjustments (if system prefers dark) */
+@media (prefers-color-scheme: dark) {
+    /* The site is already dark, but ensure consistency */
+    .product-image {
+        background: #1a1a1a;
+    }
+    
+    .search-input,
+    .sort-select {
+        background: rgba(26, 26, 46, 0.9);
+        color: #ffffff;
+    }
+}

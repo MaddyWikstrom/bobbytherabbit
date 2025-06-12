@@ -185,14 +185,14 @@ function closeMobileNav() {
 function addMobileNavStyles() {
     const styleElement = document.createElement('style');
     styleElement.textContent = `
-        /* Mobile Navigation Styles */
+        /* Enhanced Mobile Navigation Styles */
         @media (max-width: 768px) {
             .mobile-nav-toggle {
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                width: 30px;
-                height: 24px;
+                width: 32px;
+                height: 26px;
                 background: transparent;
                 border: none;
                 cursor: pointer;
@@ -200,6 +200,11 @@ function addMobileNavStyles() {
                 margin-left: auto;
                 position: relative;
                 z-index: 1001;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+                min-width: 44px;
+                min-height: 44px;
+                align-items: center;
             }
             
             .toggle-bar {
@@ -208,19 +213,21 @@ function addMobileNavStyles() {
                 height: 3px;
                 background: var(--accent-purple);
                 border-radius: 2px;
-                transition: transform 0.3s ease, opacity 0.3s ease;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+                box-shadow: 0 0 3px rgba(139, 92, 246, 0.3);
             }
             
             .nav-open .mobile-nav-toggle .toggle-bar:nth-child(1) {
-                transform: translateY(10.5px) rotate(45deg);
+                transform: translateY(11px) rotate(45deg);
             }
             
             .nav-open .mobile-nav-toggle .toggle-bar:nth-child(2) {
                 opacity: 0;
+                transform: scale(0);
             }
             
             .nav-open .mobile-nav-toggle .toggle-bar:nth-child(3) {
-                transform: translateY(-10.5px) rotate(-45deg);
+                transform: translateY(-11px) rotate(-45deg);
             }
         }
 
@@ -230,12 +237,12 @@ function addMobileNavStyles() {
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
             z-index: 999;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s ease;
         }
         
         .mobile-nav-overlay.active {
@@ -247,19 +254,20 @@ function addMobileNavStyles() {
             position: fixed;
             top: 0;
             right: 0;
-            width: 280px;
-            max-width: 80vw;
+            width: 320px;
+            max-width: 85vw;
             height: 100%;
             background: rgba(10, 10, 10, 0.98);
-            backdrop-filter: blur(10px);
-            border-left: 1px solid var(--accent-purple);
+            backdrop-filter: blur(15px);
+            border-left: 2px solid var(--accent-purple);
             z-index: 1000;
             transform: translateX(100%);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            box-shadow: -5px 0 25px rgba(139, 92, 246, 0.3);
+            box-shadow: -10px 0 40px rgba(139, 92, 246, 0.4);
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .mobile-nav-drawer.active {
@@ -270,78 +278,131 @@ function addMobileNavStyles() {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 1.5rem 1rem;
-            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+            background: rgba(139, 92, 246, 0.05);
         }
         
         .mobile-nav-brand {
             font-family: 'Orbitron', monospace;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--accent-purple);
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
         }
         
         .mobile-nav-close {
-            background: transparent;
-            border: none;
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid rgba(139, 92, 246, 0.3);
             color: var(--text-primary);
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             cursor: pointer;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .mobile-nav-close:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-purple);
+            transform: scale(1.05);
         }
         
         .mobile-nav-menu {
             list-style: none;
-            padding: 1.5rem;
+            padding: 2rem;
             flex: 1;
         }
         
         .mobile-nav-item {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
         }
         
         .mobile-nav-link {
             color: var(--text-primary);
             text-decoration: none;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             display: block;
-            padding: 0.5rem 0;
+            padding: 1rem 0;
             position: relative;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 8px;
+        }
+        
+        .mobile-nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .mobile-nav-link::after {
             content: '';
             position: absolute;
-            bottom: 0;
+            bottom: 0.5rem;
             left: 0;
             width: 0;
-            height: 2px;
-            background: var(--accent-purple);
-            transition: width 0.3s ease;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-yellow));
+            border-radius: 2px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-nav-link:hover::before {
+            opacity: 1;
         }
         
         .mobile-nav-link:hover::after {
             width: 100%;
         }
         
+        .mobile-nav-link:hover {
+            color: var(--accent-purple);
+            transform: translateX(5px);
+        }
+        
         .mobile-nav-footer {
-            padding: 1.5rem;
-            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 2rem;
+            border-top: 2px solid rgba(139, 92, 246, 0.3);
+            background: rgba(139, 92, 246, 0.05);
         }
         
         .mobile-social-links {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: 1.5rem;
+        }
+        
+        .mobile-social-links .hologram-btn {
+            min-width: 50px;
+            height: 50px;
+            padding: 0.8rem;
+            border-radius: 12px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .mobile-social-links .social-icon {
+            width: 20px;
+            height: 20px;
         }
         
         /* Ensure toggle is only visible on mobile */
@@ -359,16 +420,112 @@ function addMobileNavStyles() {
             }
         }
         
-        /* Hide original nav actions on very small screens */
+        /* Small mobile adjustments */
         @media (max-width: 480px) {
+            .mobile-nav-drawer {
+                width: 100vw;
+                max-width: 100vw;
+                border-left: none;
+                border-top: 2px solid var(--accent-purple);
+            }
+            
+            .mobile-nav-header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+            
+            .mobile-nav-brand {
+                font-size: 1.1rem;
+            }
+            
+            .mobile-nav-close {
+                width: 40px;
+                height: 40px;
+                font-size: 1.6rem;
+            }
+            
+            .mobile-nav-menu {
+                padding: 1.5rem;
+            }
+            
+            .mobile-nav-link {
+                font-size: 1.1rem;
+                padding: 0.8rem 0;
+            }
+            
+            .mobile-nav-footer {
+                padding: 1.5rem;
+            }
+            
+            .mobile-social-links .hologram-btn {
+                min-width: 44px;
+                height: 44px;
+                padding: 0.6rem;
+            }
+            
+            .mobile-social-links .social-icon {
+                width: 18px;
+                height: 18px;
+            }
+            
+            /* Hide original nav social links on very small screens */
             .nav-actions .social-links {
                 display: none;
+            }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 360px) {
+            .mobile-nav-header {
+                padding: 1.2rem 1.2rem 0.8rem;
+            }
+            
+            .mobile-nav-brand {
+                font-size: 1rem;
+            }
+            
+            .mobile-nav-menu {
+                padding: 1.2rem;
+            }
+            
+            .mobile-nav-link {
+                font-size: 1rem;
+                letter-spacing: 1px;
             }
         }
         
         /* Body scroll lock when nav is open */
         body.nav-open {
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-nav-drawer,
+            .mobile-nav-overlay,
+            .toggle-bar,
+            .mobile-nav-link {
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .mobile-nav-drawer {
+                border-left: 3px solid var(--accent-purple);
+                background: rgba(0, 0, 0, 0.95);
+            }
+            
+            .mobile-nav-header,
+            .mobile-nav-footer {
+                border-color: var(--accent-purple);
+            }
+            
+            .toggle-bar {
+                background: var(--accent-purple);
+                box-shadow: none;
+            }
         }
     `;
     
