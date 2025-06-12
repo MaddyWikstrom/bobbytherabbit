@@ -125,7 +125,7 @@
             backdrop-filter: blur(5px) !important;
         }
         
-        .product-card {
+        .product-card:not(.product-grid-scroll .product-card) {
             backdrop-filter: blur(5px) !important;
         }
     }
@@ -140,7 +140,8 @@
             background: rgba(26, 26, 46, 0.98) !important;
         }
         
-        .product-card {
+        .product-card,
+        .product-grid-scroll .product-card {
             backdrop-filter: none !important;
             background: rgba(26, 26, 46, 0.95) !important;
         }
