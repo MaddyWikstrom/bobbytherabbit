@@ -105,8 +105,9 @@
         /* Remove all blur effects */
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
+        /* Keep brightness but remove blur - ensure images are bright and visible */
+        filter: brightness(1.2) contrast(1.1) !important;
+        -webkit-filter: brightness(1.2) contrast(1.1) !important;
         /* Ensure bright appearance */
         opacity: 1 !important;
     }
@@ -131,12 +132,11 @@
         padding: 20px !important;
         /* Ensure proper object-fit */
         object-fit: scale-down !important;
-        /* Remove any dark filters */
-        filter: none !important;
-        -webkit-filter: none !important;
+        /* Keep brightness but remove blur - make images bright and clear */
+        filter: brightness(1.2) contrast(1.1) !important;
+        -webkit-filter: brightness(1.2) contrast(1.1) !important;
         /* Ensure full brightness */
         opacity: 1 !important;
-        brightness: 1 !important;
     }
     
     /* CRITICAL: Remove blur from collection section backgrounds */
