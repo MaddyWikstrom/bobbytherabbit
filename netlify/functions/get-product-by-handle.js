@@ -73,6 +73,10 @@ exports.handler = async function(event, context) {
             currencyCode
           }
         }
+        featuredImage {
+          url
+          altText
+        }
         images(first: 250) {
           edges {
             node {
@@ -131,6 +135,10 @@ exports.handler = async function(event, context) {
             amount
             currencyCode
           }
+        }
+        featuredImage {
+          url
+          altText
         }
         images(first: 250) {
           edges {

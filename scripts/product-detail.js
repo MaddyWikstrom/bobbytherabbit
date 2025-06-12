@@ -1139,8 +1139,17 @@ class ProductDetailManager {
         try {
             // Create a more flexible conversion that handles different API response formats
             
-            // Handle missing images and ensure absolute URLs
+            // Handle featured image and regular images
             let images = [];
+            let featuredImageUrl = null;
+            
+            // First, check for featured image
+            if (product.featuredImage && product.featuredImage.url) {
+                featuredImageUrl = this.ensureAbsoluteUrl(product.featuredImage.url);
+                console.log(`Found featured image: ${featuredImageUrl}`);
+            }
+            
+            // Then handle regular images
             if (product.images) {
                 if (product.images.edges) {
                     // GraphQL API format
@@ -1152,6 +1161,15 @@ class ProductDetailManager {
                     // Simple string format
                     images = [this.ensureAbsoluteUrl(product.images)];
                 }
+            }
+            
+            // If we have a featured image, make sure it's first in the images array
+            if (featuredImageUrl) {
+                // Remove featured image from regular images if it exists there
+                images = images.filter(img => img !== featuredImageUrl);
+                // Add featured image as the first image
+                images.unshift(featuredImageUrl);
+                console.log(`Featured image set as main image for product: ${product.title}`);
             }
             
             if (images.length === 0) {
