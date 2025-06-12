@@ -566,8 +566,29 @@ class ProductManager {
                 console.log(`Featured image set as main thumbnail for ${product.title}`);
             }
             
+            // VALIDATE AND CLEAN IMAGE URLS: Remove any invalid URLs
+            images = images.filter(imgUrl => {
+                if (!imgUrl || typeof imgUrl !== 'string') {
+                    console.warn(`Invalid image URL (not a string): ${imgUrl}`);
+                    return false;
+                }
+                
+                // Check for common invalid patterns
+                if (imgUrl.includes('product.html') ||
+                    imgUrl.includes('products.html') ||
+                    imgUrl.includes('.html') ||
+                    imgUrl.includes('bobbytherabbit.com/products') ||
+                    imgUrl.includes('bobbytherabbit.com/product')) {
+                    console.warn(`Invalid image URL detected (contains page URL): ${imgUrl}`);
+                    return false;
+                }
+                
+                return true;
+            });
+            
             // Ensure we have at least one image
             if (images.length === 0) {
+                console.warn(`No valid images found for ${product.title}, using placeholder`);
                 images = ['/assets/product-placeholder.png'];
             }
             

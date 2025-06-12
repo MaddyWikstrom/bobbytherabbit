@@ -3167,12 +3167,33 @@ class ProductDetailManager {
     }
     // Helper method to ensure URLs are absolute
     ensureAbsoluteUrl(url) {
-        if (!url) return '/assets/product-placeholder.png';
+        if (!url || typeof url !== 'string') {
+            console.warn(`Invalid URL input: ${url}`);
+            return '/assets/product-placeholder.png';
+        }
         
         try {
-            // Check for common error patterns
-            if (url.includes('product.html?id=')) {
-                console.error(`Invalid image URL detected (contains product.html): ${url}`);
+            // Check for common error patterns - enhanced validation
+            const invalidPatterns = [
+                'product.html',
+                'products.html',
+                '.html?id=',
+                'bobbytherabbit.com/product',
+                'bobbytherabbit.com/products',
+                '/product?',
+                '/products?'
+            ];
+            
+            for (const pattern of invalidPatterns) {
+                if (url.includes(pattern)) {
+                    console.error(`Invalid image URL detected (contains ${pattern}): ${url}`);
+                    return '/assets/product-placeholder.png';
+                }
+            }
+            
+            // Additional check for URLs that look like page URLs
+            if (url.includes('.html') && !url.includes('.jpg') && !url.includes('.png') && !url.includes('.webp') && !url.includes('.gif')) {
+                console.error(`Invalid image URL detected (appears to be a page URL): ${url}`);
                 return '/assets/product-placeholder.png';
             }
             
