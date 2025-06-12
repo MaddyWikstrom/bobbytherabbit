@@ -62,8 +62,7 @@
         filter: unset !important;
         -webkit-filter: unset !important;
         opacity: unset !important;
-        background: unset !important;
-        background-color: unset !important;
+        /* DO NOT unset background/background-color - preserve inline styles for colors */
     }
     
     /* Ensure color circles maintain their background colors */
@@ -230,9 +229,8 @@
         -webkit-backdrop-filter: unset !important;
         filter: unset !important;
         -webkit-filter: unset !important;
-        background: unset !important;
-        background-color: unset !important;
         opacity: unset !important;
+        /* DO NOT unset background/background-color - preserve inline styles for colors */
     }
     
     /* Ensure color circles maintain their background colors */
@@ -298,9 +296,8 @@
         -webkit-backdrop-filter: unset !important;
         filter: unset !important;
         -webkit-filter: unset !important;
-        background: unset !important;
-        background-color: unset !important;
         opacity: unset !important;
+        /* DO NOT unset background/background-color - preserve inline styles for colors */
     }
 }
 
@@ -435,14 +432,90 @@
     .collection .product-card .product-variants .variant-option,
     .collection .product-card .color-option,
     .collection .product-card .color-variant {
-        /* Force restore all styling properties that main.css removes */
+        /* Force restore styling properties that main.css removes, but preserve inline background colors */
         backdrop-filter: revert !important;
         -webkit-backdrop-filter: revert !important;
         filter: revert !important;
         -webkit-filter: revert !important;
+        opacity: revert !important;
+        /* Allow inline background-color styles to take precedence */
         background: revert !important;
         background-color: revert !important;
-        opacity: revert !important;
+    }
+    
+    /* ========================================
+       MOBILE COLOR CIRCLES FIX
+       ======================================== */
+    
+    @media (max-width: 768px) {
+        /* CRITICAL: Ensure color circles show actual colors on mobile */
+        /* Override any CSS that might be removing inline background-color styles */
+        .variant-option[style*="background-color"],
+        .product-variants .variant-option[style*="background-color"],
+        .color-option[style*="background-color"],
+        .color-variant[style*="background-color"],
+        .variant-color[style*="background-color"],
+        .product-card .variant-option[style*="background-color"],
+        .product-card .product-variants .variant-option[style*="background-color"],
+        .product-card .color-option[style*="background-color"],
+        .product-card .color-variant[style*="background-color"],
+        .product-grid .product-card .variant-option[style*="background-color"],
+        .product-grid .product-card .product-variants .variant-option[style*="background-color"],
+        .product-grid .product-card .color-option[style*="background-color"],
+        .product-grid .product-card .color-variant[style*="background-color"],
+        .product-grid-scroll .product-card .variant-option[style*="background-color"],
+        .product-grid-scroll .product-card .product-variants .variant-option[style*="background-color"],
+        .product-grid-scroll .product-card .color-option[style*="background-color"],
+        .product-grid-scroll .product-card .color-variant[style*="background-color"],
+        .products-grid .product-card .variant-option[style*="background-color"],
+        .products-grid .product-card .product-variants .variant-option[style*="background-color"],
+        .products-grid .product-card .color-option[style*="background-color"],
+        .products-grid .product-card .color-variant[style*="background-color"],
+        .collection .product-card .variant-option[style*="background-color"],
+        .collection .product-card .product-variants .variant-option[style*="background-color"],
+        .collection .product-card .color-option[style*="background-color"],
+        .collection .product-card .color-variant[style*="background-color"] {
+            /* Force inline background-color styles to be visible */
+            background: unset !important;
+            /* Let the inline style take precedence */
+        }
+        
+        /* Ensure color circles have proper dimensions and styling */
+        .variant-option,
+        .product-variants .variant-option,
+        .color-option,
+        .color-variant,
+        .variant-color {
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 50% !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            display: inline-block !important;
+            margin-right: 8px !important;
+        }
+        
+        /* Active state for color circles */
+        .variant-option.active,
+        .product-variants .variant-option.active,
+        .color-option.active,
+        .color-variant.active,
+        .variant-color.active {
+            border-color: #a855f7 !important;
+            border-width: 3px !important;
+            transform: scale(1.1) !important;
+        }
+        
+        /* Hover state for color circles */
+        .variant-option:hover,
+        .product-variants .variant-option:hover,
+        .color-option:hover,
+        .color-variant:hover,
+        .variant-color:hover {
+            transform: scale(1.05) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
+        }
     }
     
     /* CRITICAL: Restore color circle pseudo-elements with maximum specificity */
