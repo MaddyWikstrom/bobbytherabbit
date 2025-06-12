@@ -598,8 +598,14 @@ class QuickViewManager {
                 });
                 e.target.classList.add('active');
                 
-                // Update main image
-                document.getElementById('quick-view-main-image').src = e.target.src;
+                // Update main image with validation
+                const mainImage = document.getElementById('quick-view-main-image');
+                if (this.isValidImageUrl(e.target.src)) {
+                    mainImage.src = e.target.src;
+                } else {
+                    console.warn('Invalid image URL detected in thumbnail click, using placeholder');
+                    mainImage.src = '/assets/product-placeholder.png';
+                }
             }
         });
         
@@ -1105,7 +1111,12 @@ class QuickViewManager {
                 if (product.colorImages && product.colorImages[colorName]) {
                     const mainImage = document.getElementById('quick-view-main-image');
                     mainImage.dataset.originalSrc = mainImage.dataset.originalSrc || mainImage.src;
-                    mainImage.src = product.colorImages[colorName][0];
+                    if (this.isValidImageUrl(product.colorImages[colorName][0])) {
+                        mainImage.src = product.colorImages[colorName][0];
+                    } else {
+                        console.warn('Invalid color image URL detected, using placeholder');
+                        mainImage.src = '/assets/product-placeholder.png';
+                    }
                 }
             });
             
@@ -1132,7 +1143,12 @@ class QuickViewManager {
                 // Update main image permanently
                 if (product.colorImages && product.colorImages[colorName]) {
                     const mainImage = document.getElementById('quick-view-main-image');
-                    mainImage.src = product.colorImages[colorName][0];
+                    if (this.isValidImageUrl(product.colorImages[colorName][0])) {
+                        mainImage.src = product.colorImages[colorName][0];
+                    } else {
+                        console.warn('Invalid color image URL detected, using placeholder');
+                        mainImage.src = '/assets/product-placeholder.png';
+                    }
                     mainImage.dataset.originalSrc = product.colorImages[colorName][0];
                     
                     // Also update thumbnails to show color-specific images
@@ -1678,9 +1694,14 @@ class QuickViewManager {
             return;
         }
         
-        // Set main image
+        // Set main image with validation
         const mainImage = document.getElementById('quick-view-main-image');
-        mainImage.src = this.currentProduct.images[0];
+        if (this.isValidImageUrl(this.currentProduct.images[0])) {
+            mainImage.src = this.currentProduct.images[0];
+        } else {
+            console.warn('Invalid main image URL detected, using placeholder');
+            mainImage.src = '/assets/product-placeholder.png';
+        }
         mainImage.alt = this.currentProduct.title;
         
         // Generate thumbnails
@@ -1690,7 +1711,12 @@ class QuickViewManager {
         this.currentProduct.images.forEach((imageUrl, index) => {
             const thumbnail = document.createElement('img');
             thumbnail.className = `quick-view-thumbnail ${index === 0 ? 'active' : ''}`;
-            thumbnail.src = imageUrl;
+            if (this.isValidImageUrl(imageUrl)) {
+                thumbnail.src = imageUrl;
+            } else {
+                console.warn('Invalid thumbnail URL detected, using placeholder');
+                thumbnail.src = '/assets/product-placeholder.png';
+            }
             thumbnail.alt = `${this.currentProduct.title} - Image ${index + 1}`;
             
             // Add click handler
@@ -1702,7 +1728,12 @@ class QuickViewManager {
                 thumbnail.classList.add('active');
                 
                 // Update main image
-                mainImage.src = imageUrl;
+                if (this.isValidImageUrl(imageUrl)) {
+                    mainImage.src = imageUrl;
+                } else {
+                    console.warn('Invalid image URL detected in thumbnail click, using placeholder');
+                    mainImage.src = '/assets/product-placeholder.png';
+                }
                 mainImage.dataset.originalSrc = imageUrl;
             });
             
@@ -1732,7 +1763,12 @@ class QuickViewManager {
         images.forEach((imageUrl, index) => {
             const thumbnail = document.createElement('img');
             thumbnail.className = `quick-view-thumbnail ${index === 0 ? 'active' : ''}`;
-            thumbnail.src = imageUrl;
+            if (this.isValidImageUrl(imageUrl)) {
+                thumbnail.src = imageUrl;
+            } else {
+                console.warn('Invalid thumbnail URL detected, using placeholder');
+                thumbnail.src = '/assets/product-placeholder.png';
+            }
             thumbnail.alt = `${product.title} - ${colorName} - Image ${index + 1}`;
             
             // Add click handler
@@ -1745,7 +1781,12 @@ class QuickViewManager {
                 
                 // Update main image
                 const mainImage = document.getElementById('quick-view-main-image');
-                mainImage.src = imageUrl;
+                if (this.isValidImageUrl(imageUrl)) {
+                    mainImage.src = imageUrl;
+                } else {
+                    console.warn('Invalid image URL detected, using placeholder');
+                    mainImage.src = '/assets/product-placeholder.png';
+                }
                 mainImage.dataset.originalSrc = imageUrl;
             });
             
@@ -1755,7 +1796,12 @@ class QuickViewManager {
         // Update main image to first thumbnail
         if (images.length > 0) {
             const mainImage = document.getElementById('quick-view-main-image');
-            mainImage.src = images[0];
+            if (this.isValidImageUrl(images[0])) {
+                mainImage.src = images[0];
+            } else {
+                console.warn('Invalid image URL detected, using placeholder');
+                mainImage.src = '/assets/product-placeholder.png';
+            }
             mainImage.dataset.originalSrc = images[0];
         }
     }
@@ -2028,7 +2074,12 @@ class QuickViewManager {
                 
                 const cardImage = card.querySelector('img.product-image');
                 if (cardImage) {
-                    cardImage.src = this.currentProduct.colorImages[colorName][0];
+                    if (this.isValidImageUrl(this.currentProduct.colorImages[colorName][0])) {
+                        cardImage.src = this.currentProduct.colorImages[colorName][0];
+                    } else {
+                        console.warn('Invalid card image URL detected, using placeholder');
+                        cardImage.src = '/assets/product-placeholder.png';
+                    }
                 }
             }
             // No fallbacks - if no color-specific image exists, don't change anything
@@ -2036,6 +2087,36 @@ class QuickViewManager {
             console.error("Error updating product card image:", error);
             // Don't attempt any recovery
         }
+    }
+
+    // Helper method to validate image URLs - same as image-loader-fix.js
+    isValidImageUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+
+        // Check for invalid patterns that indicate page URLs instead of image URLs
+        const invalidPatterns = [
+            'products.html',
+            'product.html',
+            'index.html',
+            'cart.html',
+            'checkout.html',
+            'collection.html'
+        ];
+
+        for (const pattern of invalidPatterns) {
+            if (url.includes(pattern)) {
+                return false;
+            }
+        }
+
+        // Check if URL appears to be a page URL (contains .html but no image extension)
+        if (url.includes('.html') && !url.includes('.jpg') && !url.includes('.png') && !url.includes('.webp') && !url.includes('.gif')) {
+            return false;
+        }
+
+        return true;
     }
 }
 
