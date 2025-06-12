@@ -396,3 +396,81 @@
     }
 }
 */
+
+/* ========================================
+   OVERRIDE MAIN.CSS MOBILE BLUR FIX
+   ======================================== */
+
+/* This section specifically overrides the main.css mobile blur fix at lines 1767-1807 */
+@media (max-width: 768px) {
+    /* Override the main.css mobile blur fix that removes ALL filters from product elements */
+    /* Main.css has this rule that we need to override:
+       .product-card, .product-card *, .product-image, .product-image *, etc. {
+           backdrop-filter: none !important;
+           -webkit-backdrop-filter: none !important;
+           filter: none !important;
+           -webkit-filter: none !important;
+       }
+    */
+    
+    /* CRITICAL: Restore color variant circles with maximum specificity */
+    .product-card .variant-option,
+    .product-card .product-variants .variant-option,
+    .product-card .color-option,
+    .product-card .color-variant,
+    .product-card .variant-color,
+    .product-grid .product-card .variant-option,
+    .product-grid .product-card .product-variants .variant-option,
+    .product-grid .product-card .color-option,
+    .product-grid .product-card .color-variant,
+    .product-grid-scroll .product-card .variant-option,
+    .product-grid-scroll .product-card .product-variants .variant-option,
+    .product-grid-scroll .product-card .color-option,
+    .product-grid-scroll .product-card .color-variant,
+    .products-grid .product-card .variant-option,
+    .products-grid .product-card .product-variants .variant-option,
+    .products-grid .product-card .color-option,
+    .products-grid .product-card .color-variant,
+    .collection .product-card .variant-option,
+    .collection .product-card .product-variants .variant-option,
+    .collection .product-card .color-option,
+    .collection .product-card .color-variant {
+        /* Force restore all styling properties that main.css removes */
+        backdrop-filter: revert !important;
+        -webkit-backdrop-filter: revert !important;
+        filter: revert !important;
+        -webkit-filter: revert !important;
+        background: revert !important;
+        background-color: revert !important;
+        opacity: revert !important;
+    }
+    
+    /* CRITICAL: Restore color circle pseudo-elements with maximum specificity */
+    .product-card .variant-option::after,
+    .product-card .product-variants .variant-option::after,
+    .product-card .color-option::after,
+    .product-card .color-variant::after,
+    .product-grid .product-card .variant-option::after,
+    .product-grid .product-card .product-variants .variant-option::after,
+    .product-grid .product-card .color-option::after,
+    .product-grid .product-card .color-variant::after,
+    .product-grid-scroll .product-card .variant-option::after,
+    .product-grid-scroll .product-card .product-variants .variant-option::after,
+    .product-grid-scroll .product-card .color-option::after,
+    .product-grid-scroll .product-card .color-variant::after,
+    .products-grid .product-card .variant-option::after,
+    .products-grid .product-card .product-variants .variant-option::after,
+    .products-grid .product-card .color-option::after,
+    .products-grid .product-card .color-variant::after,
+    .collection .product-card .variant-option::after,
+    .collection .product-card .product-variants .variant-option::after,
+    .collection .product-card .color-option::after,
+    .collection .product-card .color-variant::after {
+        /* Force restore background colors */
+        background: currentColor !important;
+        background-color: currentColor !important;
+        opacity: 1 !important;
+        filter: revert !important;
+        -webkit-filter: revert !important;
+    }
+}
