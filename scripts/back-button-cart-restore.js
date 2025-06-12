@@ -11,7 +11,7 @@
     // Key for storing cart backup before checkout
     const CART_BACKUP_KEY = 'bobby-cart-backup';
     const CHECKOUT_FLAG_KEY = 'bobby-checkout-initiated';
-    const CART_KEY = 'bobby-streetwear-cart';
+    const CART_KEY = 'bobby-cart-items'; // Updated to match simple-cart-system.js
     
     // Function to backup cart before checkout
     function backupCartForCheckout() {

@@ -14,7 +14,7 @@
     // Function to backup cart
     function backupCart() {
         try {
-            const cartData = localStorage.getItem('bobby-streetwear-cart');
+            const cartData = localStorage.getItem('bobby-cart-items');
             if (cartData && cartData !== '[]') {
                 cartBackup = cartData;
                 console.log('📦 Cart backed up:', cartData.length, 'chars');
@@ -27,12 +27,12 @@
     // Function to restore cart if it was cleared
     function restoreCartIfNeeded() {
         try {
-            const currentCart = localStorage.getItem('bobby-streetwear-cart');
+            const currentCart = localStorage.getItem('bobby-cart-items');
             
             // If cart is empty but we have a backup, restore it
             if ((!currentCart || currentCart === '[]') && cartBackup && cartBackup !== '[]') {
                 console.log('🔄 Restoring cart from backup');
-                localStorage.setItem('bobby-streetwear-cart', cartBackup);
+                localStorage.setItem('bobby-cart-items', cartBackup);
                 
                 // Also update cart manager if available
                 if (window.cartManager) {
