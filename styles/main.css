@@ -698,8 +698,8 @@ h1, h2, h3, h4, h5, h6 {
     bottom: -10px;
     border: 1px solid var(--accent-yellow);
     border-radius: 10px;
-    opacity: 0.5;
-    animation: pulse 2s ease-in-out infinite;
+    opacity: 0.3;
+    animation: pulse 8s ease-in-out infinite;
 }
 
 @keyframes rotate3d {
