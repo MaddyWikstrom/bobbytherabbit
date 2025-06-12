@@ -50,6 +50,31 @@
         opacity: 1 !important;
     }
     
+    /* PRESERVE COLOR VARIANT CIRCLES - Don't remove their styling */
+    .variant-option,
+    .product-variants .variant-option,
+    .color-option,
+    .color-variant,
+    .variant-color {
+        /* Keep all styling for color circles - don't override */
+        backdrop-filter: initial !important;
+        -webkit-backdrop-filter: initial !important;
+        filter: initial !important;
+        -webkit-filter: initial !important;
+        opacity: initial !important;
+        background: initial !important;
+        background-color: initial !important;
+    }
+    
+    /* Ensure color circles maintain their background colors */
+    .variant-option::after,
+    .product-variants .variant-option::after,
+    .color-option::after,
+    .color-variant::after {
+        background: currentColor !important;
+        opacity: 1 !important;
+    }
+    
     /* SPECIFIC FIX: Apply desktop-like styling to grid images on mobile */
     .grid-item .grid-image {
         /* Remove backdrop-filter but keep desktop brightness/contrast */
@@ -193,14 +218,40 @@
         -webkit-backdrop-filter: blur(3px) !important;
     }
     
+    /* PRESERVE COLOR VARIANT CIRCLES - Restore their styling */
+    .variant-option,
+    .product-variants .variant-option,
+    .color-option,
+    .color-variant,
+    .variant-color {
+        backdrop-filter: initial !important;
+        -webkit-backdrop-filter: initial !important;
+        filter: initial !important;
+        -webkit-filter: initial !important;
+        background: initial !important;
+        background-color: initial !important;
+        opacity: initial !important;
+    }
+    
+    /* Ensure color circles maintain their background colors */
+    .variant-option::after,
+    .product-variants .variant-option::after,
+    .color-option::after,
+    .color-variant::after {
+        background: currentColor !important;
+        opacity: 1 !important;
+        filter: initial !important;
+        -webkit-filter: initial !important;
+    }
+    
     /* Ensure all product elements are completely clear - REFINED */
     .product-card,
-    .product-card *,
+    .product-card *:not(.variant-option):not(.color-option):not(.color-variant),
     .product-image,
     .product-image *,
     .product-image img,
     .collection,
-    .collection * {
+    .collection *:not(.variant-option):not(.color-option):not(.color-variant) {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
         /* Don't remove all filters - preserve brightness/contrast */
@@ -225,6 +276,29 @@
     .navbar {
         backdrop-filter: blur(5px) !important;
         -webkit-backdrop-filter: blur(5px) !important;
+    }
+    
+    /* PRESERVE COLOR VARIANT CIRCLES - Critical for extra small devices */
+    .variant-option,
+    .product-variants .variant-option,
+    .color-option,
+    .color-variant,
+    .variant-color,
+    .variant-option::before,
+    .variant-option::after,
+    .product-variants .variant-option::before,
+    .product-variants .variant-option::after,
+    .color-option::before,
+    .color-option::after,
+    .color-variant::before,
+    .color-variant::after {
+        backdrop-filter: initial !important;
+        -webkit-backdrop-filter: initial !important;
+        filter: initial !important;
+        -webkit-filter: initial !important;
+        background: initial !important;
+        background-color: initial !important;
+        opacity: initial !important;
     }
 }
 
