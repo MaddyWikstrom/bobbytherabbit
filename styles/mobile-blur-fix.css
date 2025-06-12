@@ -90,6 +90,55 @@
         opacity: 1 !important;
     }
     
+    /* CRITICAL FIX: Homepage product cards - remove blur and fix darkness */
+    .product-grid-scroll .product-card {
+        /* Remove backdrop-filter that causes blur */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Make background like desktop - solid instead of transparent */
+        background: rgba(26, 26, 46, 0.95) !important;
+    }
+    
+    /* CRITICAL FIX: Homepage product images - make them bright and clear */
+    .product-grid-scroll .product-image,
+    .product-grid-scroll .product-image img {
+        /* Remove all blur effects */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        /* Ensure bright appearance */
+        opacity: 1 !important;
+    }
+    
+    /* CRITICAL FIX: Make product image backgrounds white like desktop */
+    .product-grid-scroll .product-image,
+    .product-card .product-image,
+    .product-grid .product-card .product-image,
+    .products-grid .product-card .product-image {
+        /* White background like desktop */
+        background: #ffffff !important;
+    }
+    
+    /* CRITICAL FIX: Ensure product images have white background and proper padding like desktop */
+    .product-grid-scroll .product-image img,
+    .product-card .product-image img,
+    .product-grid .product-card .product-image img,
+    .products-grid .product-card .product-image img {
+        /* White background like desktop */
+        background: #ffffff !important;
+        /* Proper padding like desktop */
+        padding: 20px !important;
+        /* Ensure proper object-fit */
+        object-fit: scale-down !important;
+        /* Remove any dark filters */
+        filter: none !important;
+        -webkit-filter: none !important;
+        /* Ensure full brightness */
+        opacity: 1 !important;
+        brightness: 1 !important;
+    }
+    
     /* CRITICAL: Remove blur from collection section backgrounds */
     .collection,
     .collection::before,
