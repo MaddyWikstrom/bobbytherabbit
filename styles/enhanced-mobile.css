@@ -145,6 +145,89 @@
             background: rgba(26, 26, 46, 0.95) !important;
         }
     }
+    
+    /* Enhanced Hamburger Menu Spacing */
+    @media (max-width: 768px) {
+        .mobile-nav-toggle {
+            width: 36px !important;
+            height: 32px !important;
+            padding: 4px !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            min-width: 48px !important;
+            min-height: 48px !important;
+        }
+        
+        .toggle-bar {
+            width: 28px !important;
+            height: 3px !important;
+            margin: 3px 0 !important;
+            border-radius: 2px !important;
+            background: var(--accent-purple) !important;
+            box-shadow: 0 0 5px rgba(139, 92, 246, 0.4) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Better spacing between bars */
+        .toggle-bar:nth-child(1) {
+            margin-bottom: 5px !important;
+        }
+        
+        .toggle-bar:nth-child(2) {
+            margin: 5px 0 !important;
+        }
+        
+        .toggle-bar:nth-child(3) {
+            margin-top: 5px !important;
+        }
+        
+        /* Enhanced active state animations */
+        .nav-open .mobile-nav-toggle .toggle-bar:nth-child(1) {
+            transform: translateY(11px) rotate(45deg) !important;
+        }
+        
+        .nav-open .mobile-nav-toggle .toggle-bar:nth-child(2) {
+            opacity: 0 !important;
+            transform: scale(0) !important;
+        }
+        
+        .nav-open .mobile-nav-toggle .toggle-bar:nth-child(3) {
+            transform: translateY(-11px) rotate(-45deg) !important;
+        }
+        
+        /* Hover effect for better UX */
+        .mobile-nav-toggle:hover .toggle-bar {
+            background: var(--accent-yellow) !important;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5) !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .mobile-nav-toggle {
+            width: 34px !important;
+            height: 30px !important;
+            min-width: 44px !important;
+            min-height: 44px !important;
+        }
+        
+        .toggle-bar {
+            width: 26px !important;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .mobile-nav-toggle {
+            width: 32px !important;
+            height: 28px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+        }
+        
+        .toggle-bar {
+            width: 24px !important;
+            height: 2.5px !important;
+        }
+    }
 }
 
 /* Enhanced Loading Screen for Mobile */
