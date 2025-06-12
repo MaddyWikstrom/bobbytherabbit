@@ -15,17 +15,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Cart Cleanup - clears any corrupted or test cart data -->
-    <script src="scripts/cart-cleanup.js"></script>
-    
-    <!-- Simple Cart Fix - prevents cart clearing during checkout -->
-    <script src="scripts/simple-cart-fix.js"></script>
-    
-    <!-- Back Button Cart Restore - handles cart restoration when returning from Shopify checkout -->
-    <script src="scripts/back-button-cart-restore.js"></script>
-    
-    <!-- Universal Cart Persistence - handles cart persistence across all page navigations and redirects -->
-    <script src="scripts/universal-cart-persistence.js"></script>
+    <!-- Unified Back Button Cart Fix - replaces multiple conflicting cart persistence systems -->
+    <script src="scripts/unified-back-button-cart-fix.js"></script>
     
     <!-- Shopify ID Handler - For real Shopify variant IDs (add this first) -->
     <script src="scripts/shopify-id-handler.js"></script>
@@ -267,14 +258,7 @@
     <!-- Quick View functionality -->
     <script src="scripts/quick-view.js"></script>
     
-    <!-- Cart duplicate fix - prevents duplicate cart additions -->
-    <script src="scripts/cart-duplicate-fix.js"></script>
-    
-    <!-- Cart persistence - prevents cart clearing when navigating back from checkout -->
-    <script src="scripts/cart-persistence.js"></script>
-    
-    <!-- Cross-domain cart persistence - handles checkout between different domains -->
-    <script src="scripts/cross-domain-cart.js"></script>
+    <!-- Cart functionality is now handled by unified-back-button-cart-fix.js and simple-cart-system.js -->
     
     <!-- Standard scripts (wishlist is independent) -->
     <script src="scripts/wishlist.js"></script>

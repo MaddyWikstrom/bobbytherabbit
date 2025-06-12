@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Back Button Cart Fix Test - Bobby Streetwear</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/cart-styles.css">
+    
+    <!-- Unified Back Button Cart Fix -->
+    <script src="scripts/unified-back-button-cart-fix.js"></script>
+    
+    <!-- Simple Cart System -->
+    <script src="scripts/simple-cart-system.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 30, 50, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(120, 119, 198, 0.3);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(40, 40, 60, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(120, 119, 198, 0.2);
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #a855f7, #3b82f6);
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(120, 119, 198, 0.4);
+        }
+        
+        .danger-button {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+        
+        .info-button {
+            background: linear-gradient(45deg, #06b6d4, #0891b2);
+        }
+        
+        .status-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            border-left: 4px solid #a855f7;
+        }
+        
+        .cart-status {
+            background: rgba(168, 85, 247, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        
+        .test-instructions {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .navigation-links {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            background: rgba(120, 119, 198, 0.2);
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(120, 119, 198, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .navigation-links {
+                flex-direction: column;
+            }
+            
+            .test-button {
+                width: 100%;
+                margin: 5px 0;
+                padding: 15px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Back Button Cart Fix Test</h1>
+        <p>This page tests the unified back button cart fix for both mobile and desktop navigation issues.</p>
+        
+        <!-- Navigation Links -->
+        <div class="test-section">
+            <h2>🧭 Navigation Links</h2>
+            <div class="navigation-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="products.html" class="nav-link">Products</a>
+                <a href="cart.html" class="nav-link">Cart</a>
+            </div>
+        </div>
+        
+        <!-- Cart Status Display -->
+        <div class="test-section">
+            <h2>🛒 Current Cart Status</h2>
+            <div class="cart-status" id="cart-status">
+                <div><strong>Items in Cart:</strong> <span id="cart-count">0</span></div>
+                <div><strong>Cart Contents:</strong></div>
+                <div id="cart-contents" style="margin-top: 10px; font-family: monospace; font-size: 12px;">
+                    Loading...
+                </div>
+            </div>
+            <button class="test-button info-button" onclick="refreshCartStatus()">🔄 Refresh Cart Status</button>
+        </div>
+        
+        <!-- Test Cart Operations -->
+        <div class="test-section">
+            <h2>🧪 Test Cart Operations</h2>
+            <div class="test-instructions">
+                <strong>Instructions:</strong> Add test items to cart, then navigate using browser back button or links to test cart persistence.
+            </div>
+            
+            <button class="test-button" onclick="addTestItem('Test Hoodie', 45.99, 'Navy', 'Large')">
+                ➕ Add Test Hoodie (Navy/Large)
+            </button>
+            
+            <button class="test-button" onclick="addTestItem('Test T-Shirt', 25.99, 'Black', 'Medium')">
+                ➕ Add Test T-Shirt (Black/Medium)
+            </button>
+            
+            <button class="test-button" onclick="addTestItem('Test Sweatshirt', 55.99, 'Gray', 'Small')">
+                ➕ Add Test Sweatshirt (Gray/Small)
+            </button>
+            
+            <button class="test-button danger-button" onclick="clearTestCart()">
+                🗑️ Clear Cart
+            </button>
+        </div>
+        
+        <!-- Navigation State Testing -->
+        <div class="test-section">
+            <h2>🔙 Navigation State Testing</h2>
+            <div class="test-instructions">
+                <strong>Test Steps:</strong>
+                <ol>
+                    <li>Add items to cart using buttons above</li>
+                    <li>Navigate to another page using links above</li>
+                    <li>Use browser back button to return here</li>
+                    <li>Check if cart items are preserved</li>
+                    <li>Test on both desktop and mobile devices</li>
+                </ol>
+            </div>
+            
+            <button class="test-button info-button" onclick="simulateNavigation()">
+                🔄 Simulate Navigation Event
+            </button>
+            
+            <button class="test-button info-button" onclick="simulateBackButton()">
+                🔙 Simulate Back Button
+            </button>
+            
+            <button class="test-button info-button" onclick="testCartPersistence()">
+                💾 Test Cart Persistence
+            </button>
+        </div>
+        
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h2>🐛 Debug Information</h2>
+            <div class="status-display" id="debug-info">
+                Loading debug information...
+            </div>
+            
+            <button class="test-button info-button" onclick="showDebugInfo()">
+                🔍 Show Debug Info
+            </button>
+            
+            <button class="test-button info-button" onclick="clearDebugInfo()">
+                🧹 Clear Debug Info
+            </button>
+        </div>
+        
+        <!-- Test Results -->
+        <div class="test-section">
+            <h2>✅ Test Results</h2>
+            <div class="status-display" id="test-results">
+                No tests run yet. Use the buttons above to test cart functionality.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test functions
+        let testResults = [];
+        
+        function addTestItem(title, price, color, size) {
+            if (!window.BobbyCart) {
+                logResult('❌ BobbyCart not available', 'error');
+                return;
+            }
+            
+            const item = {
+                id: `test-${Date.now()}`,
+                title: title,
+                price: price,
+                selectedColor: color,
+                selectedSize: size,
+                image: 'assets/placeholder.png',
+                quantity: 1
+            };
+            
+            try {
+                window.BobbyCart.addItem(item);
+                logResult(`✅ Added ${title} (${color}/${size}) - $${price}`, 'success');
+                refreshCartStatus();
+            } catch (error) {
+                logResult(`❌ Failed to add ${title}: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearTestCart() {
+            if (!window.BobbyCart) {
+                logResult('❌ BobbyCart not available', 'error');
+                return;
+            }
+            
+            try {
+                window.BobbyCart.clearCart();
+                logResult('✅ Cart cleared successfully', 'success');
+                refreshCartStatus();
+            } catch (error) {
+                logResult(`❌ Failed to clear cart: ${error.message}`, 'error');
+            }
+        }
+        
+        function refreshCartStatus() {
+            const cartCountElement = document.getElementById('cart-count');
+            const cartContentsElement = document.getElementById('cart-contents');
+            
+            if (!window.BobbyCart) {
+                cartCountElement.textContent = 'N/A';
+                cartContentsElement.textContent = 'BobbyCart not available';
+                return;
+            }
+            
+            try {
+                const items = window.BobbyCart.getItems();
+                const count = window.BobbyCart.getItemCount();
+                
+                cartCountElement.textContent = count;
+                
+                if (items.length === 0) {
+                    cartContentsElement.textContent = 'Cart is empty';
+                } else {
+                    cartContentsElement.innerHTML = items.map(item => 
+                        `• ${item.title} (${item.selectedColor || 'N/A'}/${item.selectedSize || 'N/A'}) - $${item.price} x${item.quantity}`
+                    ).join('<br>');
+                }
+            } catch (error) {
+                cartContentsElement.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function simulateNavigation() {
+            if (window.UnifiedCartFix) {
+                window.UnifiedCartFix.saveState();
+                logResult('✅ Navigation state saved', 'success');
+            } else {
+                logResult('❌ UnifiedCartFix not available', 'error');
+            }
+        }
+        
+        function simulateBackButton() {
+            // Simulate popstate event
+            const event = new PopStateEvent('popstate', { state: null });
+            window.dispatchEvent(event);
+            logResult('✅ Back button event simulated', 'success');
+            
+            setTimeout(() => {
+                refreshCartStatus();
+                logResult('🔄 Cart status refreshed after back button simulation', 'info');
+            }, 500);
+        }
+        
+        function testCartPersistence() {
+            if (!window.UnifiedCartFix) {
+                logResult('❌ UnifiedCartFix not available', 'error');
+                return;
+            }
+            
+            try {
+                // Get current cart
+                const currentCart = window.UnifiedCartFix.getCurrentCart();
+                logResult(`📊 Current cart has ${currentCart.length} items`, 'info');
+                
+                // Save state
+                window.UnifiedCartFix.saveState();
+                logResult('💾 Cart state saved', 'success');
+                
+                // Try to restore state
+                const restored = window.UnifiedCartFix.restoreState();
+                if (restored) {
+                    logResult('✅ Cart state restored successfully', 'success');
+                } else {
+                    logResult('ℹ️ No saved state to restore', 'info');
+                }
+                
+                refreshCartStatus();
+            } catch (error) {
+                logResult(`❌ Cart persistence test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function showDebugInfo() {
+            const debugElement = document.getElementById('debug-info');
+            
+            const debugInfo = {
+                'BobbyCart Available': !!window.BobbyCart,
+                'UnifiedCartFix Available': !!window.UnifiedCartFix,
+                'Current Page': window.location.pathname,
+                'User Agent': navigator.userAgent,
+                'Screen Size': `${window.screen.width}x${window.screen.height}`,
+                'Viewport Size': `${window.innerWidth}x${window.innerHeight}`,
+                'Local Storage Keys': Object.keys(localStorage).filter(key => key.includes('bobby')),
+                'Cart Items Count': window.BobbyCart ? window.BobbyCart.getItemCount() : 'N/A',
+                'Timestamp': new Date().toISOString()
+            };
+            
+            debugElement.innerHTML = Object.entries(debugInfo)
+                .map(([key, value]) => `<strong>${key}:</strong> ${JSON.stringify(value)}`)
+                .join('<br>');
+        }
+        
+        function clearDebugInfo() {
+            document.getElementById('debug-info').textContent = 'Debug info cleared.';
+            document.getElementById('test-results').textContent = 'Test results cleared.';
+            testResults = [];
+        }
+        
+        function logResult(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            testResults.push(logEntry);
+            
+            const resultsElement = document.getElementById('test-results');
+            resultsElement.innerHTML = testResults.slice(-10).join('<br>'); // Show last 10 results
+            
+            console.log(logEntry);
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            logResult('🚀 Back Button Cart Fix Test Page Loaded', 'success');
+            
+            // Wait for cart system to load
+            setTimeout(() => {
+                refreshCartStatus();
+                showDebugInfo();
+                
+                if (window.BobbyCart) {
+                    logResult('✅ BobbyCart system detected', 'success');
+                } else {
+                    logResult('❌ BobbyCart system not detected', 'error');
+                }
+                
+                if (window.UnifiedCartFix) {
+                    logResult('✅ UnifiedCartFix system detected', 'success');
+                } else {
+                    logResult('❌ UnifiedCartFix system not detected', 'error');
+                }
+            }, 1000);
+        });
+        
+        // Listen for navigation events
+        window.addEventListener('popstate', function() {
+            logResult('🔙 Popstate event detected', 'info');
+        });
+        
+        window.addEventListener('beforeunload', function() {
+            logResult('📤 Page unloading', 'info');
+        });
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                logResult('👁️ Page hidden', 'info');
+            } else {
+                logResult('👁️ Page visible', 'info');
+                setTimeout(refreshCartStatus, 200);
+            }
+        });
+    </script>
+</body>
+</html>
