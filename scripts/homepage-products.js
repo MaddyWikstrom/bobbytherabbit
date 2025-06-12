@@ -110,8 +110,21 @@ class HomepageProductLoader {
         // Get images from Shopify only - no fallbacks
         const shopifyImages = product.images.edges.map(edge => edge.node.url);
         
-        // No local fallbacks - use empty array if no Shopify images
-        const images = shopifyImages.length > 0 ? shopifyImages : [];
+        // Get the featured image (Shopify's designated thumbnail)
+        const featuredImageUrl = product.featuredImage ? product.featuredImage.url : null;
+        
+        // Ensure featured image is used as the main thumbnail
+        let images = shopifyImages.length > 0 ? shopifyImages : [];
+        
+        // If we have a featured image, ensure it's the first image in our array
+        if (featuredImageUrl && !images.includes(featuredImageUrl)) {
+            // Featured image is not in the regular images array, add it at the beginning
+            images = [featuredImageUrl, ...images];
+        } else if (featuredImageUrl && images.includes(featuredImageUrl)) {
+            // Featured image is in the array but not first, move it to the front
+            images = images.filter(img => img !== featuredImageUrl);
+            images = [featuredImageUrl, ...images];
+        }
         
         let mainImage = images.length > 0 ? images[0] : '';
         let hoverImage = images.length > 1 ? images[1] : mainImage;

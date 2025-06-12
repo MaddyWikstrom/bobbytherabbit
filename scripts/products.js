@@ -448,6 +448,10 @@ class ProductManager {
                                         currencyCode
                                     }
                                 }
+                                featuredImage {
+                                    url
+                                    altText
+                                }
                                 images(first: 5) {
                                     edges {
                                         node {
@@ -543,11 +547,24 @@ class ProductManager {
             // Extract images from Shopify - this will be our only image source
             const shopifyImages = product.images.edges.map(imgEdge => imgEdge.node.url);
             
+            // Get the featured image (Shopify's designated thumbnail)
+            const featuredImageUrl = product.featuredImage ? product.featuredImage.url : null;
+            
             // Create a map to track which images are associated with which variants
             const variantImageMap = new Map();
             
             // Use images directly from Shopify API only
             let images = shopifyImages;
+            
+            // If we have a featured image, ensure it's the first image in our array
+            if (featuredImageUrl && !images.includes(featuredImageUrl)) {
+                // Featured image is not in the regular images array, add it at the beginning
+                images = [featuredImageUrl, ...images];
+            } else if (featuredImageUrl && images.includes(featuredImageUrl)) {
+                // Featured image is in the array but not first, move it to the front
+                images = images.filter(img => img !== featuredImageUrl);
+                images = [featuredImageUrl, ...images];
+            }
             
             // Extract variants and organize by color/size
             const variants = [];

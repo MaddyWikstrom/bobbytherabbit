@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Featured Image Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        ul {
+            line-height: 1.6;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Featured Image Fix Test</h1>
+        <p>This page helps you verify that the featured image fix has been implemented correctly.</p>
+
+        <div class="test-section">
+            <h3>📋 What Was Changed</h3>
+            <div class="status info">
+                <strong>Problem:</strong> Your site was using the first image from Shopify's images array as thumbnails, but Shopify has a designated "featured image" for each product that should be used as the thumbnail.
+            </div>
+            <div class="status success">
+                <strong>Solution:</strong> Updated the GraphQL queries and image processing logic to prioritize Shopify's featured image as the thumbnail.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Files Modified</h3>
+            <ul>
+                <li><strong>netlify/functions/get-products.js</strong> - Added <span class="highlight">featuredImage</span> field to GraphQL query</li>
+                <li><strong>scripts/products.js</strong> - Updated image processing to prioritize featured image</li>
+                <li><strong>scripts/homepage-products.js</strong> - Updated thumbnail logic to use featured image</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 GraphQL Query Changes</h3>
+            <p>Added the following field to fetch Shopify's designated featured image:</p>
+            <div class="code-block">
+featuredImage {
+  url
+  altText
+}
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Image Processing Logic</h3>
+            <p>The new logic ensures that:</p>
+            <ul>
+                <li>If a product has a featured image set in Shopify, it becomes the first image (thumbnail)</li>
+                <li>If the featured image is already in the images array, it gets moved to the front</li>
+                <li>If the featured image is not in the images array, it gets added at the beginning</li>
+                <li>This ensures the thumbnail always matches what's set in Shopify admin</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Testing Instructions</h3>
+            <div class="status warning">
+                <strong>Note:</strong> Since Shopify API only works when deployed, you'll need to deploy these changes to test them.
+            </div>
+            <ol>
+                <li>Deploy the updated code to Netlify</li>
+                <li>Check your Shopify admin to see which image is set as "featured" for each product</li>
+                <li>Visit your deployed site and verify that the thumbnails match the featured images from Shopify</li>
+                <li>Test both the homepage product grid and the products page</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>✅ Expected Results</h3>
+            <p>After deployment, you should see:</p>
+            <ul>
+                <li>Product thumbnails on your homepage match the featured images set in Shopify</li>
+                <li>Product thumbnails on the products page match the featured images set in Shopify</li>
+                <li>The thumbnail is consistent across all pages of your site</li>
+                <li>If you change a featured image in Shopify admin, it will be reflected on your site</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 How to Verify in Shopify Admin</h3>
+            <ol>
+                <li>Go to your Shopify admin dashboard</li>
+                <li>Navigate to Products</li>
+                <li>Click on any product</li>
+                <li>Look at the images section - the first image with a star icon is the featured image</li>
+                <li>This starred image should now appear as the thumbnail on your website</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

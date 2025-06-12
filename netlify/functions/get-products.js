@@ -38,7 +38,7 @@ exports.handler = async function(event, context) {
     },
   ];
 
-  // Enhanced GraphQL query
+  // Enhanced GraphQL query with featured image
   const productsQuery = `
     query Products {
       products(first: 250) {
@@ -57,6 +57,10 @@ exports.handler = async function(event, context) {
                 amount
                 currencyCode
               }
+            }
+            featuredImage {
+              url
+              altText
             }
             images(first: 5) {
               edges {
