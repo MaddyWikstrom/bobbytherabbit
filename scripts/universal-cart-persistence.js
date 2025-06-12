@@ -60,6 +60,16 @@
                     }
                 }
                 
+                // Check for problematic test data
+                if (cartData && (cartData.toLowerCase().includes('navy') ||
+                                cartData.toLowerCase().includes('blazer') ||
+                                cartData.toLowerCase().includes('test'))) {
+                    console.warn('⚠️ Detected problematic test data, clearing cart');
+                    localStorage.removeItem(CONFIG.CART_KEY);
+                    localStorage.removeItem(CONFIG.BACKUP_KEY);
+                    return [];
+                }
+                
                 return cartData ? JSON.parse(cartData) : [];
             } catch (error) {
                 console.error('Error loading cart:', error);
