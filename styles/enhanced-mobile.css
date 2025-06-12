@@ -112,6 +112,39 @@
             padding: 0 15px !important;
         }
     }
+    
+    /* Fix blurred collection section on mobile */
+    @media (max-width: 768px) {
+        .product-collection::after {
+            filter: none !important;
+            opacity: 0.3 !important;
+        }
+        
+        /* Also reduce blur effects on other elements for better mobile performance */
+        .collection-controls {
+            backdrop-filter: blur(5px) !important;
+        }
+        
+        .product-card {
+            backdrop-filter: blur(5px) !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .product-collection::after {
+            display: none !important;
+        }
+        
+        .collection-controls {
+            backdrop-filter: none !important;
+            background: rgba(26, 26, 46, 0.98) !important;
+        }
+        
+        .product-card {
+            backdrop-filter: none !important;
+            background: rgba(26, 26, 46, 0.95) !important;
+        }
+    }
 }
 
 /* Enhanced Loading Screen for Mobile */
