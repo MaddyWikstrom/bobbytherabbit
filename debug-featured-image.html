@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Featured Image Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .debug-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .image-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .featured-indicator {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Featured Image Debug Tool</h1>
+        <p>This tool helps debug whether the featured image fix is working correctly.</p>
+
+        <div class="debug-section">
+            <h3>🧪 API Test</h3>
+            <button class="test-button" onclick="testNetlifyFunction()">Test Netlify Function</button>
+            <button class="test-button" onclick="testDirectAPI()">Test Direct API</button>
+            <div id="api-status" class="status info">Click a button to test the API</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>📊 Product Data Analysis</h3>
+            <div id="analysis-results" class="loading">Click "Test Netlify Function" first to analyze product data</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🖼️ Product Images Preview</h3>
+            <div id="products-preview" class="loading">Product data will appear here after testing</div>
+        </div>
+
+        <div class="debug-section">
+            <h3>🔧 Troubleshooting</h3>
+            <div class="status info">
+                <strong>If you're not seeing featured images:</strong>
+                <ul>
+                    <li>Make sure you've deployed the updated code to Netlify</li>
+                    <li>Check that your products have featured images set in Shopify admin</li>
+                    <li>Clear your browser cache and try again</li>
+                    <li>Verify the Netlify function is returning the featuredImage field</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let productData = null;
+
+        async function testNetlifyFunction() {
+            const statusDiv = document.getElementById('api-status');
+            const analysisDiv = document.getElementById('analysis-results');
+            const previewDiv = document.getElementById('products-preview');
+            
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = '🔄 Testing Netlify function...';
+            
+            try {
+                const response = await fetch('/.netlify/functions/get-products');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                productData = data;
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `✅ Netlify function working! Found ${data.products ? data.products.length : 'unknown'} products`;
+                
+                analyzeProductData(data);
+                renderProductPreview(data);
+                
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                analysisDiv.innerHTML = '<div class="status error">Cannot analyze - API test failed</div>';
+                previewDiv.innerHTML = '<div class="status error">Cannot preview - API test failed</div>';
+            }
+        }
+
+        async function testDirectAPI() {
+            const statusDiv = document.getElementById('api-status');
+            
+            statusDiv.className = 'status info';
+            statusDiv.innerHTML = '🔄 Testing direct Shopify API...';
+            
+            try {
+                const query = `
+                    query Products {
+                        products(first: 5) {
+                            edges {
+                                node {
+                                    id
+                                    title
+                                    handle
+                                    featuredImage {
+                                        url
+                                        altText
+                                    }
+                                    images(first: 3) {
+                                        edges {
+                                            node {
+                                                url
+                                                altText
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `;
+                
+                const response = await fetch('https://mfdkk3-7g.myshopify.com/api/2024-04/graphql.json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': '8c6bd66766da4553701a1f1fe7d94dc4'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.errors) {
+                    throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+                }
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `✅ Direct API working! Found ${data.data.products.edges.length} products`;
+                
+                // Convert to same format as Netlify function for analysis
+                const convertedData = {
+                    products: data.data.products.edges,
+                    meta: { source: 'direct-api' }
+                };
+                
+                analyzeProductData(convertedData);
+                renderProductPreview(convertedData);
+                
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Direct API Error: ${error.message}`;
+            }
+        }
+
+        function analyzeProductData(data) {
+            const analysisDiv = document.getElementById('analysis-results');
+            
+            if (!data.products || !Array.isArray(data.products)) {
+                analysisDiv.innerHTML = '<div class="status error">Invalid data format</div>';
+                return;
+            }
+            
+            const products = data.products;
+            let featuredImageCount = 0;
+            let totalImageCount = 0;
+            let productsWithImages = 0;
+            
+            const analysis = products.map(productEdge => {
+                const product = productEdge.node || productEdge;
+                const hasFeaturedImage = !!(product.featuredImage && product.featuredImage.url);
+                const imageCount = product.images ? (product.images.edges ? product.images.edges.length : product.images.length) : 0;
+                
+                if (hasFeaturedImage) featuredImageCount++;
+                if (imageCount > 0) productsWithImages++;
+                totalImageCount += imageCount;
+                
+                return {
+                    title: product.title,
+                    hasFeaturedImage,
+                    featuredImageUrl: hasFeaturedImage ? product.featuredImage.url : null,
+                    imageCount,
+                    firstImageUrl: imageCount > 0 ? 
+                        (product.images.edges ? product.images.edges[0].node.url : product.images[0]) : null
+                };
+            });
+            
+            let html = `
+                <div class="status success">
+                    <strong>Analysis Complete:</strong><br>
+                    • Total products: ${products.length}<br>
+                    • Products with featured image: ${featuredImageCount}<br>
+                    • Products with any images: ${productsWithImages}<br>
+                    • Average images per product: ${(totalImageCount / products.length).toFixed(1)}
+                </div>
+                
+                <h4>Product Details:</h4>
+                <div class="code-block">
+            `;
+            
+            analysis.forEach(product => {
+                html += `${product.title}:\n`;
+                html += `  Featured Image: ${product.hasFeaturedImage ? '✅ YES' : '❌ NO'}\n`;
+                if (product.hasFeaturedImage) {
+                    html += `  Featured URL: ${product.featuredImageUrl}\n`;
+                }
+                html += `  Total Images: ${product.imageCount}\n`;
+                if (product.firstImageUrl) {
+                    html += `  First Image: ${product.firstImageUrl}\n`;
+                }
+                html += `\n`;
+            });
+            
+            html += '</div>';
+            analysisDiv.innerHTML = html;
+        }
+
+        function renderProductPreview(data) {
+            const previewDiv = document.getElementById('products-preview');
+            
+            if (!data.products || !Array.isArray(data.products)) {
+                previewDiv.innerHTML = '<div class="status error">No products to preview</div>';
+                return;
+            }
+            
+            const products = data.products.slice(0, 6); // Show first 6 products
+            
+            let html = '<div class="product-grid">';
+            
+            products.forEach(productEdge => {
+                const product = productEdge.node || productEdge;
+                const hasFeaturedImage = !!(product.featuredImage && product.featuredImage.url);
+                const featuredImageUrl = hasFeaturedImage ? product.featuredImage.url : null;
+                
+                // Get first regular image
+                let firstImageUrl = null;
+                if (product.images) {
+                    if (product.images.edges && product.images.edges.length > 0) {
+                        firstImageUrl = product.images.edges[0].node.url;
+                    } else if (Array.isArray(product.images) && product.images.length > 0) {
+                        firstImageUrl = product.images[0];
+                    }
+                }
+                
+                // Determine which image to show (featured takes priority)
+                const displayImage = featuredImageUrl || firstImageUrl;
+                const isUsingFeatured = featuredImageUrl && displayImage === featuredImageUrl;
+                
+                html += `
+                    <div class="product-card">
+                        ${displayImage ? 
+                            `<img src="${displayImage}" alt="${product.title}" class="product-image" onerror="this.style.display='none'">` :
+                            `<div style="height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #666;">No Image</div>`
+                        }
+                        <div class="product-info">
+                            <div class="product-title">
+                                ${product.title}
+                                ${isUsingFeatured ? '<span class="featured-indicator">FEATURED</span>' : ''}
+                            </div>
+                            <div class="image-info">
+                                ${hasFeaturedImage ? 
+                                    `✅ Has featured image${isUsingFeatured ? ' (showing)' : ' (not showing)'}` : 
+                                    '❌ No featured image'
+                                }<br>
+                                ${firstImageUrl ? `📷 Has ${product.images ? (product.images.edges ? product.images.edges.length : product.images.length) : 0} total images` : '📷 No images'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            previewDiv.innerHTML = html;
+        }
+
+        // Auto-test on page load if we're on a deployed site
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            setTimeout(() => {
+                testNetlifyFunction();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

@@ -166,6 +166,10 @@ async function fetchProducts() {
                     currencyCode
                   }
                 }
+                featuredImage {
+                  url
+                  altText
+                }
                 images(first: 3) {
                   edges {
                     node {

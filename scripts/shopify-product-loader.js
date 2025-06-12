@@ -41,6 +41,10 @@ async function loadProductsAndRender(containerSelector = '.product-grid', limit 
                   title
                   handle
                   description
+                  featuredImage {
+                    url
+                    altText
+                  }
                   variants(first: 10) {
                     edges {
                       node {
@@ -84,6 +88,10 @@ async function loadProductsAndRender(containerSelector = '.product-grid', limit 
                 title
                 handle
                 description
+                featuredImage {
+                  url
+                  altText
+                }
                 variants(first: 10) {
                   edges {
                     node {
@@ -159,9 +167,14 @@ async function loadProductsAndRender(containerSelector = '.product-grid', limit 
       
       if (!firstVariant) return; // Skip products with no variants
       
-      // Get the main product image or the first variant image
-      const productImage = product.images.edges[0]?.node.url || 
-                           firstVariant.image?.url || 
+      // Get the featured image first, then fall back to other images
+      const featuredImageUrl = product.featuredImage ? product.featuredImage.url : null;
+      const firstRegularImage = product.images.edges[0]?.node.url;
+      const firstVariantImage = firstVariant.image?.url;
+      
+      const productImage = featuredImageUrl ||
+                           firstRegularImage ||
+                           firstVariantImage ||
                            'assets/product-placeholder.png';
       
       // Get available colors and sizes from variants
