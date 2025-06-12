@@ -28,7 +28,7 @@
         -webkit-backdrop-filter: none !important;
     }
     
-    /* CRITICAL: Ensure crystal clear product images - REFINED */
+    /* CRITICAL: Ensure crystal clear product images - MATCH DESKTOP STYLING */
     .product-image img,
     .product-img,
     .grid-image,
@@ -36,40 +36,57 @@
     .hoodie-back,
     .tee-default,
     .tee-hover {
+        /* Remove only backdrop-filter (blur), keep other filters for proper appearance */
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        /* Remove ALL filters including brightness/darkness filters */
-        -webkit-filter: none !important;
-        filter: none !important;
-        /* Optimize image rendering without aggressive transforms */
+        /* Keep desktop styling but remove blur-related filters only */
         image-rendering: auto !important;
         -webkit-backface-visibility: visible !important;
         backface-visibility: visible !important;
         /* Remove performance-heavy transforms that cause choppy scrolling */
         transform: none !important;
         will-change: auto !important;
-        /* Ensure proper brightness and opacity */
+        /* Ensure proper opacity */
         opacity: 1 !important;
     }
     
-    /* SPECIFIC FIX: Override dark brightness filters from main.css */
-    .grid-item .grid-image,
-    .grid-item:nth-child(odd) .grid-image,
+    /* SPECIFIC FIX: Apply desktop-like styling to grid images on mobile */
+    .grid-item .grid-image {
+        /* Remove backdrop-filter but keep desktop brightness/contrast */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Apply desktop-like styling: brightness(0.9) contrast(1.1) from main.css */
+        filter: brightness(0.9) contrast(1.1) !important;
+        -webkit-filter: brightness(0.9) contrast(1.1) !important;
+    }
+    
+    .grid-item:nth-child(odd) .grid-image {
+        /* Remove backdrop-filter but keep desktop color styling */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Apply desktop styling: brightness(0.85) sepia(0.2) saturate(1.2) hue-rotate(250deg) */
+        filter: brightness(0.85) sepia(0.2) saturate(1.2) hue-rotate(250deg) !important;
+        -webkit-filter: brightness(0.85) sepia(0.2) saturate(1.2) hue-rotate(250deg) !important;
+    }
+    
     .grid-item:nth-child(even) .grid-image {
-        filter: none !important;
-        -webkit-filter: none !important;
-        brightness: 1 !important;
-        opacity: 1 !important;
+        /* Remove backdrop-filter but keep desktop color styling */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Apply desktop styling: brightness(0.85) sepia(0.15) saturate(1.2) hue-rotate(40deg) */
+        filter: brightness(0.85) sepia(0.15) saturate(1.2) hue-rotate(40deg) !important;
+        -webkit-filter: brightness(0.85) sepia(0.15) saturate(1.2) hue-rotate(40deg) !important;
     }
     
-    /* SPECIFIC FIX: Override any product card darkness */
+    /* SPECIFIC FIX: Product card images should be clear and bright like desktop */
     .product-card .product-image img,
     .product-grid .product-card .product-image img,
     .product-grid-scroll .product-card .product-image img,
     .products-grid .product-card .product-image img {
-        filter: none !important;
-        -webkit-filter: none !important;
-        brightness: 1 !important;
+        /* Remove only backdrop-filter, keep normal appearance */
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        /* Ensure bright, clear appearance like desktop */
         opacity: 1 !important;
     }
     
