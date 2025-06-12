@@ -16,6 +16,60 @@
     --border-color: #374151;
     --glow-purple: rgba(139, 92, 246, 0.5);
     --glow-yellow: rgba(251, 191, 36, 0.5);
+    
+    /* Color variables for product color swatches */
+    --color-black: #000000;
+    --color-white: #ffffff;
+    --color-red: #dc2626;
+    --color-green: #16a34a;
+    --color-blue: #2563eb;
+    --color-yellow: #eab308;
+    --color-purple: #9333ea;
+    --color-orange: #ea580c;
+    --color-brown: #92400e;
+    --color-pink: #ec4899;
+    --color-gray: #6b7280;
+    --color-grey: #6b7280;
+    
+    /* Named color variants */
+    --color-forest-green: #166534;
+    --color-navy-blazer: #1e3a8a;
+    --color-navy: #1e40af;
+    --color-charcoal-gray: #374151;
+    --color-charcoal: #374151;
+    --color-burgundy: #991b1b;
+    --color-olive: #65a30d;
+    --color-teal: #0d9488;
+    --color-maroon: #7f1d1d;
+    --color-navy-blue: #1e40af;
+    --color-royal-blue: #1d4ed8;
+    --color-sky-blue: #0ea5e9;
+    --color-turquoise: #06b6d4;
+    --color-mint-green: #10b981;
+    --color-sage-green: #84cc16;
+    --color-hunter-green: #166534;
+    --color-emerald: #059669;
+    --color-jade: #047857;
+    --color-khaki: #a3a3a3;
+    --color-beige: #d6d3d1;
+    --color-tan: #a8a29e;
+    --color-cream: #fef7cd;
+    --color-ivory: #fffbeb;
+    --color-coral: #fb7185;
+    --color-salmon: #fda4af;
+    --color-peach: #fed7aa;
+    --color-rust: #dc2626;
+    --color-copper: #ea580c;
+    --color-gold: #eab308;
+    --color-silver: #d1d5db;
+    --color-slate: #64748b;
+    --color-indigo: #4f46e5;
+    --color-lavender: #c084fc;
+    --color-plum: #a855f7;
+    --color-magenta: #d946ef;
+    --color-violet: #8b5cf6;
+    --color-mustard: #ca8a04;
+    --color-taupe: #78716c;
 }
 
 body {
