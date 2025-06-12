@@ -774,11 +774,13 @@ class QuickViewManager {
             // Fetch product data
             const product = await this.fetchProductData(productId, productHandle);
             
-            // If product is null (API failure), close modal and show error
+            // If product is null (API failure), close modal silently
+            // Don't show error notification as products may be loading fine elsewhere
             if (!product) {
                 this.showLoading(false);
                 this.closeQuickView();
-                this.showNotification(`Unable to load product data`, 'error');
+                // Removed error notification to prevent confusion when products load fine
+                console.log('Quick view: Product data not available, closing modal');
                 return;
             }
             
