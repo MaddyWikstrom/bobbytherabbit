@@ -84,6 +84,34 @@
         font-weight: 700;
         letter-spacing: 0.5px;
     }
+    
+    /* Fix for "THE TECH ANIMAL COLLECTION" hyphenation on mobile */
+    .collection-title-main {
+        hyphens: none !important;
+        -webkit-hyphens: none !important;
+        -ms-hyphens: none !important;
+        word-break: keep-all !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+    }
+    
+    /* Ensure proper spacing for collection title on mobile */
+    @media (max-width: 768px) {
+        .collection-title-main {
+            font-size: clamp(1.5rem, 5vw, 2.5rem) !important;
+            padding: 0 20px !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .collection-title-main {
+            font-size: clamp(1.3rem, 4.5vw, 2rem) !important;
+            padding: 0 15px !important;
+        }
+    }
 }
 
 /* Enhanced Loading Screen for Mobile */
