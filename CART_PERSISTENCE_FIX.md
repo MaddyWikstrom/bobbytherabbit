@@ -1,51 +1,43 @@
-# Prevent Cart Clearing During Checkout
+# Prevent Cart UI from Clearing During Checkout
 
 ## Issue Fixed
-The cart was being cleared immediately when clicking the checkout button, before even getting to the Shopify checkout page. This premature clearing is why when users clicked back from checkout, they would find their cart empty and would need to re-add all items.
+When clicking the checkout button, the cart was visually clearing immediately on the main site page, even though the items were still being sent to the Shopify checkout. This made it appear like the cart was empty when clicking back from checkout.
 
 ## Solution Implemented
 
-The fix directly prevents the cart from being cleared during the checkout process:
+The fix maintains the visual cart UI during the entire checkout process:
 
-1. **Intercepts Cart Clearing Operations**:
-   - New standalone script (`prevent-checkout-clear.js`) loaded at the very top of each page
-   - Directly overrides localStorage operations to prevent cart data from being cleared
-   - Intercepts all cart management methods that might clear the cart
+1. **Preserves Visual Cart State**:
+   - New script (`prevent-cart-ui-clear.js`) that specifically targets the UI aspect
+   - Takes a snapshot of the cart UI state when checkout is clicked
+   - Actively prevents the cart from visually appearing empty during checkout
 
-2. **Comprehensive Protection**:
-   - Monitors and blocks all potential cart clearing pathways:
-     - Prevents `localStorage.setItem()` from clearing the cart key
-     - Prevents `localStorage.removeItem()` from removing the cart key
-     - Prevents `localStorage.clear()` from clearing the cart data
-     - Overrides cart manager's `clearCart()` methods
+2. **DOM Observation and Restoration**:
+   - Uses MutationObserver to watch for cart UI changes in real-time
+   - Immediately restores the cart UI if it detects it being cleared
+   - Maintains cart count indicators so they don't disappear
 
-3. **Multiple System Compatibility**:
-   - Works with all cart implementations on the site:
-     - CartManager
-     - BobbyCheckoutStorefront
-     - BobbyCart
-   - Automatic backup and restoration as a failsafe
+3. **Multiple Protection Layers**:
+   - `prevent-cart-ui-clear.js` - Focuses on the visual UI aspect
+   - `prevent-checkout-clear.js` - Prevents actual cart data clearing
+   - `back-button-cart-fix.js` - Handles back button navigation
 
 ## How It Works Now
 
 1. User adds items to cart on bobbytherabbit.com
 2. User clicks "Checkout"
-3. The system prevents the cart from being cleared during checkout
-4. User is redirected to Shopify checkout (mfdkk3-7g.myshopify.com)
-5. If user clicks back from checkout:
-   - Cart items are still there since they were never cleared
-   - Shopping experience continues seamlessly with all items intact
+3. The cart items remain visually present in the UI (not cleared)
+4. Items are sent to Shopify checkout page
+5. If user clicks back:
+   - Cart items are still visually present in the UI
+   - No disruption to the shopping experience
 
-## Combined Approach
+## Technical Implementation
 
-This solution works alongside the previously implemented back button fix:
-- `prevent-checkout-clear.js` - Prevents the cart from being cleared in the first place
-- `back-button-cart-fix.js` - Provides a backup restoration mechanism if clearing somehow occurs
+The solution specifically addresses the visual cart clearing by:
+1. Preserving cart HTML when checkout is clicked
+2. Watching for DOM changes that would clear the cart
+3. Immediately restoring the cart UI if it gets cleared
+4. Running periodic checks to ensure cart UI stays intact
 
-## Implementation Details
-
-- Overrides native localStorage methods to protect cart data
-- Intercepts all cart clearing operations from any source
-- Creates backups before any potentially destructive operations
-- Loaded before all other scripts to ensure it catches all operations
-- Added to all main HTML files (index.html, cart.html, products.html)
+This focuses on preventing the visible UI disruption that was occurring between clicking checkout and the actual redirect to Shopify.
