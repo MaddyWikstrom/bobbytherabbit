@@ -556,14 +556,19 @@ class ProductManager {
             // Use images directly from Shopify API only
             let images = shopifyImages;
             
-            // If we have a featured image, ensure it's the first image in our array
-            if (featuredImageUrl && !images.includes(featuredImageUrl)) {
-                // Featured image is not in the regular images array, add it at the beginning
-                images = [featuredImageUrl, ...images];
-            } else if (featuredImageUrl && images.includes(featuredImageUrl)) {
-                // Featured image is in the array but not first, move it to the front
+            // FEATURED IMAGE PRIORITIZATION: Ensure featured image is always first
+            if (featuredImageUrl) {
+                console.log(`Found featured image for ${product.title}: ${featuredImageUrl}`);
+                // Remove featured image from regular images if it exists there
                 images = images.filter(img => img !== featuredImageUrl);
+                // Add featured image as the first image
                 images = [featuredImageUrl, ...images];
+                console.log(`Featured image set as main thumbnail for ${product.title}`);
+            }
+            
+            // Ensure we have at least one image
+            if (images.length === 0) {
+                images = ['/assets/product-placeholder.png'];
             }
             
             // Extract variants and organize by color/size

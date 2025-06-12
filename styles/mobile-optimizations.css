@@ -43,10 +43,24 @@
         min-width: 0 !important;
     }
     
-    /* Hide logo banner completely on mobile */
-    .logo-banner,
-    .banner-logo {
-        display: none !important;
+    /* Hide logo banner only on very small mobile devices (under 480px) */
+    @media (max-width: 479px) {
+        .logo-banner,
+        .banner-logo {
+            display: none !important;
+        }
+    }
+    
+    /* Show logo banner on larger mobile devices and tablets */
+    @media (min-width: 480px) {
+        .logo-banner {
+            display: flex !important;
+        }
+        
+        .banner-logo {
+            display: block !important;
+            height: 32px !important; /* Smaller size for mobile */
+        }
     }
     
     .nav-actions {
