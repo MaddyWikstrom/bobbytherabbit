@@ -26,11 +26,9 @@
     .add-to-cart-btn {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
     }
     
-    /* CRITICAL: Ensure crystal clear product images */
+    /* CRITICAL: Ensure crystal clear product images - REFINED */
     .product-image img,
     .product-img,
     .grid-image,
@@ -40,15 +38,39 @@
     .tee-hover {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
+        /* Remove ALL filters including brightness/darkness filters */
+        -webkit-filter: none !important;
+        filter: none !important;
+        /* Optimize image rendering without aggressive transforms */
+        image-rendering: auto !important;
+        -webkit-backface-visibility: visible !important;
+        backface-visibility: visible !important;
+        /* Remove performance-heavy transforms that cause choppy scrolling */
+        transform: none !important;
+        will-change: auto !important;
+        /* Ensure proper brightness and opacity */
+        opacity: 1 !important;
+    }
+    
+    /* SPECIFIC FIX: Override dark brightness filters from main.css */
+    .grid-item .grid-image,
+    .grid-item:nth-child(odd) .grid-image,
+    .grid-item:nth-child(even) .grid-image {
         filter: none !important;
         -webkit-filter: none !important;
-        image-rendering: -webkit-optimize-contrast !important;
-        image-rendering: crisp-edges !important;
-        image-rendering: optimizeQuality !important;
-        -webkit-backface-visibility: hidden !important;
-        backface-visibility: hidden !important;
-        transform: translateZ(0) !important;
-        will-change: auto !important;
+        brightness: 1 !important;
+        opacity: 1 !important;
+    }
+    
+    /* SPECIFIC FIX: Override any product card darkness */
+    .product-card .product-image img,
+    .product-grid .product-card .product-image img,
+    .product-grid-scroll .product-card .product-image img,
+    .products-grid .product-card .product-image img {
+        filter: none !important;
+        -webkit-filter: none !important;
+        brightness: 1 !important;
+        opacity: 1 !important;
     }
     
     /* CRITICAL: Remove blur from collection section backgrounds */
@@ -105,7 +127,7 @@
         -webkit-backdrop-filter: blur(3px) !important;
     }
     
-    /* Ensure all product elements are completely clear */
+    /* Ensure all product elements are completely clear - REFINED */
     .product-card,
     .product-card *,
     .product-image,
@@ -115,8 +137,7 @@
     .collection * {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
+        /* Don't remove all filters - preserve brightness/contrast */
     }
 }
 
@@ -131,8 +152,7 @@
     *::after {
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        filter: none !important;
-        -webkit-filter: none !important;
+        /* Don't remove all filters - preserve image quality */
     }
     
     /* Only restore essential navigation blur */
@@ -169,22 +189,30 @@
 }
 
 /* ========================================
-   PERFORMANCE OPTIMIZATIONS
+   SMOOTH SCROLLING OPTIMIZATIONS
    ======================================== */
 
 @media (max-width: 768px) {
-    /* Optimize rendering for mobile */
+    /* Optimize for smooth scrolling - remove heavy transforms */
     .product-image img {
-        transform: translateZ(0) !important;
-        -webkit-transform: translateZ(0) !important;
+        /* Remove transforms that cause choppy scrolling */
+        transform: none !important;
+        -webkit-transform: none !important;
         will-change: auto !important;
-        contain: layout style paint !important;
+        /* Remove contain property that can cause performance issues */
     }
     
-    /* Reduce composite layers */
+    /* Ensure smooth product card rendering */
     .product-card {
         will-change: auto !important;
-        contain: layout style !important;
+        /* Remove contain property for better scrolling performance */
+    }
+    
+    /* Improve overall scrolling performance */
+    .product-grid-scroll,
+    .products-grid {
+        -webkit-overflow-scrolling: touch !important;
+        scroll-behavior: smooth !important;
     }
 }
 
