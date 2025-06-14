@@ -703,21 +703,22 @@ class ProductManager {
             // Determine category from product type or title
             const category = this.extractCategory(product.title || product.productType || '');
             
-            // Calculate pricing - handle potential missing priceRange with fallbacks
-            let minPrice = 0;
+            // Calculate pricing - use the actual API price, not discounted variants
+            let apiPrice = 0;
             try {
                 if (product.priceRange?.minVariantPrice?.amount) {
-                    minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+                    // Use the minVariantPrice from priceRange as the base API price
+                    apiPrice = parseFloat(product.priceRange.minVariantPrice.amount);
                 } else if (variants.length > 0) {
-                    // Get minimum price from variants
-                    minPrice = Math.min(...variants.map(v => v.price || 0));
+                    // Use the first variant's price as the API price (not minimum which could be discounted)
+                    apiPrice = variants[0].price || 0;
                 } else if (product.price) {
                     // Direct price field
-                    minPrice = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
+                    apiPrice = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
                 }
             } catch (priceError) {
                 console.error('Error calculating price:', priceError);
-                minPrice = 0; // Default to 0 if calculation fails
+                apiPrice = 0; // Default to 0 if calculation fails
             }
             
             // Get compare price from various sources with fallbacks
@@ -763,7 +764,7 @@ class ProductManager {
                 title: product.title || 'Unknown Product',
                 description: this.cleanDescription(product.description || ''),
                 category: category,
-                price: minPrice,
+                price: apiPrice,
                 comparePrice: comparePrice,
                 images: images,
                 mainImage: images[0] || '',
@@ -772,7 +773,7 @@ class ProductManager {
                 sizes: Array.from(sizes),
                 featured: product.tags?.includes('featured') || false,
                 new: product.tags?.includes('new') || false,
-                sale: comparePrice > minPrice,
+                sale: comparePrice > apiPrice,
                 tags: product.tags || [],
                 productType: product.productType || '',
                 // Add the color to images mapping for easy filtering
