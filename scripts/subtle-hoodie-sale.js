@@ -22,9 +22,9 @@ class SubtleHoodieSale {
     );
   }
 
-  // Calculate original price from current price (current = original * 0.88)
-  calculateOriginalPrice(currentPrice) {
-    return currentPrice / 0.88; // 12% off means current is 88% of original
+  // Calculate discounted price from original price (12% off the API price)
+  calculateDiscountedPrice(originalPrice) {
+    return originalPrice * 0.88; // 12% off means discounted is 88% of original
   }
 
   // Format price for display
@@ -47,15 +47,15 @@ class SubtleHoodieSale {
   }
 
   // Generate subtle price display with 12% off
-  generateSubtlePriceDisplay(currentPrice) {
-    const current = parseFloat(currentPrice);
-    const original = this.calculateOriginalPrice(current);
-    const savings = original - current;
+  generateSubtlePriceDisplay(originalPrice) {
+    const original = parseFloat(originalPrice);
+    const discounted = this.calculateDiscountedPrice(original);
+    const savings = original - discounted;
 
     return `
       <div class="subtle-price-display">
         <span class="subtle-original-price">${this.formatPrice(original)}</span>
-        <span class="subtle-sale-price">${this.formatPrice(current)}</span>
+        <span class="subtle-sale-price">${this.formatPrice(discounted)}</span>
         <span class="subtle-savings">Save ${this.formatPrice(savings)}</span>
       </div>
     `;
@@ -126,7 +126,7 @@ class SubtleHoodieSale {
             card.appendChild(badge.firstElementChild);
           }
 
-          // Update price display
+          // Update price display (currentPrice from API is the original, we show 12% off)
           priceElement.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
           priceElement.classList.add('has-subtle-sale');
           card.classList.add('subtle-sale-item');
