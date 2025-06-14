@@ -210,36 +210,88 @@ class SubtleHoodieSale {
     return updatedCount;
   }
 
-  // Apply to cart items
+  // Apply to cart items - enhanced detection
   applyToCartItems() {
-    const cartItems = document.querySelectorAll(this.cartSelectors.join(', '));
+    console.log('🛒 Starting cart items processing...');
+    
+    // Expanded cart selectors to catch more cart implementations
+    const cartSelectors = [
+      '.cart-item', '.cart-product', '[class*="cart"]',
+      '.line-item', '.checkout-item', '.basket-item',
+      '[data-cart-item]', '[data-line-item]'
+    ];
+    
+    const cartItems = document.querySelectorAll(cartSelectors.join(', '));
+    console.log(`📍 Found ${cartItems.length} potential cart items`);
+    
     let updatedCount = 0;
 
     for (const cartItem of cartItems) {
       const cartId = this.getCartItemId(cartItem);
-      if (this.processedCartItems.has(cartId)) continue;
+      if (this.processedCartItems.has(cartId)) {
+        console.log('⏭️ Skipping already processed cart item');
+        continue;
+      }
 
-      const titleElement = cartItem.querySelector(this.titleSelectors.join(', '));
-      if (!titleElement) continue;
+      // Look for product titles in cart items
+      const titleSelectors = [
+        '.product-title', '.product-name', '.item-title', '.item-name',
+        'h1', 'h2', 'h3', 'h4', '[class*="title"]', '[class*="name"]',
+        'a[href*="products"]', '.cart-item-title'
+      ];
+      
+      const titleElement = cartItem.querySelector(titleSelectors.join(', '));
+      if (!titleElement) {
+        console.log('❌ No title element found in cart item');
+        continue;
+      }
 
       const productTitle = titleElement.textContent || titleElement.innerText || '';
-      if (!this.isTargetProduct(productTitle)) continue;
+      console.log('🔍 Checking cart item title:', productTitle);
+      
+      if (!this.isTargetProduct(productTitle)) {
+        console.log('❌ Not a target product in cart:', productTitle);
+        continue;
+      }
 
-      const priceElements = cartItem.querySelectorAll(this.priceSelectors.join(', '));
+      console.log('✅ Target product found in cart:', productTitle);
+
+      // Look for price elements in cart items
+      const priceSelectors = [
+        '.price', '.product-price', '.item-price', '.line-price',
+        '[class*="price"]', '.cost', '.amount', '.total'
+      ];
+      
+      const priceElements = cartItem.querySelectorAll(priceSelectors.join(', '));
+      console.log(`📍 Found ${priceElements.length} price elements in cart item`);
+      
       for (const priceElement of priceElements) {
-        if (priceElement.classList.contains('subtle-price-display')) continue;
+        if (priceElement.classList.contains('subtle-price-display') ||
+            priceElement.classList.contains('has-cart-sale') ||
+            priceElement.classList.contains('cart-original-price') ||
+            priceElement.classList.contains('cart-sale-price')) {
+          continue;
+        }
         
-        const priceMatch = (priceElement.textContent || '').match(/\$?(\d+\.?\d*)/);
+        const priceText = (priceElement.textContent || '').trim();
+        const priceMatch = priceText.match(/\$?(\d+\.?\d*)/);
+        
         if (priceMatch && parseFloat(priceMatch[1]) > 0) {
           const currentPrice = parseFloat(priceMatch[1]);
+          console.log(`💰 Found cart price: $${currentPrice}`);
           
-          // For cart items, show more compact pricing
-          const original = parseFloat(currentPrice);
-          const discounted = this.calculateDiscountedPrice(original);
-          
-          priceElement.innerHTML = `<span class="cart-original-price">${this.formatPrice(original)}</span><span class="cart-sale-price">${this.formatPrice(discounted)}</span>`;
-          priceElement.classList.add('has-cart-sale');
-          updatedCount++;
+          // Only process reasonable prices
+          if (currentPrice >= 10 && currentPrice <= 1000) {
+            // For cart items, show more compact pricing
+            const original = parseFloat(currentPrice);
+            const discounted = this.calculateDiscountedPrice(original);
+            
+            priceElement.innerHTML = `<span class="cart-original-price">${this.formatPrice(original)}</span><span class="cart-sale-price">${this.formatPrice(discounted)}</span>`;
+            priceElement.classList.add('has-cart-sale');
+            updatedCount++;
+            
+            console.log(`✅ Applied cart discount: ${this.formatPrice(original)} → ${this.formatPrice(discounted)}`);
+          }
         }
       }
 
@@ -248,6 +300,7 @@ class SubtleHoodieSale {
       }
     }
 
+    console.log(`🛒 Cart processing complete. Updated ${updatedCount} items.`);
     return updatedCount;
   }
 
@@ -280,40 +333,59 @@ class SubtleHoodieSale {
     this.setupDebouncedObserver();
   }
 
-  // Optimized debounced observer
+  // Optimized debounced observer with enhanced cart detection
   setupDebouncedObserver() {
     let timeout = null;
     
     const observer = new MutationObserver((mutations) => {
       let hasNewContent = false;
+      let hasCartChanges = false;
       
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1 && (
-            node.classList?.contains('product-card') ||
-            node.classList?.contains('product-item') ||
-            node.classList?.contains('cart-item') ||
-            node.classList?.contains('product-detail') ||
-            node.querySelector?.('.product-card, .product-item, .cart-item, .product-detail')
-          )) {
-            hasNewContent = true;
-            break;
+          if (node.nodeType === 1) {
+            // Check for general product content
+            if (node.classList?.contains('product-card') ||
+                node.classList?.contains('product-item') ||
+                node.classList?.contains('product-detail') ||
+                node.querySelector?.('.product-card, .product-item, .product-detail')) {
+              hasNewContent = true;
+            }
+            
+            // Check for cart-specific content
+            if (node.classList?.contains('cart-item') ||
+                node.classList?.contains('cart-product') ||
+                node.classList?.contains('line-item') ||
+                node.classList?.contains('checkout-item') ||
+                node.querySelector?.('.cart-item, .cart-product, .line-item, .checkout-item, [class*="cart"]')) {
+              hasCartChanges = true;
+              console.log('🛒 Cart changes detected');
+            }
           }
         }
-        if (hasNewContent) break;
+        if (hasNewContent && hasCartChanges) break;
       }
 
-      if (hasNewContent) {
+      if (hasNewContent || hasCartChanges) {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
+          console.log('🔄 Processing content changes...');
           this.applyToTargetProducts();
           this.applyToProductDetail();
           this.applyToCartItems();
-        }, 1000);
+        }, hasCartChanges ? 500 : 1000); // Faster processing for cart changes
       }
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Also set up a periodic cart check for dynamic cart systems
+    setInterval(() => {
+      const cartCount = this.applyToCartItems();
+      if (cartCount > 0) {
+        console.log(`🛒 Periodic cart check: Applied discounts to ${cartCount} items`);
+      }
+    }, 3000); // Check every 3 seconds
   }
 
   // Testing methods (minimal logging)
