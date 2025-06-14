@@ -114,56 +114,60 @@ class SubtleHoodieSale {
     return `${title}-${price}`.replace(/\s+/g, '-');
   }
 
-  // Apply to product detail pages
+  // Apply to product detail pages - super aggressive approach
   applyToProductDetail() {
-    // Try multiple possible containers for product details
-    const detailContainer = document.querySelector('.product-detail, .product-detail-grid, .product-info, .product-main, body, main');
-    if (!detailContainer) return 0;
+    // Check if page contains target product keywords
+    const pageText = document.body.textContent || document.body.innerText || '';
+    const isTargetPage = this.targetCategories.some(category => 
+      pageText.toLowerCase().includes(category.toLowerCase())
+    );
 
-    const detailId = this.getDetailPageId(detailContainer);
-    if (this.processedDetailPages.has(detailId)) return 0;
-
-    // Look for title in the entire page, not just container
-    const titleElement = document.querySelector('h1, h2, .product-title, .product-name, .product-detail-title') ||
-                         detailContainer.querySelector(this.titleSelectors.join(', '));
-    if (!titleElement) return 0;
-
-    const productTitle = titleElement.textContent || titleElement.innerText || '';
-    if (!this.isTargetProduct(productTitle)) return 0;
+    if (!isTargetPage) return 0;
 
     let updatedCount = 0;
 
-    // Look for price elements across the entire page
-    const allPriceElements = document.querySelectorAll('*');
-    for (const element of allPriceElements) {
-      if (element.classList.contains('subtle-price-display')) continue;
-      
-      const text = element.textContent || '';
-      const priceMatch = text.match(/^\$(\d+\.?\d*)$/);
-      
-      if (priceMatch && parseFloat(priceMatch[1]) > 0 &&
-          !element.querySelector('*') && // Only leaf elements
-          element.offsetParent !== null) { // Only visible elements
-        
-        const currentPrice = parseFloat(priceMatch[1]);
-        
-        // Add badge to the page
-        if (!document.querySelector('.subtle-sale-badge')) {
-          const badgeContainer = document.querySelector('.product-detail, .product-info, main, body');
-          if (badgeContainer) {
-            badgeContainer.style.position = 'relative';
-            badgeContainer.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
-          }
-        }
+    // Find ALL text nodes that look like prices
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
 
-        element.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
-        element.classList.add('has-subtle-sale');
-        updatedCount++;
+    const priceNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      const text = node.textContent.trim();
+      if (/^\$\d+(?:\.\d{2})?$/.test(text) && parseFloat(text.substring(1)) >= 10) {
+        priceNodes.push(node);
       }
     }
 
-    if (updatedCount > 0) {
-      this.processedDetailPages.add(detailId);
+    // Process each price node
+    for (const textNode of priceNodes) {
+      const priceText = textNode.textContent.trim();
+      const priceMatch = priceText.match(/^\$(\d+(?:\.\d{2})?)$/);
+      
+      if (priceMatch) {
+        const currentPrice = parseFloat(priceMatch[1]);
+        const parentElement = textNode.parentElement;
+        
+        if (parentElement && 
+            !parentElement.classList.contains('subtle-price-display') &&
+            !parentElement.classList.contains('has-subtle-sale')) {
+          
+          // Add badge to body if not present
+          if (!document.querySelector('.subtle-sale-badge')) {
+            document.body.style.position = 'relative';
+            document.body.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
+          }
+
+          // Replace the parent element's content
+          parentElement.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
+          parentElement.classList.add('has-subtle-sale');
+          updatedCount++;
+        }
+      }
     }
 
     return updatedCount;
@@ -298,6 +302,13 @@ if (document.readyState === 'loading') {
 } else {
   window.subtleHoodieSale.initialize();
 }
+
+// Also try to apply after a delay to catch dynamically loaded content
+setTimeout(() => {
+  if (window.subtleHoodieSale) {
+    window.subtleHoodieSale.forceUpdate();
+  }
+}, 2000);
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
