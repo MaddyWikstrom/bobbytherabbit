@@ -192,44 +192,60 @@ class DiscountDisplayManager {
     }
 
     insertBannerBelowNavbar(banner) {
-        // Try multiple selectors to find the navbar
-        const navbarSelectors = ['.navbar', 'nav', '.nav-container', '.navigation'];
-        let navbar = null;
-        
-        for (const selector of navbarSelectors) {
-            navbar = document.querySelector(selector);
-            if (navbar) break;
-        }
-        
-        if (navbar) {
-            // Find the next sibling or parent's next sibling to insert after
-            let insertionPoint = navbar.nextElementSibling;
-            if (insertionPoint) {
-                navbar.parentNode.insertBefore(banner, insertionPoint);
-            } else {
-                // If no next sibling, append after the navbar's parent
-                navbar.parentNode.appendChild(banner);
-            }
-            console.log('Banner inserted after navbar');
-        } else {
-            // Fallback: look for main content areas
-            const contentSelectors = ['#main-site', '.main-site', '#main-content', '.main-content', 'main'];
-            let contentArea = null;
+        // Wait for DOM to be fully ready
+        setTimeout(() => {
+            console.log('Attempting to insert banner below navbar...');
             
-            for (const selector of contentSelectors) {
-                contentArea = document.querySelector(selector);
-                if (contentArea) break;
+            // First, try to find the main site container
+            const mainSite = document.getElementById('main-site');
+            if (mainSite) {
+                console.log('Found main-site container');
+                
+                // Look for navbar within main-site
+                const navbar = mainSite.querySelector('.navbar');
+                if (navbar) {
+                    console.log('Found navbar inside main-site, inserting banner after it');
+                    
+                    // Insert banner right after the navbar
+                    if (navbar.nextElementSibling) {
+                        mainSite.insertBefore(banner, navbar.nextElementSibling);
+                    } else {
+                        mainSite.appendChild(banner);
+                    }
+                    
+                    console.log('Banner successfully inserted after navbar in main-site');
+                    return;
+                }
+                
+                // If no navbar found in main-site, insert at the beginning
+                console.log('No navbar found in main-site, inserting at beginning');
+                mainSite.insertBefore(banner, mainSite.firstChild);
+                console.log('Banner inserted at beginning of main-site');
+                return;
             }
             
-            if (contentArea) {
-                contentArea.insertBefore(banner, contentArea.firstChild);
-                console.log('Banner inserted at top of main content');
-            } else {
-                // Last resort: insert at top of body
-                document.body.insertBefore(banner, document.body.firstChild);
-                console.log('Banner inserted at top of body');
+            // Fallback: try to find navbar anywhere in the document
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                console.log('Found navbar in document, inserting banner after it');
+                
+                // Insert banner after navbar
+                if (navbar.nextElementSibling) {
+                    navbar.parentNode.insertBefore(banner, navbar.nextElementSibling);
+                } else {
+                    navbar.parentNode.appendChild(banner);
+                }
+                
+                console.log('Banner inserted after navbar');
+                return;
             }
-        }
+            
+            // Last resort: insert at top of body
+            console.log('No navbar found, inserting at top of body');
+            document.body.insertBefore(banner, document.body.firstChild);
+            console.log('Banner inserted at top of body as fallback');
+            
+        }, 200); // Increased delay to ensure DOM is ready
     }
 
     addDiscountStyles() {
@@ -246,13 +262,16 @@ class DiscountDisplayManager {
                 animation: discountGradient 3s ease infinite;
                 color: white;
                 padding: 8px 0;
-                position: relative;
+                position: static;
+                display: block;
                 width: 100%;
-                z-index: 1000;
+                z-index: 10;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
+                margin: 0;
+                clear: both;
             }
 
             .discount-banner.show {
