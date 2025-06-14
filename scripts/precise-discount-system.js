@@ -12,13 +12,8 @@ window.PreciseDiscountSystem = {
         // Add specific product IDs or handles that should have discounts
         // Format: 'product-id': { percentage: 12, description: '12% off' }
         
-        // Example hoodie products that should be on sale
-        // You'll need to replace these with actual product IDs from your Shopify store
-        'hoodie-black': { percentage: 12, description: '12% off hoodies' },
-        'hoodie-navy': { percentage: 12, description: '12% off hoodies' },
-        'hoodie-charcoal': { percentage: 12, description: '12% off hoodies' },
-        'sweatshirt-vintage': { percentage: 12, description: '12% off sweatshirts' },
-        'sweatpants-black': { percentage: 12, description: '12% off sweatpants' }
+        // EMPTY BY DEFAULT - NO PRODUCTS WILL SHOW DISCOUNTS UNTIL YOU ADD THEM HERE
+        // Example: 'your-actual-product-id': { percentage: 12, description: '12% off hoodies' },
     },
     
     // DISABLED: No automatic pattern matching - only specific product IDs get discounts
@@ -110,10 +105,28 @@ window.PreciseDiscountSystem = {
             return this.discountEligibleProducts[item.handle];
         }
         
-        // Method 2: DISABLED - No automatic pattern matching
-        // Only products explicitly listed in discountEligibleProducts will get discounts
+        // Method 2: Automatic pattern matching for hoodies, sweatshirts, and joggers
+        if (item.title) {
+            const title = item.title.toLowerCase();
+            
+            // Very specific keywords for discount-eligible items
+            const discountKeywords = ['hoodie', 'sweatshirt', 'jogger', 'sweatpants'];
+            
+            // Check if title contains any of these keywords
+            const hasDiscountKeyword = discountKeywords.some(keyword => title.includes(keyword));
+            
+            if (hasDiscountKeyword) {
+                // Additional validation to prevent false positives
+                const exclusions = ['gift card', 'shipping', 'tax', 'fee', 'accessory', 'sticker', 'pin', 'hat', 'cap', 'bag'];
+                const hasExclusion = exclusions.some(exclusion => title.includes(exclusion));
+                
+                if (!hasExclusion) {
+                    return { percentage: 12, description: '12% off hoodies, sweatshirts & joggers' };
+                }
+            }
+        }
         
-        return null; // No discount unless explicitly configured
+        return null; // No discount for other items
     },
     
     isDefinitelyDiscountEligible(title, pattern) {
@@ -514,13 +527,38 @@ window.BobbyCart = PreciseDiscountSystem;
 window.BobbyCartEnhanced = PreciseDiscountSystem;
 window.BobbyCartDiscountFix = PreciseDiscountSystem;
 
+// Clear any cached discount data and reset cart
+PreciseDiscountSystem.clearCachedDiscounts = function() {
+    console.log('🧹 Clearing cached discount data...');
+    
+    // Clear localStorage
+    localStorage.removeItem('precise-bobby-cart');
+    localStorage.removeItem('bobby-cart');
+    localStorage.removeItem('clean-bobby-cart');
+    
+    // Reset items array
+    this.items = [];
+    
+    // Update display
+    this.updateCount();
+    if (document.getElementById('cart-items')) {
+        this.renderCart();
+    }
+    
+    console.log('✅ All cached discount data cleared');
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear any old cached data first
+    PreciseDiscountSystem.clearCachedDiscounts();
     PreciseDiscountSystem.init();
 });
 
 // If DOM is already loaded
 if (document.readyState !== 'loading') {
+    // Clear any old cached data first
+    PreciseDiscountSystem.clearCachedDiscounts();
     PreciseDiscountSystem.init();
 }
 
