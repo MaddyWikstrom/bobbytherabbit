@@ -16,11 +16,9 @@ class SubtleHoodieSale {
     this.cartSelectors = ['.cart-item', '.cart-product', '[class*="cart"]'];
   }
 
-  // Optimized target product check
+  // DISABLED - target product check
   isTargetProduct(productTitle) {
-    if (!productTitle) return false;
-    const title = productTitle.toLowerCase();
-    return this.targetCategories.some(category => title.includes(category));
+    return false; // DISABLED - always return false
   }
 
   // Calculate discounted price from original price (12% off the API price)
@@ -407,31 +405,9 @@ class SubtleHoodieSale {
 // Create global instance
 window.subtleHoodieSale = new SubtleHoodieSale();
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    window.subtleHoodieSale.initialize();
-  });
-} else {
-  window.subtleHoodieSale.initialize();
-}
-
-// Also try to apply after a delay to catch dynamically loaded content
-setTimeout(() => {
-  if (window.subtleHoodieSale) {
-    console.log('🔄 Running delayed force update...');
-    window.subtleHoodieSale.forceUpdate();
-  }
-}, 2000);
-
-// Add another attempt after 5 seconds for slow-loading pages
-setTimeout(() => {
-  if (window.subtleHoodieSale) {
-    console.log('🔄 Running final force update...');
-    window.subtleHoodieSale.clearCache();
-    window.subtleHoodieSale.forceUpdate();
-  }
-}, 5000);
+// DISABLED - Auto-initialize when DOM is ready
+console.log('🚫 Subtle Hoodie Sale auto-initialization DISABLED');
+// All initialization and periodic updates disabled
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {

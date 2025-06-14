@@ -109,12 +109,8 @@ window.PreciseDiscountSystem = {
         if (item.title) {
             const title = item.title.toLowerCase();
             
-            console.log(`🔍 Cart: Checking discount eligibility for: "${item.title}"`);
-            console.log(`🔍 Cart: Lowercase title: "${title}"`);
-            
             // Only BUNGI X BOBBY products with these specific types
             const isBungiProduct = title.includes('bungi x bobby');
-            console.log(`🔍 Cart: Is BUNGI product: ${isBungiProduct}`);
             
             if (isBungiProduct) {
                 // Specific product types that should get discounts
@@ -125,17 +121,10 @@ window.PreciseDiscountSystem = {
                 ];
                 
                 // Check if this BUNGI X BOBBY product is one of the discount types
-                const hasDiscountType = discountTypes.some(type => {
-                    const hasType = title.includes(type);
-                    console.log(`🔍 Cart: Checking for "${type}": ${hasType}`);
-                    return hasType;
-                });
+                const hasDiscountType = discountTypes.some(type => title.includes(type));
                 
                 if (hasDiscountType) {
-                    console.log(`✅ Cart: Product eligible for 12% discount: ${item.title}`);
                     return { percentage: 12, description: '12% off BUNGI X BOBBY collection' };
-                } else {
-                    console.log(`❌ Cart: BUNGI product but not eligible type: ${item.title}`);
                 }
             }
         }

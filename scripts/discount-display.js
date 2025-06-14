@@ -47,12 +47,8 @@ class DiscountDisplayManager {
         
         const title = productTitle.toLowerCase();
         
-        console.log(`🔍 Checking discount eligibility for: "${productTitle}"`);
-        console.log(`🔍 Lowercase title: "${title}"`);
-        
         // Only BUNGI X BOBBY products with these specific types
         const isBungiProduct = title.includes('bungi x bobby');
-        console.log(`🔍 Is BUNGI product: ${isBungiProduct}`);
         
         if (isBungiProduct) {
             // Specific product types that should get discounts
@@ -63,21 +59,13 @@ class DiscountDisplayManager {
             ];
             
             // Check if this BUNGI X BOBBY product is one of the discount types
-            const hasDiscountType = discountTypes.some(type => {
-                const hasType = title.includes(type);
-                console.log(`🔍 Checking for "${type}": ${hasType}`);
-                return hasType;
-            });
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
             
             if (hasDiscountType) {
-                console.log(`✅ Product eligible for 12% discount: ${productTitle}`);
                 return { percentage: 12, description: '12% off BUNGI X BOBBY collection' };
-            } else {
-                console.log(`❌ BUNGI product but not eligible type: ${productTitle}`);
             }
         }
         
-        console.log(`❌ No discount for: ${productTitle}`);
         return null; // No discount for other items
         
         // Delay banner creation to ensure DOM is ready and navbar animation is complete
