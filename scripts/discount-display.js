@@ -20,6 +20,13 @@ class DiscountDisplayManager {
         document.addEventListener('productDetailInitialized', () => {
             this.updateProductDiscounts();
         });
+        
+        // Listen for homepage products loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                this.updateProductDiscounts();
+            }, 2000);
+        });
     }
 
     async loadDiscounts() {
@@ -100,14 +107,14 @@ class DiscountDisplayManager {
     }
 
     setFallbackDiscount() {
-        // Set a generic discount for when no specific product discounts are found
+        // Set the specific discount code for first-time customers
         this.currentDiscount = {
-            type: 'general',
-            title: 'LIMITED TIME OFFER',
-            description: 'Special discounts available at checkout',
-            discountPercent: 15,
+            type: 'first_order',
+            title: 'FIRST ORDER DISCOUNT',
+            description: '10% off your first order',
+            discountPercent: 10,
             isActive: true,
-            code: 'BOBBY15'
+            code: 'BUNGIXBOBBY'
         };
     }
 
@@ -149,17 +156,14 @@ class DiscountDisplayManager {
         // Add styles
         this.addDiscountStyles();
         
-        // Insert banner at the top of the page
-        const navbar = document.querySelector('.navbar');
-        if (navbar) {
-            navbar.parentNode.insertBefore(banner, navbar);
-        } else {
-            document.body.insertBefore(banner, document.body.firstChild);
-        }
+        // Insert banner at the very top of the page, before everything
+        document.body.insertBefore(banner, document.body.firstChild);
 
-        // Add animation
+        // Add animation and body padding
         setTimeout(() => {
             banner.classList.add('show');
+            // Add padding to body to prevent content from being hidden behind fixed banner
+            document.body.style.paddingTop = banner.offsetHeight + 'px';
         }, 100);
     }
 
@@ -177,8 +181,12 @@ class DiscountDisplayManager {
                 animation: discountGradient 3s ease infinite;
                 color: white;
                 padding: 12px 0;
-                position: relative;
-                z-index: 1000;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                z-index: 9999;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
@@ -405,6 +413,9 @@ class DiscountDisplayManager {
         // Add discount badges to product cards
         this.addProductDiscountBadges();
         
+        // Update product pricing display
+        this.updateProductPricing();
+        
         // Add savings info to product detail pages
         this.addProductSavingsInfo();
     }
@@ -438,6 +449,84 @@ class DiscountDisplayManager {
                 }
             }
         });
+    }
+
+    updateProductPricing() {
+        // Update product cards to show proper pricing with crossed-out original prices
+        const productCards = document.querySelectorAll('.product-card');
+        
+        productCards.forEach(card => {
+            const priceContainer = card.querySelector('.product-price');
+            const originalPriceSpan = card.querySelector('.original-price');
+            
+            if (priceContainer && originalPriceSpan) {
+                // Get the current price and original price
+                const currentPriceText = priceContainer.textContent.split('$')[1];
+                const originalPriceText = originalPriceSpan.textContent.replace('$', '');
+                
+                if (currentPriceText && originalPriceText) {
+                    const currentPrice = parseFloat(currentPriceText);
+                    const originalPrice = parseFloat(originalPriceText);
+                    
+                    if (originalPrice > currentPrice) {
+                        // Calculate discount percentage
+                        const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+                        
+                        // Update the price display
+                        priceContainer.innerHTML = `
+                            <span class="current-price">$${currentPrice.toFixed(2)}</span>
+                            <span class="original-price-crossed">$${originalPrice.toFixed(2)}</span>
+                            <span class="discount-percent">-${discountPercent}%</span>
+                        `;
+                        
+                        // Add styles for the new price elements
+                        this.addPricingStyles();
+                    }
+                }
+            }
+        });
+    }
+
+    addPricingStyles() {
+        if (document.getElementById('pricing-styles')) {
+            return; // Styles already added
+        }
+
+        const style = document.createElement('style');
+        style.id = 'pricing-styles';
+        style.textContent = `
+            .current-price {
+                color: #10b981;
+                font-weight: bold;
+                font-size: 18px;
+            }
+            
+            .original-price-crossed {
+                text-decoration: line-through;
+                color: #9ca3af;
+                margin-left: 8px;
+                font-size: 14px;
+            }
+            
+            .discount-percent {
+                background: #ef4444;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+                margin-left: 8px;
+            }
+            
+            .product-price {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+        `;
+        
+        document.head.appendChild(style);
     }
 
     addProductSavingsInfo() {
@@ -487,6 +576,8 @@ class DiscountDisplayManager {
         const banner = document.getElementById('discount-banner');
         if (banner) {
             banner.style.display = 'none';
+            // Remove body padding when banner is hidden
+            document.body.style.paddingTop = '0px';
         }
     }
 }
