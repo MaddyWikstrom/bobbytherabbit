@@ -10,10 +10,10 @@ class DiscountDisplayManager {
         console.log('Initializing discount display system');
         await this.loadDiscounts();
         
-        // Delay banner creation to ensure DOM is ready
+        // Delay banner creation to ensure DOM is ready and navbar animation is complete
         setTimeout(() => {
             this.createDiscountBanner();
-        }, 500);
+        }, 2000); // Increased delay to wait for navbar animation
         
         // Delay product discount updates to ensure products are loaded
         setTimeout(() => {
@@ -192,9 +192,9 @@ class DiscountDisplayManager {
     }
 
     insertBannerBelowNavbar(banner) {
-        // Wait for DOM to be fully ready
-        setTimeout(() => {
-            console.log('Attempting to insert banner below navbar...');
+        // Wait for navbar animation to complete
+        this.waitForNavbarAnimation(() => {
+            console.log('Navbar animation complete, inserting banner...');
             
             // First, try to find the main site container
             const mainSite = document.getElementById('main-site');
@@ -244,8 +244,44 @@ class DiscountDisplayManager {
             console.log('No navbar found, inserting at top of body');
             document.body.insertBefore(banner, document.body.firstChild);
             console.log('Banner inserted at top of body as fallback');
+        });
+    }
+
+    waitForNavbarAnimation(callback) {
+        // Wait for navbar to be present and animation to complete
+        let attempts = 0;
+        const maxAttempts = 20; // 4 seconds max wait time
+        
+        const checkNavbar = () => {
+            attempts++;
+            const navbar = document.querySelector('.navbar');
             
-        }, 200); // Increased delay to ensure DOM is ready
+            if (navbar) {
+                // Check if navbar has finished animating by checking its computed styles
+                const computedStyle = window.getComputedStyle(navbar);
+                const transform = computedStyle.transform;
+                const opacity = computedStyle.opacity;
+                
+                console.log(`Navbar check ${attempts}: transform=${transform}, opacity=${opacity}`);
+                
+                // If navbar is visible and not being transformed, animation is likely complete
+                if (opacity === '1' && (transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)')) {
+                    console.log('Navbar animation appears complete');
+                    callback();
+                    return;
+                }
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(checkNavbar, 200);
+            } else {
+                console.log('Max attempts reached, proceeding with banner insertion');
+                callback();
+            }
+        };
+        
+        // Start checking after initial delay
+        setTimeout(checkNavbar, 500);
     }
 
     addDiscountStyles() {
