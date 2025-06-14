@@ -919,6 +919,57 @@ class DiscountDisplayManager {
             banner.style.display = 'none';
         }
     }
+
+    // Debug method to check product pricing
+    debugProductPricing() {
+        console.log('=== DEBUG PRODUCT PRICING ===');
+        
+        // Check what products are loaded
+        const selectors = [
+            '#homepage-products .product-card',
+            '.product-card',
+            '.product-item',
+            '.product'
+        ];
+        
+        let productCards = [];
+        for (const selector of selectors) {
+            productCards = document.querySelectorAll(selector);
+            if (productCards.length > 0) {
+                console.log(`Found ${productCards.length} product cards using selector: ${selector}`);
+                break;
+            }
+        }
+        
+        if (productCards.length === 0) {
+            console.log('❌ No product cards found on page');
+            return;
+        }
+        
+        productCards.forEach((card, index) => {
+            console.log(`\n--- DEBUG Card ${index} ---`);
+            console.log('Card HTML:', card.outerHTML);
+            
+            const priceSelectors = ['.product-price', '.price', '.product-pricing', '.price-container'];
+            let priceContainer = null;
+            
+            for (const selector of priceSelectors) {
+                priceContainer = card.querySelector(selector);
+                if (priceContainer) {
+                    console.log(`Price container found with: ${selector}`);
+                    console.log('Price container HTML:', priceContainer.outerHTML);
+                    console.log('Price container text:', priceContainer.textContent);
+                    break;
+                }
+            }
+            
+            if (!priceContainer) {
+                console.log('❌ No price container found');
+            }
+        });
+        
+        console.log('=== END DEBUG ===');
+    }
 }
 
 // Initialize discount display system
@@ -930,5 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.DiscountDisplay = {
     showTest: () => window.discountDisplayManager?.showTestDiscount(),
     hide: () => window.discountDisplayManager?.hideDiscountBanner(),
-    reload: () => window.discountDisplayManager?.loadDiscounts()
+    reload: () => window.discountDisplayManager?.loadDiscounts(),
+    debugPricing: () => window.discountDisplayManager?.debugProductPricing(),
+    forceUpdate: () => window.discountDisplayManager?.updateProductDiscounts()
 };
