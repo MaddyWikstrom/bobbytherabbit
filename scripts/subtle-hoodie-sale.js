@@ -10,8 +10,8 @@ class SubtleHoodieSale {
     this.processedDetailPages = new Set();
     this.processedCartItems = new Set();
     this.targetCategories = ['hoodie', 'sweatshirt', 'sweatpants', 'joggers'];
-    this.priceSelectors = ['.price', '.product-price', '.price-display', '[class*="price"]'];
-    this.titleSelectors = ['.product-title', '.product-name', 'h3', 'h2', '.product-detail-title'];
+    this.priceSelectors = ['.price', '.product-price', '.price-display', '[class*="price"]', 'h1', 'h2', 'h3'];
+    this.titleSelectors = ['.product-title', '.product-name', 'h1', 'h2', 'h3', '.product-detail-title'];
     this.cartSelectors = ['.cart-item', '.cart-product', '[class*="cart"]'];
   }
 
@@ -116,13 +116,16 @@ class SubtleHoodieSale {
 
   // Apply to product detail pages
   applyToProductDetail() {
-    const detailContainer = document.querySelector('.product-detail, .product-detail-grid, .product-info, .product-main');
+    // Try multiple possible containers for product details
+    const detailContainer = document.querySelector('.product-detail, .product-detail-grid, .product-info, .product-main, body, main');
     if (!detailContainer) return 0;
 
     const detailId = this.getDetailPageId(detailContainer);
     if (this.processedDetailPages.has(detailId)) return 0;
 
-    const titleElement = detailContainer.querySelector(this.titleSelectors.join(', '));
+    // Look for title in the entire page, not just container
+    const titleElement = document.querySelector('h1, h2, .product-title, .product-name, .product-detail-title') ||
+                         detailContainer.querySelector(this.titleSelectors.join(', '));
     if (!titleElement) return 0;
 
     const productTitle = titleElement.textContent || titleElement.innerText || '';
@@ -130,37 +133,31 @@ class SubtleHoodieSale {
 
     let updatedCount = 0;
 
-    // Apply to main product price
-    const priceElements = detailContainer.querySelectorAll(this.priceSelectors.join(', '));
-    for (const priceElement of priceElements) {
-      if (priceElement.classList.contains('subtle-price-display')) continue;
+    // Look for price elements across the entire page
+    const allPriceElements = document.querySelectorAll('*');
+    for (const element of allPriceElements) {
+      if (element.classList.contains('subtle-price-display')) continue;
       
-      const priceMatch = (priceElement.textContent || '').match(/\$?(\d+\.?\d*)/);
-      if (priceMatch && parseFloat(priceMatch[1]) > 0) {
+      const text = element.textContent || '';
+      const priceMatch = text.match(/^\$(\d+\.?\d*)$/);
+      
+      if (priceMatch && parseFloat(priceMatch[1]) > 0 &&
+          !element.querySelector('*') && // Only leaf elements
+          element.offsetParent !== null) { // Only visible elements
+        
         const currentPrice = parseFloat(priceMatch[1]);
         
-        // Add badge to detail container
-        if (!detailContainer.querySelector('.subtle-sale-badge')) {
-          detailContainer.style.position = 'relative';
-          detailContainer.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
+        // Add badge to the page
+        if (!document.querySelector('.subtle-sale-badge')) {
+          const badgeContainer = document.querySelector('.product-detail, .product-info, main, body');
+          if (badgeContainer) {
+            badgeContainer.style.position = 'relative';
+            badgeContainer.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
+          }
         }
 
-        priceElement.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
-        priceElement.classList.add('has-subtle-sale');
-        updatedCount++;
-      }
-    }
-
-    // Apply to variant prices if they exist
-    const variantPrices = detailContainer.querySelectorAll('.variant-price, .option-price, [data-variant-price]');
-    for (const variantPrice of variantPrices) {
-      if (variantPrice.classList.contains('subtle-price-display')) continue;
-      
-      const priceMatch = (variantPrice.textContent || '').match(/\$?(\d+\.?\d*)/);
-      if (priceMatch && parseFloat(priceMatch[1]) > 0) {
-        const currentPrice = parseFloat(priceMatch[1]);
-        variantPrice.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
-        variantPrice.classList.add('has-subtle-sale');
+        element.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
+        element.classList.add('has-subtle-sale');
         updatedCount++;
       }
     }
@@ -277,11 +274,16 @@ class SubtleHoodieSale {
 
   // Testing methods (minimal logging)
   forceUpdate() {
-    return this.applyToTargetProducts();
+    const productCount = this.applyToTargetProducts();
+    const detailCount = this.applyToProductDetail();
+    const cartCount = this.applyToCartItems();
+    return productCount + detailCount + cartCount;
   }
 
   clearCache() {
     this.processedProducts.clear();
+    this.processedDetailPages.clear();
+    this.processedCartItems.clear();
   }
 }
 
