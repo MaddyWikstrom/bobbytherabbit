@@ -21,12 +21,10 @@ window.PreciseDiscountSystem = {
         'sweatpants-black': { percentage: 12, description: '12% off sweatpants' }
     },
     
-    // Alternative: Define by product title patterns (more precise than keywords)
+    // DISABLED: No automatic pattern matching - only specific product IDs get discounts
     discountPatterns: [
-        // Only apply discount if title EXACTLY matches these patterns
-        { pattern: /^.*hoodie.*$/i, percentage: 12, description: '12% off hoodies', requiresExactMatch: true },
-        { pattern: /^.*sweatshirt.*$/i, percentage: 12, description: '12% off sweatshirts', requiresExactMatch: true },
-        { pattern: /^.*sweatpants.*$/i, percentage: 12, description: '12% off sweatpants', requiresExactMatch: true }
+        // Patterns are disabled to prevent unwanted discounts
+        // Add specific product IDs to discountEligibleProducts instead
     ],
     
     isInitialized: false,
@@ -112,23 +110,10 @@ window.PreciseDiscountSystem = {
             return this.discountEligibleProducts[item.handle];
         }
         
-        // Method 2: Check by precise title patterns (only if configured)
-        const title = (item.title || '').toLowerCase().trim();
+        // Method 2: DISABLED - No automatic pattern matching
+        // Only products explicitly listed in discountEligibleProducts will get discounts
         
-        for (const pattern of this.discountPatterns) {
-            if (pattern.requiresExactMatch) {
-                // Only apply if this is specifically a hoodie/sweatshirt product
-                // Add additional validation to prevent false positives
-                if (this.isDefinitelyDiscountEligible(title, pattern)) {
-                    return {
-                        percentage: pattern.percentage,
-                        description: pattern.description
-                    };
-                }
-            }
-        }
-        
-        return null; // No discount
+        return null; // No discount unless explicitly configured
     },
     
     isDefinitelyDiscountEligible(title, pattern) {
