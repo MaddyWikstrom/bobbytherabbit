@@ -2684,7 +2684,9 @@ class ProductDetailManager {
                 variantTitle: `${this.selectedVariant.color} / ${this.selectedVariant.size}`,
                 // Add discount information for cart display
                 hasDiscount: !!discountInfo,
-                discountInfo: discountInfo
+                discountPercentage: discountInfo ? discountInfo.percentage : null,
+                discountAmount: discountInfo ? (basePrice - itemPrice) : null,
+                discountDescription: discountInfo ? discountInfo.description : null
             };
             
             console.log(`Adding to cart: ${cartProduct.title} - ${cartProduct.variantTitle} (Quantity: ${cartProduct.quantity})`);

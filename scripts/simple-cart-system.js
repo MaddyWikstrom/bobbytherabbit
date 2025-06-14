@@ -373,6 +373,15 @@ if (window.BobbyCartSystem) {
         items[existingItemIndex].image = product.image;
       }
       
+      // Update discount information if provided
+      if (product.hasDiscount !== undefined) {
+        items[existingItemIndex].hasDiscount = product.hasDiscount;
+        items[existingItemIndex].discountPercentage = product.discountPercentage;
+        items[existingItemIndex].discountAmount = product.discountAmount;
+        items[existingItemIndex].discountDescription = product.discountDescription;
+        items[existingItemIndex].originalPrice = product.originalPrice || product.basePrice || product.price;
+      }
+      
       // Always ensure we have the Shopify variant ID if it's available
       if (isShopifyGID && !items[existingItemIndex].shopifyVariantId) {
         console.log(`Adding missing Shopify variant ID to existing item: ${product.id}`);
@@ -388,11 +397,17 @@ if (window.BobbyCartSystem) {
         productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
         price: product.price || 0,
+        originalPrice: product.originalPrice || product.basePrice || product.price || 0,
         image: product.image || 'assets/placeholder.png',
         quantity: product.quantity || 1,
         variant: product.variantTitle || product.variant || '',
         selectedColor: color,
-        selectedSize: size
+        selectedSize: size,
+        // Preserve discount information from product detail page
+        hasDiscount: product.hasDiscount || false,
+        discountPercentage: product.discountPercentage || null,
+        discountAmount: product.discountAmount || null,
+        discountDescription: product.discountDescription || null
       });
     }
     
@@ -516,9 +531,13 @@ if (window.BobbyCartSystem) {
                 ''}</div>
               <div class="cart-item-price">
                 ${item.hasDiscount ?
-                  `<span class="discounted-price">$${(item.price).toFixed(2)}</span>
-                   <span class="original-price">$${(item.originalPrice).toFixed(2)}</span>
-                   <span class="discount-badge">${item.discountPercentage}% OFF</span>` :
+                  `<div class="price-with-discount">
+                     <span class="discounted-price">$${(item.price).toFixed(2)}</span>
+                     <span class="original-price">$${(item.originalPrice).toFixed(2)}</span>
+                   </div>
+                   <div class="discount-info">
+                     <span class="discount-badge">${item.discountPercentage}% OFF</span>
+                   </div>` :
                   `$${(item.price).toFixed(2)}`
                 }
               </div>
@@ -875,27 +894,38 @@ if (window.BobbyCartSystem) {
         margin-bottom: 10px;
       }
       
+      .price-with-discount {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      
       .discounted-price {
-        color: #00ff88;
+        color: #00ff88 !important;
         font-weight: bold;
         font-size: 16px;
       }
       
       .original-price {
-        color: #999;
+        color: #999 !important;
         text-decoration: line-through;
         font-size: 14px;
-        margin-left: 8px;
+      }
+      
+      .discount-info {
+        margin-top: 2px;
       }
       
       .discount-badge {
-        background: #ff4444;
-        color: white;
-        padding: 2px 6px;
+        background: #ff4444 !important;
+        color: white !important;
+        padding: 3px 6px;
         border-radius: 3px;
         font-size: 10px;
         font-weight: bold;
-        margin-left: 8px;
+        text-transform: uppercase;
+        display: inline-block;
       }
       
       .cart-item-quantity {
