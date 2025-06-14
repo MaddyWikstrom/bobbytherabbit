@@ -105,27 +105,22 @@ window.PreciseDiscountSystem = {
             return this.discountEligibleProducts[item.handle];
         }
         
-        // Method 2: Automatic pattern matching for specific BUNGI X BOBBY products
+        // Method 2: Automatic pattern matching for hoodies, sweatshirts, and sweatpants
         if (item.title) {
             const title = item.title.toLowerCase();
             
-            // Only BUNGI X BOBBY products with these specific types
-            const isBungiProduct = title.includes('bungi x bobby');
+            // Specific product types that should get discounts
+            const discountTypes = [
+                'hoodie',
+                'sweatshirt',
+                'sweatpants'
+            ];
             
-            if (isBungiProduct) {
-                // Specific product types that should get discounts
-                const discountTypes = [
-                    'sweatshirt',
-                    'joggers',
-                    'hoodie'
-                ];
-                
-                // Check if this BUNGI X BOBBY product is one of the discount types
-                const hasDiscountType = discountTypes.some(type => title.includes(type));
-                
-                if (hasDiscountType) {
-                    return { percentage: 12, description: '12% off BUNGI X BOBBY collection' };
-                }
+            // Check if this product is one of the discount types
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
+            
+            if (hasDiscountType) {
+                return { percentage: 12, description: '12% off hoodies, sweatshirts & sweatpants' };
             }
         }
         

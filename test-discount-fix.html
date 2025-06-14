@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount System Test - Bobby Streetwear</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+        }
+        .product-test {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .price-display {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        .sale-price {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #888;
+            margin-left: 10px;
+        }
+        .discount-badge {
+            background: #ff4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .no-discount {
+            color: #a855f7;
+            font-weight: bold;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pass {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+        }
+        .fail {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+        }
+        button {
+            background: #00ff88;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00cc6a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Discount System Test</h1>
+        <p>Testing the precise discount system to ensure only hoodies, sweatshirts, and sweatpants get 12% discounts.</p>
+        
+        <div class="test-section">
+            <h2>Test Products</h2>
+            <div id="test-results"></div>
+            <button onclick="runTests()">Run Discount Tests</button>
+            <button onclick="clearTests()">Clear Results</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Expected Results</h2>
+            <ul>
+                <li>✅ Products with "hoodie", "sweatshirt", or "sweatpants" in title should get 12% discount</li>
+                <li>❌ Other products (t-shirts, beanies, etc.) should NOT get discounts</li>
+                <li>✅ Discount should show: Sale price, original price crossed out, "12% OFF" badge</li>
+                <li>✅ Cart should use the discounted price when adding items</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load the discount system -->
+    <script src="scripts/precise-discount-system.js"></script>
+    
+    <script>
+        // Test products - mix of items that should and shouldn't get discounts
+        const testProducts = [
+            // Should get discounts (12% off)
+            { id: 'test-hoodie-1', title: 'Classic Black Hoodie', price: 59.99 },
+            { id: 'test-sweatshirt-1', title: 'Vintage Sweatshirt', price: 49.99 },
+            { id: 'test-sweatpants-1', title: 'Comfort Sweatpants', price: 39.99 },
+            { id: 'test-hoodie-2', title: 'BUNGI X BOBBY Hoodie - Navy', price: 69.99 },
+            { id: 'test-sweatshirt-2', title: 'Oversized Sweatshirt - Gray', price: 54.99 },
+            
+            // Should NOT get discounts
+            { id: 'test-tshirt-1', title: 'Basic T-Shirt', price: 24.99 },
+            { id: 'test-beanie-1', title: 'Winter Beanie', price: 19.99 },
+            { id: 'test-jacket-1', title: 'Denim Jacket', price: 89.99 },
+            { id: 'test-shorts-1', title: 'Summer Shorts', price: 34.99 },
+            { id: 'test-cap-1', title: 'Baseball Cap', price: 29.99 }
+        ];
+        
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h3>Test Results:</h3>';
+            
+            let passCount = 0;
+            let totalTests = testProducts.length;
+            
+            testProducts.forEach(product => {
+                const discountInfo = window.PreciseDiscountSystem ? 
+                    window.PreciseDiscountSystem.getDiscountForProduct(product) : null;
+                
+                const shouldHaveDiscount = product.title.toLowerCase().includes('hoodie') || 
+                                         product.title.toLowerCase().includes('sweatshirt') || 
+                                         product.title.toLowerCase().includes('sweatpants');
+                
+                const hasDiscount = !!discountInfo;
+                const testPassed = shouldHaveDiscount === hasDiscount;
+                
+                if (testPassed) passCount++;
+                
+                let priceDisplay = '';
+                if (hasDiscount) {
+                    const salePrice = product.price * (1 - discountInfo.percentage / 100);
+                    priceDisplay = `
+                        <div class="price-display">
+                            <span class="sale-price">$${salePrice.toFixed(2)}</span>
+                            <span class="original-price">$${product.price.toFixed(2)}</span>
+                            <span class="discount-badge">${discountInfo.percentage}% OFF</span>
+                        </div>
+                        <div style="font-size: 0.9em; color: #00ff88; font-style: italic;">
+                            ${discountInfo.description}
+                        </div>
+                    `;
+                } else {
+                    priceDisplay = `
+                        <div class="price-display">
+                            <span class="no-discount">$${product.price.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+                
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'product-test';
+                resultDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${product.title}</strong>
+                            ${priceDisplay}
+                        </div>
+                        <div class="test-result ${testPassed ? 'pass' : 'fail'}">
+                            ${testPassed ? '✅ PASS' : '❌ FAIL'}
+                            <br>
+                            <small>
+                                Expected: ${shouldHaveDiscount ? 'Discount' : 'No Discount'}<br>
+                                Got: ${hasDiscount ? 'Discount' : 'No Discount'}
+                            </small>
+                        </div>
+                    </div>
+                `;
+                
+                resultsDiv.appendChild(resultDiv);
+            });
+            
+            // Add summary
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = `test-result ${passCount === totalTests ? 'pass' : 'fail'}`;
+            summaryDiv.innerHTML = `
+                <h3>Test Summary</h3>
+                <p><strong>${passCount}/${totalTests} tests passed</strong></p>
+                ${passCount === totalTests ? 
+                    '<p>🎉 All tests passed! Discount system is working correctly.</p>' : 
+                    '<p>⚠️ Some tests failed. Check the discount logic.</p>'
+                }
+            `;
+            resultsDiv.appendChild(summaryDiv);
+        }
+        
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 1000); // Wait for discount system to load
+        });
+    </script>
+</body>
+</html>
