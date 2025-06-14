@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subtle Hoodie Sale Test - Bobby Streetwear</title>
+    <link rel="stylesheet" href="styles/subtle-hoodie-sale.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 16px;
+        }
+        
+        .alert {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .alert h3 {
+            margin: 0 0 10px 0;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .product-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .status h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Subtle Hoodie Sale - FIXED!</h1>
+            <p>Only applies to hoodies, sweatshirts, and sweatpants with subtle styling</p>
+        </div>
+
+        <div class="alert">
+            <h3>✅ Fixed Issues:</h3>
+            <ul>
+                <li><strong>No more constant re-rendering</strong> - Products are processed once and tracked</li>
+                <li><strong>Only target products</strong> - Only hoodies, sweatshirts, and sweatpants get the sale</li>
+                <li><strong>Subtle styling</strong> - Clean, minimal design that's not flashy</li>
+                <li><strong>Debounced updates</strong> - Waits 1 second before processing new content</li>
+                <li><strong>Prevents price inflation</strong> - Each product is only processed once</li>
+            </ul>
+        </div>
+
+        <div class="status">
+            <h4>Target Products Updated</h4>
+            <div class="status-value" id="updated-count">0</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="forceUpdate()">
+                🔄 Apply Sale to Target Products
+            </button>
+            <button class="btn btn-success" onclick="addTestProduct()">
+                ➕ Add Test Hoodie
+            </button>
+        </div>
+
+        <!-- Test Products -->
+        <div class="product-grid" id="product-grid">
+            <!-- THESE SHOULD GET SALE (Hoodies/Sweatshirts/Sweatpants) -->
+            <div class="product-card">
+                <div class="product-image">
+                    BUNGI X BOBBY Hoodie
+                </div>
+                <div class="product-info">
+                    <div class="product-title">BUNGI X BOBBY Rabbit Hardware Unisex Hoodie</div>
+                    <div class="product-description">Premium quality hoodie with unique rabbit hardware design.</div>
+                    <div class="price">$65.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Comfort Sweatshirt
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Streetwear Comfort Sweatshirt</div>
+                    <div class="product-description">Cozy sweatshirt perfect for everyday wear.</div>
+                    <div class="price">$55.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Jogger Sweatpants
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Urban Style Jogger Sweatpants</div>
+                    <div class="product-description">Comfortable sweatpants for active lifestyle.</div>
+                    <div class="price">$45.00</div>
+                </div>
+            </div>
+
+            <!-- THESE SHOULD NOT GET SALE (Other products) -->
+            <div class="product-card">
+                <div class="product-image">
+                    Classic T-Shirt
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Streetwear Classic Tee</div>
+                    <div class="product-description">Comfortable cotton t-shirt with premium feel.</div>
+                    <div class="price">$25.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Stylish Hat
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Logo Cap</div>
+                    <div class="product-description">Adjustable cap with embroidered logo.</div>
+                    <div class="price">$30.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Designer Jacket
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Urban Style Jacket</div>
+                    <div class="product-description">Modern jacket perfect for streetwear style.</div>
+                    <div class="price">$120.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the Subtle Hoodie Sale Script -->
+    <script src="scripts/subtle-hoodie-sale.js"></script>
+    <script>
+        // Update counter
+        function updateCounter() {
+            const saleProducts = document.querySelectorAll('.subtle-sale-item').length;
+            document.getElementById('updated-count').textContent = saleProducts;
+        }
+
+        // Force update target products
+        function forceUpdate() {
+            console.log('🔄 Force updating target products...');
+            const count = window.subtleHoodieSale.forceUpdate();
+            updateCounter();
+            console.log(`✅ Updated ${count} target products with subtle sale`);
+        }
+
+        // Add a test hoodie dynamically
+        function addTestProduct() {
+            const grid = document.getElementById('product-grid');
+            const randomPrice = (Math.random() * 50 + 40).toFixed(2);
+            const hoodieNames = [
+                'Dynamic Test Hoodie',
+                'New Arrival Sweatshirt',
+                'Limited Edition Hoodie',
+                'Fresh Design Sweatshirt',
+                'Latest Collection Hoodie'
+            ];
+            const randomName = hoodieNames[Math.floor(Math.random() * hoodieNames.length)];
+            
+            const newProduct = document.createElement('div');
+            newProduct.className = 'product-card';
+            newProduct.innerHTML = `
+                <div class="product-image">
+                    ${randomName}
+                </div>
+                <div class="product-info">
+                    <div class="product-title">${randomName}</div>
+                    <div class="product-description">Dynamically added hoodie to test the subtle sale system.</div>
+                    <div class="price">$${randomPrice}</div>
+                </div>
+            `;
+            
+            grid.appendChild(newProduct);
+            
+            // The debounced observer will automatically apply sale after 1 second
+            setTimeout(updateCounter, 1500);
+            
+            console.log(`➕ Added new hoodie: ${randomName} - $${randomPrice}`);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎯 Subtle hoodie sale test page loaded');
+            
+            // Update counter periodically
+            setInterval(updateCounter, 2000);
+            
+            // Initial counter update
+            setTimeout(updateCounter, 1000);
+        });
+    </script>
+</body>
+</html>
