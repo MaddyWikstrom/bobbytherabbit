@@ -1223,9 +1223,10 @@ class ProductManager {
 
         const title = product.title.toLowerCase();
         
-        // Check if product qualifies for discount (hoodies, sweatshirts, sweatpants)
+        // Check if product qualifies for discount (hoodies, sweatshirts, joggers)
         const isEligible = title.includes('hoodie') ||
                           title.includes('sweatshirt') ||
+                          title.includes('joggers') ||
                           title.includes('sweatpants');
         
         if (!isEligible) {
@@ -1330,7 +1331,13 @@ class ProductManager {
                     ${this.currentView === 'list' ? '<div class="product-details">' : ''}
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-title">${product.title}</h3>
-                    <div class="product-price">$${hasDiscount ? salePrice.toFixed(2) : product.price.toFixed(2)}</div>
+                    <div class="product-price">
+                        ${hasDiscount ?
+                            `<span class="sale-price">$${salePrice.toFixed(2)}</span>
+                             <span class="original-price">$${originalPrice.toFixed(2)}</span>` :
+                            `$${product.price.toFixed(2)}`
+                        }
+                    </div>
                     ${product.colors.length > 0 ? `
                         <div class="product-variants">
                             ${variantOptionsHTML}
