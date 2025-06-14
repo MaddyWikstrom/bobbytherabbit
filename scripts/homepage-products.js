@@ -101,7 +101,25 @@ class HomepageProductLoader {
         const maxPrice = parseFloat(product.priceRange.maxVariantPrice.amount);
         const hasVariants = product.variants.edges.length > 0;
         const firstVariant = hasVariants ? product.variants.edges[0].node : null;
-        const compareAtPrice = firstVariant?.compareAtPrice ? parseFloat(firstVariant.compareAtPrice.amount) : null;
+        
+        // Check for compareAtPrice across all variants, not just the first one
+        let compareAtPrice = null;
+        if (hasVariants) {
+            for (const variantEdge of product.variants.edges) {
+                const variant = variantEdge.node;
+                if (variant.compareAtPrice && variant.compareAtPrice.amount) {
+                    const comparePrice = parseFloat(variant.compareAtPrice.amount);
+                    const variantPrice = parseFloat(variant.price.amount);
+                    
+                    // Only use compareAtPrice if it's actually higher than the current price
+                    if (comparePrice > variantPrice) {
+                        compareAtPrice = comparePrice;
+                        console.log(`Found compareAtPrice for ${product.title}: $${comparePrice} vs $${variantPrice}`);
+                        break; // Use the first valid compareAtPrice found
+                    }
+                }
+            }
+        }
         
         // Get product ID for hover configuration
         const productId = product.id.replace('gid://shopify/Product/', '');
@@ -181,18 +199,28 @@ class HomepageProductLoader {
             hoverImage = images[1]; // back image
         }
 
+        const finalComparePrice = compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null;
+        const isOnSale = finalComparePrice !== null;
+        
+        // Debug logging for pricing
+        console.log(`Product: ${product.title}`);
+        console.log(`  Price: $${minPrice}`);
+        console.log(`  CompareAtPrice: ${compareAtPrice ? `$${compareAtPrice}` : 'null'}`);
+        console.log(`  Final ComparePrice: ${finalComparePrice ? `$${finalComparePrice}` : 'null'}`);
+        console.log(`  Is On Sale: ${isOnSale}`);
+        
         return {
             id: product.handle,
             title: product.title,
             description: this.cleanDescription(product.description),
             category: this.extractCategory(product.title),
             price: minPrice,
-            comparePrice: compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null,
+            comparePrice: finalComparePrice,
             mainImage: mainImage,
             hoverImage: hoverImage,
             featured: product.tags.includes('featured'),
             new: product.tags.includes('new'),
-            sale: compareAtPrice && compareAtPrice > minPrice,
+            sale: isOnSale,
             shopifyId: product.id,
             handle: product.handle,
             colors: colors, // Add available colors
@@ -297,8 +325,11 @@ class HomepageProductLoader {
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-name">${product.title}</h3>
                     <div class="product-price">
-                        $${product.price.toFixed(2)}
-                        ${product.comparePrice ? `<span class="original-price">$${product.comparePrice.toFixed(2)}</span>` : ''}
+                        ${product.comparePrice ?
+                            `<span class="price-current">$${product.price.toFixed(2)}</span>
+                             <span class="original-price">$${product.comparePrice.toFixed(2)}</span>` :
+                            `<span class="price-current">$${product.price.toFixed(2)}</span>`
+                        }
                     </div>
                 </div>
             </div>
