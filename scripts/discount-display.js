@@ -685,24 +685,37 @@ class DiscountDisplayManager {
                         console.log(`Card ${index}: Could not extract prices from text`);
                     }
                 } else {
-                    console.log(`Card ${index}: No discount indicators found (no original-price or compare-price spans)`);
+                    console.log(`Card ${index}: No original-price span found, checking for sale badge...`);
                     
-                    // Try to detect if there are multiple prices in the text anyway
-                    const priceText = priceContainer.textContent;
-                    const priceMatches = priceText.match(/\$(\d+\.?\d*)/g);
-                    
-                    if (priceMatches && priceMatches.length >= 2) {
-                        console.log(`Card ${index}: Found multiple prices in text, attempting to apply discount styling`);
-                        const price1 = parseFloat(priceMatches[0].replace('$', ''));
-                        const price2 = parseFloat(priceMatches[1].replace('$', ''));
+                    // Check if there's a sale badge on this product
+                    const saleBadge = card.querySelector('.product-badge.sale');
+                    if (saleBadge) {
+                        console.log(`Card ${index}: ✅ Found sale badge:`, saleBadge.textContent);
                         
-                        // Assume first price is current, second is original
-                        if (price2 > price1) {
-                            const discountPercent = Math.round(((price2 - price1) / price2) * 100);
-                            console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling (detected from multiple prices)`);
-                            priceContainer.innerHTML = this.renderSalePrice(price1, price2, discountPercent);
-                            this.addEnhancedPricingStyles();
+                        // Extract discount percentage from badge
+                        const badgeText = saleBadge.textContent;
+                        const discountMatch = badgeText.match(/-(\d+)%/);
+                        
+                        if (discountMatch) {
+                            const discountPercent = parseInt(discountMatch[1]);
+                            const priceText = priceContainer.textContent;
+                            const priceMatch = priceText.match(/\$(\d+\.?\d*)/);
+                            
+                            if (priceMatch) {
+                                const currentPrice = parseFloat(priceMatch[1]);
+                                // Calculate original price from discount percentage
+                                const originalPrice = currentPrice / (1 - discountPercent / 100);
+                                
+                                console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling from badge`);
+                                console.log(`Card ${index}: Current: $${currentPrice}, Calculated Original: $${originalPrice.toFixed(2)}`);
+                                
+                                // Update the price display with enhanced styling
+                                priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
+                                this.addEnhancedPricingStyles();
+                            }
                         }
+                    } else {
+                        console.log(`Card ${index}: ❌ No sale indicators found (no original-price span or sale badge)`);
                     }
                 }
             });
