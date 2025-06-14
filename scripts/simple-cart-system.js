@@ -255,7 +255,7 @@ if (window.BobbyCartSystem) {
     }
   }
   
-  // Apply discount to BUNGI X BOBBY products
+  // Apply discount using the precise discount system
   function applyDiscountToProduct(product) {
     console.log(`🔍 Cart: Checking discount for product: "${product?.title}"`);
     
@@ -264,26 +264,43 @@ if (window.BobbyCartSystem) {
       return product;
     }
     
-    const title = product.title.toLowerCase();
-    console.log(`🔍 Cart: Lowercase title: "${title}"`);
-    
-    // Only BUNGI X BOBBY products with these specific types
-    const isBungiProduct = title.includes('bungi x bobby');
-    console.log(`🔍 Cart: Is BUNGI product: ${isBungiProduct}`);
-    
-    if (isBungiProduct) {
-      // Specific product types that should get discounts
-      const discountTypes = ['sweatshirt', 'joggers', 'hoodie'];
+    // Use the precise discount system if available
+    if (window.PreciseDiscountSystem && typeof window.PreciseDiscountSystem.getDiscountForProduct === 'function') {
+      const discountInfo = window.PreciseDiscountSystem.getDiscountForProduct(product);
       
-      // Check if this BUNGI X BOBBY product is one of the discount types
-      const hasDiscountType = discountTypes.some(type => {
-        const hasType = title.includes(type);
-        console.log(`🔍 Cart: Checking for "${type}": ${hasType}`);
-        return hasType;
-      });
+      if (discountInfo) {
+        const originalPrice = product.price;
+        const discountedPrice = originalPrice * (1 - discountInfo.percentage / 100);
+        
+        console.log(`✅ Cart: Applying ${discountInfo.percentage}% discount to: ${product.title}`);
+        console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
+        
+        // Create a copy of the product with discount applied
+        return {
+          ...product,
+          price: discountedPrice,
+          originalPrice: originalPrice,
+          hasDiscount: true,
+          discountPercentage: discountInfo.percentage,
+          discountAmount: originalPrice - discountedPrice,
+          discountDescription: discountInfo.description
+        };
+      }
+    } else {
+      // Fallback: Check for discount patterns directly (same as precise discount system)
+      const title = product.title.toLowerCase();
+      
+      // Specific product types that should get discounts
+      const discountTypes = [
+        'hoodie',
+        'sweatshirt',
+        'sweatpants'
+      ];
+      
+      // Check if this product is one of the discount types
+      const hasDiscountType = discountTypes.some(type => title.includes(type));
       
       if (hasDiscountType) {
-        // Apply 12% discount
         const originalPrice = product.price;
         const discountedPrice = originalPrice * (1 - 12 / 100);
         
@@ -297,15 +314,13 @@ if (window.BobbyCartSystem) {
           originalPrice: originalPrice,
           hasDiscount: true,
           discountPercentage: 12,
-          discountAmount: originalPrice - discountedPrice
+          discountAmount: originalPrice - discountedPrice,
+          discountDescription: '12% off hoodies, sweatshirts & sweatpants'
         };
-      } else {
-        console.log(`❌ Cart: BUNGI product but not eligible type: ${product.title}`);
       }
-    } else {
-      console.log(`❌ Cart: Not a BUNGI product: ${product.title}`);
     }
     
+    console.log(`❌ Cart: No discount applied to: ${product.title}`);
     return product;
   }
   

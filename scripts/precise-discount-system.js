@@ -509,21 +509,17 @@ window.PreciseDiscountSystem = {
     }
 };
 
-// Replace the clean cart system with precise system
-if (window.CleanCartSystem) {
-    // Migrate items if they exist
-    if (window.CleanCartSystem.items && window.CleanCartSystem.items.length > 0) {
-        PreciseDiscountSystem.items = window.CleanCartSystem.items.map(item => 
-            PreciseDiscountSystem.validateAndApplyDiscounts(item)
-        );
-    }
-}
+// Don't replace existing cart systems - just provide discount functionality
+// The simple cart system will use our getDiscountForProduct method
 
-// Replace all cart references
-window.CleanCartSystem = PreciseDiscountSystem;
-window.BobbyCart = PreciseDiscountSystem;
-window.BobbyCartEnhanced = PreciseDiscountSystem;
-window.BobbyCartDiscountFix = PreciseDiscountSystem;
+// Only replace if no cart system exists
+if (!window.BobbyCart && !window.cartManager) {
+    console.log('🎯 No existing cart system found, setting up PreciseDiscountSystem as fallback');
+    window.BobbyCart = PreciseDiscountSystem;
+    window.cartManager = PreciseDiscountSystem;
+} else {
+    console.log('🎯 Existing cart system found, PreciseDiscountSystem will provide discount logic only');
+}
 
 // Clear any cached discount data and reset cart
 PreciseDiscountSystem.clearCachedDiscounts = function() {
@@ -546,18 +542,30 @@ PreciseDiscountSystem.clearCachedDiscounts = function() {
     console.log('✅ All cached discount data cleared');
 };
 
-// Initialize
+// Initialize - but don't clear cart data or interfere with existing cart
 document.addEventListener('DOMContentLoaded', function() {
-    // Clear any old cached data first
-    PreciseDiscountSystem.clearCachedDiscounts();
-    PreciseDiscountSystem.init();
+    // Only initialize discount logic, don't clear existing cart data
+    if (!window.BobbyCart || !window.BobbyCart.getItems) {
+        console.log('🎯 No existing cart system, initializing PreciseDiscountSystem');
+        PreciseDiscountSystem.init();
+    } else {
+        console.log('🎯 Existing cart system detected, PreciseDiscountSystem providing discount logic only');
+        // Just mark as initialized so discount methods are available
+        PreciseDiscountSystem.isInitialized = true;
+    }
 });
 
 // If DOM is already loaded
 if (document.readyState !== 'loading') {
-    // Clear any old cached data first
-    PreciseDiscountSystem.clearCachedDiscounts();
-    PreciseDiscountSystem.init();
+    // Only initialize discount logic, don't clear existing cart data
+    if (!window.BobbyCart || !window.BobbyCart.getItems) {
+        console.log('🎯 No existing cart system, initializing PreciseDiscountSystem');
+        PreciseDiscountSystem.init();
+    } else {
+        console.log('🎯 Existing cart system detected, PreciseDiscountSystem providing discount logic only');
+        // Just mark as initialized so discount methods are available
+        PreciseDiscountSystem.isInitialized = true;
+    }
 }
 
 console.log('🎯✅ Precise discount system loaded - only eligible products will be discounted');
