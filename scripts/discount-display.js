@@ -9,7 +9,12 @@ class DiscountDisplayManager {
     async init() {
         console.log('Initializing discount display system');
         await this.loadDiscounts();
-        this.createDiscountBanner();
+        
+        // Delay banner creation to ensure DOM is ready
+        setTimeout(() => {
+            this.createDiscountBanner();
+        }, 500);
+        
         this.updateProductDiscounts();
         
         // Listen for product updates to refresh discount displays
@@ -156,18 +161,54 @@ class DiscountDisplayManager {
         // Add styles
         this.addDiscountStyles();
         
-        // Insert banner below the navbar
-        const navbar = document.querySelector('.navbar');
-        if (navbar) {
-            navbar.parentNode.insertBefore(banner, navbar.nextSibling);
-        } else {
-            document.body.insertBefore(banner, document.body.firstChild);
-        }
+        // Wait for DOM to be ready and insert banner properly below navbar
+        this.insertBannerBelowNavbar(banner);
 
         // Add animation
         setTimeout(() => {
             banner.classList.add('show');
         }, 100);
+    }
+
+    insertBannerBelowNavbar(banner) {
+        // Try multiple selectors to find the navbar
+        const navbarSelectors = ['.navbar', 'nav', '.nav-container', '.navigation'];
+        let navbar = null;
+        
+        for (const selector of navbarSelectors) {
+            navbar = document.querySelector(selector);
+            if (navbar) break;
+        }
+        
+        if (navbar) {
+            // Find the next sibling or parent's next sibling to insert after
+            let insertionPoint = navbar.nextElementSibling;
+            if (insertionPoint) {
+                navbar.parentNode.insertBefore(banner, insertionPoint);
+            } else {
+                // If no next sibling, append after the navbar's parent
+                navbar.parentNode.appendChild(banner);
+            }
+            console.log('Banner inserted after navbar');
+        } else {
+            // Fallback: look for main content areas
+            const contentSelectors = ['#main-site', '.main-site', '#main-content', '.main-content', 'main'];
+            let contentArea = null;
+            
+            for (const selector of contentSelectors) {
+                contentArea = document.querySelector(selector);
+                if (contentArea) break;
+            }
+            
+            if (contentArea) {
+                contentArea.insertBefore(banner, contentArea.firstChild);
+                console.log('Banner inserted at top of main content');
+            } else {
+                // Last resort: insert at top of body
+                document.body.insertBefore(banner, document.body.firstChild);
+                console.log('Banner inserted at top of body');
+            }
+        }
     }
 
     addDiscountStyles() {
