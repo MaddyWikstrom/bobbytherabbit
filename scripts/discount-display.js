@@ -315,7 +315,7 @@ class DiscountDisplayManager {
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
-                margin: 0 0 20px 0;
+                margin: 100px 0 20px 0;
                 clear: both;
             }
 
