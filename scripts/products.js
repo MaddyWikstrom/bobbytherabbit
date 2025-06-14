@@ -1199,8 +1199,53 @@ class ProductManager {
         }, 500);
     }
 
+    // Get discount information for a product using precise discount system
+    getDiscountForProduct(product) {
+        if (!product || !product.title) {
+            return {
+                hasDiscount: false,
+                discount: 0,
+                salePrice: product?.price || 0,
+                originalPrice: product?.price || 0
+            };
+        }
+
+        const title = product.title.toLowerCase();
+        
+        // Check if product qualifies for discount (hoodies, sweatshirts, sweatpants)
+        const isEligible = title.includes('hoodie') ||
+                          title.includes('sweatshirt') ||
+                          title.includes('sweatpants');
+        
+        if (!isEligible) {
+            return {
+                hasDiscount: false,
+                discount: 0,
+                salePrice: product.price,
+                originalPrice: product.price
+            };
+        }
+
+        // Apply 12% discount
+        const discountPercent = 12;
+        const originalPrice = product.price;
+        const salePrice = originalPrice * (1 - discountPercent / 100);
+
+        return {
+            hasDiscount: true,
+            discount: discountPercent,
+            salePrice: salePrice,
+            originalPrice: originalPrice
+        };
+    }
+
     createProductCard(product) {
-        const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
+        // Get discount information using precise discount system
+        const discountInfo = this.getDiscountForProduct(product);
+        const discount = discountInfo.discount;
+        const salePrice = discountInfo.salePrice;
+        const originalPrice = discountInfo.originalPrice;
+        const hasDiscount = discountInfo.hasDiscount;
         
         // Store color-specific data for JavaScript handling
         // Ensure the color keys are strings, not objects
@@ -1260,7 +1305,8 @@ class ProductManager {
                     <!-- Product overlay removed to eliminate all popups -->
                     <div class="product-badges">
                         ${product.new ? '<span class="product-badge new">New</span>' : ''}
-                        ${product.sale ? `<span class="product-badge sale">-${discount}%</span>` : ''}
+                        ${hasDiscount ? `<span class="product-badge sale">-${discount}%</span>` : ''}
+                        ${product.sale && !hasDiscount ? `<span class="product-badge sale">Sale</span>` : ''}
                         ${product.featured ? '<span class="product-badge">Featured</span>' : ''}
                     </div>
                     <button class="wishlist-btn" data-product-id="${product.id}" title="Add to Wishlist">
@@ -1274,9 +1320,13 @@ class ProductManager {
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-title">${product.title}</h3>
                     <div class="product-price">
-                        <span class="price-current">$${product.price.toFixed(2)}</span>
-                        ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}
-                        ${product.sale ? `<span class="price-discount">-${discount}%</span>` : ''}
+                        ${hasDiscount ?
+                            `<span class="price-current sale-price">$${salePrice.toFixed(2)}</span>
+                             <span class="price-original">$${originalPrice.toFixed(2)}</span>
+                             <span class="price-discount">-${discount}%</span>` :
+                            `<span class="price-current">$${product.price.toFixed(2)}</span>
+                             ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}`
+                        }
                     </div>
                     ${product.colors.length > 0 ? `
                         <div class="product-variants">

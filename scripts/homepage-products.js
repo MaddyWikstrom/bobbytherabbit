@@ -102,6 +102,34 @@ class HomepageProductLoader {
         const hasVariants = product.variants.edges.length > 0;
         const firstVariant = hasVariants ? product.variants.edges[0].node : null;
         
+        // Check for discount eligibility using precise discount system
+        let discountInfo = null;
+        if (window.PreciseDiscountSystem && typeof window.PreciseDiscountSystem.getDiscountForProduct === 'function') {
+            discountInfo = window.PreciseDiscountSystem.getDiscountForProduct({ title: product.title, price: minPrice });
+        } else {
+            // Fallback: Check for discount patterns directly
+            const title = product.title.toLowerCase();
+            const discountTypes = ['hoodie', 'sweatshirt', 'sweatpants'];
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
+            
+            if (hasDiscountType) {
+                discountInfo = { percentage: 12, description: '12% off hoodies, sweatshirts & sweatpants' };
+            }
+        }
+        
+        // Calculate discounted price if applicable
+        let finalPrice = minPrice;
+        let originalPrice = minPrice;
+        let hasDiscount = false;
+        
+        if (discountInfo) {
+            originalPrice = minPrice;
+            finalPrice = minPrice * (1 - discountInfo.percentage / 100);
+            hasDiscount = true;
+            console.log(`🎯 Homepage: Applying ${discountInfo.percentage}% discount to ${product.title}`);
+            console.log(`🎯 Homepage: Original: $${originalPrice.toFixed(2)} → Sale: $${finalPrice.toFixed(2)}`);
+        }
+        
         // Check for compareAtPrice across all variants, not just the first one
         let compareAtPrice = null;
         if (hasVariants) {
@@ -200,11 +228,13 @@ class HomepageProductLoader {
         }
 
         const finalComparePrice = compareAtPrice && compareAtPrice > minPrice ? compareAtPrice : null;
-        const isOnSale = finalComparePrice !== null;
+        const isOnSale = finalComparePrice !== null || hasDiscount;
         
         // Debug logging for pricing
         console.log(`Product: ${product.title}`);
-        console.log(`  Price: $${minPrice}`);
+        console.log(`  Original Price: $${originalPrice}`);
+        console.log(`  Final Price: $${finalPrice}`);
+        console.log(`  Has Discount: ${hasDiscount}`);
         console.log(`  CompareAtPrice: ${compareAtPrice ? `$${compareAtPrice}` : 'null'}`);
         console.log(`  Final ComparePrice: ${finalComparePrice ? `$${finalComparePrice}` : 'null'}`);
         console.log(`  Is On Sale: ${isOnSale}`);
@@ -214,13 +244,16 @@ class HomepageProductLoader {
             title: product.title,
             description: this.cleanDescription(product.description),
             category: this.extractCategory(product.title),
-            price: minPrice,
+            price: finalPrice, // Use discounted price if applicable
+            originalPrice: hasDiscount ? originalPrice : null, // Store original price for discount display
             comparePrice: finalComparePrice,
             mainImage: mainImage,
             hoverImage: hoverImage,
             featured: product.tags.includes('featured'),
             new: product.tags.includes('new'),
             sale: isOnSale,
+            hasDiscount: hasDiscount,
+            discountPercentage: discountInfo ? discountInfo.percentage : null,
             shopifyId: product.id,
             handle: product.handle,
             colors: colors, // Add available colors
@@ -275,7 +308,13 @@ class HomepageProductLoader {
             return '';
         }
         
-        const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
+        // Calculate discount percentage - prioritize our discount system over comparePrice
+        let discount = 0;
+        if (product.hasDiscount && product.discountPercentage) {
+            discount = product.discountPercentage;
+        } else if (product.comparePrice) {
+            discount = Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100);
+        }
         
         // Get the first available color for the product (for data attributes)
         const firstColor = product.colors && product.colors.length > 0 ? product.colors[0] : '';
@@ -325,10 +364,13 @@ class HomepageProductLoader {
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-name">${product.title}</h3>
                     <div class="product-price">
-                        ${product.comparePrice ?
-                            `<span class="price-current">$${product.price.toFixed(2)}</span>
-                             <span class="original-price">$${product.comparePrice.toFixed(2)}</span>` :
-                            `<span class="price-current">$${product.price.toFixed(2)}</span>`
+                        ${product.hasDiscount ?
+                            `<span class="price-current sale-price">$${product.price.toFixed(2)}</span>
+                             <span class="original-price">$${product.originalPrice.toFixed(2)}</span>` :
+                            (product.comparePrice ?
+                                `<span class="price-current">$${product.price.toFixed(2)}</span>
+                                 <span class="original-price">$${product.comparePrice.toFixed(2)}</span>` :
+                                `<span class="price-current">$${product.price.toFixed(2)}</span>`)
                         }
                     </div>
                 </div>

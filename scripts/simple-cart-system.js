@@ -330,8 +330,14 @@ if (window.BobbyCartSystem) {
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
     
-    // Apply discount for BUNGI X BOBBY products
-    product = applyDiscountToProduct(product);
+    // Only apply discount if the product doesn't already have discount information
+    if (!product.hasDiscount) {
+      console.log('🔍 Cart: Product has no discount info, checking for discounts...');
+      product = applyDiscountToProduct(product);
+    } else {
+      console.log('✅ Cart: Product already has discount info, using provided data');
+      console.log(`✅ Cart: Sale price: $${product.price.toFixed(2)}, Original: $${(product.originalPrice || product.basePrice || product.price).toFixed(2)}`);
+    }
     
     // Check if we're receiving a real Shopify variant ID (starts with gid://)
     const isShopifyGID = product.id && typeof product.id === 'string' &&
