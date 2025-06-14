@@ -174,8 +174,7 @@ class DiscountDisplayManager {
                 <div class="discount-icon">🔥</div>
                 <div class="discount-text">
                     <span class="discount-title">${this.currentDiscount.title}</span>
-                    <span class="discount-description">${this.currentDiscount.description}</span>
-                    ${this.currentDiscount.code ? `<span class="discount-code">Code: ${this.currentDiscount.code}</span>` : ''}
+                    <span class="discount-description">${this.currentDiscount.description}${this.currentDiscount.code ? ` - Code: ${this.currentDiscount.code}` : ''}</span>
                 </div>
                 <div class="discount-cta">
                     <button class="discount-shop-btn" onclick="window.location.href='products.html'">
@@ -306,7 +305,7 @@ class DiscountDisplayManager {
                 background-size: 400% 400%;
                 animation: discountGradient 3s ease infinite;
                 color: white;
-                padding: 12px 0;
+                padding: 8px 0;
                 position: static;
                 display: block;
                 width: 100%;
@@ -315,7 +314,7 @@ class DiscountDisplayManager {
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
-                margin: 100px 0 20px 0;
+                margin: 80px 0 15px 0;
                 clear: both;
             }
 
@@ -370,31 +369,23 @@ class DiscountDisplayManager {
             .discount-text {
                 flex: 1;
                 display: flex;
-                flex-direction: column;
-                gap: 4px;
+                align-items: center;
+                gap: 15px;
             }
 
             .discount-title {
                 font-weight: 900;
-                font-size: 18px;
+                font-size: 16px;
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                white-space: nowrap;
             }
 
             .discount-description {
                 font-size: 14px;
                 opacity: 0.9;
-            }
-
-            .discount-code {
-                font-size: 12px;
-                background: rgba(255,255,255,0.2);
-                padding: 2px 8px;
-                border-radius: 12px;
-                display: inline-block;
-                margin-top: 2px;
-                font-weight: bold;
+                white-space: nowrap;
             }
 
             .discount-cta {
