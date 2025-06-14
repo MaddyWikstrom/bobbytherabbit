@@ -57,13 +57,23 @@ class ProductManager {
                         
                         // Process each product to match our format
                         this.products = products.map(product => {
+                            // Ensure we use the original API price, not any pre-discounted price
+                            let apiPrice = 0;
+                            if (product.originalPrice) {
+                                // Use original price if available
+                                apiPrice = parseFloat(product.originalPrice) || 0;
+                            } else if (product.price) {
+                                // Use the price from the API as the base price
+                                apiPrice = parseFloat(product.price) || 0;
+                            }
+                            
                             return {
                                 id: product.id,  // This is already the Shopify GID
                                 shopifyId: product.id,
                                 title: product.title || 'Unknown Product',
                                 description: this.cleanDescription(product.description || ''),
                                 category: this.extractCategory(product.title || product.productType || ''),
-                                price: parseFloat(product.price) || 0,
+                                price: apiPrice, // Use the API price as the base
                                 comparePrice: product.comparePrice ? parseFloat(product.comparePrice) : null,
                                 images: [product.image],
                                 mainImage: product.image || '',
@@ -72,7 +82,7 @@ class ProductManager {
                                 sizes: product.selectedSize ? [product.selectedSize] : [],
                                 featured: false,
                                 new: false,
-                                sale: product.comparePrice && parseFloat(product.price) < parseFloat(product.comparePrice),
+                                sale: product.comparePrice && apiPrice < parseFloat(product.comparePrice),
                                 tags: [],
                                 productType: '',
                                 colorImages: {},
