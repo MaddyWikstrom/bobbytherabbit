@@ -255,11 +255,53 @@ if (window.BobbyCartSystem) {
     }
   }
   
+  // Apply discount to BUNGI X BOBBY products
+  function applyDiscountToProduct(product) {
+    if (!product || !product.title) return product;
+    
+    const title = product.title.toLowerCase();
+    
+    // Only BUNGI X BOBBY products with these specific types
+    const isBungiProduct = title.includes('bungi x bobby');
+    
+    if (isBungiProduct) {
+      // Specific product types that should get discounts
+      const discountTypes = ['sweatshirt', 'joggers', 'hoodie'];
+      
+      // Check if this BUNGI X BOBBY product is one of the discount types
+      const hasDiscountType = discountTypes.some(type => title.includes(type));
+      
+      if (hasDiscountType) {
+        // Apply 12% discount
+        const originalPrice = product.price;
+        const discountedPrice = originalPrice * (1 - 12 / 100);
+        
+        console.log(`🎯 Applying 12% discount to cart item: ${product.title}`);
+        console.log(`🎯 Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
+        
+        // Create a copy of the product with discount applied
+        return {
+          ...product,
+          price: discountedPrice,
+          originalPrice: originalPrice,
+          hasDiscount: true,
+          discountPercentage: 12,
+          discountAmount: originalPrice - discountedPrice
+        };
+      }
+    }
+    
+    return product;
+  }
+  
   // Add an item to the cart
   function addItem(product) {
     if (!product || !product.id) return;
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
+    
+    // Apply discount for BUNGI X BOBBY products
+    product = applyDiscountToProduct(product);
     
     // Check if we're receiving a real Shopify variant ID (starts with gid://)
     const isShopifyGID = product.id && typeof product.id === 'string' &&
@@ -442,7 +484,14 @@ if (window.BobbyCartSystem) {
               <div class="cart-item-variant">${item.variant || (item.selectedColor && item.selectedSize) ?
                 `${item.selectedColor || ''} / ${item.selectedSize === 'One Size' ? 'OS' : item.selectedSize || ''}` :
                 ''}</div>
-              <div class="cart-item-price">$${(item.price).toFixed(2)}</div>
+              <div class="cart-item-price">
+                ${item.hasDiscount ?
+                  `<span class="discounted-price">$${(item.price).toFixed(2)}</span>
+                   <span class="original-price">$${(item.originalPrice).toFixed(2)}</span>
+                   <span class="discount-badge">${item.discountPercentage}% OFF</span>` :
+                  `$${(item.price).toFixed(2)}`
+                }
+              </div>
               <div class="cart-item-quantity">
                 <button class="quantity-decrease" data-item-id="${item.cartItemId}">-</button>
                 <span class="quantity-value">${item.quantity}</span>
@@ -794,6 +843,29 @@ if (window.BobbyCartSystem) {
         color: #a855f7;
         font-weight: bold;
         margin-bottom: 10px;
+      }
+      
+      .discounted-price {
+        color: #00ff88;
+        font-weight: bold;
+        font-size: 16px;
+      }
+      
+      .original-price {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 14px;
+        margin-left: 8px;
+      }
+      
+      .discount-badge {
+        background: #ff4444;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        margin-left: 8px;
       }
       
       .cart-item-quantity {
