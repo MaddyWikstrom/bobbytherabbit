@@ -114,60 +114,75 @@ class SubtleHoodieSale {
     return `${title}-${price}`.replace(/\s+/g, '-');
   }
 
-  // Apply to product detail pages - super aggressive approach
+  // Apply to product detail pages - fixed approach
   applyToProductDetail() {
-    // Check if page contains target product keywords
-    const pageText = document.body.textContent || document.body.innerText || '';
-    const isTargetPage = this.targetCategories.some(category => 
-      pageText.toLowerCase().includes(category.toLowerCase())
-    );
+    // Check if already processed
+    if (this.processedDetailPages.has('detail-page')) return 0;
 
-    if (!isTargetPage) return 0;
+    // Check if page contains target product keywords in MAIN title only (h1)
+    const mainTitle = document.querySelector('h1');
+    if (!mainTitle) return 0;
+    
+    const titleText = mainTitle.textContent || mainTitle.innerText || '';
+    console.log('🔍 Checking main product title:', titleText);
+    
+    if (!this.isTargetProduct(titleText)) {
+      console.log('❌ Not a target product:', titleText);
+      return 0;
+    }
+
+    console.log('✅ Target product confirmed:', titleText);
 
     let updatedCount = 0;
 
-    // Find ALL text nodes that look like prices
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      null,
-      false
-    );
+    // Find price elements more carefully - only main prices, not duplicates
+    const priceElements = document.querySelectorAll('.price, [class*="price"]:not(.subtle-price-display):not(.subtle-original-price):not(.subtle-sale-price):not(.subtle-savings)');
+    const processedPrices = new Set();
 
-    const priceNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-      const text = node.textContent.trim();
-      if (/^\$\d+(?:\.\d{2})?$/.test(text) && parseFloat(text.substring(1)) >= 10) {
-        priceNodes.push(node);
+    console.log(`📍 Found ${priceElements.length} price elements to check`);
+
+    for (const element of priceElements) {
+      // Skip if already processed or is our generated content
+      if (element.classList.contains('subtle-price-display') ||
+          element.classList.contains('has-subtle-sale') ||
+          element.classList.contains('subtle-original-price') ||
+          element.classList.contains('subtle-sale-price') ||
+          element.classList.contains('subtle-savings')) {
+        continue;
       }
-    }
 
-    // Process each price node
-    for (const textNode of priceNodes) {
-      const priceText = textNode.textContent.trim();
-      const priceMatch = priceText.match(/^\$(\d+(?:\.\d{2})?)$/);
+      const text = (element.textContent || '').trim();
+      const priceMatch = text.match(/^\$(\d+(?:\.\d{2})?)$/);
       
-      if (priceMatch) {
-        const currentPrice = parseFloat(priceMatch[1]);
-        const parentElement = textNode.parentElement;
+      if (priceMatch &&
+          !element.querySelector('*') && // No child elements
+          element.offsetParent !== null && // Visible
+          !processedPrices.has(priceMatch[1])) { // Not already processed this price
         
-        if (parentElement && 
-            !parentElement.classList.contains('subtle-price-display') &&
-            !parentElement.classList.contains('has-subtle-sale')) {
-          
+        const currentPrice = parseFloat(priceMatch[1]);
+        
+        // Only process reasonable prices
+        if (currentPrice >= 10 && currentPrice <= 1000) {
           // Add badge to body if not present
           if (!document.querySelector('.subtle-sale-badge')) {
             document.body.style.position = 'relative';
             document.body.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
           }
 
-          // Replace the parent element's content
-          parentElement.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
-          parentElement.classList.add('has-subtle-sale');
+          // Replace the element's content
+          element.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
+          element.classList.add('has-subtle-sale');
+          processedPrices.add(priceMatch[1]);
           updatedCount++;
+          
+          console.log(`💰 Applied discount to price: $${currentPrice}`);
         }
       }
+    }
+
+    if (updatedCount > 0) {
+      this.processedDetailPages.add('detail-page');
+      console.log(`✅ Applied discounts to ${updatedCount} price elements`);
     }
 
     return updatedCount;
@@ -234,6 +249,9 @@ class SubtleHoodieSale {
 
   // Initialize with optimized observer
   initialize() {
+    // Clear any previous processing to prevent duplicates
+    this.clearCache();
+    
     this.applyToTargetProducts();
     this.applyToProductDetail();
     this.applyToCartItems();
