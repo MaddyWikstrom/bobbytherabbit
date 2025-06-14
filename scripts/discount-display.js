@@ -306,7 +306,7 @@ class DiscountDisplayManager {
                 background-size: 400% 400%;
                 animation: discountGradient 3s ease infinite;
                 color: white;
-                padding: 8px 0;
+                padding: 12px 0;
                 position: static;
                 display: block;
                 width: 100%;
@@ -315,7 +315,7 @@ class DiscountDisplayManager {
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
-                margin: 0;
+                margin: 0 0 20px 0;
                 clear: both;
             }
 
