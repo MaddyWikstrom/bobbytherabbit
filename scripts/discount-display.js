@@ -14,26 +14,34 @@ class DiscountDisplayManager {
         
         // Delay product discount updates to ensure products are loaded
         setTimeout(() => {
+            console.log('🎯 Running first discount update...');
             this.updateProductDiscounts();
         }, 2000);
         
         setTimeout(() => {
+            console.log('🎯 Running second discount update...');
             this.updateProductDiscounts();
         }, 4000);
         
         // Listen for page changes to update product detail pages
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
+                console.log('🎯 Running DOMContentLoaded discount update...');
                 this.updateProductDiscounts();
             }, 1000);
         });
         
         // Also listen for product detail page loads
         if (window.location.pathname.includes('product')) {
+            console.log('🎯 Detected product page, setting up product detail pricing...');
             setTimeout(() => {
                 this.updateProductDetailPricing();
             }, 1500);
         }
+        
+        // Force immediate update for testing
+        console.log('🎯 Running immediate discount update...');
+        this.updateProductDiscounts();
     }
     
     setupPreciseDiscounts() {

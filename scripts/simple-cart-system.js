@@ -257,27 +257,38 @@ if (window.BobbyCartSystem) {
   
   // Apply discount to BUNGI X BOBBY products
   function applyDiscountToProduct(product) {
-    if (!product || !product.title) return product;
+    console.log(`🔍 Cart: Checking discount for product: "${product?.title}"`);
+    
+    if (!product || !product.title) {
+      console.log('❌ Cart: No product or title provided');
+      return product;
+    }
     
     const title = product.title.toLowerCase();
+    console.log(`🔍 Cart: Lowercase title: "${title}"`);
     
     // Only BUNGI X BOBBY products with these specific types
     const isBungiProduct = title.includes('bungi x bobby');
+    console.log(`🔍 Cart: Is BUNGI product: ${isBungiProduct}`);
     
     if (isBungiProduct) {
       // Specific product types that should get discounts
       const discountTypes = ['sweatshirt', 'joggers', 'hoodie'];
       
       // Check if this BUNGI X BOBBY product is one of the discount types
-      const hasDiscountType = discountTypes.some(type => title.includes(type));
+      const hasDiscountType = discountTypes.some(type => {
+        const hasType = title.includes(type);
+        console.log(`🔍 Cart: Checking for "${type}": ${hasType}`);
+        return hasType;
+      });
       
       if (hasDiscountType) {
         // Apply 12% discount
         const originalPrice = product.price;
         const discountedPrice = originalPrice * (1 - 12 / 100);
         
-        console.log(`🎯 Applying 12% discount to cart item: ${product.title}`);
-        console.log(`🎯 Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
+        console.log(`✅ Cart: Applying 12% discount to: ${product.title}`);
+        console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
         
         // Create a copy of the product with discount applied
         return {
@@ -288,7 +299,11 @@ if (window.BobbyCartSystem) {
           discountPercentage: 12,
           discountAmount: originalPrice - discountedPrice
         };
+      } else {
+        console.log(`❌ Cart: BUNGI product but not eligible type: ${product.title}`);
       }
+    } else {
+      console.log(`❌ Cart: Not a BUNGI product: ${product.title}`);
     }
     
     return product;
