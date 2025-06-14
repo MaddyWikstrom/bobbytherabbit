@@ -18,7 +18,16 @@ class DiscountDisplayManager {
         // Delay product discount updates to ensure products are loaded
         setTimeout(() => {
             this.updateProductDiscounts();
-        }, 3000);
+        }, 4000);
+        
+        // Add additional triggers for product pricing updates
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 6000);
+        
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 8000);
         
         // Listen for product updates to refresh discount displays
         document.addEventListener('productDetailRendered', () => {
@@ -589,14 +598,45 @@ class DiscountDisplayManager {
     updateHomepageProductPricing() {
         // Wait a bit for products to load
         setTimeout(() => {
-            console.log('Updating homepage product pricing...');
+            console.log('=== UPDATING HOMEPAGE PRODUCT PRICING ===');
             
-            // Update homepage product cards
-            const productCards = document.querySelectorAll('#homepage-products .product-card');
-            console.log(`Found ${productCards.length} product cards to check for pricing`);
+            // Try multiple selectors to find product cards
+            const selectors = [
+                '#homepage-products .product-card',
+                '.product-card',
+                '.product-item',
+                '.product'
+            ];
+            
+            let productCards = [];
+            for (const selector of selectors) {
+                productCards = document.querySelectorAll(selector);
+                if (productCards.length > 0) {
+                    console.log(`Found ${productCards.length} product cards using selector: ${selector}`);
+                    break;
+                }
+            }
+            
+            if (productCards.length === 0) {
+                console.log('No product cards found with any selector');
+                return;
+            }
             
             productCards.forEach((card, index) => {
-                const priceContainer = card.querySelector('.product-price');
+                console.log(`\n--- Processing Card ${index} ---`);
+                
+                // Try multiple selectors for price containers
+                const priceSelectors = ['.product-price', '.price', '.product-pricing', '.price-container'];
+                let priceContainer = null;
+                
+                for (const selector of priceSelectors) {
+                    priceContainer = card.querySelector(selector);
+                    if (priceContainer) {
+                        console.log(`Card ${index}: Found price container with selector: ${selector}`);
+                        break;
+                    }
+                }
+                
                 if (!priceContainer) {
                     console.log(`Card ${index}: No price container found`);
                     return;
@@ -608,49 +648,85 @@ class DiscountDisplayManager {
                     return;
                 }
                 
-                // Look for existing price elements in the current structure
-                const originalPriceSpan = priceContainer.querySelector('.original-price');
+                // Log the current price container content
+                console.log(`Card ${index}: Price container HTML:`, priceContainer.innerHTML);
+                console.log(`Card ${index}: Price container text:`, priceContainer.textContent);
                 
-                if (originalPriceSpan) {
-                    console.log(`Card ${index}: Found original price span, product has discount`);
+                // Look for existing price elements in various structures
+                const originalPriceSpan = priceContainer.querySelector('.original-price') ||
+                                        priceContainer.querySelector('.compare-price') ||
+                                        priceContainer.querySelector('.was-price');
+                
+                const currentPriceSpan = priceContainer.querySelector('.current-price') ||
+                                       priceContainer.querySelector('.sale-price') ||
+                                       priceContainer.querySelector('.now-price');
+                
+                if (originalPriceSpan || currentPriceSpan) {
+                    console.log(`Card ${index}: Found price spans - original:`, originalPriceSpan?.textContent, 'current:', currentPriceSpan?.textContent);
                     
                     // Extract prices from the existing structure
                     const priceText = priceContainer.textContent;
                     const priceMatches = priceText.match(/\$(\d+\.?\d*)/g);
                     
+                    console.log(`Card ${index}: Price matches found:`, priceMatches);
+                    
                     if (priceMatches && priceMatches.length >= 2) {
                         const currentPrice = parseFloat(priceMatches[0].replace('$', ''));
                         const originalPrice = parseFloat(priceMatches[1].replace('$', ''));
                         
-                        console.log(`Card ${index}: Current: $${currentPrice}, Original: $${originalPrice}`);
+                        console.log(`Card ${index}: Parsed - Current: $${currentPrice}, Original: $${originalPrice}`);
                         
                         if (originalPrice > currentPrice) {
                             // Calculate discount percentage
                             const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
                             
-                            console.log(`Card ${index}: Applying ${discountPercent}% discount styling`);
+                            console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling`);
                             
                             // Update the price display with Bobby theme styling
                             priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
                             
                             // Add enhanced pricing styles
                             this.addEnhancedPricingStyles();
+                        } else {
+                            console.log(`Card ${index}: No discount (original <= current)`);
                         }
+                    } else {
+                        console.log(`Card ${index}: Could not extract prices from text`);
                     }
                 } else {
-                    console.log(`Card ${index}: No discount found (no original-price span)`);
+                    console.log(`Card ${index}: No discount indicators found (no original-price or compare-price spans)`);
+                    
+                    // Try to detect if there are multiple prices in the text anyway
+                    const priceText = priceContainer.textContent;
+                    const priceMatches = priceText.match(/\$(\d+\.?\d*)/g);
+                    
+                    if (priceMatches && priceMatches.length >= 2) {
+                        console.log(`Card ${index}: Found multiple prices in text, attempting to apply discount styling`);
+                        const price1 = parseFloat(priceMatches[0].replace('$', ''));
+                        const price2 = parseFloat(priceMatches[1].replace('$', ''));
+                        
+                        // Assume first price is current, second is original
+                        if (price2 > price1) {
+                            const discountPercent = Math.round(((price2 - price1) / price2) * 100);
+                            console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling (detected from multiple prices)`);
+                            priceContainer.innerHTML = this.renderSalePrice(price1, price2, discountPercent);
+                            this.addEnhancedPricingStyles();
+                        }
+                    }
                 }
             });
-        }, 2000); // Wait 2 seconds for products to load
+            
+            console.log('=== FINISHED UPDATING HOMEPAGE PRODUCT PRICING ===\n');
+        }, 1000);
         
         // Also set up a mutation observer to catch dynamically loaded products
-        const homepageContainer = document.getElementById('homepage-products');
+        const homepageContainer = document.getElementById('homepage-products') || document.querySelector('.products-grid') || document.querySelector('.product-grid');
         if (homepageContainer) {
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                         console.log('New products detected, updating pricing...');
-                        setTimeout(() => this.updateHomepageProductPricing(), 500);
+                        setTimeout(() => this.updateHomepageProductPricing(), 1000);
                     }
                 });
             });
