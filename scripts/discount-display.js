@@ -20,6 +20,20 @@ class DiscountDisplayManager {
         setTimeout(() => {
             this.updateProductDiscounts();
         }, 4000);
+        
+        // Listen for page changes to update product detail pages
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                this.updateProductDiscounts();
+            }, 1000);
+        });
+        
+        // Also listen for product detail page loads
+        if (window.location.pathname.includes('product')) {
+            setTimeout(() => {
+                this.updateProductDetailPricing();
+            }, 1500);
+        }
     }
     
     setupPreciseDiscounts() {
@@ -577,6 +591,9 @@ class DiscountDisplayManager {
         // Update product pricing display (using precise logic)
         this.updatePreciseProductPricing();
         
+        // Update product detail pages with precise logic
+        this.updateProductDetailPricing();
+        
         // Add savings info to product detail pages
         this.addProductSavingsInfo();
     }
@@ -640,6 +657,46 @@ class DiscountDisplayManager {
         });
         
         console.log('✅ Precise product pricing update complete');
+    }
+    
+    updateProductDetailPricing() {
+        console.log('🎯 Updating product detail page pricing with PRECISE logic...');
+        
+        // Check if we're on a product detail page
+        const productTitle = document.querySelector('.product-title, .product-name, h1')?.textContent?.trim();
+        if (!productTitle) {
+            return;
+        }
+        
+        // Check if this specific product should have a discount
+        const discount = this.shouldHaveDiscount(productTitle);
+        
+        if (discount) {
+            console.log(`🎯 Applying ${discount.percentage}% discount to product detail page: ${productTitle}`);
+            
+            // Find the price container on product detail page
+            const priceContainer = document.querySelector('.price-container, .product-price, .price');
+            if (priceContainer && !priceContainer.querySelector('.sale-price-enhanced')) {
+                
+                // Extract current price
+                const priceText = priceContainer.textContent;
+                const priceMatch = priceText.match(/\$([0-9.]+)/);
+                
+                if (priceMatch) {
+                    const currentPrice = parseFloat(priceMatch[1]);
+                    // Calculate original price (current price is already discounted)
+                    const originalPrice = currentPrice / (1 - discount.percentage / 100);
+                    
+                    // Update the price display with enhanced styling
+                    priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discount.percentage);
+                    this.addEnhancedPricingStyles();
+                    
+                    console.log(`✅ Applied ${discount.percentage}% discount to product detail page`);
+                }
+            }
+        } else {
+            console.log(`ℹ️ No discount applied to product detail page: ${productTitle}`);
+        }
     }
 
     addProductDiscountBadges() {
