@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" data-netlify="true">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bungi x Bobby | The Tech Animal Collection</title>
+    
+    <!-- Critical Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.shopify.com">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
+    
+    <!-- Critical CSS Inline -->
+    <style>
+        /* Critical above-the-fold styles */
+        body { margin: 0; font-family: 'Rajdhani', sans-serif; background: #0a0a0a; color: #fff; overflow-x: hidden; }
+        .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .loading-container { text-align: center; }
+        .loading-logo { max-width: 200px; height: auto; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+        .hidden { display: none !important; }
+        .main-site { min-height: 100vh; }
+        .navbar { position: fixed; top: 0; width: 100%; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); z-index: 1000; padding: 1rem 0; }
+        .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+        .nav-logo { display: flex; align-items: center; gap: 1rem; }
+        .nav-logo-img { height: 40px; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: #00ff88; }
+        .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; gap: 2rem; }
+        .nav-link { color: #fff; text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-link:hover { color: #00ff88; }
+        .cart-btn { background: #00ff88; border: none; padding: 0.5rem 1rem; border-radius: 5px; color: #000; font-weight: 600; cursor: pointer; }
+        .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding-top: 80px; }
+        .hero-title { font-size: 4rem; margin-bottom: 1rem; color: #00ff88; }
+        .subtitle { display: block; font-size: 1.5rem; color: #fff; margin-top: 0.5rem; }
+        .cta-btn { background: linear-gradient(45deg, #00ff88, #00cc6a); border: none; padding: 1rem 2rem; font-size: 1.2rem; font-weight: 600; color: #000; border-radius: 5px; cursor: pointer; margin-top: 2rem; }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .hero-title { font-size: 2.5rem; }
+            .nav-container { padding: 0 1rem; }
+        }
+    </style>
+    
+    <!-- Non-critical CSS loaded asynchronously -->
+    <link rel="preload" href="styles/main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="styles/loading.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="styles/animations.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="styles/main.css">
+        <link rel="stylesheet" href="styles/loading.css">
+        <link rel="stylesheet" href="styles/animations.css">
+    </noscript>
+    
+    <!-- Fonts loaded with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-container">
+            <img src="assets/bobby-logo.svg" alt="BUNGI X BOBBY" class="loading-logo">
+            <div class="loading-text">INITIALIZING...</div>
+        </div>
+    </div>
+
+    <!-- Main Website -->
+    <div id="main-site" class="main-site hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="assets/bobby-logo.svg" alt="Bobby" class="nav-logo-img">
+                    <span class="nav-brand">BUNGI X BOBBY</span>
+                </div>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="#home" class="nav-link">HOME</a></li>
+                    <li><a href="products.html" class="nav-link">SHOP</a></li>
+                    <li><a href="#collection" class="nav-link">COLLECTION</a></li>
+                    <li><a href="#about" class="nav-link">ABOUT</a></li>
+                    <li><a href="#contact" class="nav-link">CONTACT</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="cart-btn" id="cart-btn">
+                        🛒 <span class="cart-count">0</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    BUNGI X BOBBY
+                    <span class="subtitle">THE TECH ANIMAL COLLECTION</span>
+                </h1>
+                <p class="hero-description">
+                    Tech animal of the elite GooberMcGeet club
+                </p>
+                <button class="cta-btn" onclick="window.location.href='products.html'">
+                    EXPLORE COLLECTION
+                </button>
+            </div>
+        </section>
+
+        <!-- Collection Section -->
+        <section id="collection" class="collection">
+            <h2 class="section-title">COLLECTION</h2>
+            <div class="container">
+                <div class="product-grid-scroll" id="homepage-products">
+                    <div class="loading-products">
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+                <div class="view-all-container">
+                    <button class="view-all-btn" onclick="window.location.href='products.html'">
+                        VIEW ALL PRODUCTS
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <h2 class="section-title">ABOUT BOBBY</h2>
+                        <p class="about-description">
+                            In the neon-lit streets of the digital underground, Bobby the Rabbit reigns supreme as the ultimate Tech Animal of the elite GooberMcGeet Club. This collection isn't just fashion – it's Bobby's world, brought to life.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3 class="footer-title">BUNGI X BOBBY</h3>
+                        <p class="footer-text">Tech animal of the elite GooberMcGeet club</p>
+                    </div>
+                    <div class="footer-section">
+                        <h3 class="footer-title">CONTACT</h3>
+                        <p class="footer-text">bungi.bobby@gmail.com</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p class="copyright">© 2025 BUNGI X BOBBY. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Cart Sidebar (will be populated by cart system) -->
+    <div id="cart-sidebar" class="cart-sidebar"></div>
+    <div id="cart-overlay" class="cart-overlay"></div>
+
+    <!-- Performance-Optimized JavaScript Loading -->
+    <script>
+        // Critical performance optimizations
+        window.performance = window.performance || {};
+        window.performance.mark = window.performance.mark || function() {};
+        
+        // Mark start of script loading
+        performance.mark('scripts-start');
+        
+        // Optimized loading screen with minimal JavaScript
+        function showMainSite() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const mainSite = document.getElementById('main-site');
+            
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease';
+            
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainSite.classList.remove('hidden');
+                performance.mark('site-visible');
+            }, 500);
+        }
+        
+        // Minimal cart system for immediate functionality
+        window.BobbyCart = {
+            items: JSON.parse(localStorage.getItem('bobby-cart') || '[]'),
+            
+            updateCount() {
+                const countEl = document.querySelector('.cart-count');
+                if (countEl) {
+                    countEl.textContent = this.items.reduce((sum, item) => sum + item.quantity, 0);
+                }
+            },
+            
+            openCart() {
+                // Load full cart system on demand
+                if (!window.fullCartLoaded) {
+                    this.loadFullCartSystem();
+                }
+                
+                const sidebar = document.getElementById('cart-sidebar');
+                const overlay = document.getElementById('cart-overlay');
+                if (sidebar) {
+                    sidebar.classList.add('active');
+                    overlay.classList.add('active');
+                }
+            },
+            
+            loadFullCartSystem() {
+                // Load cart scripts only when needed
+                const scripts = [
+                    'scripts/simple-cart-system.js',
+                    'scripts/shopify-integration.js'
+                ];
+                
+                scripts.forEach((src, index) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = true;
+                    if (index === scripts.length - 1) {
+                        script.onload = () => {
+                            window.fullCartLoaded = true;
+                            performance.mark('cart-loaded');
+                        };
+                    }
+                    document.head.appendChild(script);
+                });
+            }
+        };
+        
+        // Initialize immediately
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update cart count
+            BobbyCart.updateCount();
+            
+            // Setup cart button
+            const cartBtn = document.getElementById('cart-btn');
+            if (cartBtn) {
+                cartBtn.addEventListener('click', () => BobbyCart.openCart());
+            }
+            
+            // Show site quickly
+            setTimeout(showMainSite, 800);
+            
+            // Load non-critical scripts after main content is visible
+            setTimeout(() => {
+                loadNonCriticalScripts();
+            }, 1000);
+        });
+        
+        // Load non-critical scripts asynchronously
+        function loadNonCriticalScripts() {
+            const nonCriticalScripts = [
+                'styles/homepage-products.css',
+                'styles/cart-styles.css',
+                'styles/quick-view.css',
+                'styles/mobile-optimizations.css',
+                'scripts/homepage-products.js',
+                'scripts/animations.js',
+                'scripts/mobile-navigation.js'
+            ];
+            
+            nonCriticalScripts.forEach(src => {
+                if (src.endsWith('.css')) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = src;
+                    document.head.appendChild(link);
+                } else {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = true;
+                    document.head.appendChild(script);
+                }
+            });
+            
+            performance.mark('non-critical-loaded');
+        }
+        
+        // Performance monitoring
+        window.addEventListener('load', function() {
+            performance.mark('page-loaded');
+            
+            // Log performance metrics
+            setTimeout(() => {
+                const navigation = performance.getEntriesByType('navigation')[0];
+                console.log('Performance Metrics:', {
+                    'DOM Content Loaded': navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+                    'Load Complete': navigation.loadEventEnd - navigation.loadEventStart,
+                    'Total Load Time': navigation.loadEventEnd - navigation.fetchStart
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,21 +1,99 @@
 // Discount Display System for Bobby Streetwear
 class DiscountDisplayManager {
     constructor() {
+        console.log('🎯 Initializing PRECISE Discount Display Manager');
         this.discounts = [];
         this.currentDiscount = null;
         this.init();
     }
 
     async init() {
-        console.log('Initializing discount display system');
-        await this.loadDiscounts();
+        console.log('🎯 Initializing precise discount display system');
+        // Skip loading external discounts, use our precise logic instead
+        this.setupPreciseDiscounts();
         
-        // Delay banner creation to ensure DOM is ready
+        // Delay product discount updates to ensure products are loaded
+        setTimeout(() => {
+            console.log('🎯 Running first discount update...');
+            this.updateProductDiscounts();
+        }, 2000);
+        
+        setTimeout(() => {
+            console.log('🎯 Running second discount update...');
+            this.updateProductDiscounts();
+        }, 4000);
+        
+        // Listen for page changes to update product detail pages
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                console.log('🎯 Running DOMContentLoaded discount update...');
+                this.updateProductDiscounts();
+            }, 1000);
+        });
+        
+        // Also listen for product detail page loads
+        if (window.location.pathname.includes('product')) {
+            console.log('🎯 Detected product page, setting up product detail pricing...');
+            setTimeout(() => {
+                this.updateProductDetailPricing();
+            }, 1500);
+        }
+        
+        // Force immediate update for testing
+        console.log('🎯 Running immediate discount update...');
+        this.updateProductDiscounts();
+    }
+    
+    setupPreciseDiscounts() {
+        // Use the same precise logic as PreciseDiscountSystem
+        console.log('🎯 Setting up precise discount rules for product tiles');
+    }
+    
+    // Check if product should have discount (same logic as cart system)
+    shouldHaveDiscount(productTitle) {
+        if (!productTitle) return false;
+        
+        const title = productTitle.toLowerCase();
+        
+        // Only BUNGI X BOBBY products with these specific types
+        const isBungiProduct = title.includes('bungi x bobby');
+        
+        if (isBungiProduct) {
+            // Specific product types that should get discounts
+            const discountTypes = [
+                'sweatshirt',
+                'joggers',
+                'hoodie'
+            ];
+            
+            // Check if this BUNGI X BOBBY product is one of the discount types
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
+            
+            if (hasDiscountType) {
+                return { percentage: 12, description: '12% off BUNGI X BOBBY collection' };
+            }
+        }
+        
+        return null; // No discount for other items
+        
+        // Delay banner creation to ensure DOM is ready and navbar animation is complete
         setTimeout(() => {
             this.createDiscountBanner();
-        }, 500);
+        }, 2000); // Increased delay to wait for navbar animation
         
-        this.updateProductDiscounts();
+        // Delay product discount updates to ensure products are loaded
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 4000);
+        
+        // Add additional triggers for product pricing updates
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 6000);
+        
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 8000);
         
         // Listen for product updates to refresh discount displays
         document.addEventListener('productDetailRendered', () => {
@@ -32,6 +110,24 @@ class DiscountDisplayManager {
                 this.updateProductDiscounts();
             }, 2000);
         });
+        
+        // Also listen for when homepage products are specifically loaded
+        if (window.homepageProductLoader) {
+            // If homepage loader already exists, trigger update
+            setTimeout(() => {
+                this.updateProductDiscounts();
+            }, 4000);
+        } else {
+            // Wait for homepage loader to be created
+            const checkForLoader = setInterval(() => {
+                if (window.homepageProductLoader) {
+                    clearInterval(checkForLoader);
+                    setTimeout(() => {
+                        this.updateProductDiscounts();
+                    }, 1000);
+                }
+            }, 500);
+        }
     }
 
     async loadDiscounts() {
@@ -144,8 +240,7 @@ class DiscountDisplayManager {
                 <div class="discount-icon">🔥</div>
                 <div class="discount-text">
                     <span class="discount-title">${this.currentDiscount.title}</span>
-                    <span class="discount-description">${this.currentDiscount.description}</span>
-                    ${this.currentDiscount.code ? `<span class="discount-code">Code: ${this.currentDiscount.code}</span>` : ''}
+                    <span class="discount-description">${this.currentDiscount.description}${this.currentDiscount.code ? ` - Code: ${this.currentDiscount.code}` : ''}</span>
                 </div>
                 <div class="discount-cta">
                     <button class="discount-shop-btn" onclick="window.location.href='products.html'">
@@ -171,44 +266,96 @@ class DiscountDisplayManager {
     }
 
     insertBannerBelowNavbar(banner) {
-        // Try multiple selectors to find the navbar
-        const navbarSelectors = ['.navbar', 'nav', '.nav-container', '.navigation'];
-        let navbar = null;
-        
-        for (const selector of navbarSelectors) {
-            navbar = document.querySelector(selector);
-            if (navbar) break;
-        }
-        
-        if (navbar) {
-            // Find the next sibling or parent's next sibling to insert after
-            let insertionPoint = navbar.nextElementSibling;
-            if (insertionPoint) {
-                navbar.parentNode.insertBefore(banner, insertionPoint);
-            } else {
-                // If no next sibling, append after the navbar's parent
-                navbar.parentNode.appendChild(banner);
-            }
-            console.log('Banner inserted after navbar');
-        } else {
-            // Fallback: look for main content areas
-            const contentSelectors = ['#main-site', '.main-site', '#main-content', '.main-content', 'main'];
-            let contentArea = null;
+        // Wait for navbar animation to complete
+        this.waitForNavbarAnimation(() => {
+            console.log('Navbar animation complete, inserting banner...');
             
-            for (const selector of contentSelectors) {
-                contentArea = document.querySelector(selector);
-                if (contentArea) break;
+            // First, try to find the main site container
+            const mainSite = document.getElementById('main-site');
+            if (mainSite) {
+                console.log('Found main-site container');
+                
+                // Look for navbar within main-site
+                const navbar = mainSite.querySelector('.navbar');
+                if (navbar) {
+                    console.log('Found navbar inside main-site, inserting banner after it');
+                    
+                    // Insert banner right after the navbar
+                    if (navbar.nextElementSibling) {
+                        mainSite.insertBefore(banner, navbar.nextElementSibling);
+                    } else {
+                        mainSite.appendChild(banner);
+                    }
+                    
+                    console.log('Banner successfully inserted after navbar in main-site');
+                    return;
+                }
+                
+                // If no navbar found in main-site, insert at the beginning
+                console.log('No navbar found in main-site, inserting at beginning');
+                mainSite.insertBefore(banner, mainSite.firstChild);
+                console.log('Banner inserted at beginning of main-site');
+                return;
             }
             
-            if (contentArea) {
-                contentArea.insertBefore(banner, contentArea.firstChild);
-                console.log('Banner inserted at top of main content');
-            } else {
-                // Last resort: insert at top of body
-                document.body.insertBefore(banner, document.body.firstChild);
-                console.log('Banner inserted at top of body');
+            // Fallback: try to find navbar anywhere in the document
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                console.log('Found navbar in document, inserting banner after it');
+                
+                // Insert banner after navbar
+                if (navbar.nextElementSibling) {
+                    navbar.parentNode.insertBefore(banner, navbar.nextElementSibling);
+                } else {
+                    navbar.parentNode.appendChild(banner);
+                }
+                
+                console.log('Banner inserted after navbar');
+                return;
             }
-        }
+            
+            // Last resort: insert at top of body
+            console.log('No navbar found, inserting at top of body');
+            document.body.insertBefore(banner, document.body.firstChild);
+            console.log('Banner inserted at top of body as fallback');
+        });
+    }
+
+    waitForNavbarAnimation(callback) {
+        // Wait for navbar to be present and animation to complete
+        let attempts = 0;
+        const maxAttempts = 20; // 4 seconds max wait time
+        
+        const checkNavbar = () => {
+            attempts++;
+            const navbar = document.querySelector('.navbar');
+            
+            if (navbar) {
+                // Check if navbar has finished animating by checking its computed styles
+                const computedStyle = window.getComputedStyle(navbar);
+                const transform = computedStyle.transform;
+                const opacity = computedStyle.opacity;
+                
+                console.log(`Navbar check ${attempts}: transform=${transform}, opacity=${opacity}`);
+                
+                // If navbar is visible and not being transformed, animation is likely complete
+                if (opacity === '1' && (transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)')) {
+                    console.log('Navbar animation appears complete');
+                    callback();
+                    return;
+                }
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(checkNavbar, 200);
+            } else {
+                console.log('Max attempts reached, proceeding with banner insertion');
+                callback();
+            }
+        };
+        
+        // Start checking after initial delay
+        setTimeout(checkNavbar, 500);
     }
 
     addDiscountStyles() {
@@ -225,13 +372,16 @@ class DiscountDisplayManager {
                 animation: discountGradient 3s ease infinite;
                 color: white;
                 padding: 8px 0;
-                position: relative;
+                position: static;
+                display: block;
                 width: 100%;
-                z-index: 1000;
+                z-index: 10;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
+                margin: 60px 0 15px 0;
+                clear: both;
             }
 
             .discount-banner.show {
@@ -285,31 +435,23 @@ class DiscountDisplayManager {
             .discount-text {
                 flex: 1;
                 display: flex;
-                flex-direction: column;
-                gap: 4px;
+                align-items: center;
+                gap: 15px;
             }
 
             .discount-title {
                 font-weight: 900;
-                font-size: 18px;
+                font-size: 16px;
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                white-space: nowrap;
             }
 
             .discount-description {
                 font-size: 14px;
                 opacity: 0.9;
-            }
-
-            .discount-code {
-                font-size: 12px;
-                background: rgba(255,255,255,0.2);
-                padding: 2px 8px;
-                border-radius: 12px;
-                display: inline-block;
-                margin-top: 2px;
-                font-weight: bold;
+                white-space: nowrap;
             }
 
             .discount-cta {
@@ -451,42 +593,155 @@ class DiscountDisplayManager {
     }
 
     updateProductDiscounts() {
-        // Add discount badges to product cards
+        // Add discount badges to product cards (using precise logic)
         this.addProductDiscountBadges();
         
-        // Update product pricing display
-        this.updateProductPricing();
+        // Update product pricing display (using precise logic)
+        this.updatePreciseProductPricing();
+        
+        // Update product detail pages with precise logic
+        this.updateProductDetailPricing();
         
         // Add savings info to product detail pages
         this.addProductSavingsInfo();
     }
+    
+    updatePreciseProductPricing() {
+        console.log('🎯 Updating product pricing with PRECISE logic...');
+        
+        const productCards = document.querySelectorAll('.product-card, .related-product');
+        
+        productCards.forEach((card, index) => {
+            try {
+                // Get product title
+                const titleElement = card.querySelector('.product-title, .product-name, h3, h2');
+                const productTitle = titleElement ? titleElement.textContent.trim() : '';
+                
+                // Check if this specific product should have a discount
+                const discount = this.shouldHaveDiscount(productTitle);
+                
+                const priceContainer = card.querySelector('.product-price, .price-container, .price');
+                if (!priceContainer) {
+                    return;
+                }
+                
+                if (discount) {
+                    console.log(`🎯 Applying ${discount.percentage}% discount pricing to: ${productTitle}`);
+                    
+                    // Check if already has enhanced pricing
+                    if (priceContainer.querySelector('.sale-price-enhanced')) {
+                        return;
+                    }
+                    
+                    // Extract current price
+                    const priceText = priceContainer.textContent;
+                    const priceMatch = priceText.match(/\$([0-9.]+)/);
+                    
+                    if (priceMatch) {
+                        const originalPrice = parseFloat(priceMatch[1]);
+                        // Calculate discounted price (subtract 12% from original)
+                        const discountedPrice = originalPrice * (1 - discount.percentage / 100);
+                        
+                        // Update the price display with enhanced styling
+                        priceContainer.innerHTML = this.renderSalePrice(discountedPrice, originalPrice, discount.percentage);
+                        this.addEnhancedPricingStyles();
+                    }
+                } else {
+                    // Remove any existing enhanced pricing from non-eligible products
+                    const enhancedPricing = priceContainer.querySelector('.price-display-enhanced');
+                    if (enhancedPricing) {
+                        console.log(`🗑️ Removing discount pricing from: ${productTitle}`);
+                        // Restore original price display
+                        const priceText = priceContainer.textContent;
+                        const priceMatch = priceText.match(/\$([0-9.]+)/);
+                        if (priceMatch) {
+                            priceContainer.innerHTML = `$${priceMatch[1]}`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error processing card ${index}:`, error);
+            }
+        });
+        
+        console.log('✅ Precise product pricing update complete');
+    }
+    
+    updateProductDetailPricing() {
+        console.log('🎯 Updating product detail page pricing with PRECISE logic...');
+        
+        // Check if we're on a product detail page
+        const productTitle = document.querySelector('.product-title, .product-name, h1')?.textContent?.trim();
+        if (!productTitle) {
+            return;
+        }
+        
+        // Check if this specific product should have a discount
+        const discount = this.shouldHaveDiscount(productTitle);
+        
+        if (discount) {
+            console.log(`🎯 Applying ${discount.percentage}% discount to product detail page: ${productTitle}`);
+            
+            // Find the price container on product detail page
+            const priceContainer = document.querySelector('.price-container, .product-price, .price');
+            if (priceContainer && !priceContainer.querySelector('.sale-price-enhanced')) {
+                
+                // Extract current price
+                const priceText = priceContainer.textContent;
+                const priceMatch = priceText.match(/\$([0-9.]+)/);
+                
+                if (priceMatch) {
+                    const originalPrice = parseFloat(priceMatch[1]);
+                    // Calculate discounted price (subtract 12% from original)
+                    const discountedPrice = originalPrice * (1 - discount.percentage / 100);
+                    
+                    // Update the price display with enhanced styling
+                    priceContainer.innerHTML = this.renderSalePrice(discountedPrice, originalPrice, discount.percentage);
+                    this.addEnhancedPricingStyles();
+                    
+                    console.log(`✅ Applied ${discount.percentage}% discount to product detail page`);
+                }
+            }
+        } else {
+            console.log(`ℹ️ No discount applied to product detail page: ${productTitle}`);
+        }
+    }
 
     addProductDiscountBadges() {
-        // Find all product cards and add discount badges if they have sales
+        // Find all product cards and add discount badges ONLY for BUNGI X BOBBY products
         const productCards = document.querySelectorAll('.product-card, .related-product');
         
         productCards.forEach(card => {
-            // Check if product has a sale badge already
-            const existingSaleBadge = card.querySelector('.product-badge.sale');
-            if (existingSaleBadge && !card.querySelector('.product-discount-badge')) {
-                // Extract discount percentage from existing sale badge
-                const discountText = existingSaleBadge.textContent;
-                const discountMatch = discountText.match(/-(\d+)%/);
-                
-                if (discountMatch) {
-                    const discountPercent = discountMatch[1];
+            // Get product title
+            const titleElement = card.querySelector('.product-title, .product-name, h3, h2');
+            const productTitle = titleElement ? titleElement.textContent.trim() : '';
+            
+            // Check if this specific product should have a discount
+            const discount = this.shouldHaveDiscount(productTitle);
+            
+            if (discount) {
+                // Only add badge if it doesn't already exist
+                if (!card.querySelector('.product-discount-badge')) {
+                    console.log(`🎯 Adding discount badge to: ${productTitle}`);
                     
                     // Create enhanced discount badge
                     const discountBadge = document.createElement('div');
                     discountBadge.className = 'product-discount-badge';
-                    discountBadge.textContent = `SAVE ${discountPercent}%`;
+                    discountBadge.textContent = `${discount.percentage}% OFF`;
                     
-                    // Position it relative to the product image
+                    // Add to product image if it exists
                     const productImage = card.querySelector('.product-image');
                     if (productImage) {
                         productImage.style.position = 'relative';
                         productImage.appendChild(discountBadge);
                     }
+                }
+            } else {
+                // Remove any existing discount badges from non-eligible products
+                const existingBadge = card.querySelector('.product-discount-badge');
+                if (existingBadge) {
+                    console.log(`🗑️ Removing discount badge from: ${productTitle}`);
+                    existingBadge.remove();
                 }
             }
         });
@@ -511,40 +766,159 @@ class DiscountDisplayManager {
     }
 
     updateHomepageProductPricing() {
-        // Update homepage product cards
-        const productCards = document.querySelectorAll('.product-card');
-        
-        productCards.forEach(card => {
-            const priceContainer = card.querySelector('.product-price');
-            if (!priceContainer) return;
+        // Wait a bit for products to load
+        setTimeout(() => {
+            console.log('=== UPDATING HOMEPAGE PRODUCT PRICING ===');
             
-            // Check if this card already has enhanced pricing
-            if (priceContainer.querySelector('.sale-price-enhanced')) return;
+            // Try multiple selectors to find product cards
+            const selectors = [
+                '#homepage-products .product-card',
+                '.product-card',
+                '.product-item',
+                '.product'
+            ];
             
-            // Look for existing price elements
-            const currentPriceText = priceContainer.textContent.match(/\$(\d+\.?\d*)/);
-            const originalPriceSpan = priceContainer.querySelector('.original-price');
-            
-            if (currentPriceText && originalPriceSpan) {
-                const currentPrice = parseFloat(currentPriceText[1]);
-                const originalPriceText = originalPriceSpan.textContent.match(/\$(\d+\.?\d*)/);
-                
-                if (originalPriceText) {
-                    const originalPrice = parseFloat(originalPriceText[1]);
-                    
-                    if (originalPrice > currentPrice) {
-                        // Calculate discount percentage
-                        const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
-                        
-                        // Update the price display with Bobby theme styling
-                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
-                        
-                        // Add enhanced pricing styles
-                        this.addEnhancedPricingStyles();
-                    }
+            let productCards = [];
+            for (const selector of selectors) {
+                productCards = document.querySelectorAll(selector);
+                if (productCards.length > 0) {
+                    console.log(`Found ${productCards.length} product cards using selector: ${selector}`);
+                    break;
                 }
             }
-        });
+            
+            if (productCards.length === 0) {
+                console.log('No product cards found with any selector');
+                return;
+            }
+            
+            productCards.forEach((card, index) => {
+                console.log(`\n--- Processing Card ${index} ---`);
+                
+                // Try multiple selectors for price containers
+                const priceSelectors = ['.product-price', '.price', '.product-pricing', '.price-container'];
+                let priceContainer = null;
+                
+                for (const selector of priceSelectors) {
+                    priceContainer = card.querySelector(selector);
+                    if (priceContainer) {
+                        console.log(`Card ${index}: Found price container with selector: ${selector}`);
+                        break;
+                    }
+                }
+                
+                if (!priceContainer) {
+                    console.log(`Card ${index}: No price container found`);
+                    return;
+                }
+                
+                // Check if this card already has enhanced pricing
+                if (priceContainer.querySelector('.sale-price-enhanced')) {
+                    console.log(`Card ${index}: Already has enhanced pricing`);
+                    return;
+                }
+                
+                // Log the current price container content
+                console.log(`Card ${index}: Price container HTML:`, priceContainer.innerHTML);
+                console.log(`Card ${index}: Price container text:`, priceContainer.textContent);
+                
+                // Look for existing price elements in various structures
+                const originalPriceSpan = priceContainer.querySelector('.original-price') ||
+                                        priceContainer.querySelector('.compare-price') ||
+                                        priceContainer.querySelector('.was-price');
+                
+                const currentPriceSpan = priceContainer.querySelector('.current-price') ||
+                                       priceContainer.querySelector('.sale-price') ||
+                                       priceContainer.querySelector('.now-price');
+                
+                if (originalPriceSpan || currentPriceSpan) {
+                    console.log(`Card ${index}: Found price spans - original:`, originalPriceSpan?.textContent, 'current:', currentPriceSpan?.textContent);
+                    
+                    // Extract prices from the existing structure
+                    const priceText = priceContainer.textContent;
+                    const priceMatches = priceText.match(/\$(\d+\.?\d*)/g);
+                    
+                    console.log(`Card ${index}: Price matches found:`, priceMatches);
+                    
+                    if (priceMatches && priceMatches.length >= 2) {
+                        const currentPrice = parseFloat(priceMatches[0].replace('$', ''));
+                        const originalPrice = parseFloat(priceMatches[1].replace('$', ''));
+                        
+                        console.log(`Card ${index}: Parsed - Current: $${currentPrice}, Original: $${originalPrice}`);
+                        
+                        if (originalPrice > currentPrice) {
+                            // Calculate discount percentage
+                            const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+                            
+                            console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling`);
+                            
+                            // Update the price display with Bobby theme styling
+                            priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
+                            
+                            // Add enhanced pricing styles
+                            this.addEnhancedPricingStyles();
+                        } else {
+                            console.log(`Card ${index}: No discount (original <= current)`);
+                        }
+                    } else {
+                        console.log(`Card ${index}: Could not extract prices from text`);
+                    }
+                } else {
+                    console.log(`Card ${index}: No original-price span found, checking for sale badge...`);
+                    
+                    // Check if there's a sale badge on this product
+                    const saleBadge = card.querySelector('.product-badge.sale');
+                    if (saleBadge) {
+                        console.log(`Card ${index}: ✅ Found sale badge:`, saleBadge.textContent);
+                        
+                        // Extract discount percentage from badge
+                        const badgeText = saleBadge.textContent;
+                        const discountMatch = badgeText.match(/-(\d+)%/);
+                        
+                        if (discountMatch) {
+                            const discountPercent = parseInt(discountMatch[1]);
+                            const priceText = priceContainer.textContent;
+                            const priceMatch = priceText.match(/\$(\d+\.?\d*)/);
+                            
+                            if (priceMatch) {
+                                const currentPrice = parseFloat(priceMatch[1]);
+                                // Calculate original price from discount percentage
+                                const originalPrice = currentPrice / (1 - discountPercent / 100);
+                                
+                                console.log(`Card ${index}: ✅ APPLYING ${discountPercent}% discount styling from badge`);
+                                console.log(`Card ${index}: Current: $${currentPrice}, Calculated Original: $${originalPrice.toFixed(2)}`);
+                                
+                                // Update the price display with enhanced styling
+                                priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
+                                this.addEnhancedPricingStyles();
+                            }
+                        }
+                    } else {
+                        console.log(`Card ${index}: ❌ No sale indicators found (no original-price span or sale badge)`);
+                    }
+                }
+            });
+            
+            console.log('=== FINISHED UPDATING HOMEPAGE PRODUCT PRICING ===\n');
+        }, 1000);
+        
+        // Also set up a mutation observer to catch dynamically loaded products
+        const homepageContainer = document.getElementById('homepage-products') || document.querySelector('.products-grid') || document.querySelector('.product-grid');
+        if (homepageContainer) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        console.log('New products detected, updating pricing...');
+                        setTimeout(() => this.updateHomepageProductPricing(), 1000);
+                    }
+                });
+            });
+            
+            observer.observe(homepageContainer, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
 
     updateProductDetailPricing() {
@@ -728,6 +1102,57 @@ class DiscountDisplayManager {
             banner.style.display = 'none';
         }
     }
+
+    // Debug method to check product pricing
+    debugProductPricing() {
+        console.log('=== DEBUG PRODUCT PRICING ===');
+        
+        // Check what products are loaded
+        const selectors = [
+            '#homepage-products .product-card',
+            '.product-card',
+            '.product-item',
+            '.product'
+        ];
+        
+        let productCards = [];
+        for (const selector of selectors) {
+            productCards = document.querySelectorAll(selector);
+            if (productCards.length > 0) {
+                console.log(`Found ${productCards.length} product cards using selector: ${selector}`);
+                break;
+            }
+        }
+        
+        if (productCards.length === 0) {
+            console.log('❌ No product cards found on page');
+            return;
+        }
+        
+        productCards.forEach((card, index) => {
+            console.log(`\n--- DEBUG Card ${index} ---`);
+            console.log('Card HTML:', card.outerHTML);
+            
+            const priceSelectors = ['.product-price', '.price', '.product-pricing', '.price-container'];
+            let priceContainer = null;
+            
+            for (const selector of priceSelectors) {
+                priceContainer = card.querySelector(selector);
+                if (priceContainer) {
+                    console.log(`Price container found with: ${selector}`);
+                    console.log('Price container HTML:', priceContainer.outerHTML);
+                    console.log('Price container text:', priceContainer.textContent);
+                    break;
+                }
+            }
+            
+            if (!priceContainer) {
+                console.log('❌ No price container found');
+            }
+        });
+        
+        console.log('=== END DEBUG ===');
+    }
 }
 
 // Initialize discount display system
@@ -739,5 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.DiscountDisplay = {
     showTest: () => window.discountDisplayManager?.showTestDiscount(),
     hide: () => window.discountDisplayManager?.hideDiscountBanner(),
-    reload: () => window.discountDisplayManager?.loadDiscounts()
+    reload: () => window.discountDisplayManager?.loadDiscounts(),
+    debugPricing: () => window.discountDisplayManager?.debugProductPricing(),
+    forceUpdate: () => window.discountDisplayManager?.updateProductDiscounts()
 };

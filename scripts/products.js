@@ -57,13 +57,23 @@ class ProductManager {
                         
                         // Process each product to match our format
                         this.products = products.map(product => {
+                            // Ensure we use the original API price, not any pre-discounted price
+                            let apiPrice = 0;
+                            if (product.originalPrice) {
+                                // Use original price if available
+                                apiPrice = parseFloat(product.originalPrice) || 0;
+                            } else if (product.price) {
+                                // Use the price from the API as the base price
+                                apiPrice = parseFloat(product.price) || 0;
+                            }
+                            
                             return {
                                 id: product.id,  // This is already the Shopify GID
                                 shopifyId: product.id,
                                 title: product.title || 'Unknown Product',
                                 description: this.cleanDescription(product.description || ''),
                                 category: this.extractCategory(product.title || product.productType || ''),
-                                price: parseFloat(product.price) || 0,
+                                price: apiPrice, // Use the API price as the base
                                 comparePrice: product.comparePrice ? parseFloat(product.comparePrice) : null,
                                 images: [product.image],
                                 mainImage: product.image || '',
@@ -72,7 +82,7 @@ class ProductManager {
                                 sizes: product.selectedSize ? [product.selectedSize] : [],
                                 featured: false,
                                 new: false,
-                                sale: product.comparePrice && parseFloat(product.price) < parseFloat(product.comparePrice),
+                                sale: product.comparePrice && apiPrice < parseFloat(product.comparePrice),
                                 tags: [],
                                 productType: '',
                                 colorImages: {},
@@ -703,21 +713,22 @@ class ProductManager {
             // Determine category from product type or title
             const category = this.extractCategory(product.title || product.productType || '');
             
-            // Calculate pricing - handle potential missing priceRange with fallbacks
-            let minPrice = 0;
+            // Calculate pricing - use the actual API price, not discounted variants
+            let apiPrice = 0;
             try {
                 if (product.priceRange?.minVariantPrice?.amount) {
-                    minPrice = parseFloat(product.priceRange.minVariantPrice.amount);
+                    // Use the minVariantPrice from priceRange as the base API price
+                    apiPrice = parseFloat(product.priceRange.minVariantPrice.amount);
                 } else if (variants.length > 0) {
-                    // Get minimum price from variants
-                    minPrice = Math.min(...variants.map(v => v.price || 0));
+                    // Use the first variant's price as the API price (not minimum which could be discounted)
+                    apiPrice = variants[0].price || 0;
                 } else if (product.price) {
                     // Direct price field
-                    minPrice = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
+                    apiPrice = parseFloat(typeof product.price === 'object' ? product.price.amount : product.price);
                 }
             } catch (priceError) {
                 console.error('Error calculating price:', priceError);
-                minPrice = 0; // Default to 0 if calculation fails
+                apiPrice = 0; // Default to 0 if calculation fails
             }
             
             // Get compare price from various sources with fallbacks
@@ -763,7 +774,7 @@ class ProductManager {
                 title: product.title || 'Unknown Product',
                 description: this.cleanDescription(product.description || ''),
                 category: category,
-                price: minPrice,
+                price: apiPrice,
                 comparePrice: comparePrice,
                 images: images,
                 mainImage: images[0] || '',
@@ -772,7 +783,7 @@ class ProductManager {
                 sizes: Array.from(sizes),
                 featured: product.tags?.includes('featured') || false,
                 new: product.tags?.includes('new') || false,
-                sale: comparePrice > minPrice,
+                sale: comparePrice > apiPrice,
                 tags: product.tags || [],
                 productType: product.productType || '',
                 // Add the color to images mapping for easy filtering
@@ -1199,8 +1210,54 @@ class ProductManager {
         }, 500);
     }
 
+    // Get discount information for a product using precise discount system
+    getDiscountForProduct(product) {
+        if (!product || !product.title) {
+            return {
+                hasDiscount: false,
+                discount: 0,
+                salePrice: product?.price || 0,
+                originalPrice: product?.price || 0
+            };
+        }
+
+        const title = product.title.toLowerCase();
+        
+        // Check if product qualifies for discount (hoodies, sweatshirts, joggers)
+        const isEligible = title.includes('hoodie') ||
+                          title.includes('sweatshirt') ||
+                          title.includes('joggers') ||
+                          title.includes('sweatpants');
+        
+        if (!isEligible) {
+            return {
+                hasDiscount: false,
+                discount: 0,
+                salePrice: product.price,
+                originalPrice: product.price
+            };
+        }
+
+        // Apply 12% discount to the API price
+        const discountPercent = 12;
+        const apiPrice = product.price; // This is the price from the API
+        const salePrice = apiPrice * (1 - discountPercent / 100);
+
+        return {
+            hasDiscount: true,
+            discount: discountPercent,
+            salePrice: salePrice,
+            originalPrice: apiPrice // The API price becomes the "original" price to show crossed out
+        };
+    }
+
     createProductCard(product) {
-        const discount = product.comparePrice ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100) : 0;
+        // Get discount information using precise discount system
+        const discountInfo = this.getDiscountForProduct(product);
+        const discount = discountInfo.discount;
+        const salePrice = discountInfo.salePrice;
+        const originalPrice = discountInfo.originalPrice;
+        const hasDiscount = discountInfo.hasDiscount;
         
         // Store color-specific data for JavaScript handling
         // Ensure the color keys are strings, not objects
@@ -1260,7 +1317,8 @@ class ProductManager {
                     <!-- Product overlay removed to eliminate all popups -->
                     <div class="product-badges">
                         ${product.new ? '<span class="product-badge new">New</span>' : ''}
-                        ${product.sale ? `<span class="product-badge sale">-${discount}%</span>` : ''}
+                        ${hasDiscount ? `<span class="product-badge sale">-${discount}%</span>` : ''}
+                        ${product.sale && !hasDiscount ? `<span class="product-badge sale">Sale</span>` : ''}
                         ${product.featured ? '<span class="product-badge">Featured</span>' : ''}
                     </div>
                     <button class="wishlist-btn" data-product-id="${product.id}" title="Add to Wishlist">
@@ -1274,9 +1332,11 @@ class ProductManager {
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-title">${product.title}</h3>
                     <div class="product-price">
-                        <span class="price-current">$${product.price.toFixed(2)}</span>
-                        ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}
-                        ${product.sale ? `<span class="price-discount">-${discount}%</span>` : ''}
+                        ${hasDiscount ?
+                            `<span class="sale-price">$${salePrice.toFixed(2)}</span>
+                             <span class="original-price">$${originalPrice.toFixed(2)}</span>` :
+                            `$${product.price.toFixed(2)}`
+                        }
                     </div>
                     ${product.colors.length > 0 ? `
                         <div class="product-variants">

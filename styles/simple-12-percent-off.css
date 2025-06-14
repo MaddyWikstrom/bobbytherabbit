@@ -1,0 +1,357 @@
+/* Simple 12% Off Styling - Clean and Effective */
+
+/* Sale Badge for 12% Off */
+.sale-badge-12 {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #ff4757, #ff3742);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 3px 12px rgba(255, 71, 87, 0.4);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 65px;
+  animation: flashSale 2s ease-in-out infinite;
+}
+
+.sale-badge-12 .sale-percentage {
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.sale-badge-12 .sale-title {
+  font-size: 7px;
+  font-weight: 600;
+  opacity: 0.95;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Flash Sale Animation */
+@keyframes flashSale {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 3px 12px rgba(255, 71, 87, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(255, 71, 87, 0.6);
+  }
+}
+
+/* Price Display with 12% Off */
+.price-display-12 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.price-display-12.with-sale {
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 71, 87, 0.2);
+}
+
+/* Original Price (crossed out) */
+.original-price-12 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #95a5a6;
+  text-decoration: line-through;
+  line-height: 1.2;
+  position: relative;
+}
+
+.original-price-12::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #e74c3c;
+  transform: translateY(-50%);
+}
+
+/* Sale Price (highlighted) */
+.sale-price-12 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #27ae60;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(39, 174, 96, 0.3);
+}
+
+/* Savings Amount */
+.savings-amount-12 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 4px 10px;
+  border-radius: 15px;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  line-height: 1.2;
+}
+
+/* Product Card Enhancements */
+.product-card.on-sale-12,
+.product-item.on-sale-12,
+.product.on-sale-12 {
+  border: 2px solid rgba(255, 71, 87, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.15) !important;
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.05), rgba(255, 71, 87, 0.02)) !important;
+  position: relative;
+  overflow: visible;
+}
+
+/* Hover Effects */
+.product-card.on-sale-12:hover,
+.product-item.on-sale-12:hover,
+.product.on-sale-12:hover {
+  border-color: rgba(255, 71, 87, 0.5) !important;
+  box-shadow: 0 8px 30px rgba(255, 71, 87, 0.25) !important;
+  transform: translateY(-2px);
+}
+
+.product-card.on-sale-12:hover .sale-badge-12,
+.product-item.on-sale-12:hover .sale-badge-12,
+.product.on-sale-12:hover .sale-badge-12 {
+  transform: scale(1.1);
+  box-shadow: 0 5px 20px rgba(255, 71, 87, 0.5);
+}
+
+.product-card.on-sale-12:hover .sale-price-12,
+.product-item.on-sale-12:hover .sale-price-12,
+.product.on-sale-12:hover .sale-price-12 {
+  color: #2ecc71;
+  transform: scale(1.02);
+}
+
+/* Price Element Styling */
+.has-sale-12 {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 71, 87, 0.2);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .sale-badge-12 {
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    min-width: 55px;
+  }
+  
+  .sale-badge-12 .sale-percentage {
+    font-size: 14px;
+  }
+  
+  .sale-badge-12 .sale-title {
+    font-size: 6px;
+  }
+  
+  .original-price-12 {
+    font-size: 14px;
+  }
+  
+  .sale-price-12 {
+    font-size: 20px;
+  }
+  
+  .savings-amount-12 {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .sale-badge-12 {
+    top: 5px;
+    right: 5px;
+    padding: 4px 8px;
+    min-width: 50px;
+  }
+  
+  .sale-badge-12 .sale-percentage {
+    font-size: 12px;
+  }
+  
+  .sale-badge-12 .sale-title {
+    font-size: 5px;
+  }
+  
+  .original-price-12 {
+    font-size: 13px;
+  }
+  
+  .sale-price-12 {
+    font-size: 18px;
+  }
+  
+  .savings-amount-12 {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+}
+
+/* Loading Animation */
+.sale-loading-12 {
+  position: relative;
+  opacity: 0.8;
+}
+
+.sale-loading-12::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 71, 87, 0.2), transparent);
+  animation: saleShimmer12 1.5s infinite;
+}
+
+@keyframes saleShimmer12 {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Success Animation */
+.sale-applied-12 {
+  animation: saleSuccess12 0.8s ease-out;
+}
+
+@keyframes saleSuccess12 {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Grid/List Enhancements */
+.products-grid .product-card.on-sale-12,
+.products-grid .product-item.on-sale-12 {
+  order: -1; /* Show sale items first */
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .sale-badge-12 {
+    background: #000 !important;
+    color: #fff;
+    border: 2px solid #fff;
+  }
+  
+  .original-price-12 {
+    color: #666;
+  }
+  
+  .sale-price-12 {
+    color: #000;
+    font-weight: 900;
+    text-shadow: none;
+  }
+  
+  .product-card.on-sale-12,
+  .product-item.on-sale-12 {
+    border: 3px solid #000 !important;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .sale-badge-12,
+  .sale-price-12,
+  .sale-loading-12::after {
+    animation: none;
+  }
+  
+  .product-card.on-sale-12:hover,
+  .product-item.on-sale-12:hover {
+    transform: none;
+  }
+  
+  .product-card.on-sale-12:hover .sale-badge-12,
+  .product-item.on-sale-12:hover .sale-badge-12 {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sale-badge-12 {
+    background: #000 !important;
+    color: #fff !important;
+    box-shadow: none;
+  }
+  
+  .original-price-12::after {
+    background: #000;
+  }
+  
+  .sale-price-12 {
+    color: #000 !important;
+    text-shadow: none;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .original-price-12 {
+    color: #7f8c8d;
+  }
+  
+  .sale-price-12 {
+    color: #2ecc71;
+  }
+  
+  .has-sale-12 {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 71, 87, 0.4);
+  }
+  
+  .product-card.on-sale-12,
+  .product-item.on-sale-12 {
+    background: rgba(255, 71, 87, 0.08) !important;
+    border-color: rgba(255, 71, 87, 0.4) !important;
+  }
+}
+
+/* Ensure badges appear above everything */
+.sale-badge-12 {
+  z-index: 999 !important;
+}
+
+/* Force positioning for product containers */
+.product-card,
+.product-item,
+.product {
+  position: relative !important;
+}

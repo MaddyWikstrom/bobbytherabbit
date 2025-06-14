@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-netlify="true">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bungi x Bobby | The Tech Animal Collection</title>
+    
+    <!-- Critical Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.shopify.com">
+    <link rel="preload" href="scripts/performance-bundle.js" as="script">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
+    
+    <!-- Critical CSS Inline for instant rendering -->
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: #0a0a0a; 
+            color: #fff; 
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        /* Loading screen - critical for FCP */
+        .loading-screen { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); 
+            z-index: 10000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .loading-container { text-align: center; }
+        .loading-logo { 
+            max-width: 200px; 
+            height: auto; 
+            animation: pulse 2s infinite;
+            will-change: opacity;
+        }
+        .loading-text {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: #00ff88;
+            font-weight: 600;
+        }
+        @keyframes pulse { 
+            0%, 100% { opacity: 0.8; transform: scale(1); } 
+            50% { opacity: 1; transform: scale(1.05); } 
+        }
+        
+        /* Utility classes */
+        .hidden { display: none !important; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+        
+        /* Navigation - critical for above-the-fold */
+        .navbar { 
+            position: fixed; 
+            top: 0; 
+            width: 100%; 
+            background: rgba(10, 10, 10, 0.95); 
+            backdrop-filter: blur(10px); 
+            z-index: 1000; 
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        .nav-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0 2rem; 
+        }
+        .nav-logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+        }
+        .nav-logo-img { 
+            height: 40px; 
+            width: auto;
+        }
+        .nav-brand { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: #00ff88;
+            text-decoration: none;
+        }
+        .nav-menu { 
+            display: flex; 
+            list-style: none; 
+            gap: 2rem; 
+        }
+        .nav-link { 
+            color: #fff; 
+            text-decoration: none; 
+            font-weight: 500; 
+            transition: color 0.3s ease;
+            position: relative;
+        }
+        .nav-link:hover { 
+            color: #00ff88; 
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .cart-btn { 
+            background: linear-gradient(45deg, #00ff88, #00cc6a); 
+            border: none; 
+            padding: 0.5rem 1rem; 
+            border-radius: 5px; 
+            color: #000; 
+            font-weight: 600; 
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .cart-btn:hover {
+            transform: translateY(-2px);
+        }
+        .cart-count {
+            background: #000;
+            color: #00ff88;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        /* Hero section - critical for LCP */
+        .hero { 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+            padding: 80px 2rem 2rem;
+            background: radial-gradient(ellipse at center, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+        }
+        .hero-content {
+            max-width: 800px;
+        }
+        .hero-title { 
+            font-size: clamp(2.5rem, 8vw, 4rem); 
+            margin-bottom: 1rem; 
+            color: #00ff88;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        .subtitle { 
+            display: block; 
+            font-size: clamp(1rem, 3vw, 1.5rem); 
+            color: #fff; 
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+        .hero-description {
+            font-size: 1.2rem;
+            margin: 2rem 0;
+            opacity: 0.8;
+        }
+        .cta-btn { 
+            background: linear-gradient(45deg, #00ff88, #00cc6a); 
+            border: none; 
+            padding: 1rem 2rem; 
+            font-size: 1.2rem; 
+            font-weight: 600; 
+            color: #000; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.3);
+        }
+        
+        /* Section styles */
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #00ff88;
+            font-weight: 700;
+        }
+        .collection {
+            padding: 4rem 0;
+            background: rgba(26, 26, 46, 0.3);
+        }
+        .about {
+            padding: 4rem 0;
+        }
+        .about-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        /* Product grid */
+        .product-grid-scroll {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .product-card {
+            background: rgba(26, 26, 46, 0.5);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .product-card h3 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        .product-card .price {
+            color: #00ff88;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .add-to-cart-btn {
+            background: #00ff88;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            color: #000;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .add-to-cart-btn:hover {
+            background: #00cc6a;
+            transform: translateY(-2px);
+        }
+        
+        /* Footer */
+        .footer {
+            background: #0a0a0a;
+            padding: 3rem 0 1rem;
+            border-top: 1px solid rgba(0, 255, 136, 0.1);
+        }
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .footer-title {
+            color: #00ff88;
+            margin-bottom: 1rem;
+        }
+        .footer-text {
+            opacity: 0.8;
+        }
+        .copyright {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.6;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .nav-menu { display: none; }
+            .nav-container { padding: 0 1rem; }
+            .hero { padding: 100px 1rem 2rem; }
+            .container { padding: 0 1rem; }
+            .product-grid-scroll {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+        }
+        
+        /* Loading states */
+        .loading-products {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        /* Performance optimizations */
+        img { 
+            loading: lazy;
+            decoding: async;
+        }
+        
+        /* Reduce layout shift */
+        .nav-logo-img, .product-card img {
+            aspect-ratio: attr(width) / attr(height);
+        }
+    </style>
+    
+    <!-- Load fonts with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-container">
+            <img src="assets/bobby-logo.svg" alt="BUNGI X BOBBY" class="loading-logo" width="200" height="100">
+            <div class="loading-text">INITIALIZING...</div>
+        </div>
+    </div>
+
+    <!-- Main Website -->
+    <div id="main-site" class="main-site hidden">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="assets/bobby-logo.svg" alt="Bobby" class="nav-logo-img" width="40" height="40">
+                    <a href="#home" class="nav-brand">BUNGI X BOBBY</a>
+                </div>
+                <ul class="nav-menu" id="nav-menu">
+                    <li><a href="#home" class="nav-link">HOME</a></li>
+                    <li><a href="products.html" class="nav-link">SHOP</a></li>
+                    <li><a href="#collection" class="nav-link">COLLECTION</a></li>
+                    <li><a href="#about" class="nav-link">ABOUT</a></li>
+                    <li><a href="#contact" class="nav-link">CONTACT</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="cart-btn" id="cart-btn" aria-label="Open shopping cart">
+                        🛒 <span class="cart-count">0</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    BUNGI X BOBBY
+                    <span class="subtitle">THE TECH ANIMAL COLLECTION</span>
+                </h1>
+                <p class="hero-description">
+                    Tech animal of the elite GooberMcGeet club
+                </p>
+                <button class="cta-btn" onclick="window.location.href='products.html'">
+                    EXPLORE COLLECTION
+                </button>
+            </div>
+        </section>
+
+        <!-- Collection Section -->
+        <section id="collection" class="collection">
+            <div class="container">
+                <h2 class="section-title">COLLECTION</h2>
+                <div class="product-grid-scroll" id="homepage-products">
+                    <div class="loading-products">
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="cta-btn" onclick="window.location.href='products.html'">
+                        VIEW ALL PRODUCTS
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about">
+            <div class="container">
+                <h2 class="section-title">ABOUT BOBBY</h2>
+                <p class="about-description">
+                    In the neon-lit streets of the digital underground, Bobby the Rabbit reigns supreme as the ultimate Tech Animal of the elite GooberMcGeet Club. This collection isn't just fashion – it's Bobby's world, brought to life. Each piece channels his rebellious spirit, underground edge, and love for cookies, blending high-tech aesthetics with a streetwise vibe.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3 class="footer-title">BUNGI X BOBBY</h3>
+                        <p class="footer-text">Tech animal of the elite GooberMcGeet club</p>
+                    </div>
+                    <div class="footer-section">
+                        <h3 class="footer-title">CONTACT</h3>
+                        <p class="footer-text">bungi.bobby@gmail.com</p>
+                    </div>
+                </div>
+                <div class="copyright">
+                    © 2025 BUNGI X BOBBY. All rights reserved.
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Performance-optimized JavaScript bundle -->
+    <script src="scripts/performance-bundle.js"></script>
+    
+    <!-- Minimal initialization script -->
+    <script>
+        // Performance monitoring
+        performance.mark('page-start');
+        
+        // Fast loading screen transition
+        function showMainSite() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const mainSite = document.getElementById('main-site');
+            
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainSite.classList.remove('hidden');
+                performance.mark('site-visible');
+                
+                // Measure time to interactive
+                performance.measure('Time to Interactive', 'page-start', 'site-visible');
+            }, 500);
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(showMainSite, 800);
+            });
+        } else {
+            setTimeout(showMainSite, 800);
+        }
+        
+        // Load non-critical resources after main content
+        window.addEventListener('load', () => {
+            performance.mark('page-loaded');
+            
+            // Load additional CSS asynchronously
+            const additionalCSS = [
+                'styles/homepage-products.css',
+                'styles/mobile-optimizations.css'
+            ];
+            
+            additionalCSS.forEach(href => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = href;
+                link.media = 'print';
+                link.onload = function() { this.media = 'all'; };
+                document.head.appendChild(link);
+            });
+            
+            // Performance logging
+            setTimeout(() => {
+                const navigation = performance.getEntriesByType('navigation')[0];
+                if (navigation) {
+                    console.log('Performance Metrics:', {
+                        'FCP': navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+                        'Load Time': navigation.loadEventEnd - navigation.fetchStart,
+                        'DOM Ready': navigation.domContentLoadedEventEnd - navigation.fetchStart
+                    });
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

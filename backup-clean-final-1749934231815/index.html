@@ -18,10 +18,14 @@
     <link rel="stylesheet" href="styles/mobile-optimizations.css">
     <link rel="stylesheet" href="styles/enhanced-mobile.css">
     <link rel="stylesheet" href="styles/mobile-blur-fix.css">
+    <!-- Subtle Hoodie Sale Display System -->
+    <link rel="stylesheet" href="styles/subtle-hoodie-sale.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Unified Back Button Cart Fix - replaces multiple conflicting cart persistence systems -->
+    <script src="scripts/unified-back-button-cart-fix.js"></script>
     
     <!-- Script Loader to prevent duplicate script loading -->
     <script src="scripts/script-loader-fix.js"></script>
@@ -370,6 +374,115 @@
     <script src="scripts/loading.js"></script>
     <script src="scripts/animations.js"></script>
     <script src="scripts/homepage-products.js"></script>
+    
+    <!-- Subtle Hoodie Sale Display System - Only for Hoodies/Sweatshirts/Sweatpants -->
+    <script src="scripts/subtle-hoodie-sale.js"></script>
+    
+    <!-- Discount Display System -->
+    <script src="scripts/discount-display.js"></script>
+    
+    <!-- Shopify Integration - Option B -->
+    <script src="scripts/shopify-integration.js"></script>
+    
+    <!-- Critical fixes -->
+    <script src="scripts/mobile-navigation.js"></script>
+    <script src="scripts/mobile-touch-enhancements.js"></script>
+    <script src="scripts/universal-image-loader.js"></script>
+    
+    <!-- Quick View functionality -->
+    <script src="scripts/quick-view.js"></script>
+    
+    <!-- Cart Fixes - Using script loader to prevent duplicate loading -->
+    <script>
+        // Use script loader to load cart scripts in the correct order
+        if (window.BobbyScriptLoader) {
+            // Load scripts in sequence with dependencies
+            BobbyScriptLoader.loadOnce('shopify-id-handler', 'scripts/shopify-id-handler.js', function() {
+                BobbyScriptLoader.loadOnce('simple-cart-system', 'scripts/simple-cart-system.js', function() {
+                    BobbyScriptLoader.loadOnce('cart-bridge-fix', 'scripts/cart-bridge-fix.js', function() {
+                        BobbyScriptLoader.loadOnce('cart-duplicate-fix', 'scripts/cart-duplicate-fix.js', function() {
+                            BobbyScriptLoader.loadOnce('cart-render-fix', 'scripts/cart-render-fix.js', function() {
+                                // Load cart persistence systems last to ensure they can hook into all cart systems
+                                BobbyScriptLoader.loadOnce('cart-persistence', 'scripts/cart-persistence.js', function() {
+                                    // Cross-domain cart persistence for checkout between different domains
+                                    BobbyScriptLoader.loadOnce('cross-domain-cart', 'scripts/cross-domain-cart.js');
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        } else {
+            // Fallback to standard script tags if loader isn't available
+            document.write('<script src="scripts/shopify-id-handler.js"><\/script>');
+            document.write('<script src="scripts/simple-cart-system.js"><\/script>');
+            document.write('<script src="scripts/cart-bridge-fix.js"><\/script>');
+            document.write('<script src="scripts/cart-duplicate-fix.js"><\/script>');
+            document.write('<script src="scripts/cart-render-fix.js"><\/script>');
+        }
+    </script>
+    
+    <!-- Collection Wave Background -->
+    <script src="scripts/collection-wave-bg.js"></script>
+    
+    <!-- Improved cart button handler for homepage -->
+    <script>
+        // Ensure cart button on homepage works properly
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Setting up cart button handler');
+            const cartButton = document.getElementById('cart-btn');
+            if (cartButton) {
+                cartButton.addEventListener('click', function() {
+                    console.log('Cart button clicked on homepage');
+                    
+                    // Try to open cart system - attempt to use the bridge first
+                    try {
+                        // Try BobbyCart first (primary system)
+                        if (window.BobbyCart && typeof window.BobbyCart.openCart === 'function') {
+                            window.BobbyCart.openCart();
+                            return;
+                        }
+                        
+                        // Fall back to cartManager
+                        if (window.cartManager) {
+                            if (typeof window.cartManager.openCart === 'function') {
+                                window.cartManager.openCart();
+                                return;
+                            } else if (typeof window.cartManager.toggleCart === 'function') {
+                                window.cartManager.toggleCart();
+                                return;
+                            }
+                        }
+                        
+                        // Last resort - try to access the cart directly
+                        const cartSidebar = document.getElementById('cart-sidebar');
+                        const cartOverlay = document.getElementById('cart-overlay');
+                        
+                        if (cartSidebar) {
+                            cartSidebar.style.display = 'flex';
+                            cartSidebar.classList.add('active');
+                            cartSidebar.style.transform = 'translateX(0)';
+                            cartSidebar.style.opacity = '1';
+                            cartSidebar.style.visibility = 'visible';
+                            
+                            if (cartOverlay) {
+                                cartOverlay.style.display = 'block';
+                                cartOverlay.style.opacity = '1';
+                            }
+                        } else {
+                            console.error('No cart elements found to open');
+                        }
+                    } catch (error) {
+                        console.error('Error opening cart:', error);
+                        alert('The cart system is currently unavailable. Please try again later.');
+                    }
+                });
+                console.log('Homepage cart button handler attached');
+            } else {
+                console.warn('Cart button not found on page');
+            }
+        });
+    </script>
     
     <!-- Mobile hamburger menu functionality -->
     <script>

@@ -255,11 +255,58 @@ if (window.BobbyCartSystem) {
     }
   }
   
+  // Apply discount using the precise discount system
+  function applyDiscountToProduct(product) {
+    console.log(`🔍 Cart: Checking discount for product: "${product?.title}"`);
+    
+    if (!product || !product.title) {
+      console.log('❌ Cart: No product or title provided');
+      return product;
+    }
+    
+    // Check if this product is eligible for discount
+    const title = product.title.toLowerCase();
+    const discountTypes = ['hoodie', 'sweatshirt', 'sweatpants'];
+    const hasDiscountType = discountTypes.some(type => title.includes(type));
+    
+    if (hasDiscountType) {
+      // Use the API price (the price field should be the API price)
+      const apiPrice = product.price;
+      const discountedPrice = apiPrice * (1 - 12 / 100);
+      
+      console.log(`✅ Cart: Applying 12% discount to: ${product.title}`);
+      console.log(`✅ Cart: API price: $${apiPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
+      
+      // Create a copy of the product with discount applied
+      return {
+        ...product,
+        price: discountedPrice,
+        originalPrice: apiPrice, // API price becomes the "original" price for display
+        hasDiscount: true,
+        discountPercentage: 12,
+        discountAmount: apiPrice - discountedPrice,
+        discountDescription: '12% off hoodies, sweatshirts & sweatpants'
+      };
+    }
+    
+    console.log(`❌ Cart: No discount applied to: ${product.title}`);
+    return product;
+  }
+  
   // Add an item to the cart
   function addItem(product) {
     if (!product || !product.id) return;
     
     console.log(`Adding to cart: ${product.title} (ID: ${product.id}, Quantity: ${product.quantity || 1})`);
+    
+    // Only apply discount if the product doesn't already have discount information
+    if (!product.hasDiscount) {
+      console.log('🔍 Cart: Product has no discount info, checking for discounts...');
+      product = applyDiscountToProduct(product);
+    } else {
+      console.log('✅ Cart: Product already has discount info, using provided data');
+      console.log(`✅ Cart: Sale price: $${product.price.toFixed(2)}, Original: $${(product.originalPrice || product.basePrice || product.price).toFixed(2)}`);
+    }
     
     // Check if we're receiving a real Shopify variant ID (starts with gid://)
     const isShopifyGID = product.id && typeof product.id === 'string' &&
@@ -301,6 +348,15 @@ if (window.BobbyCartSystem) {
         items[existingItemIndex].image = product.image;
       }
       
+      // Update discount information if provided
+      if (product.hasDiscount !== undefined) {
+        items[existingItemIndex].hasDiscount = product.hasDiscount;
+        items[existingItemIndex].discountPercentage = product.discountPercentage;
+        items[existingItemIndex].discountAmount = product.discountAmount;
+        items[existingItemIndex].discountDescription = product.discountDescription;
+        items[existingItemIndex].originalPrice = product.originalPrice || product.basePrice || product.price;
+      }
+      
       // Always ensure we have the Shopify variant ID if it's available
       if (isShopifyGID && !items[existingItemIndex].shopifyVariantId) {
         console.log(`Adding missing Shopify variant ID to existing item: ${product.id}`);
@@ -316,11 +372,17 @@ if (window.BobbyCartSystem) {
         productId: product.productId || product.id, // Store original product ID
         title: product.title || 'Product',
         price: product.price || 0,
+        originalPrice: product.originalPrice || product.basePrice || product.price || 0,
         image: product.image || 'assets/placeholder.png',
         quantity: product.quantity || 1,
         variant: product.variantTitle || product.variant || '',
         selectedColor: color,
-        selectedSize: size
+        selectedSize: size,
+        // Preserve discount information from product detail page
+        hasDiscount: product.hasDiscount || false,
+        discountPercentage: product.discountPercentage || null,
+        discountAmount: product.discountAmount || null,
+        discountDescription: product.discountDescription || null
       });
     }
     
@@ -442,7 +504,18 @@ if (window.BobbyCartSystem) {
               <div class="cart-item-variant">${item.variant || (item.selectedColor && item.selectedSize) ?
                 `${item.selectedColor || ''} / ${item.selectedSize === 'One Size' ? 'OS' : item.selectedSize || ''}` :
                 ''}</div>
-              <div class="cart-item-price">$${(item.price).toFixed(2)}</div>
+              <div class="cart-item-price">
+                ${item.hasDiscount ?
+                  `<div class="price-with-discount">
+                     <span class="discounted-price">$${(item.price).toFixed(2)}</span>
+                     <span class="original-price">$${(item.originalPrice).toFixed(2)}</span>
+                   </div>
+                   <div class="discount-info">
+                     <span class="discount-badge">${item.discountPercentage}% OFF</span>
+                   </div>` :
+                  `$${(item.price).toFixed(2)}`
+                }
+              </div>
               <div class="cart-item-quantity">
                 <button class="quantity-decrease" data-item-id="${item.cartItemId}">-</button>
                 <span class="quantity-value">${item.quantity}</span>
@@ -794,6 +867,40 @@ if (window.BobbyCartSystem) {
         color: #a855f7;
         font-weight: bold;
         margin-bottom: 10px;
+      }
+      
+      .price-with-discount {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      
+      .discounted-price {
+        color: #00ff88 !important;
+        font-weight: bold;
+        font-size: 16px;
+      }
+      
+      .original-price {
+        color: #999 !important;
+        text-decoration: line-through;
+        font-size: 14px;
+      }
+      
+      .discount-info {
+        margin-top: 2px;
+      }
+      
+      .discount-badge {
+        background: #ff4444 !important;
+        color: white !important;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: inline-block;
       }
       
       .cart-item-quantity {
