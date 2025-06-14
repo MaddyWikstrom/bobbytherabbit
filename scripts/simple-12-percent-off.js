@@ -1,10 +1,11 @@
-// Simple 12% Off Display - No API Required
-// Shows 12% discount on ALL products with visual styling
+// DISABLED - Simple 12% Off Display
+// This script has been disabled to prevent unwanted discounts on all products
 
 class Simple12PercentOff {
   constructor() {
-    this.discountPercent = 12;
-    this.saleTitle = "WEEKEND FLASH SALE";
+    this.discountPercent = 0; // DISABLED
+    this.saleTitle = "DISABLED";
+    console.log('🚫 Simple 12% Off Display DISABLED - use PreciseDiscountSystem instead');
   }
 
   // Calculate original price from current price (current = original * 0.88)

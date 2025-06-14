@@ -1,14 +1,15 @@
 // Discount Display System for Bobby Streetwear
 class DiscountDisplayManager {
     constructor() {
+        console.log('🚫 Discount Display Manager DISABLED - use PreciseDiscountSystem instead');
         this.discounts = [];
         this.currentDiscount = null;
-        this.init();
+        // DISABLED - do not init
     }
 
     async init() {
-        console.log('Initializing discount display system');
-        await this.loadDiscounts();
+        console.log('🚫 Discount display system DISABLED');
+        return; // DISABLED - do nothing
         
         // Delay banner creation to ensure DOM is ready and navbar animation is complete
         setTimeout(() => {

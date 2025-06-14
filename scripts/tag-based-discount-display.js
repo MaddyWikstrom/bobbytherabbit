@@ -1,31 +1,11 @@
-// Tag-Based Discount Display System
-// Simulates discount pricing for products with sale tags
+// DISABLED - Tag-Based Discount Display System
+// This script has been disabled to prevent unwanted discounts
 
 class TagBasedDiscountDisplay {
   constructor() {
-    // Configuration for different sale types
-    this.saleConfigs = {
-      'weekend-flash': {
-        discountPercent: 12,
-        badgeText: 'WEEKEND FLASH',
-        badgeColor: '#ff4757'
-      },
-      'flash-sale': {
-        discountPercent: 12,
-        badgeText: 'FLASH SALE',
-        badgeColor: '#ff6b6b'
-      },
-      'sale': {
-        discountPercent: 12,
-        badgeText: 'SALE',
-        badgeColor: '#e74c3c'
-      },
-      'clearance': {
-        discountPercent: 20,
-        badgeText: 'CLEARANCE',
-        badgeColor: '#f39c12'
-      }
-    };
+    console.log('🚫 Tag-Based Discount Display DISABLED - use PreciseDiscountSystem instead');
+    // DISABLED - no sale configs to prevent unwanted discounts
+    this.saleConfigs = {};
   }
 
   // Check if product has any sale tags

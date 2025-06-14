@@ -4,12 +4,13 @@
 
 class SubtleHoodieSale {
   constructor() {
-    this.discountPercent = 12;
-    this.saleTitle = "12% OFF";
+    console.log('🚫 Subtle Hoodie Sale DISABLED - use PreciseDiscountSystem instead');
+    this.discountPercent = 0; // DISABLED
+    this.saleTitle = "DISABLED";
     this.processedProducts = new Set();
     this.processedDetailPages = new Set();
     this.processedCartItems = new Set();
-    this.targetCategories = ['hoodie', 'sweatshirt', 'sweatpants', 'joggers'];
+    this.targetCategories = []; // DISABLED - no target categories
     this.priceSelectors = ['.price', '.product-price', '.price-display', '[class*="price"]', 'h1', 'h2', 'h3'];
     this.titleSelectors = ['.product-title', '.product-name', 'h1', 'h2', 'h3', '.product-detail-title'];
     this.cartSelectors = ['.cart-item', '.cart-product', '[class*="cart"]'];
