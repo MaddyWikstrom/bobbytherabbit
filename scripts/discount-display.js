@@ -1,15 +1,58 @@
 // Discount Display System for Bobby Streetwear
 class DiscountDisplayManager {
     constructor() {
-        console.log('🚫 Discount Display Manager DISABLED - use PreciseDiscountSystem instead');
+        console.log('🎯 Initializing PRECISE Discount Display Manager');
         this.discounts = [];
         this.currentDiscount = null;
-        // DISABLED - do not init
+        this.init();
     }
 
     async init() {
-        console.log('🚫 Discount display system DISABLED');
-        return; // DISABLED - do nothing
+        console.log('🎯 Initializing precise discount display system');
+        // Skip loading external discounts, use our precise logic instead
+        this.setupPreciseDiscounts();
+        
+        // Delay product discount updates to ensure products are loaded
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 2000);
+        
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 4000);
+    }
+    
+    setupPreciseDiscounts() {
+        // Use the same precise logic as PreciseDiscountSystem
+        console.log('🎯 Setting up precise discount rules for product tiles');
+    }
+    
+    // Check if product should have discount (same logic as cart system)
+    shouldHaveDiscount(productTitle) {
+        if (!productTitle) return false;
+        
+        const title = productTitle.toLowerCase();
+        
+        // Only BUNGI X BOBBY products with these specific types
+        const isBungiProduct = title.includes('bungi x bobby');
+        
+        if (isBungiProduct) {
+            // Specific product types that should get discounts
+            const discountTypes = [
+                'sweatshirt',
+                'joggers',
+                'hoodie'
+            ];
+            
+            // Check if this BUNGI X BOBBY product is one of the discount types
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
+            
+            if (hasDiscountType) {
+                return { percentage: 12, description: '12% off BUNGI X BOBBY collection' };
+            }
+        }
+        
+        return null; // No discount for other items
         
         // Delay banner creation to ensure DOM is ready and navbar animation is complete
         setTimeout(() => {
@@ -528,42 +571,112 @@ class DiscountDisplayManager {
     }
 
     updateProductDiscounts() {
-        // Add discount badges to product cards
+        // Add discount badges to product cards (using precise logic)
         this.addProductDiscountBadges();
         
-        // Update product pricing display
-        this.updateProductPricing();
+        // Update product pricing display (using precise logic)
+        this.updatePreciseProductPricing();
         
         // Add savings info to product detail pages
         this.addProductSavingsInfo();
     }
+    
+    updatePreciseProductPricing() {
+        console.log('🎯 Updating product pricing with PRECISE logic...');
+        
+        const productCards = document.querySelectorAll('.product-card, .related-product');
+        
+        productCards.forEach((card, index) => {
+            try {
+                // Get product title
+                const titleElement = card.querySelector('.product-title, .product-name, h3, h2');
+                const productTitle = titleElement ? titleElement.textContent.trim() : '';
+                
+                // Check if this specific product should have a discount
+                const discount = this.shouldHaveDiscount(productTitle);
+                
+                const priceContainer = card.querySelector('.product-price, .price-container, .price');
+                if (!priceContainer) {
+                    return;
+                }
+                
+                if (discount) {
+                    console.log(`🎯 Applying ${discount.percentage}% discount pricing to: ${productTitle}`);
+                    
+                    // Check if already has enhanced pricing
+                    if (priceContainer.querySelector('.sale-price-enhanced')) {
+                        return;
+                    }
+                    
+                    // Extract current price
+                    const priceText = priceContainer.textContent;
+                    const priceMatch = priceText.match(/\$([0-9.]+)/);
+                    
+                    if (priceMatch) {
+                        const currentPrice = parseFloat(priceMatch[1]);
+                        // Calculate original price (current price is already discounted)
+                        const originalPrice = currentPrice / (1 - discount.percentage / 100);
+                        
+                        // Update the price display with enhanced styling
+                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discount.percentage);
+                        this.addEnhancedPricingStyles();
+                    }
+                } else {
+                    // Remove any existing enhanced pricing from non-eligible products
+                    const enhancedPricing = priceContainer.querySelector('.price-display-enhanced');
+                    if (enhancedPricing) {
+                        console.log(`🗑️ Removing discount pricing from: ${productTitle}`);
+                        // Restore original price display
+                        const priceText = priceContainer.textContent;
+                        const priceMatch = priceText.match(/\$([0-9.]+)/);
+                        if (priceMatch) {
+                            priceContainer.innerHTML = `$${priceMatch[1]}`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error processing card ${index}:`, error);
+            }
+        });
+        
+        console.log('✅ Precise product pricing update complete');
+    }
 
     addProductDiscountBadges() {
-        // Find all product cards and add discount badges if they have sales
+        // Find all product cards and add discount badges ONLY for BUNGI X BOBBY products
         const productCards = document.querySelectorAll('.product-card, .related-product');
         
         productCards.forEach(card => {
-            // Check if product has a sale badge already
-            const existingSaleBadge = card.querySelector('.product-badge.sale');
-            if (existingSaleBadge && !card.querySelector('.product-discount-badge')) {
-                // Extract discount percentage from existing sale badge
-                const discountText = existingSaleBadge.textContent;
-                const discountMatch = discountText.match(/-(\d+)%/);
-                
-                if (discountMatch) {
-                    const discountPercent = discountMatch[1];
+            // Get product title
+            const titleElement = card.querySelector('.product-title, .product-name, h3, h2');
+            const productTitle = titleElement ? titleElement.textContent.trim() : '';
+            
+            // Check if this specific product should have a discount
+            const discount = this.shouldHaveDiscount(productTitle);
+            
+            if (discount) {
+                // Only add badge if it doesn't already exist
+                if (!card.querySelector('.product-discount-badge')) {
+                    console.log(`🎯 Adding discount badge to: ${productTitle}`);
                     
                     // Create enhanced discount badge
                     const discountBadge = document.createElement('div');
                     discountBadge.className = 'product-discount-badge';
-                    discountBadge.textContent = `SAVE ${discountPercent}%`;
+                    discountBadge.textContent = `${discount.percentage}% OFF`;
                     
-                    // Position it relative to the product image
+                    // Add to product image if it exists
                     const productImage = card.querySelector('.product-image');
                     if (productImage) {
                         productImage.style.position = 'relative';
                         productImage.appendChild(discountBadge);
                     }
+                }
+            } else {
+                // Remove any existing discount badges from non-eligible products
+                const existingBadge = card.querySelector('.product-discount-badge');
+                if (existingBadge) {
+                    console.log(`🗑️ Removing discount badge from: ${productTitle}`);
+                    existingBadge.remove();
                 }
             }
         });
