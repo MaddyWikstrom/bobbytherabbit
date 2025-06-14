@@ -1839,7 +1839,7 @@ class ProductDetailManager {
                 hasDiscount = true;
                 displayPrice = this.currentProduct.price * (1 - discountInfo.percentage / 100);
                 console.log(`🎯 Product "${this.currentProduct.title}" has ${discountInfo.percentage}% discount`);
-                console.log(`Original price: $${originalPrice.toFixed(2)}, Sale price: $${displayPrice.toFixed(2)}`);
+                console.log(`API price: $${originalPrice.toFixed(2)}, Sale price: $${displayPrice.toFixed(2)}`);
             }
             
             // Get the product detail grid from the DOM
@@ -2657,7 +2657,7 @@ class ProductDetailManager {
             if (discountInfo) {
                 itemPrice = this.currentProduct.price * (1 - discountInfo.percentage / 100);
                 console.log(`🎯 Adding discounted item: ${this.currentProduct.title} - ${discountInfo.percentage}% off`);
-                console.log(`Original: $${basePrice.toFixed(2)}, Sale: $${itemPrice.toFixed(2)}`);
+                console.log(`API price: $${basePrice.toFixed(2)}, Sale: $${itemPrice.toFixed(2)}`);
             }
             
             // Create a properly formatted product object for cart system

@@ -363,16 +363,7 @@ class HomepageProductLoader {
                 <div class="product-info">
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-name">${product.title}</h3>
-                    <div class="product-price">
-                        ${product.hasDiscount ?
-                            `<span class="price-current sale-price">$${product.price.toFixed(2)}</span>
-                             <span class="original-price">$${product.originalPrice.toFixed(2)}</span>` :
-                            (product.comparePrice ?
-                                `<span class="price-current">$${product.price.toFixed(2)}</span>
-                                 <span class="original-price">$${product.comparePrice.toFixed(2)}</span>` :
-                                `<span class="price-current">$${product.price.toFixed(2)}</span>`)
-                        }
-                    </div>
+                    <div class="product-price">$${product.price.toFixed(2)}</div>
                 </div>
             </div>
         `;

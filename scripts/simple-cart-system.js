@@ -270,21 +270,21 @@ if (window.BobbyCartSystem) {
     const hasDiscountType = discountTypes.some(type => title.includes(type));
     
     if (hasDiscountType) {
-      // Use the original price (not the current price which might already be discounted)
-      const originalPrice = product.originalPrice || product.basePrice || product.price;
-      const discountedPrice = originalPrice * (1 - 12 / 100);
+      // Use the API price (the price field should be the API price)
+      const apiPrice = product.price;
+      const discountedPrice = apiPrice * (1 - 12 / 100);
       
       console.log(`✅ Cart: Applying 12% discount to: ${product.title}`);
-      console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
+      console.log(`✅ Cart: API price: $${apiPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
       
       // Create a copy of the product with discount applied
       return {
         ...product,
         price: discountedPrice,
-        originalPrice: originalPrice,
+        originalPrice: apiPrice, // API price becomes the "original" price for display
         hasDiscount: true,
         discountPercentage: 12,
-        discountAmount: originalPrice - discountedPrice,
+        discountAmount: apiPrice - discountedPrice,
         discountDescription: '12% off hoodies, sweatshirts & sweatpants'
       };
     }

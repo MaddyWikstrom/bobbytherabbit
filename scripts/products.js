@@ -1226,16 +1226,16 @@ class ProductManager {
             };
         }
 
-        // Apply 12% discount
+        // Apply 12% discount to the API price
         const discountPercent = 12;
-        const originalPrice = product.price;
-        const salePrice = originalPrice * (1 - discountPercent / 100);
+        const apiPrice = product.price; // This is the price from the API
+        const salePrice = apiPrice * (1 - discountPercent / 100);
 
         return {
             hasDiscount: true,
             discount: discountPercent,
             salePrice: salePrice,
-            originalPrice: originalPrice
+            originalPrice: apiPrice // The API price becomes the "original" price to show crossed out
         };
     }
 
@@ -1319,15 +1319,7 @@ class ProductManager {
                     ${this.currentView === 'list' ? '<div class="product-details">' : ''}
                     <div class="product-category">${product.category.replace('-', ' ')}</div>
                     <h3 class="product-title">${product.title}</h3>
-                    <div class="product-price">
-                        ${hasDiscount ?
-                            `<span class="price-current sale-price">$${salePrice.toFixed(2)}</span>
-                             <span class="price-original">$${originalPrice.toFixed(2)}</span>
-                             <span class="price-discount">-${discount}%</span>` :
-                            `<span class="price-current">$${product.price.toFixed(2)}</span>
-                             ${product.comparePrice ? `<span class="price-original">$${product.comparePrice.toFixed(2)}</span>` : ''}`
-                        }
-                    </div>
+                    <div class="product-price">$${hasDiscount ? salePrice.toFixed(2) : product.price.toFixed(2)}</div>
                     ${product.colors.length > 0 ? `
                         <div class="product-variants">
                             ${variantOptionsHTML}
