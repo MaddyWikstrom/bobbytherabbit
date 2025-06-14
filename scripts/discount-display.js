@@ -15,7 +15,10 @@ class DiscountDisplayManager {
             this.createDiscountBanner();
         }, 500);
         
-        this.updateProductDiscounts();
+        // Delay product discount updates to ensure products are loaded
+        setTimeout(() => {
+            this.updateProductDiscounts();
+        }, 3000);
         
         // Listen for product updates to refresh discount displays
         document.addEventListener('productDetailRendered', () => {
@@ -32,6 +35,24 @@ class DiscountDisplayManager {
                 this.updateProductDiscounts();
             }, 2000);
         });
+        
+        // Also listen for when homepage products are specifically loaded
+        if (window.homepageProductLoader) {
+            // If homepage loader already exists, trigger update
+            setTimeout(() => {
+                this.updateProductDiscounts();
+            }, 4000);
+        } else {
+            // Wait for homepage loader to be created
+            const checkForLoader = setInterval(() => {
+                if (window.homepageProductLoader) {
+                    clearInterval(checkForLoader);
+                    setTimeout(() => {
+                        this.updateProductDiscounts();
+                    }, 1000);
+                }
+            }, 500);
+        }
     }
 
     async loadDiscounts() {
@@ -511,40 +532,79 @@ class DiscountDisplayManager {
     }
 
     updateHomepageProductPricing() {
-        // Update homepage product cards
-        const productCards = document.querySelectorAll('.product-card');
-        
-        productCards.forEach(card => {
-            const priceContainer = card.querySelector('.product-price');
-            if (!priceContainer) return;
+        // Wait a bit for products to load
+        setTimeout(() => {
+            console.log('Updating homepage product pricing...');
             
-            // Check if this card already has enhanced pricing
-            if (priceContainer.querySelector('.sale-price-enhanced')) return;
+            // Update homepage product cards
+            const productCards = document.querySelectorAll('#homepage-products .product-card');
+            console.log(`Found ${productCards.length} product cards to check for pricing`);
             
-            // Look for existing price elements
-            const currentPriceText = priceContainer.textContent.match(/\$(\d+\.?\d*)/);
-            const originalPriceSpan = priceContainer.querySelector('.original-price');
-            
-            if (currentPriceText && originalPriceSpan) {
-                const currentPrice = parseFloat(currentPriceText[1]);
-                const originalPriceText = originalPriceSpan.textContent.match(/\$(\d+\.?\d*)/);
-                
-                if (originalPriceText) {
-                    const originalPrice = parseFloat(originalPriceText[1]);
-                    
-                    if (originalPrice > currentPrice) {
-                        // Calculate discount percentage
-                        const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
-                        
-                        // Update the price display with Bobby theme styling
-                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
-                        
-                        // Add enhanced pricing styles
-                        this.addEnhancedPricingStyles();
-                    }
+            productCards.forEach((card, index) => {
+                const priceContainer = card.querySelector('.product-price');
+                if (!priceContainer) {
+                    console.log(`Card ${index}: No price container found`);
+                    return;
                 }
-            }
-        });
+                
+                // Check if this card already has enhanced pricing
+                if (priceContainer.querySelector('.sale-price-enhanced')) {
+                    console.log(`Card ${index}: Already has enhanced pricing`);
+                    return;
+                }
+                
+                // Look for existing price elements in the current structure
+                const originalPriceSpan = priceContainer.querySelector('.original-price');
+                
+                if (originalPriceSpan) {
+                    console.log(`Card ${index}: Found original price span, product has discount`);
+                    
+                    // Extract prices from the existing structure
+                    const priceText = priceContainer.textContent;
+                    const priceMatches = priceText.match(/\$(\d+\.?\d*)/g);
+                    
+                    if (priceMatches && priceMatches.length >= 2) {
+                        const currentPrice = parseFloat(priceMatches[0].replace('$', ''));
+                        const originalPrice = parseFloat(priceMatches[1].replace('$', ''));
+                        
+                        console.log(`Card ${index}: Current: $${currentPrice}, Original: $${originalPrice}`);
+                        
+                        if (originalPrice > currentPrice) {
+                            // Calculate discount percentage
+                            const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+                            
+                            console.log(`Card ${index}: Applying ${discountPercent}% discount styling`);
+                            
+                            // Update the price display with Bobby theme styling
+                            priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
+                            
+                            // Add enhanced pricing styles
+                            this.addEnhancedPricingStyles();
+                        }
+                    }
+                } else {
+                    console.log(`Card ${index}: No discount found (no original-price span)`);
+                }
+            });
+        }, 2000); // Wait 2 seconds for products to load
+        
+        // Also set up a mutation observer to catch dynamically loaded products
+        const homepageContainer = document.getElementById('homepage-products');
+        if (homepageContainer) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        console.log('New products detected, updating pricing...');
+                        setTimeout(() => this.updateHomepageProductPricing(), 500);
+                    }
+                });
+            });
+            
+            observer.observe(homepageContainer, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
 
     updateProductDetailPricing() {
