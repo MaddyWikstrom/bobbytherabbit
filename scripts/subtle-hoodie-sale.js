@@ -116,32 +116,49 @@ class SubtleHoodieSale {
 
   // Apply to product detail pages - fixed approach
   applyToProductDetail() {
+    console.log('🔍 Starting product detail page processing...');
+    
     // Check if already processed
-    if (this.processedDetailPages.has('detail-page')) return 0;
-
-    // Check if page contains target product keywords in MAIN title only (h1)
-    const mainTitle = document.querySelector('h1');
-    if (!mainTitle) return 0;
-    
-    const titleText = mainTitle.textContent || mainTitle.innerText || '';
-    console.log('🔍 Checking main product title:', titleText);
-    
-    if (!this.isTargetProduct(titleText)) {
-      console.log('❌ Not a target product:', titleText);
+    if (this.processedDetailPages.has('detail-page')) {
+      console.log('⏭️ Detail page already processed');
       return 0;
     }
 
-    console.log('✅ Target product confirmed:', titleText);
+    // Check if page contains target product keywords in ANY title element
+    const titleElements = document.querySelectorAll('h1, h2, .product-title, .product-name, [class*="title"]');
+    let isTargetPage = false;
+    let foundTitle = '';
+    
+    console.log(`📍 Found ${titleElements.length} title elements to check`);
+    
+    for (const titleEl of titleElements) {
+      const titleText = titleEl.textContent || titleEl.innerText || '';
+      console.log('🔍 Checking title element:', titleText);
+      
+      if (this.isTargetProduct(titleText)) {
+        isTargetPage = true;
+        foundTitle = titleText;
+        console.log('✅ Target product found:', titleText);
+        break;
+      }
+    }
+    
+    if (!isTargetPage) {
+      console.log('❌ No target product found in any title elements');
+      return 0;
+    }
+
+    console.log('✅ Target product confirmed:', foundTitle);
 
     let updatedCount = 0;
 
-    // Find price elements more carefully - only main prices, not duplicates
-    const priceElements = document.querySelectorAll('.price, [class*="price"]:not(.subtle-price-display):not(.subtle-original-price):not(.subtle-sale-price):not(.subtle-savings)');
+    // Find ALL elements that might contain prices - be more inclusive
+    const allElements = document.querySelectorAll('*');
     const processedPrices = new Set();
 
-    console.log(`📍 Found ${priceElements.length} price elements to check`);
+    console.log(`📍 Scanning ${allElements.length} elements for prices...`);
 
-    for (const element of priceElements) {
+    for (const element of allElements) {
       // Skip if already processed or is our generated content
       if (element.classList.contains('subtle-price-display') ||
           element.classList.contains('has-subtle-sale') ||
@@ -152,7 +169,8 @@ class SubtleHoodieSale {
       }
 
       const text = (element.textContent || '').trim();
-      const priceMatch = text.match(/^\$(\d+(?:\.\d{2})?)$/);
+      // More flexible price matching
+      const priceMatch = text.match(/\$(\d+(?:\.\d{2})?)/);
       
       if (priceMatch &&
           !element.querySelector('*') && // No child elements
@@ -160,6 +178,8 @@ class SubtleHoodieSale {
           !processedPrices.has(priceMatch[1])) { // Not already processed this price
         
         const currentPrice = parseFloat(priceMatch[1]);
+        
+        console.log(`💰 Found potential price: $${currentPrice} in element:`, element.tagName, element.className);
         
         // Only process reasonable prices
         if (currentPrice >= 10 && currentPrice <= 1000) {
@@ -175,7 +195,7 @@ class SubtleHoodieSale {
           processedPrices.add(priceMatch[1]);
           updatedCount++;
           
-          console.log(`💰 Applied discount to price: $${currentPrice}`);
+          console.log(`✅ Applied discount to price: $${currentPrice}`);
         }
       }
     }
@@ -183,6 +203,8 @@ class SubtleHoodieSale {
     if (updatedCount > 0) {
       this.processedDetailPages.add('detail-page');
       console.log(`✅ Applied discounts to ${updatedCount} price elements`);
+    } else {
+      console.log('❌ No price elements found to process');
     }
 
     return updatedCount;
@@ -324,9 +346,19 @@ if (document.readyState === 'loading') {
 // Also try to apply after a delay to catch dynamically loaded content
 setTimeout(() => {
   if (window.subtleHoodieSale) {
+    console.log('🔄 Running delayed force update...');
     window.subtleHoodieSale.forceUpdate();
   }
 }, 2000);
+
+// Add another attempt after 5 seconds for slow-loading pages
+setTimeout(() => {
+  if (window.subtleHoodieSale) {
+    console.log('🔄 Running final force update...');
+    window.subtleHoodieSale.clearCache();
+    window.subtleHoodieSale.forceUpdate();
+  }
+}, 5000);
 
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
