@@ -630,12 +630,12 @@ class DiscountDisplayManager {
                     const priceMatch = priceText.match(/\$([0-9.]+)/);
                     
                     if (priceMatch) {
-                        const currentPrice = parseFloat(priceMatch[1]);
-                        // Calculate original price (current price is already discounted)
-                        const originalPrice = currentPrice / (1 - discount.percentage / 100);
+                        const originalPrice = parseFloat(priceMatch[1]);
+                        // Calculate discounted price (subtract 12% from original)
+                        const discountedPrice = originalPrice * (1 - discount.percentage / 100);
                         
                         // Update the price display with enhanced styling
-                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discount.percentage);
+                        priceContainer.innerHTML = this.renderSalePrice(discountedPrice, originalPrice, discount.percentage);
                         this.addEnhancedPricingStyles();
                     }
                 } else {
@@ -683,12 +683,12 @@ class DiscountDisplayManager {
                 const priceMatch = priceText.match(/\$([0-9.]+)/);
                 
                 if (priceMatch) {
-                    const currentPrice = parseFloat(priceMatch[1]);
-                    // Calculate original price (current price is already discounted)
-                    const originalPrice = currentPrice / (1 - discount.percentage / 100);
+                    const originalPrice = parseFloat(priceMatch[1]);
+                    // Calculate discounted price (subtract 12% from original)
+                    const discountedPrice = originalPrice * (1 - discount.percentage / 100);
                     
                     // Update the price display with enhanced styling
-                    priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discount.percentage);
+                    priceContainer.innerHTML = this.renderSalePrice(discountedPrice, originalPrice, discount.percentage);
                     this.addEnhancedPricingStyles();
                     
                     console.log(`✅ Applied ${discount.percentage}% discount to product detail page`);
