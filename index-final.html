@@ -121,14 +121,17 @@
         // Performance marks
         performance.mark('js-start');
         
-        // Ultra-minimal cart
+        // Ultra-minimal cart with pricing preservation
         const cart = {
             items: [],
+            discounts: {},
             init() {
                 try {
                     this.items = JSON.parse(localStorage.getItem('bobby-cart') || '[]');
+                    this.discounts = JSON.parse(localStorage.getItem('bobby-cart-discounts') || '{}');
                 } catch (e) {
                     this.items = [];
+                    this.discounts = {};
                 }
                 this.updateCount();
             },
@@ -136,35 +139,76 @@
                 const el = document.getElementById('cart-count');
                 if (el) el.textContent = this.items.reduce((s, i) => s + (i.quantity || 0), 0);
             },
-            add(id) {
-                this.items.push({id, quantity: 1, time: Date.now()});
+            add(id, productData = {}) {
+                // Store complete product information including pricing
+                const item = {
+                    id,
+                    quantity: 1,
+                    time: Date.now(),
+                    title: productData.title || 'Product',
+                    price: productData.price || 0,
+                    originalPrice: productData.originalPrice || productData.price || 0,
+                    salePrice: productData.salePrice,
+                    discountPercentage: productData.discountPercentage,
+                    image: productData.image,
+                    variantId: productData.variantId || id
+                };
+                
+                this.items.push(item);
                 try {
                     localStorage.setItem('bobby-cart', JSON.stringify(this.items));
+                    localStorage.setItem('bobby-cart-discounts', JSON.stringify(this.discounts));
                 } catch (e) {}
                 this.updateCount();
-                this.showNotification();
+                this.showNotification(item);
             },
             open() {
                 if (!window.fullCart) {
-                    const s = document.createElement('script');
-                    s.src = 'scripts/performance-bundle.js';
-                    s.async = true;
-                    s.onload = () => {
-                        window.fullCart = true;
-                        if (window.BobbyCart) {
-                            window.BobbyCart.items = this.items;
-                            window.BobbyCart.openCart();
-                        }
-                    };
-                    document.head.appendChild(s);
+                    // Load both performance bundle and cart pricing fix
+                    const scripts = [
+                        'scripts/performance-bundle.js',
+                        'scripts/cart-pricing-fix.js'
+                    ];
+                    
+                    let loaded = 0;
+                    scripts.forEach(src => {
+                        const s = document.createElement('script');
+                        s.src = src;
+                        s.async = true;
+                        s.onload = () => {
+                            loaded++;
+                            if (loaded === scripts.length) {
+                                window.fullCart = true;
+                                // Use enhanced cart system
+                                if (window.BobbyCartEnhanced) {
+                                    window.BobbyCartEnhanced.items = this.items;
+                                    window.BobbyCartEnhanced.discounts = this.discounts;
+                                    window.BobbyCartEnhanced.openCart();
+                                } else if (window.BobbyCart) {
+                                    window.BobbyCart.items = this.items;
+                                    window.BobbyCart.openCart();
+                                }
+                            }
+                        };
+                        document.head.appendChild(s);
+                    });
+                } else if (window.BobbyCartEnhanced) {
+                    window.BobbyCartEnhanced.openCart();
                 } else if (window.BobbyCart) {
                     window.BobbyCart.openCart();
                 }
             },
-            showNotification() {
+            showNotification(item) {
                 const n = document.createElement('div');
-                n.style.cssText = 'position:fixed;top:80px;right:20px;background:#00ff88;color:#000;padding:1rem;border-radius:4px;z-index:10001;font-weight:600';
-                n.textContent = 'Added to cart!';
+                n.style.cssText = 'position:fixed;top:80px;right:20px;background:#00ff88;color:#000;padding:1rem;border-radius:4px;z-index:10001;font-weight:600;max-width:300px';
+                
+                let message = `Added ${item.title || 'item'} to cart!`;
+                if (item.salePrice && item.originalPrice && item.salePrice < item.originalPrice) {
+                    const savings = item.originalPrice - item.salePrice;
+                    message += ` (Save $${savings.toFixed(2)})`;
+                }
+                
+                n.textContent = message;
                 document.body.appendChild(n);
                 setTimeout(() => n.remove(), 2000);
             }
