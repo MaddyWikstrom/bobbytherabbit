@@ -1,35 +1,46 @@
-// Simple Discount Banner - 10% off BUNGIXBOBBY
+// Rainbow Discount Banner - 10% off BUNGIXBOBBY
 class DiscountBanner {
     constructor() {
+        this.currentDiscount = {
+            type: 'first_order',
+            title: 'FIRST ORDER DISCOUNT',
+            description: '10% off your first order',
+            discountPercent: 10,
+            isActive: true,
+            code: 'BUNGIXBOBBY'
+        };
         this.init();
     }
 
     init() {
-        // Wait for DOM to be ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.createBanner());
-        } else {
-            this.createBanner();
-        }
+        // Wait for DOM to be ready and navbar animation to complete
+        setTimeout(() => {
+            this.createDiscountBanner();
+        }, 2000);
     }
 
-    createBanner() {
-        // Don't create banner if it already exists
-        if (document.getElementById('discount-banner')) {
+    createDiscountBanner() {
+        if (!this.currentDiscount || !this.currentDiscount.isActive) {
             return;
         }
 
-        // Create banner element
+        // Remove existing discount banner if it exists
+        const existingBanner = document.getElementById('discount-banner');
+        if (existingBanner) {
+            existingBanner.remove();
+        }
+
+        // Create discount banner
         const banner = document.createElement('div');
         banner.id = 'discount-banner';
         banner.className = 'discount-banner';
         
-        banner.innerHTML = `
+        const bannerContent = `
             <div class="discount-banner-content">
                 <div class="discount-icon">🔥</div>
                 <div class="discount-text">
-                    <span class="discount-title">FIRST ORDER DISCOUNT</span>
-                    <span class="discount-description">10% off your first order - Code: BUNGIXBOBBY</span>
+                    <span class="discount-title">${this.currentDiscount.title}</span>
+                    <span class="discount-description">${this.currentDiscount.description}${this.currentDiscount.code ? ` - Code: ${this.currentDiscount.code}` : ''}</span>
                 </div>
                 <div class="discount-cta">
                     <button class="discount-shop-btn" onclick="window.location.href='products.html'">
@@ -39,50 +50,129 @@ class DiscountBanner {
                 <button class="discount-close" onclick="this.parentElement.parentElement.style.display='none'">×</button>
             </div>
         `;
-
+        
+        banner.innerHTML = bannerContent;
+        
         // Add styles
-        this.addStyles();
+        this.addDiscountStyles();
+        
+        // Wait for DOM to be ready and insert banner properly below navbar
+        this.insertBannerBelowNavbar(banner);
 
-        // Insert banner at the top of the page
-        this.insertBanner(banner);
-
-        // Show banner with animation
+        // Add animation
         setTimeout(() => {
             banner.classList.add('show');
         }, 100);
     }
 
-    insertBanner(banner) {
-        // Try to insert after navbar
-        const navbar = document.querySelector('.navbar');
-        if (navbar && navbar.parentNode) {
-            if (navbar.nextElementSibling) {
-                navbar.parentNode.insertBefore(banner, navbar.nextElementSibling);
-            } else {
-                navbar.parentNode.appendChild(banner);
+    insertBannerBelowNavbar(banner) {
+        // Wait for navbar animation to complete
+        this.waitForNavbarAnimation(() => {
+            console.log('Navbar animation complete, inserting banner...');
+            
+            // First, try to find the main site container
+            const mainSite = document.getElementById('main-site');
+            if (mainSite) {
+                console.log('Found main-site container');
+                
+                // Look for navbar within main-site
+                const navbar = mainSite.querySelector('.navbar');
+                if (navbar) {
+                    console.log('Found navbar inside main-site, inserting banner after it');
+                    
+                    // Insert banner right after the navbar
+                    if (navbar.nextElementSibling) {
+                        mainSite.insertBefore(banner, navbar.nextElementSibling);
+                    } else {
+                        mainSite.appendChild(banner);
+                    }
+                    
+                    console.log('Banner successfully inserted after navbar in main-site');
+                    return;
+                }
+                
+                // If no navbar found in main-site, insert at the beginning
+                console.log('No navbar found in main-site, inserting at beginning');
+                mainSite.insertBefore(banner, mainSite.firstChild);
+                console.log('Banner inserted at beginning of main-site');
+                return;
             }
-        } else {
-            // Fallback: insert at top of body
+            
+            // Fallback: try to find navbar anywhere in the document
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                console.log('Found navbar in document, inserting banner after it');
+                
+                // Insert banner after navbar
+                if (navbar.nextElementSibling) {
+                    navbar.parentNode.insertBefore(banner, navbar.nextElementSibling);
+                } else {
+                    navbar.parentNode.appendChild(banner);
+                }
+                
+                console.log('Banner inserted after navbar');
+                return;
+            }
+            
+            // Last resort: insert at top of body
+            console.log('No navbar found, inserting at top of body');
             document.body.insertBefore(banner, document.body.firstChild);
-        }
+            console.log('Banner inserted at top of body as fallback');
+        });
     }
 
-    addStyles() {
-        // Don't add styles if they already exist
-        if (document.getElementById('discount-banner-styles')) {
-            return;
+    waitForNavbarAnimation(callback) {
+        // Wait for navbar to be present and animation to complete
+        let attempts = 0;
+        const maxAttempts = 20; // 4 seconds max wait time
+        
+        const checkNavbar = () => {
+            attempts++;
+            const navbar = document.querySelector('.navbar');
+            
+            if (navbar) {
+                // Check if navbar has finished animating by checking its computed styles
+                const computedStyle = window.getComputedStyle(navbar);
+                const transform = computedStyle.transform;
+                const opacity = computedStyle.opacity;
+                
+                console.log(`Navbar check ${attempts}: transform=${transform}, opacity=${opacity}`);
+                
+                // If navbar is visible and not being transformed, animation is likely complete
+                if (opacity === '1' && (transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)')) {
+                    console.log('Navbar animation appears complete');
+                    callback();
+                    return;
+                }
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(checkNavbar, 200);
+            } else {
+                console.log('Max attempts reached, proceeding with banner insertion');
+                callback();
+            }
+        };
+        
+        // Start checking after initial delay
+        setTimeout(checkNavbar, 500);
+    }
+
+    addDiscountStyles() {
+        if (document.getElementById('discount-styles')) {
+            return; // Styles already added
         }
 
         const style = document.createElement('style');
-        style.id = 'discount-banner-styles';
+        style.id = 'discount-styles';
         style.textContent = `
             .discount-banner {
                 background: linear-gradient(135deg, #ff6b6b, #ee5a24, #ff9ff3, #a855f7);
                 background-size: 400% 400%;
                 animation: discountGradient 3s ease infinite;
                 color: white;
-                padding: 12px 0;
-                position: relative;
+                padding: 8px 0;
+                position: static;
                 display: block;
                 width: 100%;
                 z-index: 10;
@@ -90,7 +180,8 @@ class DiscountBanner {
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
                 overflow: hidden;
-                margin-bottom: 0;
+                margin: 60px 0 15px 0;
+                clear: both;
             }
 
             .discount-banner.show {
@@ -204,14 +295,6 @@ class DiscountBanner {
                 opacity: 1;
             }
 
-            /* Add proper spacing after banner */
-            .discount-banner + .collection-header,
-            .discount-banner + .hero-section,
-            .discount-banner + .main-content > *:first-child {
-                margin-top: 0;
-                padding-top: 20px;
-            }
-
             /* Mobile responsiveness */
             @media (max-width: 768px) {
                 .discount-banner-content {
@@ -225,21 +308,16 @@ class DiscountBanner {
                     margin-right: 0;
                 }
 
-                .discount-text {
-                    flex-direction: column;
-                    gap: 5px;
-                }
-
                 .discount-cta {
                     margin-left: 0;
                 }
 
                 .discount-title {
-                    font-size: 14px;
+                    font-size: 16px;
                 }
 
                 .discount-description {
-                    font-size: 12px;
+                    font-size: 13px;
                 }
 
                 .discount-close {
@@ -256,11 +334,11 @@ class DiscountBanner {
                 }
 
                 .discount-title {
-                    font-size: 13px;
+                    font-size: 14px;
                 }
 
                 .discount-description {
-                    font-size: 11px;
+                    font-size: 12px;
                 }
 
                 .discount-shop-btn {
