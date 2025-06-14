@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Response - Bobby Streetwear</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .product {
+            background: #2a2a2a;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .product-title {
+            color: #a855f7;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .variant {
+            background: #3a3a3a;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .price-info {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .compare-price {
+            color: #ef4444;
+            text-decoration: line-through;
+        }
+        .raw-data {
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .loading {
+            text-align: center;
+            color: #a855f7;
+            font-size: 18px;
+        }
+        .error {
+            color: #ef4444;
+            background: #2a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bobby Streetwear - API Response Test</h1>
+        <p>This page shows the raw API response to check for sale/discount data.</p>
+        
+        <div id="loading" class="loading">Loading products from API...</div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        async function testAPIResponse() {
+            const loadingEl = document.getElementById('loading');
+            const resultsEl = document.getElementById('results');
+            
+            try {
+                console.log('Fetching products from API...');
+                const response = await fetch('/.netlify/functions/get-products');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                loadingEl.style.display = 'none';
+                
+                console.log('Raw API Response:', data);
+                
+                // Show raw response first
+                const rawSection = document.createElement('div');
+                rawSection.innerHTML = `
+                    <h2>Raw API Response</h2>
+                    <div class="raw-data">${JSON.stringify(data, null, 2)}</div>
+                `;
+                resultsEl.appendChild(rawSection);
+                
+                // Process products
+                let products = [];
+                if (data.products && Array.isArray(data.products)) {
+                    products = data.products.map(p => p.node || p);
+                } else if (Array.isArray(data)) {
+                    products = data.map(p => p.node || p);
+                }
+                
+                console.log('Processed products:', products);
+                
+                const productsSection = document.createElement('div');
+                productsSection.innerHTML = `<h2>Processed Products (${products.length} found)</h2>`;
+                
+                products.forEach((product, index) => {
+                    const productDiv = document.createElement('div');
+                    productDiv.className = 'product';
+                    
+                    let productHTML = `
+                        <div class="product-title">${product.title || 'Unknown Product'}</div>
+                        <p><strong>Handle:</strong> ${product.handle || 'N/A'}</p>
+                        <p><strong>Product Type:</strong> ${product.productType || 'N/A'}</p>
+                    `;
+                    
+                    // Check variants for pricing
+                    if (product.variants && product.variants.edges) {
+                        productHTML += `<h4>Variants (${product.variants.edges.length}):</h4>`;
+                        
+                        product.variants.edges.forEach((variantEdge, vIndex) => {
+                            const variant = variantEdge.node;
+                            const hasDiscount = variant.compareAtPrice && variant.price && 
+                                              parseFloat(variant.compareAtPrice.amount) > parseFloat(variant.price.amount);
+                            
+                            productHTML += `
+                                <div class="variant">
+                                    <p><strong>Variant ${vIndex + 1}:</strong> ${variant.title || 'Default'}</p>
+                                    <p class="price-info">Current Price: $${variant.price ? variant.price.amount : 'N/A'}</p>
+                                    <p class="compare-price">Compare At Price: $${variant.compareAtPrice ? variant.compareAtPrice.amount : 'N/A'}</p>
+                                    <p><strong>Has Discount:</strong> ${hasDiscount ? '✅ YES' : '❌ NO'}</p>
+                                    ${hasDiscount ? `<p><strong>Discount:</strong> ${Math.round(((parseFloat(variant.compareAtPrice.amount) - parseFloat(variant.price.amount)) / parseFloat(variant.compareAtPrice.amount)) * 100)}%</p>` : ''}
+                                    <div class="raw-data">${JSON.stringify(variant, null, 2)}</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        productHTML += '<p>No variants found or variants structure is different</p>';
+                    }
+                    
+                    productDiv.innerHTML = productHTML;
+                    productsSection.appendChild(productDiv);
+                });
+                
+                resultsEl.appendChild(productsSection);
+                
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                loadingEl.style.display = 'none';
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.innerHTML = `
+                    <h2>Error Loading Products</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Check the browser console for more details.</p>
+                `;
+                resultsEl.appendChild(errorDiv);
+            }
+        }
+        
+        // Start the test when page loads
+        document.addEventListener('DOMContentLoaded', testAPIResponse);
+    </script>
+</body>
+</html>

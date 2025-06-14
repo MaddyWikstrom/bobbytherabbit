@@ -1829,6 +1829,19 @@ class ProductDetailManager {
         try {
             console.log('Rendering product:', this.currentProduct.title);
             
+            // Check for discount eligibility
+            const discountInfo = this.getDiscountForProduct(this.currentProduct);
+            let displayPrice = this.currentProduct.price;
+            let originalPrice = this.currentProduct.price;
+            let hasDiscount = false;
+            
+            if (discountInfo) {
+                hasDiscount = true;
+                displayPrice = this.currentProduct.price * (1 - discountInfo.percentage / 100);
+                console.log(`🎯 Product "${this.currentProduct.title}" has ${discountInfo.percentage}% discount`);
+                console.log(`API price: $${originalPrice.toFixed(2)}, Sale price: $${displayPrice.toFixed(2)}`);
+            }
+            
             // Get the product detail grid from the DOM
             const productDetailGrid = document.getElementById('product-detail-grid');
             if (!productDetailGrid) {
@@ -1866,11 +1879,22 @@ class ProductDetailManager {
                     </div>
                     
                     <div class="price-container">
-                        <span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
-                        ${this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price ? 
-                            `<span id="product-compare-price" class="price-original">$${this.currentProduct.comparePrice.toFixed(2)}</span>
-                             <span id="product-discount" class="price-discount">-${Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100)}%</span>` : 
-                            ''}
+                        ${hasDiscount ?
+                            `<div class="price-row">
+                                <span id="product-price" class="price-current sale-price">$${displayPrice.toFixed(2)}</span>
+                                <span id="product-compare-price" class="original-price">$${originalPrice.toFixed(2)}</span>
+                                <span class="discount-badge">${discountInfo.percentage}% OFF</span>
+                             </div>
+                             <div class="discount-description">${discountInfo.description}</div>` :
+                            (this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price ?
+                                `<div class="price-row">
+                                    <span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
+                                    <span id="product-compare-price" class="original-price">$${this.currentProduct.comparePrice.toFixed(2)}</span>
+                                 </div>` :
+                                `<div class="price-row">
+                                    <span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
+                                 </div>`)
+                        }
                     </div>
                     
                     <div id="product-description" class="product-description">
@@ -1946,6 +1970,66 @@ class ProductDetailManager {
                 mainContent.style.display = 'block';
             }
             console.log('Product rendered successfully');
+            
+            // Add CSS for sale pricing if not already added
+            if (!document.getElementById('sale-pricing-styles')) {
+                const style = document.createElement('style');
+                style.id = 'sale-pricing-styles';
+                style.textContent = `
+                    .price-container {
+                        margin: 1rem 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+                    
+                    .price-current {
+                        color: #a855f7;
+                        font-weight: bold;
+                        font-size: 1.2em;
+                    }
+                    
+                    .sale-price {
+                        color: #00ff88 !important;
+                        font-weight: bold;
+                        font-size: 1.4em;
+                    }
+                    
+                    .original-price {
+                        text-decoration: line-through;
+                        color: #888;
+                        margin-left: 0.5rem;
+                        font-size: 1em;
+                    }
+                    
+                    .discount-badge {
+                        background: #ff4444;
+                        color: white;
+                        padding: 0.3rem 0.6rem;
+                        border-radius: 4px;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        display: inline-block;
+                        margin-left: 0.5rem;
+                        text-transform: uppercase;
+                    }
+                    
+                    .discount-description {
+                        color: #00ff88;
+                        font-size: 0.9rem;
+                        font-style: italic;
+                        margin-top: 0.25rem;
+                    }
+                    
+                    .price-row {
+                        display: flex;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
             
             // Trigger an event to notify that product detail rendering is complete
             document.dispatchEvent(new CustomEvent('productDetailRendered'));
@@ -2565,13 +2649,26 @@ class ProductDetailManager {
             
             console.log(`Using color image for ${this.selectedVariant.color}: ${colorImage}`);
             
+            // Check for discount and calculate correct price
+            const discountInfo = this.getDiscountForProduct(this.currentProduct);
+            let itemPrice = this.currentProduct.price;
+            let basePrice = this.currentProduct.price;
+            
+            if (discountInfo) {
+                itemPrice = this.currentProduct.price * (1 - discountInfo.percentage / 100);
+                console.log(`🎯 Adding discounted item: ${this.currentProduct.title} - ${discountInfo.percentage}% off`);
+                console.log(`API price: $${basePrice.toFixed(2)}, Sale: $${itemPrice.toFixed(2)}`);
+            }
+            
             // Create a properly formatted product object for cart system
             const cartProduct = {
                 // Use the variant-specific ID to ensure different variants are treated as different items
                 id: variantId,
                 productId: this.currentProduct.id, // Keep original product ID for reference
                 title: this.currentProduct.title,
-                price: this.currentProduct.price,
+                price: itemPrice, // Use discounted price if applicable
+                basePrice: basePrice, // Store original price for cart system
+                originalPrice: basePrice, // Alternative name for compatibility
                 image: colorImage, // Use the color-specific image instead of main image
                 shopifyId: this.currentProduct.shopifyId,
                 // Provide both formats for maximum compatibility
@@ -2584,7 +2681,12 @@ class ProductDetailManager {
                     size: this.selectedVariant.size
                 },
                 // Add variant details directly in the title for display in cart
-                variantTitle: `${this.selectedVariant.color} / ${this.selectedVariant.size}`
+                variantTitle: `${this.selectedVariant.color} / ${this.selectedVariant.size}`,
+                // Add discount information for cart display
+                hasDiscount: !!discountInfo,
+                discountPercentage: discountInfo ? discountInfo.percentage : null,
+                discountAmount: discountInfo ? (basePrice - itemPrice) : null,
+                discountDescription: discountInfo ? discountInfo.description : null
             };
             
             console.log(`Adding to cart: ${cartProduct.title} - ${cartProduct.variantTitle} (Quantity: ${cartProduct.quantity})`);
@@ -2861,6 +2963,34 @@ class ProductDetailManager {
         } catch (error) {
             console.error('Error in showProductNotFound:', error);
         }
+    }
+    
+    getDiscountForProduct(product) {
+        // Check if PreciseDiscountSystem is available
+        if (window.PreciseDiscountSystem && typeof window.PreciseDiscountSystem.getDiscountForProduct === 'function') {
+            return window.PreciseDiscountSystem.getDiscountForProduct(product);
+        }
+        
+        // Fallback: Check for discount patterns directly
+        if (product.title) {
+            const title = product.title.toLowerCase();
+            
+            // Specific product types that should get discounts
+            const discountTypes = [
+                'hoodie',
+                'sweatshirt',
+                'sweatpants'
+            ];
+            
+            // Check if this product is one of the discount types
+            const hasDiscountType = discountTypes.some(type => title.includes(type));
+            
+            if (hasDiscountType) {
+                return { percentage: 12, description: '12% off hoodies, sweatshirts & sweatpants' };
+            }
+        }
+        
+        return null; // No discount
     }
     
     getColorCode(colorInput) {

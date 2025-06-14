@@ -1,0 +1,334 @@
+/* Subtle Hoodie Sale Styling - Clean and Minimal */
+
+/* Subtle Sale Badge */
+.subtle-sale-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.subtle-sale-badge .subtle-sale-text {
+  line-height: 1;
+}
+
+/* Subtle Price Display */
+.subtle-price-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+/* Original Price (subtle strikethrough) */
+.subtle-original-price {
+  font-size: 14px;
+  font-weight: 400;
+  color: #999;
+  text-decoration: line-through;
+  line-height: 1.2;
+}
+
+/* Sale Price (clean highlight) */
+.subtle-sale-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.2;
+}
+
+/* Savings Amount (minimal styling) */
+.subtle-savings {
+  font-size: 12px;
+  font-weight: 500;
+  color: #dc3545;
+  line-height: 1.2;
+}
+
+/* Product Card with Subtle Sale */
+.product-card.subtle-sale-item,
+.product-item.subtle-sale-item,
+.product.subtle-sale-item {
+  position: relative;
+  overflow: visible;
+}
+
+/* Very subtle border enhancement */
+.product-card.subtle-sale-item {
+  border: 1px solid rgba(220, 53, 69, 0.1);
+}
+
+/* Hover effect - minimal */
+.product-card.subtle-sale-item:hover .subtle-sale-badge {
+  background: rgba(220, 53, 69, 1);
+}
+
+.product-card.subtle-sale-item:hover .subtle-sale-price {
+  color: #1a252f;
+}
+
+/* Price Element Styling */
+.has-subtle-sale {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .subtle-sale-badge {
+    top: 8px;
+    right: 8px;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+  
+  .subtle-original-price {
+    font-size: 13px;
+  }
+  
+  .subtle-sale-price {
+    font-size: 16px;
+  }
+  
+  .subtle-savings {
+    font-size: 11px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .subtle-sale-badge {
+    top: 6px;
+    right: 6px;
+    padding: 2px 5px;
+    font-size: 9px;
+  }
+  
+  .subtle-original-price {
+    font-size: 12px;
+  }
+  
+  .subtle-sale-price {
+    font-size: 15px;
+  }
+  
+  .subtle-savings {
+    font-size: 10px;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .subtle-sale-badge {
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+  }
+  
+  .subtle-original-price {
+    color: #666;
+  }
+  
+  .subtle-sale-price {
+    color: #000;
+    font-weight: 900;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .subtle-sale-badge,
+  .subtle-sale-price {
+    transition: none;
+  }
+  
+  .product-card.subtle-sale-item:hover .subtle-sale-badge,
+  .product-card.subtle-sale-item:hover .subtle-sale-price {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .subtle-sale-badge {
+    background: #000 !important;
+    color: #fff !important;
+    box-shadow: none;
+  }
+  
+  .subtle-sale-price {
+    color: #000 !important;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .subtle-original-price {
+    color: #aaa;
+  }
+  
+  .subtle-sale-price {
+    color: #fff;
+  }
+  
+  .product-card.subtle-sale-item {
+    border-color: rgba(220, 53, 69, 0.2);
+  }
+}
+
+/* Ensure badges appear above everything */
+.subtle-sale-badge {
+  z-index: 10 !important;
+}
+
+/* Force positioning for product containers */
+.product-card,
+.product-item,
+.product {
+  position: relative !important;
+}
+
+/* Clean integration with existing styles */
+.subtle-price-display {
+  font-family: inherit;
+}
+
+.subtle-sale-badge {
+  font-family: inherit;
+}
+
+/* Prevent layout shifts */
+.has-subtle-sale {
+  min-height: auto;
+}
+
+/* Cart Item Sale Styling */
+.has-cart-sale {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-original-price {
+  font-size: 12px;
+  font-weight: 400;
+  color: #999;
+  text-decoration: line-through;
+  line-height: 1;
+}
+
+.cart-sale-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+/* Product Detail Page Enhancements */
+.product-detail .subtle-sale-badge,
+.product-detail-grid .subtle-sale-badge,
+.product-info .subtle-sale-badge,
+.product-main .subtle-sale-badge {
+  top: 20px;
+  right: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Variant Price Styling */
+.variant-price.has-subtle-sale,
+.option-price.has-subtle-sale,
+[data-variant-price].has-subtle-sale {
+  margin-top: 5px;
+}
+
+/* Mobile Cart Styling */
+@media (max-width: 768px) {
+  .cart-original-price {
+    font-size: 11px;
+  }
+  
+  .cart-sale-price {
+    font-size: 13px;
+  }
+  
+  .product-detail .subtle-sale-badge,
+  .product-detail-grid .subtle-sale-badge {
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
+/* Subtle animation for new sale items */
+.subtle-sale-item {
+  animation: subtleFadeIn 0.3s ease-out;
+}
+
+@keyframes subtleFadeIn {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Cart Item Styling */
+.has-cart-sale {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cart-original-price {
+  color: #999;
+  text-decoration: line-through;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.cart-sale-price {
+  color: #dc3545;
+  font-weight: 700;
+  font-size: 1.05em;
+  background: rgba(220, 53, 69, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Cart Item Container Enhancement */
+.has-cart-sale::after {
+  content: '12% OFF';
+  background: #27ae60;
+  color: white;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 5px;
+}
+
+/* Cart Animation */
+.has-cart-sale {
+  animation: cart-highlight 0.5s ease-in-out;
+}
+
+@keyframes cart-highlight {
+  0% { background-color: rgba(220, 53, 69, 0.1); }
+  100% { background-color: transparent; }
+}

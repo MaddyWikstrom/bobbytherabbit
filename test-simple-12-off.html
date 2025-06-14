@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple 12% Off Test - Bobby Streetwear</title>
+    <link rel="stylesheet" href="styles/simple-12-percent-off.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 16px;
+        }
+        
+        .alert {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .alert h3 {
+            margin: 0 0 10px 0;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            border: 2px solid transparent;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .product-description {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .price {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .status h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .status-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Simple 12% Off - WORKS IMMEDIATELY!</h1>
+            <p>No API required - Just shows 12% off on ALL products</p>
+        </div>
+
+        <div class="alert">
+            <h3>✅ This Solution:</h3>
+            <ul>
+                <li><strong>Works immediately</strong> - No deployment or API setup required</li>
+                <li><strong>Shows 12% off on ALL products</strong> - Exactly what you wanted</li>
+                <li><strong>Calculates original prices</strong> - Current price ÷ 0.88 = Original price</li>
+                <li><strong>Beautiful styling</strong> - Discount badges and crossed-out pricing</li>
+                <li><strong>Mobile responsive</strong> - Looks great on all devices</li>
+            </ul>
+        </div>
+
+        <div class="status">
+            <h4>Products Updated</h4>
+            <div class="status-value" id="updated-count">0</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="forceUpdate()">
+                🔄 Apply 12% Off to All Products
+            </button>
+            <button class="btn btn-success" onclick="addTestProduct()">
+                ➕ Add Test Product
+            </button>
+        </div>
+
+        <!-- Test Products -->
+        <div class="product-grid" id="product-grid">
+            <div class="product-card">
+                <div class="product-image">
+                    BUNGI X BOBBY Hoodie
+                </div>
+                <div class="product-info">
+                    <div class="product-title">BUNGI X BOBBY Rabbit Hardware Unisex Hoodie</div>
+                    <div class="product-description">Premium quality hoodie with unique rabbit hardware design.</div>
+                    <div class="price">$65.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Classic T-Shirt
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Streetwear Classic Tee</div>
+                    <div class="product-description">Comfortable cotton t-shirt with premium feel.</div>
+                    <div class="price">$25.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Designer Jacket
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Urban Style Jacket</div>
+                    <div class="product-description">Modern jacket perfect for streetwear style.</div>
+                    <div class="price">$120.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Premium Sneakers
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Street Sneakers</div>
+                    <div class="product-description">High-quality sneakers for everyday wear.</div>
+                    <div class="price">$85.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Stylish Hat
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Bobby Logo Cap</div>
+                    <div class="product-description">Adjustable cap with embroidered logo.</div>
+                    <div class="price">$30.00</div>
+                </div>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">
+                    Cargo Pants
+                </div>
+                <div class="product-info">
+                    <div class="product-title">Utility Cargo Pants</div>
+                    <div class="product-description">Functional cargo pants with multiple pockets.</div>
+                    <div class="price">$75.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the Simple 12% Off Script -->
+    <script src="scripts/simple-12-percent-off.js"></script>
+    <script>
+        // Update counter
+        function updateCounter() {
+            const saleProducts = document.querySelectorAll('.on-sale-12').length;
+            document.getElementById('updated-count').textContent = saleProducts;
+        }
+
+        // Force update all products
+        function forceUpdate() {
+            console.log('🔄 Force updating all products...');
+            const count = window.simple12PercentOff.forceUpdate();
+            updateCounter();
+            console.log(`✅ Updated ${count} products with 12% off`);
+        }
+
+        // Add a test product dynamically
+        function addTestProduct() {
+            const grid = document.getElementById('product-grid');
+            const randomPrice = (Math.random() * 100 + 20).toFixed(2);
+            const productNames = [
+                'Dynamic Test Product',
+                'New Arrival Item',
+                'Limited Edition Piece',
+                'Fresh Design Product',
+                'Latest Collection Item'
+            ];
+            const randomName = productNames[Math.floor(Math.random() * productNames.length)];
+            
+            const newProduct = document.createElement('div');
+            newProduct.className = 'product-card';
+            newProduct.innerHTML = `
+                <div class="product-image">
+                    ${randomName}
+                </div>
+                <div class="product-info">
+                    <div class="product-title">${randomName}</div>
+                    <div class="product-description">Dynamically added product to test the 12% off system.</div>
+                    <div class="price">$${randomPrice}</div>
+                </div>
+            `;
+            
+            grid.appendChild(newProduct);
+            
+            // The mutation observer will automatically apply 12% off
+            setTimeout(updateCounter, 1000);
+            
+            console.log(`➕ Added new product: ${randomName} - $${randomPrice}`);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Simple 12% Off test page loaded');
+            
+            // Update counter periodically
+            setInterval(updateCounter, 2000);
+            
+            // Initial counter update
+            setTimeout(updateCounter, 1000);
+        });
+    </script>
+</body>
+</html>

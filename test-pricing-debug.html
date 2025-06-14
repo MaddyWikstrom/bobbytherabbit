@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-debug {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .price-info {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .sale-price {
+            color: #a855f7;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #666;
+            margin-left: 10px;
+        }
+        .discount-badge {
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bobby Streetwear - Pricing Debug Test</h1>
+    
+    <div class="debug-container">
+        <h2>API Response Debug</h2>
+        <button onclick="testPricing()" style="background: #a855f7; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Test Pricing Data</button>
+        <div id="debug-output"></div>
+    </div>
+
+    <div class="debug-container">
+        <h2>Manual Sale Price Test</h2>
+        <div class="product-debug">
+            <h3>Test Product with Sale Price</h3>
+            <div class="price-info">
+                <span class="sale-price">$29.99</span>
+                <span class="original-price">$39.99</span>
+                <span class="discount-badge">-25%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testPricing() {
+            const output = document.getElementById('debug-output');
+            output.innerHTML = '<p>Loading pricing data...</p>';
+            
+            try {
+                // Test direct Storefront API call
+                const SHOPIFY_DOMAIN = 'mfdkk3-7g.myshopify.com';
+                const STOREFRONT_ACCESS_TOKEN = '8c6bd66766da4553701a1f1fe7d94dc4';
+                const API_VERSION = '2024-04';
+                
+                const query = `
+                    query {
+                        products(first: 5) {
+                            edges {
+                                node {
+                                    id
+                                    title
+                                    handle
+                                    variants(first: 5) {
+                                        edges {
+                                            node {
+                                                id
+                                                title
+                                                price {
+                                                    amount
+                                                    currencyCode
+                                                }
+                                                compareAtPrice {
+                                                    amount
+                                                    currencyCode
+                                                }
+                                                availableForSale
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `;
+                
+                const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': STOREFRONT_ACCESS_TOKEN
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.errors) {
+                    throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+                }
+                
+                let html = '<h3>Products with Pricing Data:</h3>';
+                let foundSaleProducts = 0;
+                
+                data.data.products.edges.forEach(({ node: product }) => {
+                    html += `<div class="product-debug">`;
+                    html += `<h4>${product.title}</h4>`;
+                    html += `<p><strong>Handle:</strong> ${product.handle}</p>`;
+                    
+                    product.variants.edges.forEach(({ node: variant }) => {
+                        const price = parseFloat(variant.price.amount);
+                        const comparePrice = variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null;
+                        
+                        html += `<div class="price-info">`;
+                        html += `<strong>Variant:</strong> ${variant.title}<br>`;
+                        html += `<strong>Price:</strong> $${price.toFixed(2)}<br>`;
+                        
+                        if (comparePrice) {
+                            html += `<strong>Compare Price:</strong> $${comparePrice.toFixed(2)}<br>`;
+                            
+                            if (comparePrice > price) {
+                                const discount = Math.round(((comparePrice - price) / comparePrice) * 100);
+                                html += `<div style="margin-top: 10px;">`;
+                                html += `<span class="sale-price">$${price.toFixed(2)}</span>`;
+                                html += `<span class="original-price">$${comparePrice.toFixed(2)}</span>`;
+                                html += `<span class="discount-badge">-${discount}%</span>`;
+                                html += `</div>`;
+                                foundSaleProducts++;
+                            }
+                        } else {
+                            html += `<strong>Compare Price:</strong> <em>Not set</em><br>`;
+                        }
+                        
+                        html += `<strong>Available:</strong> ${variant.availableForSale ? 'Yes' : 'No'}`;
+                        html += `</div>`;
+                    });
+                    
+                    html += `</div>`;
+                });
+                
+                html += `<div style="background: #e3f2fd; padding: 15px; margin: 20px 0; border-radius: 5px;">`;
+                html += `<h4>Summary:</h4>`;
+                html += `<p><strong>Total Products Checked:</strong> ${data.data.products.edges.length}</p>`;
+                html += `<p><strong>Products with Sale Prices:</strong> ${foundSaleProducts}</p>`;
+                
+                if (foundSaleProducts === 0) {
+                    html += `<p style="color: #f44336;"><strong>⚠️ No products have compareAtPrice set in Shopify!</strong></p>`;
+                    html += `<p>This means you need to set "Compare at price" values in your Shopify admin for products to show sale prices.</p>`;
+                } else {
+                    html += `<p style="color: #4caf50;"><strong>✅ Found products with sale pricing!</strong></p>`;
+                }
+                html += `</div>`;
+                
+                output.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error testing pricing:', error);
+                output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
