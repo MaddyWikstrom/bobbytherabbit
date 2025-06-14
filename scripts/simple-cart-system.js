@@ -264,60 +264,29 @@ if (window.BobbyCartSystem) {
       return product;
     }
     
-    // Use the precise discount system if available
-    if (window.PreciseDiscountSystem && typeof window.PreciseDiscountSystem.getDiscountForProduct === 'function') {
-      const discountInfo = window.PreciseDiscountSystem.getDiscountForProduct(product);
+    // Check if this product is eligible for discount
+    const title = product.title.toLowerCase();
+    const discountTypes = ['hoodie', 'sweatshirt', 'sweatpants'];
+    const hasDiscountType = discountTypes.some(type => title.includes(type));
+    
+    if (hasDiscountType) {
+      // Use the original price (not the current price which might already be discounted)
+      const originalPrice = product.originalPrice || product.basePrice || product.price;
+      const discountedPrice = originalPrice * (1 - 12 / 100);
       
-      if (discountInfo) {
-        const originalPrice = product.price;
-        const discountedPrice = originalPrice * (1 - discountInfo.percentage / 100);
-        
-        console.log(`✅ Cart: Applying ${discountInfo.percentage}% discount to: ${product.title}`);
-        console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
-        
-        // Create a copy of the product with discount applied
-        return {
-          ...product,
-          price: discountedPrice,
-          originalPrice: originalPrice,
-          hasDiscount: true,
-          discountPercentage: discountInfo.percentage,
-          discountAmount: originalPrice - discountedPrice,
-          discountDescription: discountInfo.description
-        };
-      }
-    } else {
-      // Fallback: Check for discount patterns directly (same as precise discount system)
-      const title = product.title.toLowerCase();
+      console.log(`✅ Cart: Applying 12% discount to: ${product.title}`);
+      console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
       
-      // Specific product types that should get discounts
-      const discountTypes = [
-        'hoodie',
-        'sweatshirt',
-        'sweatpants'
-      ];
-      
-      // Check if this product is one of the discount types
-      const hasDiscountType = discountTypes.some(type => title.includes(type));
-      
-      if (hasDiscountType) {
-        const originalPrice = product.price;
-        const discountedPrice = originalPrice * (1 - 12 / 100);
-        
-        console.log(`✅ Cart: Applying 12% discount to: ${product.title}`);
-        console.log(`✅ Cart: Original: $${originalPrice.toFixed(2)} → Discounted: $${discountedPrice.toFixed(2)}`);
-        
-        // Create a copy of the product with discount applied
-        return {
-          ...product,
-          price: discountedPrice,
-          originalPrice: originalPrice,
-          hasDiscount: true,
-          discountPercentage: 12,
-          discountAmount: originalPrice - discountedPrice,
-          discountDescription: '12% off hoodies, sweatshirts & sweatpants'
-        };
-      }
+      // Create a copy of the product with discount applied
+      return {
+        ...product,
+        price: discountedPrice,
+        originalPrice: originalPrice,
+        hasDiscount: true,
+        discountPercentage: 12,
+        discountAmount: originalPrice - discountedPrice,
+        discountDescription: '12% off hoodies, sweatshirts & sweatpants'
+      };
     }
     
     console.log(`❌ Cart: No discount applied to: ${product.title}`);
