@@ -1866,11 +1866,11 @@ class ProductDetailManager {
                     </div>
                     
                     <div class="price-container">
-                        <span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
-                        ${this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price ? 
-                            `<span id="product-compare-price" class="price-original">$${this.currentProduct.comparePrice.toFixed(2)}</span>
-                             <span id="product-discount" class="price-discount">-${Math.round(((this.currentProduct.comparePrice - this.currentProduct.price) / this.currentProduct.comparePrice) * 100)}%</span>` : 
-                            ''}
+                        ${this.currentProduct.comparePrice && this.currentProduct.comparePrice > this.currentProduct.price ?
+                            `<span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>
+                             <span id="product-compare-price" class="original-price">$${this.currentProduct.comparePrice.toFixed(2)}</span>` :
+                            `<span id="product-price" class="price-current">$${this.currentProduct.price.toFixed(2)}</span>`
+                        }
                     </div>
                     
                     <div id="product-description" class="product-description">
@@ -1946,6 +1946,31 @@ class ProductDetailManager {
                 mainContent.style.display = 'block';
             }
             console.log('Product rendered successfully');
+            
+            // Add CSS for sale pricing if not already added
+            if (!document.getElementById('sale-pricing-styles')) {
+                const style = document.createElement('style');
+                style.id = 'sale-pricing-styles';
+                style.textContent = `
+                    .price-current {
+                        color: #a855f7;
+                        font-weight: bold;
+                        font-size: 1.2em;
+                    }
+                    
+                    .original-price {
+                        text-decoration: line-through;
+                        color: #888;
+                        margin-left: 0.5rem;
+                        font-size: 1em;
+                    }
+                    
+                    .price-container {
+                        margin: 1rem 0;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
             
             // Trigger an event to notify that product detail rendering is complete
             document.dispatchEvent(new CustomEvent('productDetailRendered'));
