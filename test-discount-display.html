@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Display Test - Bobby Streetwear</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        body {
+            background: #13132b;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+        
+        .test-button {
+            background: linear-gradient(45deg, #a855f7, #6366f1);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+        
+        .product-card-demo {
+            background: #181830;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            position: relative;
+            display: inline-block;
+            width: 200px;
+        }
+        
+        .product-image-demo {
+            width: 100%;
+            height: 150px;
+            background: #ffffff;
+            border-radius: 4px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .price-container-demo {
+            margin: 10px 0;
+        }
+        
+        .price-current {
+            font-size: 18px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        
+        .price-original {
+            text-decoration: line-through;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+        
+        .price-discount {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        .navbar {
+            background: rgba(0,0,0,0.8);
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: #a855f7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation (for discount banner positioning) -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <span class="nav-brand">BUNGI X BOBBY - DISCOUNT TEST</span>
+        </div>
+    </nav>
+
+    <div class="test-container">
+        <h1>Discount Display System Test</h1>
+        
+        <div class="test-section">
+            <h2>🎯 Test Controls</h2>
+            <p>Use these buttons to test different discount scenarios:</p>
+            
+            <button class="test-button" onclick="DiscountDisplay.showTest()">
+                Show Test Discount Banner
+            </button>
+            
+            <button class="test-button" onclick="DiscountDisplay.hide()">
+                Hide Discount Banner
+            </button>
+            
+            <button class="test-button" onclick="DiscountDisplay.reload()">
+                Reload Real Discounts
+            </button>
+            
+            <button class="test-button" onclick="showCustomDiscount()">
+                Show Custom Flash Sale
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📦 Product Card Examples</h2>
+            <p>These demonstrate how discount badges appear on product cards:</p>
+            
+            <div class="product-card-demo">
+                <div class="product-image-demo">
+                    <div class="product-badge sale" style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">-25%</div>
+                </div>
+                <h3>Sample Hoodie</h3>
+                <div class="price-container-demo">
+                    <span class="price-current">$44.99</span>
+                    <span class="price-original">$59.99</span>
+                    <span class="price-discount">-25%</span>
+                </div>
+            </div>
+            
+            <div class="product-card-demo">
+                <div class="product-image-demo">
+                    <div class="product-badge sale" style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">-15%</div>
+                </div>
+                <h3>Sample T-Shirt</h3>
+                <div class="price-container-demo">
+                    <span class="price-current">$25.49</span>
+                    <span class="price-original">$29.99</span>
+                    <span class="price-discount">-15%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>💰 Product Detail Example</h2>
+            <p>This shows how savings information appears on product detail pages:</p>
+            
+            <div class="price-container" style="margin: 20px 0;">
+                <span id="product-price" class="price-current">$44.99</span>
+                <span id="product-compare-price" class="price-original">$59.99</span>
+                <span id="product-discount" class="price-discount">-25%</span>
+            </div>
+            
+            <button class="test-button" onclick="addSavingsInfo()">
+                Add Savings Info
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 How It Works</h2>
+            <p>The discount display system:</p>
+            <ul>
+                <li>✅ Automatically detects discounts from Shopify product data</li>
+                <li>✅ Shows a prominent banner at the top of pages</li>
+                <li>✅ Adds enhanced discount badges to product cards</li>
+                <li>✅ Displays savings information on product detail pages</li>
+                <li>✅ Works with your existing Shopify integration</li>
+                <li>✅ Responsive design for mobile and desktop</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>📱 Features</h2>
+            <ul>
+                <li><strong>Animated Banner:</strong> Eye-catching gradient animation with shine effect</li>
+                <li><strong>Smart Detection:</strong> Automatically finds products with compareAtPrice > price</li>
+                <li><strong>Flexible Display:</strong> Shows percentage discounts and dollar savings</li>
+                <li><strong>Mobile Optimized:</strong> Responsive layout for all screen sizes</li>
+                <li><strong>Easy Integration:</strong> Just include the script on your pages</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Include the discount display script -->
+    <script src="scripts/discount-display.js"></script>
+    
+    <script>
+        // Custom test functions
+        function showCustomDiscount() {
+            if (window.discountDisplayManager) {
+                window.discountDisplayManager.currentDiscount = {
+                    type: 'flash_sale',
+                    title: 'FLASH SALE',
+                    description: '🔥 50% OFF EVERYTHING - Next 2 Hours Only!',
+                    discountPercent: 50,
+                    isActive: true,
+                    code: 'FLASH50'
+                };
+                
+                window.discountDisplayManager.createDiscountBanner();
+            }
+        }
+        
+        function addSavingsInfo() {
+            const priceContainer = document.querySelector('.price-container');
+            if (priceContainer && !document.querySelector('.product-savings-info')) {
+                const savingsInfo = document.createElement('div');
+                savingsInfo.className = 'product-savings-info';
+                savingsInfo.innerHTML = `
+                    <span class="savings-amount">You Save $15.00!</span>
+                    <span>That's 25% off the regular price</span>
+                `;
+                
+                priceContainer.parentNode.insertBefore(savingsInfo, priceContainer.nextSibling);
+            }
+        }
+        
+        // Log when discount system is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Discount display test page loaded');
+            
+            // Show a test discount after a short delay
+            setTimeout(() => {
+                if (window.DiscountDisplay) {
+                    console.log('Discount system available - you can use the test buttons above');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
