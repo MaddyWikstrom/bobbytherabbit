@@ -156,14 +156,17 @@ class DiscountDisplayManager {
         // Add styles
         this.addDiscountStyles();
         
-        // Insert banner at the very top of the page, before everything
-        document.body.insertBefore(banner, document.body.firstChild);
+        // Insert banner below the navbar
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            navbar.parentNode.insertBefore(banner, navbar.nextSibling);
+        } else {
+            document.body.insertBefore(banner, document.body.firstChild);
+        }
 
-        // Add animation and body padding
+        // Add animation
         setTimeout(() => {
             banner.classList.add('show');
-            // Add padding to body to prevent content from being hidden behind fixed banner
-            document.body.style.paddingTop = banner.offsetHeight + 'px';
         }, 100);
     }
 
@@ -180,13 +183,10 @@ class DiscountDisplayManager {
                 background-size: 400% 400%;
                 animation: discountGradient 3s ease infinite;
                 color: white;
-                padding: 12px 0;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
+                padding: 8px 0;
+                position: relative;
                 width: 100%;
-                z-index: 9999;
+                z-index: 1000;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.2);
                 transform: translateY(-100%);
                 transition: transform 0.5s ease;
@@ -452,77 +452,186 @@ class DiscountDisplayManager {
     }
 
     updateProductPricing() {
-        // Update product cards to show proper pricing with crossed-out original prices
+        // Wait for products to load, then update pricing
+        setTimeout(() => {
+            this.updateHomepageProductPricing();
+            this.updateProductDetailPricing();
+        }, 1000);
+        
+        // Also listen for when products are dynamically loaded
+        const observer = new MutationObserver(() => {
+            this.updateHomepageProductPricing();
+        });
+        
+        const productsContainer = document.getElementById('homepage-products') || document.getElementById('products-grid');
+        if (productsContainer) {
+            observer.observe(productsContainer, { childList: true, subtree: true });
+        }
+    }
+
+    updateHomepageProductPricing() {
+        // Update homepage product cards
         const productCards = document.querySelectorAll('.product-card');
         
         productCards.forEach(card => {
             const priceContainer = card.querySelector('.product-price');
-            const originalPriceSpan = card.querySelector('.original-price');
+            if (!priceContainer) return;
             
-            if (priceContainer && originalPriceSpan) {
-                // Get the current price and original price
-                const currentPriceText = priceContainer.textContent.split('$')[1];
-                const originalPriceText = originalPriceSpan.textContent.replace('$', '');
+            // Check if this card already has enhanced pricing
+            if (priceContainer.querySelector('.sale-price-enhanced')) return;
+            
+            // Look for existing price elements
+            const currentPriceText = priceContainer.textContent.match(/\$(\d+\.?\d*)/);
+            const originalPriceSpan = priceContainer.querySelector('.original-price');
+            
+            if (currentPriceText && originalPriceSpan) {
+                const currentPrice = parseFloat(currentPriceText[1]);
+                const originalPriceText = originalPriceSpan.textContent.match(/\$(\d+\.?\d*)/);
                 
-                if (currentPriceText && originalPriceText) {
-                    const currentPrice = parseFloat(currentPriceText);
-                    const originalPrice = parseFloat(originalPriceText);
+                if (originalPriceText) {
+                    const originalPrice = parseFloat(originalPriceText[1]);
                     
                     if (originalPrice > currentPrice) {
                         // Calculate discount percentage
                         const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
                         
-                        // Update the price display
-                        priceContainer.innerHTML = `
-                            <span class="current-price">$${currentPrice.toFixed(2)}</span>
-                            <span class="original-price-crossed">$${originalPrice.toFixed(2)}</span>
-                            <span class="discount-percent">-${discountPercent}%</span>
-                        `;
+                        // Update the price display with Bobby theme styling
+                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, originalPrice, discountPercent);
                         
-                        // Add styles for the new price elements
-                        this.addPricingStyles();
+                        // Add enhanced pricing styles
+                        this.addEnhancedPricingStyles();
                     }
                 }
             }
         });
     }
 
-    addPricingStyles() {
-        if (document.getElementById('pricing-styles')) {
+    updateProductDetailPricing() {
+        // Update product detail page pricing
+        const currentPriceEl = document.getElementById('product-price');
+        const comparePriceEl = document.getElementById('product-compare-price');
+        
+        if (currentPriceEl && comparePriceEl) {
+            const currentPriceText = currentPriceEl.textContent.match(/\$(\d+\.?\d*)/);
+            const comparePriceText = comparePriceEl.textContent.match(/\$(\d+\.?\d*)/);
+            
+            if (currentPriceText && comparePriceText) {
+                const currentPrice = parseFloat(currentPriceText[1]);
+                const comparePrice = parseFloat(comparePriceText[1]);
+                
+                if (comparePrice > currentPrice) {
+                    const discountPercent = Math.round(((comparePrice - currentPrice) / comparePrice) * 100);
+                    
+                    // Update the price container with enhanced styling
+                    const priceContainer = document.querySelector('.price-container');
+                    if (priceContainer && !priceContainer.querySelector('.sale-price-enhanced')) {
+                        priceContainer.innerHTML = this.renderSalePrice(currentPrice, comparePrice, discountPercent);
+                        this.addEnhancedPricingStyles();
+                    }
+                }
+            }
+        }
+    }
+
+    renderSalePrice(salePrice, originalPrice, discountPercent) {
+        return `
+            <div class="price-display-enhanced">
+                <span class="sale-price-enhanced">$${salePrice.toFixed(2)}</span>
+                <span class="original-price-enhanced">$${originalPrice.toFixed(2)}</span>
+                <span class="discount-badge-enhanced">-${discountPercent}%</span>
+            </div>
+        `;
+    }
+
+    addEnhancedPricingStyles() {
+        if (document.getElementById('enhanced-pricing-styles')) {
             return; // Styles already added
         }
 
         const style = document.createElement('style');
-        style.id = 'pricing-styles';
+        style.id = 'enhanced-pricing-styles';
         style.textContent = `
-            .current-price {
-                color: #10b981;
-                font-weight: bold;
-                font-size: 18px;
-            }
-            
-            .original-price-crossed {
-                text-decoration: line-through;
-                color: #9ca3af;
-                margin-left: 8px;
-                font-size: 14px;
-            }
-            
-            .discount-percent {
-                background: #ef4444;
-                color: white;
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: bold;
-                margin-left: 8px;
-            }
-            
-            .product-price {
+            .price-display-enhanced {
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 12px;
                 flex-wrap: wrap;
+                margin: 8px 0;
+            }
+            
+            .sale-price-enhanced {
+                color: #a855f7;
+                font-weight: 900;
+                font-size: 20px;
+                text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+                font-family: 'Orbitron', monospace;
+            }
+            
+            .original-price-enhanced {
+                text-decoration: line-through;
+                color: #6b7280;
+                font-size: 16px;
+                opacity: 0.7;
+                font-weight: 400;
+            }
+            
+            .discount-badge-enhanced {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+                animation: discountPulse 2s infinite;
+            }
+            
+            /* Product detail page specific styling */
+            .price-container .price-display-enhanced .sale-price-enhanced {
+                font-size: 28px;
+                color: #10b981;
+            }
+            
+            .price-container .price-display-enhanced .original-price-enhanced {
+                font-size: 20px;
+            }
+            
+            .price-container .price-display-enhanced .discount-badge-enhanced {
+                font-size: 14px;
+                padding: 6px 12px;
+            }
+            
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                .sale-price-enhanced {
+                    font-size: 18px;
+                }
+                
+                .original-price-enhanced {
+                    font-size: 14px;
+                }
+                
+                .price-container .price-display-enhanced .sale-price-enhanced {
+                    font-size: 24px;
+                }
+                
+                .price-container .price-display-enhanced .original-price-enhanced {
+                    font-size: 18px;
+                }
+            }
+            
+            /* Animation for discount badge */
+            @keyframes discountPulse {
+                0%, 100% {
+                    transform: scale(1);
+                    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+                }
+                50% {
+                    transform: scale(1.05);
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+                }
             }
         `;
         
@@ -576,8 +685,6 @@ class DiscountDisplayManager {
         const banner = document.getElementById('discount-banner');
         if (banner) {
             banner.style.display = 'none';
-            // Remove body padding when banner is hidden
-            document.body.style.paddingTop = '0px';
         }
     }
 }
