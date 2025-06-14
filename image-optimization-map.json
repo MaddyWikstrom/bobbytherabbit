@@ -1,0 +1,32 @@
+{
+  "bobby-logo.svg": {
+    "webp": "assets/optimized/bobby-logo.webp",
+    "fallback": "assets/bobby-logo.svg",
+    "sizes": "40px",
+    "priority": "high"
+  },
+  "featured-hoodie.svg": {
+    "webp": "assets/optimized/featured-hoodie.webp",
+    "fallback": "assets/featured-hoodie.svg",
+    "sizes": "(max-width: 768px) 300px, 400px",
+    "priority": "high"
+  },
+  "cookie_high.png": {
+    "webp": "assets/optimized/cookie_high.webp",
+    "fallback": "assets/cookie_high.png",
+    "sizes": "100px",
+    "priority": "medium"
+  },
+  "tee-1.png": {
+    "webp": "assets/optimized/tee-1.webp",
+    "fallback": "assets/tee-1.png",
+    "sizes": "(max-width: 768px) 250px, 300px",
+    "priority": "medium"
+  },
+  "pants-1.png": {
+    "webp": "assets/optimized/pants-1.webp",
+    "fallback": "assets/pants-1.png",
+    "sizes": "(max-width: 768px) 250px, 300px",
+    "priority": "medium"
+  }
+}
