@@ -1,14 +1,18 @@
 // Subtle Hoodie Sale Display - Only for Hoodies, Sweatshirts, and Sweatpants
 // Optimized for performance with minimal logging
+// Includes product detail pages and cart integration
 
 class SubtleHoodieSale {
   constructor() {
     this.discountPercent = 12;
     this.saleTitle = "12% OFF";
     this.processedProducts = new Set();
+    this.processedDetailPages = new Set();
+    this.processedCartItems = new Set();
     this.targetCategories = ['hoodie', 'sweatshirt', 'sweatpants', 'joggers'];
     this.priceSelectors = ['.price', '.product-price', '.price-display', '[class*="price"]'];
-    this.titleSelectors = ['.product-title', '.product-name', 'h3', 'h2'];
+    this.titleSelectors = ['.product-title', '.product-name', 'h3', 'h2', '.product-detail-title'];
+    this.cartSelectors = ['.cart-item', '.cart-product', '[class*="cart"]'];
   }
 
   // Optimized target product check
@@ -110,9 +114,128 @@ class SubtleHoodieSale {
     return `${title}-${price}`.replace(/\s+/g, '-');
   }
 
+  // Apply to product detail pages
+  applyToProductDetail() {
+    const detailContainer = document.querySelector('.product-detail, .product-detail-grid, .product-info, .product-main');
+    if (!detailContainer) return 0;
+
+    const detailId = this.getDetailPageId(detailContainer);
+    if (this.processedDetailPages.has(detailId)) return 0;
+
+    const titleElement = detailContainer.querySelector(this.titleSelectors.join(', '));
+    if (!titleElement) return 0;
+
+    const productTitle = titleElement.textContent || titleElement.innerText || '';
+    if (!this.isTargetProduct(productTitle)) return 0;
+
+    let updatedCount = 0;
+
+    // Apply to main product price
+    const priceElements = detailContainer.querySelectorAll(this.priceSelectors.join(', '));
+    for (const priceElement of priceElements) {
+      if (priceElement.classList.contains('subtle-price-display')) continue;
+      
+      const priceMatch = (priceElement.textContent || '').match(/\$?(\d+\.?\d*)/);
+      if (priceMatch && parseFloat(priceMatch[1]) > 0) {
+        const currentPrice = parseFloat(priceMatch[1]);
+        
+        // Add badge to detail container
+        if (!detailContainer.querySelector('.subtle-sale-badge')) {
+          detailContainer.style.position = 'relative';
+          detailContainer.insertAdjacentHTML('afterbegin', this.generateSubtleDiscountBadge());
+        }
+
+        priceElement.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
+        priceElement.classList.add('has-subtle-sale');
+        updatedCount++;
+      }
+    }
+
+    // Apply to variant prices if they exist
+    const variantPrices = detailContainer.querySelectorAll('.variant-price, .option-price, [data-variant-price]');
+    for (const variantPrice of variantPrices) {
+      if (variantPrice.classList.contains('subtle-price-display')) continue;
+      
+      const priceMatch = (variantPrice.textContent || '').match(/\$?(\d+\.?\d*)/);
+      if (priceMatch && parseFloat(priceMatch[1]) > 0) {
+        const currentPrice = parseFloat(priceMatch[1]);
+        variantPrice.innerHTML = this.generateSubtlePriceDisplay(currentPrice);
+        variantPrice.classList.add('has-subtle-sale');
+        updatedCount++;
+      }
+    }
+
+    if (updatedCount > 0) {
+      this.processedDetailPages.add(detailId);
+    }
+
+    return updatedCount;
+  }
+
+  // Apply to cart items
+  applyToCartItems() {
+    const cartItems = document.querySelectorAll(this.cartSelectors.join(', '));
+    let updatedCount = 0;
+
+    for (const cartItem of cartItems) {
+      const cartId = this.getCartItemId(cartItem);
+      if (this.processedCartItems.has(cartId)) continue;
+
+      const titleElement = cartItem.querySelector(this.titleSelectors.join(', '));
+      if (!titleElement) continue;
+
+      const productTitle = titleElement.textContent || titleElement.innerText || '';
+      if (!this.isTargetProduct(productTitle)) continue;
+
+      const priceElements = cartItem.querySelectorAll(this.priceSelectors.join(', '));
+      for (const priceElement of priceElements) {
+        if (priceElement.classList.contains('subtle-price-display')) continue;
+        
+        const priceMatch = (priceElement.textContent || '').match(/\$?(\d+\.?\d*)/);
+        if (priceMatch && parseFloat(priceMatch[1]) > 0) {
+          const currentPrice = parseFloat(priceMatch[1]);
+          
+          // For cart items, show more compact pricing
+          const original = parseFloat(currentPrice);
+          const discounted = this.calculateDiscountedPrice(original);
+          
+          priceElement.innerHTML = `<span class="cart-original-price">${this.formatPrice(original)}</span><span class="cart-sale-price">${this.formatPrice(discounted)}</span>`;
+          priceElement.classList.add('has-cart-sale');
+          updatedCount++;
+        }
+      }
+
+      if (updatedCount > 0) {
+        this.processedCartItems.add(cartId);
+      }
+    }
+
+    return updatedCount;
+  }
+
+  // Get unique ID for detail page
+  getDetailPageId(container) {
+    const titleElement = container.querySelector(this.titleSelectors.join(', '));
+    const title = titleElement ? titleElement.textContent.trim() : '';
+    return `detail-${title}`.replace(/\s+/g, '-');
+  }
+
+  // Get unique ID for cart item
+  getCartItemId(cartItem) {
+    const titleElement = cartItem.querySelector(this.titleSelectors.join(', '));
+    const priceElement = cartItem.querySelector(this.priceSelectors.join(', '));
+    
+    const title = titleElement ? titleElement.textContent.trim() : '';
+    const price = priceElement ? priceElement.textContent.trim() : '';
+    
+    return `cart-${title}-${price}`.replace(/\s+/g, '-');
+  }
+
   // Initialize with optimized observer
   initialize() {
     this.applyToTargetProducts();
+    this.applyToProductDetail();
+    this.applyToCartItems();
     this.setupDebouncedObserver();
   }
 
@@ -121,25 +244,31 @@ class SubtleHoodieSale {
     let timeout = null;
     
     const observer = new MutationObserver((mutations) => {
-      let hasNewProducts = false;
+      let hasNewContent = false;
       
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === 1 && (
             node.classList?.contains('product-card') ||
             node.classList?.contains('product-item') ||
-            node.querySelector?.('.product-card, .product-item')
+            node.classList?.contains('cart-item') ||
+            node.classList?.contains('product-detail') ||
+            node.querySelector?.('.product-card, .product-item, .cart-item, .product-detail')
           )) {
-            hasNewProducts = true;
+            hasNewContent = true;
             break;
           }
         }
-        if (hasNewProducts) break;
+        if (hasNewContent) break;
       }
 
-      if (hasNewProducts) {
+      if (hasNewContent) {
         clearTimeout(timeout);
-        timeout = setTimeout(() => this.applyToTargetProducts(), 1000);
+        timeout = setTimeout(() => {
+          this.applyToTargetProducts();
+          this.applyToProductDetail();
+          this.applyToCartItems();
+        }, 1000);
       }
     });
 

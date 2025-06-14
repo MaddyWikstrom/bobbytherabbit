@@ -213,6 +213,65 @@
   min-height: auto;
 }
 
+/* Cart Item Sale Styling */
+.has-cart-sale {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-original-price {
+  font-size: 12px;
+  font-weight: 400;
+  color: #999;
+  text-decoration: line-through;
+  line-height: 1;
+}
+
+.cart-sale-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+/* Product Detail Page Enhancements */
+.product-detail .subtle-sale-badge,
+.product-detail-grid .subtle-sale-badge,
+.product-info .subtle-sale-badge,
+.product-main .subtle-sale-badge {
+  top: 20px;
+  right: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Variant Price Styling */
+.variant-price.has-subtle-sale,
+.option-price.has-subtle-sale,
+[data-variant-price].has-subtle-sale {
+  margin-top: 5px;
+}
+
+/* Mobile Cart Styling */
+@media (max-width: 768px) {
+  .cart-original-price {
+    font-size: 11px;
+  }
+  
+  .cart-sale-price {
+    font-size: 13px;
+  }
+  
+  .product-detail .subtle-sale-badge,
+  .product-detail-grid .subtle-sale-badge {
+    top: 15px;
+    right: 15px;
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+}
+
 /* Subtle animation for new sale items */
 .subtle-sale-item {
   animation: subtleFadeIn 0.3s ease-out;
